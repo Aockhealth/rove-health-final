@@ -1,103 +1,143 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { ArrowRight, CheckCircle2, Star, ShieldCheck, Zap, Clock, Activity, Brain, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { HormoneFlowBackground } from "@/components/HormoneFlowBackground";
+import { PlatformPreview } from "@/components/PlatformPreview";
+import { MaleClockGraph, FemaleCycleGraph } from "@/components/CycleGraphs";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-screen bg-white text-rove-charcoal font-sans selection:bg-rove-red/20">
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* 1. THE HOOK: You are cyclical */}
+      <section className="relative min-h-[90vh] flex flex-col justify-center px-6 overflow-hidden text-center">
+        <HormoneFlowBackground />
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Badge variant="luxury" className="mb-8 bg-white/50 backdrop-blur-sm text-rove-charcoal border-rove-charcoal/10 px-4 py-1.5 tracking-widest uppercase text-xs font-medium">
+              The New Standard
+            </Badge>
+            <h1 className="font-heading text-5xl md:text-7xl tracking-tight mb-8 leading-[1.1] text-rove-charcoal">
+              <span className="font-light block mb-2">You're not inconsistent.</span>
+              <span className="italic text-rove-red font-medium">You're cyclical.</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-rove-charcoal/70 font-light leading-relaxed mb-10 max-w-xl mx-auto">
+              Stop forcing your 28-day biology into a 24-hour world.
+            </p>
+            <Button size="lg" className="w-auto rounded-full px-10 h-14 text-lg shadow-xl shadow-rove-red/5 hover:shadow-rove-red/10 bg-rove-charcoal text-white hover:bg-rove-charcoal/90 transition-all" asChild>
+              <Link href="/cycle-sync">
+                Get Started Now
+              </Link>
+            </Button>
+          </motion.div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* 2. THE PROBLEM: The 24-Hour Trap */}
+      <section className="py-20 px-6 bg-rove-charcoal text-white">
+        <div className="max-w-xl">
+          <h2 className="font-heading text-4xl md:text-5xl mb-8">The 24-Hour Trap.</h2>
+          <p className="text-xl text-white/70 leading-relaxed mb-12">
+            Society expects you to be the same person every day. But your brain, metabolism, and energy shift every week.
+          </p>
+
+          <div className="grid gap-6">
+            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold">The Male Clock</h3>
+              </div>
+              <div className="h-24 w-full mb-4 border-b border-white/10 relative">
+                <MaleClockGraph />
+              </div>
+              <p className="text-white/60 text-sm">Resets every 24 hours. Static.</p>
+            </div>
+            <div className="p-6 rounded-2xl bg-white text-rove-charcoal border border-white/10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-rove-red/10 rounded-full blur-2xl" />
+              <div className="flex items-center gap-4 mb-4 relative z-10">
+                <div className="w-10 h-10 rounded-full bg-rove-red/10 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-rove-red" />
+                </div>
+                <h3 className="text-xl font-bold">Your Clock</h3>
+              </div>
+              <div className="h-24 w-full mb-4 border-b border-rove-stone/10 relative z-10">
+                <FemaleCycleGraph color="#6A1B21" />
+              </div>
+              <p className="text-rove-stone text-sm relative z-10">Resets every 28 days. Dynamic.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. THE SOLUTION: The Rove System */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-xl mx-auto md:mx-0">
+          <Badge className="mb-6 bg-rove-green/10 text-rove-green border-rove-green/20">The Solution</Badge>
+          <h2 className="font-heading text-4xl md:text-6xl mb-6 text-rove-charcoal">Sync with your system.</h2>
+          <p className="text-xl text-rove-stone leading-relaxed mb-12">
+            Rove is the first platform that adapts your nutrition and fitness to your real-time biology.
+          </p>
+
+          <div className="space-y-4">
+            {[
+              { title: "Follicular", desc: "Build energy.", color: "bg-rove-charcoal" },
+              { title: "Ovulatory", desc: "Maximize power.", color: "bg-rove-green" },
+              { title: "Luteal", desc: "Focus & stabilize.", color: "bg-rove-red" },
+              { title: "Menstrual", desc: "Rest & reset.", color: "bg-rove-stone" },
+            ].map((phase, i) => (
+              <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-rove-cream/30 border border-rove-stone/5">
+                <div className={cn("w-3 h-3 rounded-full shrink-0", phase.color)} />
+                <div>
+                  <span className="font-bold text-rove-charcoal block">{phase.title}</span>
+                  <span className="text-rove-stone text-sm">{phase.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. THE PROOF: Real-Time Sync */}
+      <section className="py-20 bg-rove-cream/30 overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="max-w-xl mb-12">
+            <h2 className="font-heading text-4xl md:text-5xl mb-4">It happens in real-time.</h2>
+            <p className="text-xl text-rove-stone">
+              Your daily plan updates automatically as your hormones shift.
+            </p>
+          </div>
+
+          <div className="relative max-w-sm mx-auto md:max-w-2xl md:mx-0">
+            <div className="absolute -inset-4 bg-gradient-to-r from-rove-red/20 to-rove-green/20 rounded-full blur-3xl opacity-50" />
+            <PlatformPreview />
+          </div>
+        </div>
+      </section>
+
+      {/* 5. CTA */}
+      <section className="py-24 px-6 bg-rove-charcoal text-center text-white">
+        <div className="max-w-xl mx-auto">
+          <h2 className="font-heading text-5xl mb-6">Join the Sync.</h2>
+          <p className="text-xl text-white/60 mb-10">
+            Master your rhythm today.
+          </p>
+          <Button size="lg" className="w-full md:w-auto rounded-full px-12 h-16 text-xl bg-white text-rove-charcoal hover:bg-rove-cream" asChild>
+            <Link href="/ingredients">Get Started</Link>
+          </Button>
+        </div>
+      </section>
+
+    </main>
   );
 }
