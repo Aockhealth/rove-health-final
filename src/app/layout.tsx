@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import Header from "@/components/layout/Header";
+import { createClient } from "@/utils/supabase/server";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,17 +19,20 @@ export const metadata: Metadata = {
   description: "Doctor-formulated supplements for women's health.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${outfit.variable} antialiased`}
       >
-        <Header />
+        <Header user={user} />
         <div className="pt-16">
           {children}
         </div>

@@ -25,7 +25,7 @@ export default function InsightsPage() {
 
     const itemVariants = {
         hidden: { opacity: 0, y: 30 },
-        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 40, damping: 20 } }
+        show: { opacity: 1, y: 0, transition: { stiffness: 40, damping: 20 } }
     };
 
     return (

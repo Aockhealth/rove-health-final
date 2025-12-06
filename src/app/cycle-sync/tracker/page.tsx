@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, Check, Droplets } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { logDailySymptoms } from "@/app/actions/cycle-sync";
 
 export default function TrackerPage() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
     const [isPeriodMode, setIsPeriodMode] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     // Mock calendar generation (current week)
     const generateWeek = () => {
@@ -30,7 +32,7 @@ export default function TrackerPage() {
             name: "Flow",
             items: ["Spotting", "Light", "Medium", "Heavy"],
             color: "bg-rove-red/10 border-rove-red/20 text-rove-red",
-            visible: isPeriodMode // Only prominent if period mode is on, or always? Let's keep it always but move it up if period mode is on.
+            visible: isPeriodMode
         },
         {
             name: "Mood",
@@ -63,6 +65,18 @@ export default function TrackerPage() {
         }
     };
 
+    const handleSave = () => {
+        startTransition(async () => {
+            await logDailySymptoms({
+                date: selectedDate,
+                symptoms: selectedSymptoms,
+                isPeriod: isPeriodMode
+            });
+            // Show success via toast or UI state in real app
+            alert("Entry Saved!");
+        });
+    }
+
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
@@ -81,7 +95,6 @@ export default function TrackerPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20">
-            {/* Immersive Background Gradient */}
             {/* Immersive Background Gradient - Optimized */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className={cn("absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full blur-[80px] animate-pulse transition-colors duration-1000 will-change-[opacity,background-color]", isPeriodMode ? "bg-rove-red/20" : "bg-rove-red/5")} style={{ animationDuration: "8s" }} />
@@ -232,8 +245,8 @@ export default function TrackerPage() {
                 {/* Save Button */}
                 <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/90 to-transparent md:static md:bg-none md:p-0 z-20">
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button size="lg" className="w-full max-w-md mx-auto rounded-full h-14 text-lg font-heading shadow-xl shadow-rove-charcoal/20 bg-rove-charcoal text-white hover:bg-rove-charcoal/90">
-                            Save Daily Log
+                        <Button onClick={handleSave} size="lg" className="w-full max-w-md mx-auto rounded-full h-14 text-lg font-heading shadow-xl shadow-rove-charcoal/20 bg-rove-charcoal text-white hover:bg-rove-charcoal/90" disabled={isPending}>
+                            {isPending ? "Saving..." : "Save Daily Log"}
                         </Button>
                     </motion.div>
                 </div>
