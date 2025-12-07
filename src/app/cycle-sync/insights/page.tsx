@@ -41,17 +41,17 @@ export default function InsightsPage() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="relative z-10 p-4 md:p-8 space-y-8 pb-32"
+                className="relative z-10 p-4 md:p-8 space-y-6 pb-32"
             >
                 <motion.header variants={itemVariants}>
-                    <h1 className="font-heading text-3xl text-rove-charcoal mb-1">Cycle Insights</h1>
-                    <p className="text-rove-stone text-sm">AI analysis based on your last 3 cycles.</p>
+                    <h1 className="font-heading text-2xl md:text-3xl text-rove-charcoal mb-1">Cycle Insights</h1>
+                    <p className="text-rove-stone text-xs md:text-sm">AI analysis based on your last 3 cycles.</p>
                 </motion.header>
 
                 {/* Main Insight Card - Holographic Style */}
                 <motion.div
                     variants={itemVariants}
-                    className="relative overflow-hidden p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-lg group"
+                    className="relative overflow-hidden p-5 md:p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-lg group"
                 >
                     {/* Shimmer Effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />

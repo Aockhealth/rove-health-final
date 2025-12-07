@@ -21,7 +21,7 @@ export default function CycleSyncLayout({
     ];
 
     return (
-        <div className="min-h-screen bg-rove-cream/20 pb-24 md:pb-0">
+        <div className="min-h-screen bg-rove-cream/20 pb-32 md:pb-0">
             {/* Main Content */}
             <main className="container mx-auto max-w-md md:max-w-4xl min-h-screen bg-white shadow-2xl shadow-rove-stone/5 md:my-8 md:rounded-[3rem] overflow-hidden relative">
                 {children}

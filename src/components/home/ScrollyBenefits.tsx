@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { Zap, Activity, ShieldCheck, Moon } from "lucide-react";
@@ -48,10 +48,34 @@ const PHASES = [
 
 export function ScrollyBenefits() {
     const containerRef = useRef<HTMLDivElement>(null);
+    const mobileContainerRef = useRef<HTMLDivElement>(null);
+    const [isUserInteracting, setIsUserInteracting] = useState(false);
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"]
     });
+
+    // Auto-Scroll Logic for Mobile (Horizontal)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (isUserInteracting) return;
+            const container = mobileContainerRef.current;
+            if (!container || window.innerWidth >= 768) return;
+
+            const width = container.clientWidth;
+            const scrollPos = container.scrollLeft;
+            const totalWidth = container.scrollWidth;
+
+            // If we are at the end, reset to start. Otherwise, scroll right one screen.
+            if (scrollPos + width >= totalWidth - 10) {
+                container.scrollTo({ left: 0, behavior: "smooth" });
+            } else {
+                container.scrollBy({ left: width * 0.85, behavior: "smooth" }); // 85vw width
+            }
+        }, 3500);
+
+        return () => clearInterval(interval);
+    }, [isUserInteracting]);
 
     return (
         <section ref={containerRef} className="relative bg-white text-rove-charcoal">
@@ -135,10 +159,17 @@ export function ScrollyBenefits() {
                 </div>
 
                 {/* Snap Container */}
-                <div className="flex overflow-x-auto snap-x snap-mandatory px-6 gap-4 pb-8 no-scrollbar relative z-10">
+                <div
+                    ref={mobileContainerRef}
+                    className="flex overflow-x-auto snap-x snap-mandatory px-6 gap-4 pb-8 no-scrollbar relative z-10"
+                    onTouchStart={() => setIsUserInteracting(true)}
+                    onTouchEnd={() => setIsUserInteracting(false)}
+                    onMouseEnter={() => setIsUserInteracting(true)}
+                    onMouseLeave={() => setIsUserInteracting(false)}
+                >
                     {PHASES.map((phase) => (
                         <div key={phase.title} className="snap-center shrink-0 w-[85vw] max-w-sm">
-                            <div className={cn("h-full p-8 rounded-[2rem] border backdrop-blur-sm shadow-xl flex flex-col items-center text-center bg-white/60", phase.accent, "border-black/5")}>
+                            <div className={cn("h-full p-8 rounded-[2rem] border backdrop-blur-xl shadow-lg flex flex-col items-center text-center bg-white/40", phase.accent, "border-white/60")}>
                                 <div className={cn("w-14 h-14 rounded-full flex items-center justify-center mb-6 shadow-sm", "bg-white")}>
                                     <phase.icon className={cn("w-7 h-7", phase.textColor)} />
                                 </div>
