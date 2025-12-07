@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import Header from "@/components/layout/Header";
 import { createClient } from "@/utils/supabase/server";
@@ -14,9 +14,27 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevents zooming for app-like feel
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "Rove Health | Precision Women's Health",
   description: "Doctor-formulated supplements for women's health.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Rove Health",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default async function RootLayout({

@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync";
 import Link from "next/link";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 function RiverTrack({ items, direction = "left", speed = 20, label }: { items: any[], direction?: "left" | "right", speed?: number, label: string }) {
     // Duplicate items for seamless loop
@@ -249,101 +250,107 @@ export default function CycleSyncDashboard() {
                 </motion.div>
 
                 {/* Daily Flow Animation - Moved Up */}
-                <section className="relative">
-                    <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-2 px-2">Daily Flow</h3>
-                    <DailyFlowRiver data={data} />
-                </section>
+                <ScrollReveal delay={0.2}>
+                    <section className="relative">
+                        <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-2 px-2">Daily Flow</h3>
+                        <DailyFlowRiver data={data} />
+                    </section>
+                </ScrollReveal>
 
                 {/* Glassmorphism Cards - Moved Down */}
-                <section>
-                    <div className="flex justify-between items-baseline mb-4">
-                        <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
-                        <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                        {/* Hormone Status */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-red">
-                                    <TrendingUp className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Hormones</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Estrogen Rising</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Social skills are peaking today.</p>
-                            </div>
+                <ScrollReveal delay={0.3}>
+                    <section>
+                        <div className="flex justify-between items-baseline mb-4">
+                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
+                            <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
                         </div>
 
-                        {/* Focus */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-charcoal">
-                                    <Brain className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                            {/* Hormone Status */}
+                            <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-red">
+                                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Hormones</span>
+                                    <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Estrogen Rising</p>
+                                    <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Social skills are peaking today.</p>
                                 </div>
                             </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Mind</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Deep Focus</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Perfect for complex tasks.</p>
-                            </div>
-                        </div>
 
-                        {/* Body */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-green">
-                                    <Activity className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                            {/* Focus */}
+                            <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-charcoal">
+                                        <Brain className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Mind</span>
+                                    <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Deep Focus</p>
+                                    <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Perfect for complex tasks.</p>
                                 </div>
                             </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Body</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">High Recovery</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Push your limits in the gym.</p>
-                            </div>
-                        </div>
 
-                        {/* Skin */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-amber-500">
-                                    <Sun className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                            {/* Body */}
+                            <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-green">
+                                        <Activity className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Body</span>
+                                    <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">High Recovery</p>
+                                    <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Push your limits in the gym.</p>
                                 </div>
                             </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Glow</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Radiance Peak</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Collagen levels are optimal.</p>
+
+                            {/* Skin */}
+                            <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                <div className="flex justify-between items-start">
+                                    <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-amber-500">
+                                        <Sun className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Glow</span>
+                                    <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Radiance Peak</p>
+                                    <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Collagen levels are optimal.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </ScrollReveal>
 
                 {/* Quick Actions */}
-                <section>
-                    <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4">Quick Actions</h3>
-                    <div className="space-y-4">
-                        <Link href="/cycle-sync/tracker">
-                            <button className="w-full flex items-center justify-between p-1 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm group transition-all hover:scale-[1.01]">
-                                <div className="flex items-center gap-5 pl-5 py-4">
-                                    <div className="w-12 h-12 rounded-full bg-rove-charcoal text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20">
-                                        <Droplets className="w-5 h-5" />
+                <ScrollReveal delay={0.4}>
+                    <section>
+                        <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4">Quick Actions</h3>
+                        <div className="space-y-4">
+                            <Link href="/cycle-sync/tracker">
+                                <button className="w-full flex items-center justify-between p-1 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm group transition-all hover:scale-[1.01]">
+                                    <div className="flex items-center gap-5 pl-5 py-4">
+                                        <div className="w-12 h-12 rounded-full bg-rove-charcoal text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20">
+                                            <Droplets className="w-5 h-5" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-heading text-lg text-rove-charcoal">Log Symptoms</p>
+                                            <p className="text-rove-stone text-sm">Track your daily rhythm</p>
+                                        </div>
                                     </div>
-                                    <div className="text-left">
-                                        <p className="font-heading text-lg text-rove-charcoal">Log Symptoms</p>
-                                        <p className="text-rove-stone text-sm">Track your daily rhythm</p>
+                                    <div className="pr-6">
+                                        <div className="w-10 h-10 rounded-full bg-white text-rove-charcoal flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm">
+                                            <ArrowRight className="w-5 h-5" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="pr-6">
-                                    <div className="w-10 h-10 rounded-full bg-white text-rove-charcoal flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm">
-                                        <ArrowRight className="w-5 h-5" />
-                                    </div>
-                                </div>
-                            </button>
-                        </Link>
-                    </div>
-                </section>
+                                </button>
+                            </Link>
+                        </div>
+                    </section>
+                </ScrollReveal>
             </div>
         </div>
     );

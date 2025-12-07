@@ -37,12 +37,6 @@ export default function Header({ user }: { user: any }) {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center space-x-8">
-                    <Link href="/our-science" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
-                        Our Science
-                    </Link>
-                    <Link href="/ingredients" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
-                        Ingredients
-                    </Link>
                     <Link href="#" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                         Shop
                     </Link>
@@ -107,13 +101,7 @@ export default function Header({ user }: { user: any }) {
                             >
                                 Our Science
                             </Link>
-                            <Link
-                                href="/ingredients"
-                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Ingredients
-                            </Link>
+
                             <Link
                                 href="#"
                                 className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
