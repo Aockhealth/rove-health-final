@@ -2,16 +2,67 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface HormoneFlowBackgroundProps {
     variant?: "flow" | "calm" | "cellular";
     className?: string;
 }
 
+interface Particle {
+    id: number;
+    bg?: string;
+    width: number;
+    height: number;
+    left: string;
+    top: string;
+    moveX: number[];
+    moveY: number[];
+    duration: number;
+    delay?: number;
+}
+
 export const HormoneFlowBackground = ({
     variant = "flow",
     className
 }: HormoneFlowBackgroundProps) => {
+    const [particles, setParticles] = useState<Particle[]>([]);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const count = variant === "cellular" ? 6 : 3;
+        const newParticles: Particle[] = [];
+
+        for (let i = 0; i < count; i++) {
+            if (variant === "cellular") {
+                newParticles.push({
+                    id: i,
+                    bg: i % 2 === 0 ? "rgba(216, 165, 157, 0.15)" : "rgba(168, 198, 160, 0.15)",
+                    width: Math.random() * 200 + 100,
+                    height: Math.random() * 200 + 100,
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    moveX: [0, Math.random() * 100 - 50, 0],
+                    moveY: [0, Math.random() * 100 - 50, 0],
+                    duration: Math.random() * 10 + 15,
+                });
+            } else {
+                newParticles.push({
+                    id: i,
+                    width: Math.random() * 150 + 50,
+                    height: Math.random() * 150 + 50,
+                    left: `${Math.random() * 80 + 10}%`,
+                    top: `${Math.random() * 60 + 20}%`,
+                    moveX: [], // Not used for flow variant
+                    moveY: [0, -40, 0],
+                    duration: Math.random() * 5 + 10,
+                    delay: i * 3,
+                });
+            }
+        }
+        setParticles(newParticles);
+    }, [variant]);
 
     // ---------------------------------------------------------------------------
     // VARIANT: CELLULAR (Ingredients Page)
@@ -22,26 +73,26 @@ export const HormoneFlowBackground = ({
             <div className={cn("absolute inset-0 z-0 overflow-hidden bg-rove-cream/20", className)}>
                 <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/80 z-10" />
 
-                {/* Floating Organic Shapes */}
-                {[...Array(6)].map((_, i) => (
+                {/* Floating Organic Shapes - Client Only */}
+                {mounted && particles.map((p) => (
                     <motion.div
-                        key={i}
+                        key={p.id}
                         className="absolute rounded-full mix-blend-multiply filter blur-xl"
                         style={{
-                            background: i % 2 === 0 ? "rgba(216, 165, 157, 0.15)" : "rgba(168, 198, 160, 0.15)", // rove-red / sage
-                            width: Math.random() * 200 + 100,
-                            height: Math.random() * 200 + 100,
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
+                            background: p.bg,
+                            width: p.width,
+                            height: p.height,
+                            left: p.left,
+                            top: p.top,
                         }}
                         animate={{
-                            x: [0, Math.random() * 100 - 50, 0],
-                            y: [0, Math.random() * 100 - 50, 0],
+                            x: p.moveX,
+                            y: p.moveY,
                             scale: [1, 1.1, 0.9, 1],
                             opacity: [0.3, 0.6, 0.3],
                         }}
                         transition={{
-                            duration: Math.random() * 10 + 15,
+                            duration: p.duration,
                             repeat: Infinity,
                             ease: "easeInOut",
                         }}
@@ -135,32 +186,33 @@ export const HormoneFlowBackground = ({
                         duration: isCalm ? 25 : 15,
                         repeat: Infinity,
                         ease: "easeInOut",
+                        times: [0, 0.5, 1] // Added explicit times to match length
                     }}
                     style={{ mixBlendMode: "multiply" }}
                 />
             </svg>
 
-            {/* Floating Particles */}
-            {[...Array(3)].map((_, i) => (
+            {/* Floating Particles - Client Only */}
+            {mounted && particles.map((p) => (
                 <motion.div
-                    key={i}
+                    key={p.id}
                     className="absolute rounded-full bg-rove-red/10 blur-3xl"
                     style={{
-                        width: Math.random() * 150 + 50,
-                        height: Math.random() * 150 + 50,
-                        left: `${Math.random() * 80 + 10}%`,
-                        top: `${Math.random() * 60 + 20}%`,
+                        width: p.width,
+                        height: p.height,
+                        left: p.left,
+                        top: p.top,
                     }}
                     animate={{
-                        y: [0, -40, 0],
+                        y: p.moveY,
                         opacity: [0.2 * opacityMultiplier, 0.4 * opacityMultiplier, 0.2 * opacityMultiplier],
                         scale: [1, 1.2, 1],
                     }}
                     transition={{
-                        duration: Math.random() * 5 + 10,
+                        duration: p.duration,
                         repeat: Infinity,
                         ease: "easeInOut",
-                        delay: i * 3,
+                        delay: p.delay,
                     }}
                 />
             ))}
