@@ -67,15 +67,20 @@ export default function TrackerPage() {
 
     const handleSave = () => {
         startTransition(async () => {
+          
             await logDailySymptoms({
-                date: selectedDate,
-                symptoms: selectedSymptoms,
-                isPeriod: isPeriodMode
+            date: selectedDate,
+            symptoms: selectedSymptoms,
+            isPeriod: isPeriodMode,
+            flowIntensity: selectedSymptoms.find(s => ["Spotting","Light","Medium","Heavy"].includes(s)) // optional
             });
+
             // Show success via toast or UI state in real app
             alert("Entry Saved!");
         });
     }
+
+
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -90,7 +95,7 @@ export default function TrackerPage() {
 
     const itemVariants = {
         hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+        show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 50 } }
     };
 
     return (

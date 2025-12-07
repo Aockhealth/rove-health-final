@@ -35,36 +35,10 @@ export async function signup(formData: FormData) {
         }
     };
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(data);
+    const { error } = await supabase.auth.signUp(data);
 
-    if (signUpError) {
-        redirect("/signup?error=" + signUpError.message);
-    }
-
-    // Attempt to sign in immediately to ensure session is active
-    // This handles cases where auto-confirm is enabled but session isn't automatically attached
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-    });
-
-    if (signInError) {
-        // If sign in fails (e.g. email verification strictly required), 
-        // redirect to login with message
-        if (signInError.message.includes("Email not confirmed")) {
-            redirect("/login?message=Please check your email to confirm your account.");
-        }
-        redirect("/signup?error=" + signInError.message);
-    }
-
-    // Force creation of profile if it doesn't exist (Backup for trigger failure)
-    if (signUpData.user) {
-        await supabase.from("profiles").upsert({
-            id: signUpData.user.id,
-            email: data.email,
-            full_name: data.options.data.full_name,
-            updated_at: new Date().toISOString(),
-        });
+    if (error) {
+        redirect("/signup?error=" + error.message);
     }
 
     revalidatePath("/", "layout");

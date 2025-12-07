@@ -6,6 +6,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/utils/supabase/supabase-client";
+
 
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -14,12 +16,19 @@ export default function Header({ user }: { user: any }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const router = useRouter();
 
-    const handleSignOut = async () => {
+ /*    const handleSignOut = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
         router.refresh(); // Refresh server components
-    };
-
+    }; */
+ const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Sign out error:', error.message); // log if 401 happens
+    } else {
+      router.push('/login'); // redirect after sign-out
+    }
+  };
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-rove-stone/10">
             <div className="container mx-auto px-6 h-16 flex items-center justify-between">
@@ -37,6 +46,12 @@ export default function Header({ user }: { user: any }) {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center space-x-8">
+                    <Link href="/our-science" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Our Science
+                    </Link>
+                    <Link href="/ingredients" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Ingredients
+                    </Link>
                     <Link href="#" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                         Shop
                     </Link>
@@ -101,7 +116,13 @@ export default function Header({ user }: { user: any }) {
                             >
                                 Our Science
                             </Link>
-
+                            <Link
+                                href="/ingredients"
+                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Ingredients
+                            </Link>
                             <Link
                                 href="#"
                                 className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
