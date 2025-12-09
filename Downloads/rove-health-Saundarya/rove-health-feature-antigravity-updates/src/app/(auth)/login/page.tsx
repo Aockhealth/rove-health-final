@@ -55,6 +55,15 @@ export default function LoginPage() {
                             placeholder="••••••••"
                         />
                     </div>
+                    <div className="text-right">
+                        <Link
+                            href="/forgot-password"
+                            className="text-xs font-semibold text-rove-charcoal hover:underline decoration-rove-green decoration-2 underline-offset-4"
+                        >
+                            Forgot password?
+                        </Link>
+                        </div>
+
 
                     <Button
                         type="submit"

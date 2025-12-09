@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/utils/supabase/supabase-client";
+import { usePathname } from "next/navigation";
 
 
 import { createClient } from "@/utils/supabase/client";
@@ -21,6 +22,14 @@ export default function Header({ user }: { user: any }) {
         await supabase.auth.signOut();
         router.refresh(); // Refresh server components
     }; */
+    const pathname = usePathname();
+
+const hideHeaderRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"];
+
+if (hideHeaderRoutes.includes(pathname)) {
+  return null;
+}
+
  const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
