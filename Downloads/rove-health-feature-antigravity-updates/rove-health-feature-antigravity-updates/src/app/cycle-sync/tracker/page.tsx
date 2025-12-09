@@ -13,19 +13,26 @@ export default function TrackerPage() {
     const [isPeriodMode, setIsPeriodMode] = useState(false);
     const [isPending, startTransition] = useTransition();
 
-    // Mock calendar generation (current week)
+    // UPDATED: Generate week based on selectedDate instead of "today"
     const generateWeek = () => {
-        const today = new Date();
+        const anchorDate = new Date(selectedDate); // Use selectedDate as anchor
         const week = [];
         for (let i = -3; i <= 3; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
+            const date = new Date(anchorDate);
+            date.setDate(anchorDate.getDate() + i);
             week.push(date);
         }
         return week;
     };
 
     const weekDates = generateWeek();
+
+    // NEW: Function to handle previous/next week navigation
+    const navigateWeek = (direction: "prev" | "next") => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() + (direction === "next" ? 7 : -7));
+        setSelectedDate(newDate);
+    };
 
     const symptomCategories = [
         {
@@ -69,18 +76,16 @@ export default function TrackerPage() {
         startTransition(async () => {
           
             await logDailySymptoms({
-            date: selectedDate,
-            symptoms: selectedSymptoms,
-            isPeriod: isPeriodMode,
-            flowIntensity: selectedSymptoms.find(s => ["Spotting","Light","Medium","Heavy"].includes(s)) // optional
+                date: selectedDate,
+                symptoms: selectedSymptoms,
+                isPeriod: isPeriodMode,
+                flowIntensity: selectedSymptoms.find(s => ["Spotting","Light","Medium","Heavy"].includes(s)) // optional
             });
 
             // Show success via toast or UI state in real app
             alert("Entry Saved!");
         });
     }
-
-
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -131,9 +136,24 @@ export default function TrackerPage() {
                         <h2 className="font-heading text-lg text-rove-charcoal">
                             {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                         </h2>
+                        {/* UPDATED: Buttons now use navigateWeek */}
                         <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-white/50"><ChevronLeft className="w-4 h-4" /></Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-white/50"><ChevronRight className="w-4 h-4" /></Button>
+                            <Button 
+                                onClick={() => navigateWeek("prev")}
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 rounded-full hover:bg-white/50"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                                onClick={() => navigateWeek("next")}
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 rounded-full hover:bg-white/50"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
                         </div>
                     </div>
                     <div className="flex justify-between gap-2 overflow-x-auto pb-2 no-scrollbar">
