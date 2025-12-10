@@ -2,19 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-
 export async function submitOnboarding(data: {
     dob: string;
     height: number;
     weight: number;
     activity: string;
-    goal: string;
+    goals: string[];
     conditions: string[];
     diet: string[];
     lastPeriod: string;
     cycleLength: number;
     periodLength: number;
     irregular: boolean;
+    tracker_mode: string;
 }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -45,9 +45,10 @@ export async function submitOnboarding(data: {
         height_cm: data.height,
         weight_kg: data.weight,
         activity_level: data.activity,
-        primary_goal: data.goal,
+        primary_goal: data.goals.join(", "),
         metabolic_conditions: data.conditions,
         dietary_preferences: data.diet,
+        tracker_mode: data.tracker_mode,
     };
 
     const { error: onboardingError } = await supabase
@@ -56,7 +57,7 @@ export async function submitOnboarding(data: {
 
     if (onboardingError) {
         console.error("Onboarding Error:", onboardingError);
-        throw new Error("Failed to save onboarding data: " + onboardingError.message);
+        return { error: onboardingError.message };
     }
 
     // 2. Save Cycle Settings to user_cycle_settings

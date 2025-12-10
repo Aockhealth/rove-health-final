@@ -18,6 +18,7 @@ export default function CycleSyncLayout({
         { href: "/cycle-sync/tracker", icon: Calendar, label: "Tracker" },
         { href: "/cycle-sync/insights", icon: BarChart2, label: "Insights" },
         { href: "/cycle-sync/plan", icon: List, label: "Plan" },
+        { href: "/cycle-sync/profile", icon: Settings, label: "Profile" },
     ];
 
     return (

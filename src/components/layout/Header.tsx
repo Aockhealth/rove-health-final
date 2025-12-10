@@ -46,9 +46,6 @@ export default function Header({ user }: { user: any }) {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center space-x-8">
-                    <Link href="#" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
-                        Shop
-                    </Link>
                     {user && (
                         <Link href="/cycle-sync" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                             Dashboard
@@ -103,13 +100,6 @@ export default function Header({ user }: { user: any }) {
                         className="md:hidden bg-white border-b border-rove-stone/10 overflow-hidden"
                     >
                         <nav className="flex flex-col p-6 space-y-4">
-                            <Link
-                                href="#"
-                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Shop
-                            </Link>
                             {user && (
                                 <Link
                                     href="/cycle-sync"

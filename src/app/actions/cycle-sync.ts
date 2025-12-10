@@ -66,6 +66,13 @@ export async function fetchDashboardData() {
         .eq("id", user.id)
         .single();
 
+    // Fetch tracker mode from onboarding
+    const { data: onboarding } = await supabase
+        .from("user_onboarding")
+        .select("tracker_mode")
+        .eq("user_id", user.id)
+        .single();
+
     if (!cycleSettings) return null;
 
     // Calculate Phase
@@ -156,7 +163,8 @@ export async function fetchDashboardData() {
         phase: { name: phase, day, river: riverStr },
         insights,
         fuel,
-        move
+        move,
+        tracker_mode: onboarding?.tracker_mode || "menstruation"
     };
 }
 
@@ -174,54 +182,54 @@ export async function fetchDashboardData() {
 
 
 export interface LogDailySymptomsPayload {
-  date: Date;
-  symptoms: string[];
-  isPeriod: boolean;
-  flowIntensity?: string; // Optional: "Spotting", "Light", "Medium", "Heavy"
+    date: Date;
+    symptoms: string[];
+    isPeriod: boolean;
+    flowIntensity?: string; // Optional: "Spotting", "Light", "Medium", "Heavy"
 }
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
-  const supabase = await createClient();
+    const supabase = await createClient();
 
-  // Get the authenticated user
-  const {
-    data: { user },
-    error: userError
-  } = await supabase.auth.getUser();
+    // Get the authenticated user
+    const {
+        data: { user },
+        error: userError
+    } = await supabase.auth.getUser();
 
-  if (userError) {
-    console.error("Error fetching user:", userError);
-    return { success: false, error: userError.message };
-  }
-
-  if (!user) {
-    console.error("No authenticated user.");
-    return { success: false, error: "User not authenticated" };
-  }
-
-  const { date, symptoms, isPeriod, flowIntensity } = payload;
-
-  try {
-    // Insert a new daily log
-    const { data, error } = await supabase.from("daily_logs").insert({
-      user_id: user.id,
-      date: date.toISOString(), // Store in ISO format
-      symptoms, // array of strings
-      is_period: isPeriod,
-      flow_intensity: flowIntensity || null, // optional
-      created_at: new Date().toISOString()
-    });
-
-    if (error) {
-      console.error("Error inserting daily log:", error);
-      return { success: false, error: error.message };
+    if (userError) {
+        console.error("Error fetching user:", userError);
+        return { success: false, error: userError.message };
     }
 
-    return { success: true, data };
-  } catch (err) {
-    console.error("Unexpected error logging daily symptoms:", err);
-    return { success: false, error: (err as Error).message };
-  }
+    if (!user) {
+        console.error("No authenticated user.");
+        return { success: false, error: "User not authenticated" };
+    }
+
+    const { date, symptoms, isPeriod, flowIntensity } = payload;
+
+    try {
+        // Insert a new daily log
+        const { data, error } = await supabase.from("daily_logs").insert({
+            user_id: user.id,
+            date: date.toISOString(), // Store in ISO format
+            symptoms, // array of strings
+            is_period: isPeriod,
+            flow_intensity: flowIntensity || null, // optional
+            created_at: new Date().toISOString()
+        });
+
+        if (error) {
+            console.error("Error inserting daily log:", error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, data };
+    } catch (err) {
+        console.error("Unexpected error logging daily symptoms:", err);
+        return { success: false, error: (err as Error).message };
+    }
 }
 
 

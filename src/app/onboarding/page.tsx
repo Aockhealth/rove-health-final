@@ -8,11 +8,19 @@ import { ArrowRight, Check, Activity, Calendar, Target, Scale } from "lucide-rea
 import { cn } from "@/lib/utils";
 
 const STEPS = [
+    { id: "goals", title: "Your Goals", icon: Target },
     { id: "basics", title: "The Basics", icon: Scale },
     { id: "health", title: "Health Profile", icon: Activity },
     { id: "cycle", title: "Cycle History", icon: Calendar },
-    { id: "goals", title: "Your Goals", icon: Target },
 ];
+
+const GOALS_BY_STAGE: Record<string, string[]> = {
+    menstruation: ['Weight Loss', 'Maintenance', 'Energy Boost', 'Hormone Balance', 'Muscle Gain', 'Reduce PMS'],
+    ttc: ['Conceive Naturally', 'Track Ovulation', 'Improve Egg Quality', 'Hormone Balance', 'Reduce Stress'],
+    menopause: ['Manage Hot Flashes', 'Weight Management', 'Sleep Better', 'Bone Health', 'Hormone Balance']
+};
+
+import { Sparkles } from "lucide-react";
 
 export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState(0);
@@ -28,7 +36,8 @@ export default function OnboardingPage() {
         cycleLength: 28,
         periodLength: 5,
         irregular: false,
-        goal: ""
+        goals: [] as string[],
+        tracker_mode: "menstruation"
     });
 
     const totalSteps = STEPS.length;
@@ -50,6 +59,18 @@ export default function OnboardingPage() {
         });
     };
 
+    const toggleGoal = (goal: string) => {
+        setFormData(prev => {
+            const exists = prev.goals.includes(goal);
+            return {
+                ...prev,
+                goals: exists
+                    ? prev.goals.filter(g => g !== goal)
+                    : [...prev.goals, goal]
+            };
+        });
+    };
+
     const next = () => {
         if (currentStep < totalSteps - 1) setCurrentStep(currentStep + 1);
     };
@@ -60,11 +81,15 @@ export default function OnboardingPage() {
 
     const handleSubmit = () => {
         startTransition(async () => {
-            await submitOnboarding({
+            const res = await submitOnboarding({
                 ...formData,
                 height: Number(formData.height),
                 weight: Number(formData.weight),
+                tracker_mode: formData.tracker_mode
             });
+            if (res?.error) {
+                alert("Error: " + res.error);
+            }
         });
     };
 
@@ -104,7 +129,39 @@ export default function OnboardingPage() {
                     </div>
 
                     <AnimatePresence mode="wait">
+                        {/* Step 0: Goals */}
                         {currentStep === 0 && (
+                            <motion.div key="goals" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                                <h2 className="text-2xl font-heading text-rove-charcoal">Primary Goals</h2>
+                                <p className="text-rove-stone">Select all that apply for your cycle journey.</p>
+                                <div className="space-y-3">
+                                    {GOALS_BY_STAGE['menstruation']?.map(g => {
+                                        const val = g;
+                                        const isSelected = formData.goals.includes(val);
+                                        return (
+                                            <div
+                                                key={g}
+                                                onClick={() => toggleGoal(val)}
+                                                className={cn(
+                                                    "flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all",
+                                                    isSelected
+                                                        ? "bg-rove-green/5 border-rove-green"
+                                                        : "bg-white border-transparent hover:border-rove-charcoal/20"
+                                                )}
+                                            >
+                                                <div className={cn("w-5 h-5 rounded border flex items-center justify-center", isSelected ? "bg-rove-green border-rove-green" : "border-rove-stone/30")}>
+                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                </div>
+                                                <span className="text-1xl font-heading text-rove-charcoal">{g}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Step 1: The Basics */}
+                        {currentStep === 1 && (
                             <motion.div key="basics" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                                 <div className="space-y-4">
                                     <h2 className="text-2xl font-heading text-rove-charcoal">The Basics</h2>
@@ -143,7 +200,8 @@ export default function OnboardingPage() {
                             </motion.div>
                         )}
 
-                        {currentStep === 1 && (
+                        {/* Step 2: Health Profile */}
+                        {currentStep === 2 && (
                             <motion.div key="health" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                                 <h2 className="text-2xl font-heading text-rove-charcoal">Health Profile</h2>
 
@@ -175,7 +233,8 @@ export default function OnboardingPage() {
                             </motion.div>
                         )}
 
-                        {currentStep === 2 && (
+                        {/* Step 3: Cycle History */}
+                        {currentStep === 3 && (
                             <motion.div key="cycle" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                                 <h2 className="text-2xl font-heading text-rove-charcoal">Cycle History</h2>
                                 <div className="space-y-4">
@@ -209,35 +268,6 @@ export default function OnboardingPage() {
                                             />
                                         </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {currentStep === 3 && (
-                            <motion.div key="goals" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                                <h2 className="text-2xl font-heading text-rove-charcoal">Primary Goal</h2>
-                                <div className="space-y-3">
-                                    {['Weight Loss', 'Maintenance', 'Energy Boost', 'Hormone Balance', 'Muscle Gain'].map(g => {
-                                        const val = g.toLowerCase().replace(" ", "_");
-                                        const isSelected = formData.goal === val;
-                                        return (
-                                            <div
-                                                key={g}
-                                                onClick={() => updateField("goal", val)}
-                                                className={cn(
-                                                    "flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all",
-                                                    isSelected
-                                                        ? "bg-rove-green/5 border-rove-green"
-                                                        : "bg-white border-transparent hover:border-rove-charcoal/20"
-                                                )}
-                                            >
-                                                <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", isSelected ? "border-rove-green" : "border-rove-stone/30")}>
-                                                    {isSelected && <div className="w-3 h-3 rounded-full bg-rove-green" />}
-                                                </div>
-                                                <span className="text-1xl font-heading text-rove-charcoal">{g}</span>
-                                            </div>
-                                        );
-                                    })}
                                 </div>
                             </motion.div>
                         )}

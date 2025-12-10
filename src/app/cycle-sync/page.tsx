@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Plus, ChevronRight, Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell } from "lucide-react";
+import { Plus, ChevronRight, Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -119,8 +119,11 @@ const phaseThemes: Record<string, any> = {
     }
 };
 
+
+
 export default function CycleSyncDashboard() {
     const [data, setData] = useState<any>(null);
+
 
     useEffect(() => {
         const load = async () => {
@@ -147,6 +150,7 @@ export default function CycleSyncDashboard() {
 
     const { user, phase: currentPhase } = data;
     const theme = phaseThemes[currentPhase.name] || phaseThemes["Follicular"];
+    const trackerMode = data.tracker_mode || "menstruation";
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20">
@@ -171,179 +175,230 @@ export default function CycleSyncDashboard() {
                     </Button>
                 </header>
 
-                {/* Hero Phase Orb */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative flex flex-col items-center justify-center py-1 md:py-6"
-                >
-                    {/* Glowing Orb Container */}
-                    <div className="relative w-56 h-56 md:w-[300px] md:h-[300px] flex items-center justify-center">
-                        {/* Outer Glow */}
-                        <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
-
-                        {/* Phase Indicator - Animated Orb */}
+                {/* MODE: Menstruation (Default) */}
+                {trackerMode === "menstruation" && (
+                    <motion.div
+                        key="menstruation"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="space-y-8"
+                    >
+                        {/* Hero Phase Orb */}
                         <motion.div
-                            className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center"
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="relative flex flex-col items-center justify-center py-1 md:py-6"
                         >
-                            {/* Rotating Gradient Ring */}
-                            <motion.div
-                                className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                style={{ willChange: "transform" }}
-                            />
+                            {/* Glowing Orb Container */}
+                            <div className="relative w-56 h-56 md:w-[300px] md:h-[300px] flex items-center justify-center">
+                                {/* Outer Glow */}
+                                <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
 
-                            {/* Static Background Circle */}
-                            <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
-
-                            {/* Pulsing Glow Effect */}
-                            <motion.div
-                                className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
-                                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            />
-
-                            {/* Content */}
-                            <div className="relative text-center z-10">
-                                <motion.p
-                                    className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                >
-                                    Current Phase
-                                </motion.p>
-                                <motion.h2
-                                    className={`text-2xl md:text-5xl font-heading ${theme.color} mb-2`}
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                >
-                                    {currentPhase.name}
-                                </motion.h2>
+                                {/* Phase Indicator - Animated Orb */}
                                 <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
+                                    className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center"
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ duration: 0.8, ease: "easeOut" }}
                                 >
-                                    <Badge variant="secondary" className={`${theme.badge} px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs tracking-wider transition-colors duration-500`}>
-                                        <Sparkles className="w-3 h-3 mr-2 inline-block" />
-                                        {currentPhase.superpower}
-                                    </Badge>
+                                    {/* Rotating Gradient Ring */}
+                                    <motion.div
+                                        className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                        style={{ willChange: "transform" }}
+                                    />
+
+                                    {/* Static Background Circle */}
+                                    <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
+
+                                    {/* Pulsing Glow Effect */}
+                                    <motion.div
+                                        className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
+                                        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                    />
+
+                                    {/* Content */}
+                                    <div className="relative text-center z-10">
+                                        <motion.p
+                                            className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.3 }}
+                                        >
+                                            Current Phase
+                                        </motion.p>
+                                        <motion.h2
+                                            className={`text-2xl md:text-5xl font-heading ${theme.color} mb-2`}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.4 }}
+                                        >
+                                            {currentPhase.name}
+                                        </motion.h2>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.5 }}
+                                        >
+                                            <Badge variant="secondary" className={`${theme.badge} px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs tracking-wider transition-colors duration-500`}>
+                                                <Sparkles className="w-3 h-3 mr-2 inline-block" />
+                                                {currentPhase.superpower}
+                                            </Badge>
+                                        </motion.div>
+                                    </div>
+
+                                    {/* Day Indicator - Pinned Top */}
+                                    <motion.div
+                                        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
+                                    >
+                                        <span className="text-xs font-bold text-rove-charcoal whitespace-nowrap">Day {currentPhase.day}</span>
+                                    </motion.div>
                                 </motion.div>
                             </div>
-
-                            {/* Day Indicator - Pinned Top */}
-                            <motion.div
-                                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
-                            >
-                                <span className="text-xs font-bold text-rove-charcoal whitespace-nowrap">Day {currentPhase.day}</span>
-                            </motion.div>
                         </motion.div>
-                    </div>
-                </motion.div>
 
-                {/* Daily Flow Animation - Moved Up */}
-                <section className="relative">
-                    <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-2 px-2">Daily Flow</h3>
-                    <DailyFlowRiver data={data} />
-                </section>
+                        {/* Daily Flow Animation - Moved Up */}
+                        <section className="relative">
+                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-2 px-2">Daily Flow</h3>
+                            <DailyFlowRiver data={data} />
+                        </section>
 
-                {/* Glassmorphism Cards - Moved Down */}
-                <section>
-                    <div className="flex justify-between items-baseline mb-4">
-                        <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
-                        <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
-                    </div>
+                        {/* Glassmorphism Cards - Moved Down */}
+                        <section>
+                            <div className="flex justify-between items-baseline mb-4">
+                                <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
+                                <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
+                            </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                        {/* Hormone Status */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-red">
-                                    <TrendingUp className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Hormones</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Estrogen Rising</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Social skills are peaking today.</p>
-                            </div>
-                        </div>
-
-                        {/* Focus */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-charcoal">
-                                    <Brain className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Mind</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Deep Focus</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Perfect for complex tasks.</p>
-                            </div>
-                        </div>
-
-                        {/* Body */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-green">
-                                    <Activity className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Body</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">High Recovery</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Push your limits in the gym.</p>
-                            </div>
-                        </div>
-
-                        {/* Skin */}
-                        <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                            <div className="flex justify-between items-start">
-                                <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-amber-500">
-                                    <Sun className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Glow</span>
-                                <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Radiance Peak</p>
-                                <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Collagen levels are optimal.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Quick Actions */}
-                <section>
-                    <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4">Quick Actions</h3>
-                    <div className="space-y-4">
-                        <Link href="/cycle-sync/tracker">
-                            <button className="w-full flex items-center justify-between p-1 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm group transition-all hover:scale-[1.01]">
-                                <div className="flex items-center gap-5 pl-5 py-4">
-                                    <div className="w-12 h-12 rounded-full bg-rove-charcoal text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20">
-                                        <Droplets className="w-5 h-5" />
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                                {/* Hormone Status */}
+                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                    <div className="flex justify-between items-start">
+                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-red">
+                                            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                        </div>
                                     </div>
-                                    <div className="text-left">
-                                        <p className="font-heading text-lg text-rove-charcoal">Log Symptoms</p>
-                                        <p className="text-rove-stone text-sm">Track your daily rhythm</p>
+                                    <div>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Hormones</span>
+                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Estrogen Rising</p>
+                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Social skills are peaking today.</p>
                                     </div>
                                 </div>
-                                <div className="pr-6">
-                                    <div className="w-10 h-10 rounded-full bg-white text-rove-charcoal flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm">
-                                        <ArrowRight className="w-5 h-5" />
+
+                                {/* Focus */}
+                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                    <div className="flex justify-between items-start">
+                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-charcoal">
+                                            <Brain className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Mind</span>
+                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Deep Focus</p>
+                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Perfect for complex tasks.</p>
                                     </div>
                                 </div>
-                            </button>
-                        </Link>
-                    </div>
-                </section>
+
+                                {/* Body */}
+                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                    <div className="flex justify-between items-start">
+                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-green">
+                                            <Activity className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Body</span>
+                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">High Recovery</p>
+                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Push your limits in the gym.</p>
+                                    </div>
+                                </div>
+
+                                {/* Skin */}
+                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
+                                    <div className="flex justify-between items-start">
+                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-amber-500">
+                                            <Sun className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Glow</span>
+                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Radiance Peak</p>
+                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Collagen levels are optimal.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Quick Actions */}
+                        <section>
+                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4">Quick Actions</h3>
+                            <div className="space-y-4">
+                                <Link href="/cycle-sync/tracker">
+                                    <button className="w-full flex items-center justify-between p-1 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm group transition-all hover:scale-[1.01]">
+                                        <div className="flex items-center gap-5 pl-5 py-4">
+                                            <div className="w-12 h-12 rounded-full bg-rove-charcoal text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20">
+                                                <Droplets className="w-5 h-5" />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-heading text-lg text-rove-charcoal">Log Symptoms</p>
+                                                <p className="text-rove-stone text-sm">Track your daily rhythm</p>
+                                            </div>
+                                        </div>
+                                        <div className="pr-6">
+                                            <div className="w-10 h-10 rounded-full bg-white text-rove-charcoal flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm">
+                                                <ArrowRight className="w-5 h-5" />
+                                            </div>
+                                        </div>
+                                    </button>
+                                </Link>
+                            </div>
+                        </section>
+                    </motion.div>
+                )}
+
+                {/* MODE: TTC */}
+                {trackerMode === "ttc" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 mb-4">
+                            <Baby className="w-10 h-10" />
+                        </div>
+                        <h2 className="font-heading text-3xl text-rove-charcoal">Fertility Window</h2>
+                        <p className="text-rove-stone max-w-md">
+                            Your dedicated fertility dashboard is being prepared. <br />
+                            Soon you'll track BBT, cervical mucus, and peak ovulation days here.
+                        </p>
+                        <Button className="rounded-full">Log Temperature</Button>
+                    </motion.div>
+                )}
+
+                {/* MODE: Menopause */}
+                {trackerMode === "menopause" && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 mb-4">
+                            <Flower2 className="w-10 h-10" />
+                        </div>
+                        <h2 className="font-heading text-3xl text-rove-charcoal">Symptom Management</h2>
+                        <p className="text-rove-stone max-w-md">
+                            Your menopause support hub is coming soon. <br />
+                            Track hot flashes, sleep quality, and HRT adherence.
+                        </p>
+                        <Button className="rounded-full">Log Symptom</Button>
+                    </motion.div>
+                )}
             </div>
         </div>
     );

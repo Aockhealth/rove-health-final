@@ -22,6 +22,7 @@ create table user_onboarding (
   dietary_preferences text[], -- e.g., ['vegan', 'gluten-free']
   metabolic_conditions text[], -- e.g., ['pcos', 'thyroid']
   primary_goal text check (primary_goal in ('weight_loss', 'maintenance', 'muscle_gain', 'energy', 'hormone_balance')),
+  tracker_mode text default 'menstruation' check (tracker_mode in ('menstruation', 'ttc', 'menopause')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone
 );
