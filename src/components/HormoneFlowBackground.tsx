@@ -1,7 +1,10 @@
+// src/components/HormoneFlowBackground.tsx
+
 "use client";
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface HormoneFlowBackgroundProps {
     variant?: "flow" | "calm" | "cellular";
@@ -12,36 +15,59 @@ export const HormoneFlowBackground = ({
     variant = "flow",
     className
 }: HormoneFlowBackgroundProps) => {
+    // State to hold random values for hydration stability
+    const [cellularParticles, setCellularParticles] = useState<any[]>([]);
+    const [flowParticles, setFlowParticles] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Generate random values only on the client side
+        setCellularParticles([...Array(6)].map(() => ({
+            width: Math.random() * 200 + 100,
+            height: Math.random() * 200 + 100,
+            left: Math.random() * 100,
+            top: Math.random() * 100,
+            xMove: Math.random() * 100 - 50,
+            yMove: Math.random() * 100 - 50,
+            duration: Math.random() * 10 + 15
+        })));
+
+        setFlowParticles([...Array(3)].map(() => ({
+            width: Math.random() * 150 + 50,
+            height: Math.random() * 150 + 50,
+            left: Math.random() * 80 + 10,
+            top: Math.random() * 60 + 20,
+            duration: Math.random() * 5 + 10
+        })));
+    }, []);
 
     // ---------------------------------------------------------------------------
     // VARIANT: CELLULAR (Ingredients Page)
-    // Organic, floating circles representing cells/follicles/nourishment
     // ---------------------------------------------------------------------------
     if (variant === "cellular") {
         return (
             <div className={cn("absolute inset-0 z-0 overflow-hidden bg-rove-cream/20", className)}>
                 <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/80 z-10" />
 
-                {/* Floating Organic Shapes */}
-                {[...Array(6)].map((_, i) => (
+                {/* Floating Organic Shapes - Rendered from state to prevent hydration error */}
+                {cellularParticles.map((p, i) => (
                     <motion.div
                         key={i}
                         className="absolute rounded-full mix-blend-multiply filter blur-xl"
                         style={{
                             background: i % 2 === 0 ? "rgba(216, 165, 157, 0.15)" : "rgba(168, 198, 160, 0.15)", // rove-red / sage
-                            width: Math.random() * 200 + 100,
-                            height: Math.random() * 200 + 100,
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
+                            width: p.width,
+                            height: p.height,
+                            left: `${p.left}%`,
+                            top: `${p.top}%`,
                         }}
                         animate={{
-                            x: [0, Math.random() * 100 - 50, 0],
-                            y: [0, Math.random() * 100 - 50, 0],
+                            x: [0, p.xMove, 0],
+                            y: [0, p.yMove, 0],
                             scale: [1, 1.1, 0.9, 1],
                             opacity: [0.3, 0.6, 0.3],
                         }}
                         transition={{
-                            duration: Math.random() * 10 + 15,
+                            duration: p.duration,
                             repeat: Infinity,
                             ease: "easeInOut",
                         }}
@@ -53,7 +79,6 @@ export const HormoneFlowBackground = ({
 
     // ---------------------------------------------------------------------------
     // VARIANT: FLOW & CALM (Home Page)
-    // Wave-based animations
     // ---------------------------------------------------------------------------
     const isCalm = variant === "calm";
     const opacityMultiplier = isCalm ? 0.5 : 1;
@@ -92,7 +117,7 @@ export const HormoneFlowBackground = ({
                         ],
                     }}
                     transition={{
-                        duration: isCalm ? 30 : 20, // Slower for calm variant
+                        duration: isCalm ? 30 : 20,
                         repeat: Infinity,
                         ease: "easeInOut",
                         times: [0, 0.4, 0.7, 1]
@@ -140,16 +165,16 @@ export const HormoneFlowBackground = ({
                 />
             </svg>
 
-            {/* Floating Particles */}
-            {[...Array(3)].map((_, i) => (
+            {/* Floating Particles - Rendered from state */}
+            {flowParticles.map((p, i) => (
                 <motion.div
                     key={i}
                     className="absolute rounded-full bg-rove-red/10 blur-3xl"
                     style={{
-                        width: Math.random() * 150 + 50,
-                        height: Math.random() * 150 + 50,
-                        left: `${Math.random() * 80 + 10}%`,
-                        top: `${Math.random() * 60 + 20}%`,
+                        width: p.width,
+                        height: p.height,
+                        left: `${p.left}%`,
+                        top: `${p.top}%`,
                     }}
                     animate={{
                         y: [0, -40, 0],
@@ -157,7 +182,7 @@ export const HormoneFlowBackground = ({
                         scale: [1, 1.2, 1],
                     }}
                     transition={{
-                        duration: Math.random() * 5 + 10,
+                        duration: p.duration,
                         repeat: Infinity,
                         ease: "easeInOut",
                         delay: i * 3,
