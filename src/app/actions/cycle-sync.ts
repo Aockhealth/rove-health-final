@@ -72,25 +72,94 @@ export async function fetchDashboardData() {
 
     const { phase, day } = calculatePhase(cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
 
-    const insights = [
-        { title: `Day ${day}`, desc: "Tracking perfectly", icon: "TrendingUp" },
-        { title: `${phase} Phase`, desc: "Current status", icon: "Moon" },
-    ];
+    let insights: any[] = [];
+
+    switch (phase) {
+        case "Menstrual":
+            insights = [
+                { title: "Reset Mode", desc: "Energy reflects introspection", icon: "Moon" },
+                { title: "Iron Needs", desc: "Replenish lost minerals", icon: "Soup" }
+            ];
+            break;
+        case "Follicular":
+            insights = [
+                { title: "Rising Energy", desc: "Creativity is peaking", icon: "Zap" },
+                { title: "Brain Power", desc: "Learn new skills", icon: "Brain" }
+            ];
+            break;
+        case "Ovulatory":
+            insights = [
+                { title: "Peak Confidence", desc: "Social magnetism high", icon: "Sparkles" },
+                { title: "Verbal Flow", desc: "Great for communication", icon: "Mic" }
+            ];
+            break;
+        case "Luteal":
+            insights = [
+                { title: "Metabolism Up", desc: "Burning ~200 more cal", icon: "Flame" },
+                { title: "Deep Focus", desc: "Detail-oriented work", icon: "CheckCircle2" }
+            ];
+            break;
+        default:
+            insights = [
+                { title: `Day ${day}`, desc: "Tracking perfectly", icon: "TrendingUp" },
+                { title: `${phase} Phase`, desc: "Current status", icon: "Moon" },
+            ];
+    }
 
     let fuel: any[] = [];
     let move: any[] = [];
     let riverStr = "";
 
-    // Fill data based on phase... (Keeping your existing logic short for brevity)
-    if (phase === "Menstrual") {
-        riverStr = "Rest • Restore • Reload";
-        fuel = [{ title: "Bone Broth", desc: "Mineral Replenishment", icon: "Soup" }]; // ... abbreviated
-        move = [{ title: "Yin Yoga", desc: "Stretch & Relax", icon: "Moon" }];
-    } else {
-        // Fallbacks for other phases (You can keep your full original logic here)
-        riverStr = "Build • Create • Push";
-        fuel = [{ title: "Oats", desc: "Sustained Energy", icon: "Wheat" }];
-        move = [{ title: "Running", desc: "Cardio Peak", icon: "Wind" }];
+    // Generic Phase Content Mapping
+    switch (phase) {
+        case "Menstrual":
+            riverStr = "Rest • Restore • Reload";
+            fuel = [
+                { title: "Bone Broth", desc: "Mineral Replenishment", icon: "Soup" },
+                { title: "Dark Chocolate", desc: "Magnesium Boost", icon: "Coffee" }
+            ];
+            move = [
+                { title: "Yin Yoga", desc: "Stretch & Relax", icon: "Moon" },
+                { title: "Walking", desc: "Light Movement", icon: "Footprints" }
+            ];
+            break;
+        case "Follicular":
+            riverStr = "Dream • Plan • Initiate";
+            fuel = [
+                { title: "Fermented Foods", desc: "Gut Health", icon: "Beaker" },
+                { title: "Avocado", desc: "Healthy Fats", icon: "Leaf" }
+            ];
+            move = [
+                { title: "Cardio Run", desc: "Build Endurance", icon: "Wind" },
+                { title: "Dance", desc: "Creative Flow", icon: "Music" }
+            ];
+            break;
+        case "Ovulatory":
+            riverStr = "Connect • Shine • Magnetize";
+            fuel = [
+                { title: "Raw Salads", desc: "Liver Support", icon: "Carrot" },
+                { title: "Berries", desc: "Antioxidants", icon: "Sparkles" }
+            ];
+            move = [
+                { title: "HIIT", desc: "Max Intensity", icon: "Zap" },
+                { title: "Spin Class", desc: "High Energy", icon: "Bike" }
+            ];
+            break;
+        case "Luteal":
+            riverStr = "Complete • Organize • Nest";
+            fuel = [
+                { title: "Sweet Potato", desc: "Complex Carbs", icon: "Wheat" },
+                { title: "Brown Rice", desc: "Mood Stability", icon: "Soup" }
+            ];
+            move = [
+                { title: "Pilates", desc: "Core & Stability", icon: "Activity" },
+                { title: "Strength", desc: "Maintenance", icon: "Dumbbell" }
+            ];
+            break;
+        default:
+            riverStr = "Balance • Maintain • Flow";
+            fuel = [{ title: "Balanced Meal", desc: "Whole Foods", icon: "Utensils" }];
+            move = [{ title: "Walking", desc: "Daily Steps", icon: "Footprints" }];
     }
 
     return {
@@ -173,8 +242,81 @@ export async function getDailyLog(date: Date) {
 }
 
 export async function fetchCycleIntelligence() {
-    // (Keep your existing fetchCycleIntelligence code here unchanged)
-    // I am omitting the full body to save space, but DO NOT DELETE IT from your file.
-    // Ensure you keep the full implementation you provided earlier.
-    return null;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Fetch cycle settings for calculation
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    let phase = "Menstrual";
+    let dayInCycle = 1 as number;
+
+    if (cycleSettings) {
+        const result = calculatePhase(cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+        phase = result.phase;
+        dayInCycle = result.day;
+    }
+
+    // Dynamic Data Generation based on Phase
+    let nutrition = {};
+    let biometrics = {};
+
+    switch (phase) {
+        case "Menstrual":
+            nutrition = {
+                calories: 1850,
+                macros: { protein: { g: 120, pct: 30 }, fats: { g: 70, pct: 35 }, carbs: { g: 180, pct: 35 } },
+                hormones: { estrogen: "Low", progesterone: "Low", text: "Baseline" },
+                symptoms: [], bio_facts: [], diet_river: [], exercise_river: []
+            };
+            biometrics = { reason: "Higher iron needs during menstruation require nutrient-dense caloric intake." };
+            break;
+        case "Follicular":
+            nutrition = {
+                calories: 1950,
+                macros: { protein: { g: 130, pct: 30 }, fats: { g: 60, pct: 30 }, carbs: { g: 210, pct: 40 } },
+                hormones: { estrogen: "Rising", progesterone: "Low", text: "Building" },
+                symptoms: [], bio_facts: [], diet_river: [], exercise_river: []
+            };
+            biometrics = { reason: "Rising estrogen supports higher carbohydrate tolerance and energy for building." };
+            break;
+        case "Ovulatory":
+            nutrition = {
+                calories: 2000,
+                macros: { protein: { g: 125, pct: 25 }, fats: { g: 65, pct: 30 }, carbs: { g: 220, pct: 45 } },
+                hormones: { estrogen: "Peak", progesterone: "Low", text: "Peak" },
+                symptoms: [], bio_facts: [], diet_river: [], exercise_river: []
+            };
+            biometrics = { reason: "Peak estrogen helps utilize glycogen; focus on complex carbs and antioxidants." };
+            break;
+        case "Luteal":
+            nutrition = {
+                calories: 2100,
+                macros: { protein: { g: 135, pct: 30 }, fats: { g: 80, pct: 40 }, carbs: { g: 180, pct: 30 } },
+                hormones: { estrogen: "Moderate", progesterone: "Peak", text: "Luteal Peak" },
+                symptoms: [], bio_facts: [], diet_river: [], exercise_river: []
+            };
+            biometrics = { reason: "Progesterone increases metabolic rate; higher caloric needs but stable blood sugar is key." };
+            break;
+        default:
+            nutrition = {
+                calories: 2000,
+                macros: { protein: { g: 120, pct: 30 }, fats: { g: 70, pct: 35 }, carbs: { g: 200, pct: 35 } },
+                hormones: { estrogen: "Unknown", progesterone: "Unknown", text: "Unknown" },
+                symptoms: [], bio_facts: [], diet_river: [], exercise_river: []
+            };
+            biometrics = { reason: "Balanced nutrition for maintenance." };
+    }
+
+    return {
+        phase: phase,
+        day: dayInCycle,
+        nutrition: nutrition,
+        biometrics: biometrics
+    };
 }

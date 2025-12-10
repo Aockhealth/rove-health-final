@@ -1,17 +1,39 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, Check, Droplets } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { logDailySymptoms } from "@/app/actions/cycle-sync";
+import { logDailySymptoms, getDailyLog } from "@/app/actions/cycle-sync";
 
 export default function TrackerPage() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
     const [isPeriodMode, setIsPeriodMode] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    // Fetch existing log when date changes
+    useEffect(() => {
+        const fetchLog = async () => {
+            const data = await getDailyLog(selectedDate);
+            if (data) {
+                setSelectedSymptoms(data.symptoms || []);
+                setIsPeriodMode(data.is_period || false);
+            } else {
+                setSelectedSymptoms([]);
+                setIsPeriodMode(false);
+            }
+        };
+        fetchLog();
+    }, [selectedDate]);
+
+    // Validation: Future dates
+    const isFutureDate = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date > today;
+    };
 
     // UPDATED: Generate week based on selectedDate instead of "today"
     const generateWeek = () => {
@@ -74,12 +96,12 @@ export default function TrackerPage() {
 
     const handleSave = () => {
         startTransition(async () => {
-          
+
             await logDailySymptoms({
                 date: selectedDate,
                 symptoms: selectedSymptoms,
                 isPeriod: isPeriodMode,
-                flowIntensity: selectedSymptoms.find(s => ["Spotting","Light","Medium","Heavy"].includes(s)) // optional
+                flowIntensity: selectedSymptoms.find(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s)) // optional
             });
 
             // Show success via toast or UI state in real app
@@ -138,18 +160,18 @@ export default function TrackerPage() {
                         </h2>
                         {/* UPDATED: Buttons now use navigateWeek */}
                         <div className="flex gap-1">
-                            <Button 
+                            <Button
                                 onClick={() => navigateWeek("prev")}
-                                size="icon" 
-                                variant="ghost" 
+                                size="icon"
+                                variant="ghost"
                                 className="h-8 w-8 rounded-full hover:bg-white/50"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={() => navigateWeek("next")}
-                                size="icon" 
-                                variant="ghost" 
+                                size="icon"
+                                variant="ghost"
                                 className="h-8 w-8 rounded-full hover:bg-white/50"
                             >
                                 <ChevronRight className="w-4 h-4" />
@@ -161,17 +183,21 @@ export default function TrackerPage() {
                             const isSelected = date.toDateString() === selectedDate.toDateString();
                             const isToday = date.toDateString() === new Date().toDateString();
 
+                            const isFuture = isFutureDate(date);
                             return (
                                 <motion.button
                                     key={i}
-                                    onClick={() => setSelectedDate(date)}
-                                    whileTap={{ scale: 0.9 }}
-                                    whileHover={{ scale: 1.05 }}
+                                    onClick={() => !isFuture && setSelectedDate(date)}
+                                    disabled={isFuture}
+                                    whileTap={!isFuture ? { scale: 0.9 } : {}}
+                                    whileHover={!isFuture ? { scale: 1.05 } : {}}
                                     className={cn(
                                         "flex flex-col items-center justify-center min-w-[3.5rem] h-16 rounded-2xl transition-all border",
                                         isSelected
                                             ? "bg-rove-charcoal text-white border-rove-charcoal shadow-lg shadow-rove-charcoal/20"
-                                            : "bg-white/50 border-white/50 text-rove-stone hover:bg-white"
+                                            : isFuture
+                                                ? "bg-gray-100 text-gray-300 border-transparent cursor-not-allowed"
+                                                : "bg-white/50 border-white/50 text-rove-stone hover:bg-white"
                                     )}
                                 >
                                     <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1)}</span>
@@ -270,8 +296,8 @@ export default function TrackerPage() {
                 {/* Save Button */}
                 <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/90 to-transparent md:static md:bg-none md:p-0 z-20">
                     <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button onClick={handleSave} size="lg" className="w-full max-w-md mx-auto rounded-full h-14 text-lg font-heading shadow-xl shadow-rove-charcoal/20 bg-rove-charcoal text-white hover:bg-rove-charcoal/90" disabled={isPending}>
-                            {isPending ? "Saving..." : "Save Daily Log"}
+                        <Button onClick={handleSave} size="lg" className="w-full max-w-md mx-auto rounded-full h-14 text-lg font-heading shadow-xl shadow-rove-charcoal/20 bg-rove-charcoal text-white hover:bg-rove-charcoal/90 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isPending || isFutureDate(selectedDate)}>
+                            {isFutureDate(selectedDate) ? "Future Date Locked" : (isPending ? "Saving..." : "Save Daily Log")}
                         </Button>
                     </motion.div>
                 </div>

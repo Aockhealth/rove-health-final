@@ -4,8 +4,9 @@ import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { submitOnboarding } from "./actions";
 import { Button } from "@/components/ui/Button";
-import { ArrowRight, Check, Activity, Calendar, Target, Scale } from "lucide-react";
+import { ArrowRight, Check, Activity, Calendar, Target, Scale, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import DatePicker from "@/components/ui/DatePicker";
 
 const STEPS = [
     { id: "goals", title: "Your Goals", icon: Target },
@@ -19,8 +20,6 @@ const GOALS_BY_STAGE: Record<string, string[]> = {
     ttc: ['Conceive Naturally', 'Track Ovulation', 'Improve Egg Quality', 'Hormone Balance', 'Reduce Stress'],
     menopause: ['Manage Hot Flashes', 'Weight Management', 'Sleep Better', 'Bone Health', 'Hormone Balance']
 };
-
-import { Sparkles } from "lucide-react";
 
 export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState(0);
@@ -119,7 +118,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Right Panel - Form */}
-            <div className="flex-1 p-6 md:p-12 flex items-center justify-center relative overflow-hidden">
+            <div className="flex-1 p-6 md:p-12 flex items-center justify-center relative overflow-y-auto">
                 <div className="w-full max-w-lg relative z-10">
                     <div className="mb-8">
                         <span className="text-xs font-bold uppercase tracking-widest text-rove-stone block md:hidden mb-2">Step {currentStep + 1} of {totalSteps}</span>
@@ -187,13 +186,13 @@ export default function OnboardingPage() {
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-rove-stone">Date of Birth</label>
-                                        <input
-                                            type="date"
+                                    <div className="space-y-1">
+                                        {/* DatePicker for DOB */}
+                                        <DatePicker
+                                            label="Date of Birth"
                                             value={formData.dob}
-                                            onChange={(e) => updateField("dob", e.target.value)}
-                                            className="w-full p-4 rounded-xl bg-white border border-transparent focus:border-rove-charcoal outline-none shadow-sm"
+                                            onChange={(val) => updateField("dob", val)}
+                                            placeholder="Select date"
                                         />
                                     </div>
                                 </div>
@@ -238,13 +237,13 @@ export default function OnboardingPage() {
                             <motion.div key="cycle" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                                 <h2 className="text-2xl font-heading text-rove-charcoal">Cycle History</h2>
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-bold text-rove-stone">When did your last period start?</label>
-                                        <input
-                                            type="date"
+                                    <div className="space-y-1">
+                                        {/* DatePicker for Last Period */}
+                                        <DatePicker
+                                            label="When did your last period start?"
                                             value={formData.lastPeriod}
-                                            onChange={(e) => updateField("lastPeriod", e.target.value)}
-                                            className="w-full p-4 rounded-xl bg-white border border-transparent focus:border-rove-charcoal outline-none shadow-sm"
+                                            onChange={(val) => updateField("lastPeriod", val)}
+                                            placeholder="Select date"
                                         />
                                     </div>
 
