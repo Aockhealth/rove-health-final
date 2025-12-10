@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { submitOnboarding } from "./actions";
 import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { ArrowRight, Check, Activity, Calendar, Target, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -132,11 +133,10 @@ export default function OnboardingPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-rove-stone">Date of Birth</label>
-                                        <input
-                                            type="date"
+                                        <DatePicker
                                             value={formData.dob}
-                                            onChange={(e) => updateField("dob", e.target.value)}
-                                            className="w-full p-4 rounded-xl bg-white border border-transparent focus:border-rove-charcoal outline-none shadow-sm"
+                                            onChange={(value) => updateField("dob", value)}
+                                            placeholder="Select your date of birth"
                                         />
                                     </div>
                                 </div>
@@ -181,11 +181,10 @@ export default function OnboardingPage() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-rove-stone">When did your last period start?</label>
-                                        <input
-                                            type="date"
+                                        <DatePicker
                                             value={formData.lastPeriod}
-                                            onChange={(e) => updateField("lastPeriod", e.target.value)}
-                                            className="w-full p-4 rounded-xl bg-white border border-transparent focus:border-rove-charcoal outline-none shadow-sm"
+                                            onChange={(value) => updateField("lastPeriod", value)}
+                                            placeholder="Select date"
                                         />
                                     </div>
 
