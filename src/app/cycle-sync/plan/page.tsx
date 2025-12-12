@@ -278,6 +278,16 @@ function SnowIcon(props: any) {
     )
 }
 
+// --- Icon Mapping for AI Data ---
+const ICON_MAP: any = {
+    "Droplets": Droplets, "Sparkles": Sparkles, "Fish": Fish, "Soup": Soup, "Sunrise": Sunrise, "Sun": Sun,
+    "Coffee": Coffee, "Moon": Moon, "Leaf": Leaf, "Beaker": Beaker, "Drumstick": Drumstick, "Wind": Wind,
+    "Wheat": Wheat, "Shield": Shield, "Carrot": Carrot, "Zap": Zap, "Bike": Bike, "Pill": Pill,
+    "Activity": Activity, "Dumbbell": Dumbbell, "Utensils": Utensils
+};
+
+const dIcon = (name: string) => ICON_MAP[name] || Sparkles;
+
 export default function DetailedPlanPage() {
     const [data, setData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'nutrition' | 'movement'>('overview');
@@ -296,9 +306,9 @@ export default function DetailedPlanPage() {
         </div>
     );
 
-    // Select Blueprint based on Phase
+    // Select Blueprint: Prioritize AI Blueprint, else use Static Fallback
     const phaseName = data.phase || "Menstrual";
-    const BP = BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+    const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
 
     return (
         <div className="min-h-screen bg-rove-cream/20 pt-24 pb-24 px-4 md:px-8">
@@ -394,34 +404,40 @@ export default function DetailedPlanPage() {
                             <section>
                                 <SectionHeader title="Dietary Architecture" icon={Utensils} />
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                                    {BP.diet.core_needs.map((n: any) => (
-                                        <BlueprintCard key={n.id} className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-md h-full">
-                                            <div className="p-2 bg-rove-green/10 text-rove-green rounded-full mb-1"><n.icon className="w-5 h-5" /></div>
-                                            <div className="font-heading text-rove-charcoal text-sm">{n.title}</div>
-                                            <div className="text-[10px] text-rove-stone uppercase tracking-wide opacity-80">{n.desc}</div>
-                                        </BlueprintCard>
-                                    ))}
+                                    {BP.diet.core_needs.map((n: any) => {
+                                        const Icon = typeof n.icon === 'string' ? dIcon(n.icon) : n.icon;
+                                        return (
+                                            <BlueprintCard key={n.id} className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-md h-full">
+                                                <div className="p-2 bg-rove-green/10 text-rove-green rounded-full mb-1"><Icon className="w-5 h-5" /></div>
+                                                <div className="font-heading text-rove-charcoal text-sm">{n.title}</div>
+                                                <div className="text-[10px] text-rove-stone uppercase tracking-wide opacity-80">{n.desc}</div>
+                                            </BlueprintCard>
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="space-y-4 mb-8">
                                     <h3 className="text-lg font-heading text-rove-charcoal ml-1">Ideal Meals</h3>
-                                    {BP.diet.ideal_meals.map((meal: any, i: number) => (
-                                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-white border border-rove-stone/10 hover:border-rove-charcoal/20 transition-colors">
-                                            <div className="flex flex-col items-center">
-                                                <div className="p-2 bg-rove-cream rounded-full"><meal.icon className="w-5 h-5 text-rove-charcoal" /></div>
-                                                <div className="h-full w-px bg-rove-stone/20 mt-2" />
-                                            </div>
-                                            <div className="pb-2 w-full">
-                                                <div className="flex items-baseline justify-between mb-2">
-                                                    <span className="text-sm font-heading text-rove-charcoal text-lg">{meal.title}</span>
-                                                    <h4 className="font-bold text-xs uppercase tracking-wide text-rove-stone bg-rove-stone/5 px-2 py-1 rounded-md">{meal.time}</h4>
+                                    {BP.diet.ideal_meals.map((meal: any, i: number) => {
+                                        const Icon = typeof meal.icon === 'string' ? dIcon(meal.icon) : meal.icon;
+                                        return (
+                                            <div key={i} className="flex gap-4 p-4 rounded-xl bg-white border border-rove-stone/10 hover:border-rove-charcoal/20 transition-colors">
+                                                <div className="flex flex-col items-center">
+                                                    <div className="p-2 bg-rove-cream rounded-full"><Icon className="w-5 h-5 text-rove-charcoal" /></div>
+                                                    <div className="h-full w-px bg-rove-stone/20 mt-2" />
                                                 </div>
-                                                <ul className="text-sm text-rove-stone space-y-2">
-                                                    {meal.items.map((item: string) => <li key={item} className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-rove-green rounded-full flex-shrink-0" />{item}</li>)}
-                                                </ul>
+                                                <div className="pb-2 w-full">
+                                                    <div className="flex items-baseline justify-between mb-2">
+                                                        <span className="text-sm font-heading text-rove-charcoal text-lg">{meal.title}</span>
+                                                        <h4 className="font-bold text-xs uppercase tracking-wide text-rove-stone bg-rove-stone/5 px-2 py-1 rounded-md">{meal.time}</h4>
+                                                    </div>
+                                                    <ul className="text-sm text-rove-stone space-y-2">
+                                                        {meal.items.map((item: string) => <li key={item} className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-rove-green rounded-full flex-shrink-0" />{item}</li>)}
+                                                    </ul>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-6">

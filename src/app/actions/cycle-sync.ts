@@ -1,8 +1,14 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { PHASE_CONTENT } from "@/data/phase-content";
 
 // --- HELPERS ---
+
+function getRandomItems<T>(items: T[], count: number): T[] {
+    const shuffled = [...items].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
 
 // 1. DYNAMIC CYCLE TRACKING LOGIC
 function calculatePhase(lastPeriodStart: string, cycleLength: number = 28, periodLength: number = 5) {
@@ -61,10 +67,9 @@ export async function fetchDashboardData() {
         .eq("id", user.id)
         .single();
 
-    // Fetch tracker mode from onboarding
     const { data: onboarding } = await supabase
         .from("user_onboarding")
-        .select("tracker_mode")
+        .select("tracker_mode, dietary_preferences, metabolic_conditions")
         .eq("user_id", user.id)
         .single();
 
@@ -72,106 +77,41 @@ export async function fetchDashboardData() {
 
     const { phase, day } = calculatePhase(cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
 
-    let insights: any[] = [];
+    // --- STATIC CONTENT SELECTION ---
+    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
 
-    switch (phase) {
-        case "Menstrual":
-            insights = [
-                { title: "Reset Mode", desc: "Energy reflects introspection", icon: "Moon" },
-                { title: "Iron Needs", desc: "Replenish lost minerals", icon: "Soup" }
-            ];
-            break;
-        case "Follicular":
-            insights = [
-                { title: "Rising Energy", desc: "Creativity is peaking", icon: "Zap" },
-                { title: "Brain Power", desc: "Learn new skills", icon: "Brain" }
-            ];
-            break;
-        case "Ovulatory":
-            insights = [
-                { title: "Peak Confidence", desc: "Social magnetism high", icon: "Sparkles" },
-                { title: "Verbal Flow", desc: "Great for communication", icon: "Mic" }
-            ];
-            break;
-        case "Luteal":
-            insights = [
-                { title: "Metabolism Up", desc: "Burning ~200 more cal", icon: "Flame" },
-                { title: "Deep Focus", desc: "Detail-oriented work", icon: "CheckCircle2" }
-            ];
-            break;
-        default:
-            insights = [
-                { title: `Day ${day}`, desc: "Tracking perfectly", icon: "TrendingUp" },
-                { title: `${phase} Phase`, desc: "Current status", icon: "Moon" },
-            ];
-    }
+    // 1. River (1 Random)
+    const riverStr = getRandomItems(content.river, 1)[0] || "Rest • Restore • Reload";
 
-    let fuel: any[] = [];
-    let move: any[] = [];
-    let riverStr = "";
+    // 2. Fuel (2 Items)
+    const fuel = getRandomItems(content.fuel, 2);
 
-    // Generic Phase Content Mapping
-    switch (phase) {
-        case "Menstrual":
-            riverStr = "Rest • Restore • Reload";
-            fuel = [
-                { title: "Bone Broth", desc: "Mineral Replenishment", icon: "Soup" },
-                { title: "Dark Chocolate", desc: "Magnesium Boost", icon: "Coffee" }
-            ];
-            move = [
-                { title: "Yin Yoga", desc: "Stretch & Relax", icon: "Moon" },
-                { title: "Walking", desc: "Light Movement", icon: "Footprints" }
-            ];
-            break;
-        case "Follicular":
-            riverStr = "Dream • Plan • Initiate";
-            fuel = [
-                { title: "Fermented Foods", desc: "Gut Health", icon: "Beaker" },
-                { title: "Avocado", desc: "Healthy Fats", icon: "Leaf" }
-            ];
-            move = [
-                { title: "Cardio Run", desc: "Build Endurance", icon: "Wind" },
-                { title: "Dance", desc: "Creative Flow", icon: "Music" }
-            ];
-            break;
-        case "Ovulatory":
-            riverStr = "Connect • Shine • Magnetize";
-            fuel = [
-                { title: "Raw Salads", desc: "Liver Support", icon: "Carrot" },
-                { title: "Berries", desc: "Antioxidants", icon: "Sparkles" }
-            ];
-            move = [
-                { title: "HIIT", desc: "Max Intensity", icon: "Zap" },
-                { title: "Spin Class", desc: "High Energy", icon: "Bike" }
-            ];
-            break;
-        case "Luteal":
-            riverStr = "Complete • Organize • Nest";
-            fuel = [
-                { title: "Sweet Potato", desc: "Complex Carbs", icon: "Wheat" },
-                { title: "Brown Rice", desc: "Mood Stability", icon: "Soup" }
-            ];
-            move = [
-                { title: "Pilates", desc: "Core & Stability", icon: "Activity" },
-                { title: "Strength", desc: "Maintenance", icon: "Dumbbell" }
-            ];
-            break;
-        default:
-            riverStr = "Balance • Maintain • Flow";
-            fuel = [{ title: "Balanced Meal", desc: "Whole Foods", icon: "Utensils" }];
-            move = [{ title: "Walking", desc: "Daily Steps", icon: "Footprints" }];
-    }
+    // 3. Move (2 Items)
+    const move = getRandomItems(content.move, 2);
+
+    // 4. Rituals (2 Items)
+    const rituals = getRandomItems(content.rituals, 2);
+
+    // 5. Snapshot (1 Set)
+    const snapshotSet = getRandomItems(content.snapshot, 1)[0];
+    const snapshot = {
+        hormones: snapshotSet?.hormones || { title: "", desc: "" },
+        mind: snapshotSet?.mind || { title: "", desc: "" },
+        body: snapshotSet?.body || { title: "", desc: "" },
+        skin: snapshotSet?.skin || { title: "", desc: "" }
+    };
 
     return {
-        user: { ...user, name: profile?.full_name || user.user_metadata?.full_name || "Rove Member" },
-        phase: { name: phase, day, river: riverStr },
-        insights,
+        user: { ...user, name: profile?.full_name || "Rove Member" },
+        phase: { name: phase, day, river: riverStr, superpower: "Resilience" },
+        insights: [],
         fuel,
         move,
+        rituals,
+        snapshot,
         tracker_mode: onboarding?.tracker_mode || "menstruation"
     };
 }
-
 
 export interface LogDailySymptomsPayload {
     date: Date;
@@ -253,6 +193,10 @@ export async function fetchCycleIntelligence() {
         .eq("user_id", user.id)
         .single();
 
+    // Correctly fetch name from 'profiles' table (needed for AI context)
+    const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+    const { data: onboarding } = await supabase.from("user_onboarding").select("dietary_preferences, metabolic_conditions").eq("user_id", user.id).single();
+
     let phase = "Menstrual";
     let dayInCycle = 1 as number;
 
@@ -262,7 +206,35 @@ export async function fetchCycleIntelligence() {
         dayInCycle = result.day;
     }
 
-    // Dynamic Data Generation based on Phase
+    // --- STATIC CONTENT FALLBACK (AI REMOVED) ---
+    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+
+    // Construct a Mock Blueprint using static content to prevent Plan Page crash
+    // Construct a Full Blueprint using static content
+    const snapshotSet = getRandomItems(content.snapshot, 1)[0] || content.snapshot[0];
+
+    const blueprint = {
+        hormones: {
+            ...snapshotSet.hormones,
+            summary: content.plan.hormones.summary,
+            symptoms: content.plan.hormones.symptoms
+        },
+        diet: {
+            core_needs: getRandomItems(content.fuel, 3),
+            ideal_meals: content.plan.diet.ideal_meals,
+            cramp_relief: content.plan.diet.cramp_relief,
+            avoid: content.plan.diet.avoid
+        },
+        exercise: {
+            summary: content.plan.exercise.summary,
+            best: getRandomItems(content.move, 2).map(m => ({ ...m, time: "30 mins" })),
+            avoid: content.plan.exercise.avoid
+        },
+        supplements: content.plan.supplements,
+        daily_flow: content.plan.daily_flow
+    };
+
+    // Dynamic Data Generation based on Phase (Calculated Metrics)
     let nutrition = {};
     let biometrics = {};
 
@@ -317,6 +289,61 @@ export async function fetchCycleIntelligence() {
         phase: phase,
         day: dayInCycle,
         nutrition: nutrition,
-        biometrics: biometrics
+        biometrics: biometrics,
+        blueprint: blueprint // Pass the MOCK blueprint
+    };
+}
+
+export async function fetchInsightsData() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!cycleSettings) return null;
+
+    const avgCycle = cycleSettings.cycle_length_days || 28;
+    const avgPeriod = cycleSettings.period_length_days || 5;
+
+    // Generate Mock History (Last 6 Cycles)
+    const history = Array.from({ length: 6 }).map((_, i) => {
+        // Random variation +/- 2 days
+        const variation = Math.floor(Math.random() * 5) - 2;
+        const length = avgCycle + variation;
+        const status = length > 35 || length < 21 ? "Abnormal" : "Normal";
+
+        const date = new Date(cycleSettings.last_period_start);
+        date.setMonth(date.getMonth() - (i + 1));
+
+        return {
+            month: date.toLocaleString('default', { month: 'short' }),
+            length,
+            periodLength: avgPeriod + (Math.random() > 0.8 ? 1 : 0), // Occasional variation
+            status
+        };
+    }).reverse();
+
+    return {
+        averages: {
+            cycle: avgCycle,
+            period: avgPeriod
+        },
+        history,
+        lastCycle: history[history.length - 1],
+        symptoms: [
+            { name: "Cramps", count: 12, severity: "High", phase: "Menstrual" },
+            { name: "Bloating", count: 8, severity: "Medium", phase: "Luteal" },
+            { name: "Fatigue", count: 15, severity: "High", phase: "Menstrual" },
+            { name: "Anxiety", count: 5, severity: "Low", phase: "Luteal" }
+        ],
+        vitals: {
+            bbt: Array.from({ length: 30 }).map((_, i) => ({ day: i + 1, temp: 36.4 + Math.random() * 0.5 + (i > 14 ? 0.4 : 0) })),
+            weight: { current: 62, trend: "-0.5kg" }
+        }
     };
 }
