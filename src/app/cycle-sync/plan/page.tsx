@@ -22,6 +22,19 @@ const BLUEPRINTS: any = {
             desc: "Your body is shedding & renewing. Treat this phase like your 'inner winter'.",
             symptoms: ["Energy Dips", "Cramps", "Mood Sensitivity", "Inflammation"]
         },
+        rituals: {
+            focus: "Inner Winter",
+            practices: [
+                { title: "Journaling", desc: "Reflect on the past month", icon: "Book" },
+                { title: "Yoga Nidra", desc: "Deep conscious rest", icon: "Moon" },
+                { title: "Salt Bath", desc: "Magnesium absoption & relaxation", icon: "Waves" },
+                { title: "Phone Detox", desc: "Reduce sensory input", icon: "Ban" }
+            ],
+            symptom_relief: [
+                { symptom: "Cramps", remedy: "Castor Oil Pack" },
+                { symptom: "Fatigue", remedy: "Legs Up The Wall" }
+            ]
+        },
         diet: {
             core_needs: [
                 { id: "iron", title: "Iron-Rich", desc: "Restore blood loss", icon: Droplets },
@@ -68,6 +81,19 @@ const BLUEPRINTS: any = {
             summary: "Estrogen is rising, boosting energy.",
             desc: "Your 'inner spring'. Creativity and energy are increasing as follicles mature.",
             symptoms: ["Increasing Energy", "Better Mood", "Curiosity", "Lightness"]
+        },
+        rituals: {
+            focus: "Inner Spring",
+            practices: [
+                { title: "Vision Boarding", desc: "Plan your month ahead", icon: "Sun" },
+                { title: "Morning Pages", desc: "Brain dump ideas", icon: "Book" },
+                { title: "Social Planning", desc: "Book friend dates", icon: "Users" },
+                { title: "Learn Skill", desc: "Try something new", icon: "Brain" }
+            ],
+            symptom_relief: [
+                { symptom: "Restlessness", remedy: "Dancing/Shaking" },
+                { symptom: "Overthinking", remedy: "Brain Dump Journaling" }
+            ]
         },
         diet: {
             core_needs: [
@@ -116,6 +142,19 @@ const BLUEPRINTS: any = {
             desc: "Your 'inner summer'. You are magnetic, verbal, and energetic.",
             symptoms: ["Peak Energy", "High Libido", "Confidence", "Social Buzz"]
         },
+        rituals: {
+            focus: "Inner Summer",
+            practices: [
+                { title: "Community", desc: "Host a gathering", icon: "Users" },
+                { title: "Gratitude", desc: "Express appreciation", icon: "Heart" },
+                { title: "Date Night", desc: "Romantic or self-date", icon: "Sparkles" },
+                { title: "Public Speaking", desc: "Pitch ideas now", icon: "Mic" }
+            ],
+            symptom_relief: [
+                { symptom: "Overstimulation", remedy: "Dim Lighting" },
+                { symptom: "Skin Breakout", remedy: "Ice Roller" }
+            ]
+        },
         diet: {
             core_needs: [
                 { id: "fiber", title: "Fiber", desc: "Bind excess estrogen", icon: Wheat },
@@ -162,6 +201,19 @@ const BLUEPRINTS: any = {
             summary: "Progesterone rises, then drops.",
             desc: "Your 'inner autumn'. Winding down, focusing on completion and detail.",
             symptoms: ["PMS Possible", "Bloating", "Cravings", "Introversion"]
+        },
+        rituals: {
+            focus: "Inner Autumn",
+            practices: [
+                { title: "Declutter", desc: "Organize your space", icon: "Home" },
+                { title: "Boundaries", desc: "Say no to extra plans", icon: "Shield" },
+                { title: "Budgeting", desc: "Review finances", icon: "FileText" },
+                { title: "Self-Care", desc: "Spa night at home", icon: "Sparkles" }
+            ],
+            symptom_relief: [
+                { symptom: "PMS", remedy: "Magnesium Spray" },
+                { symptom: "Anxiety", remedy: "Box Breathing" }
+            ]
         },
         diet: {
             core_needs: [
@@ -220,7 +272,7 @@ function Counter({ from, to }: { from: number; to: number }) {
 function MacroVisualizer({ nutrition, biometrics }: { nutrition: any, biometrics: any }) {
     const { macros, calories } = nutrition;
     return (
-        <div className="relative p-6 rounded-[2.5rem] bg-white shadow-xl shadow-rove-charcoal/5 overflow-hidden border border-rove-stone/10 h-full">
+        <div className="relative h-full">
             <div className="flex flex-col md:flex-row gap-8 items-center h-full">
                 <div className="relative w-36 h-36 flex items-center justify-center flex-shrink-0">
                     <svg className="absolute inset-0 w-full h-full rotate-[-90deg]" viewBox="0 0 100 100">
@@ -262,14 +314,14 @@ function MacroVisualizer({ nutrition, biometrics }: { nutrition: any, biometrics
 function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     return (
         <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-rove-charcoal rounded-full text-white"><Icon className="w-5 h-5" /></div>
-            <h2 className="text-2xl font-heading text-rove-charcoal">{title}</h2>
+            <div className="p-2 bg-white/50 text-rove-charcoal rounded-full shadow-sm border border-white/60"><Icon className="w-5 h-5" /></div>
+            <h2 className="text-xl md:text-2xl font-heading text-rove-charcoal">{title}</h2>
         </div>
     );
 }
 
 function BlueprintCard({ children, className }: { children: React.ReactNode, className?: string }) {
-    return <div className={cn("p-6 rounded-2xl bg-white/80 backdrop-blur-sm border border-rove-stone/10 shadow-sm transition-all", className)}>{children}</div>;
+    return <div className={cn("p-6 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm transition-all", className)}>{children}</div>;
 }
 
 function SnowIcon(props: any) {
@@ -290,7 +342,7 @@ const dIcon = (name: string) => ICON_MAP[name] || Sparkles;
 
 export default function DetailedPlanPage() {
     const [data, setData] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'nutrition' | 'movement'>('overview');
+    const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
 
     useEffect(() => {
         const load = async () => {
@@ -311,26 +363,33 @@ export default function DetailedPlanPage() {
     const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
 
     return (
-        <div className="min-h-screen bg-rove-cream/20 pt-24 pb-24 px-4 md:px-8">
-            <div className="max-w-4xl mx-auto space-y-8">
+        <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pb-24">
+            {/* Background Ambience */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-20%] left-[20%] w-[500px] h-[500px] bg-rove-charcoal/5 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[10%] right-[-10%] w-[300px] h-[300px] bg-rove-red/5 rounded-full blur-[80px]" />
+            </div>
+
+            <div className="relative z-10 p-4 md:p-8 space-y-6 max-w-5xl mx-auto">
 
                 {/* Header */}
                 <header>
                     <div className="flex items-center gap-3 mb-2">
-                        <Badge className="bg-rove-charcoal text-white px-3 py-1">Day {data.day || "?"}</Badge>
-                        <span className="text-sm font-bold uppercase tracking-widest text-rove-stone">{phaseName} Phase</span>
+                        <Badge className="bg-white/50 backdrop-blur-md text-rove-charcoal border-white/60 px-3 py-1 shadow-sm">Day {data.day || "?"}</Badge>
+                        <span className="text-xs font-bold uppercase tracking-widest text-rove-stone">{phaseName} Phase</span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-heading text-rove-charcoal leading-tight">
-                        Your Complete Blueprint
+                    <h1 className="font-heading text-3xl md:text-5xl text-rove-charcoal leading-tight">
+                        Daily Blueprint
                     </h1>
                 </header>
 
-                {/* Tabs */}
-                <div className="bg-white/50 p-1.5 rounded-full flex gap-1 backdrop-blur-sm border border-rove-stone/5 sticky top-20 z-20 shadow-sm">
+                {/* Tabs - Floating Glass Pill */}
+                {/* Tabs - Floating Glass Pill */}
+                <div className="flex p-1.5 bg-white/40 backdrop-blur-xl rounded-full border border-white/40 shadow-lg shadow-rove-charcoal/5 mx-auto max-w-md sticky top-4 z-50">
                     {[
-                        { id: 'overview', label: 'Overview', icon: LayoutGrid },
-                        { id: 'nutrition', label: 'Nutrition', icon: Utensils },
-                        { id: 'movement', label: 'Movement', icon: Dumbbell }
+                        { id: 'guide', label: 'Phase Guide', icon: Sparkles },
+                        { id: 'diet', label: 'Diet', icon: Utensils },
+                        { id: 'exercise', label: 'Exercise', icon: Dumbbell }
                     ].map(tab => {
                         const isActive = activeTab === tab.id;
                         return (
@@ -338,8 +397,8 @@ export default function DetailedPlanPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={cn(
-                                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold transition-all",
-                                    isActive ? "bg-rove-charcoal text-white shadow-md" : "text-rove-stone hover:bg-white/50"
+                                    "flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300",
+                                    isActive ? "bg-white text-rove-charcoal shadow-md" : "text-rove-charcoal/60 hover:bg-white/20"
                                 )}
                             >
                                 <tab.icon className="w-4 h-4" />
@@ -350,42 +409,74 @@ export default function DetailedPlanPage() {
                 </div>
 
                 <AnimatePresence mode="wait">
-                    {/* OVERVIEW TAB */}
-                    {activeTab === 'overview' && (
+
+                    {/* PHASE GUIDE TAB (Science + Rituals) */}
+                    {activeTab === 'guide' && (
                         <motion.div
-                            key="overview"
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                            key="guide"
+                            initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                             className="space-y-6"
                         >
-                            <MacroVisualizer nutrition={data.nutrition} biometrics={data.biometrics} />
+                            {/* Hero Focus Card */}
+                            <div className="p-8 rounded-[2.5rem] bg-[#1a1a1a] text-white relative overflow-hidden shadow-lg text-center">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-rove-gold/10 rounded-full blur-[60px]" />
+                                <Sparkles className="w-10 h-10 text-white/50 mx-auto mb-4 relative z-10" />
+                                <p className="text-white/50 uppercase tracking-widest text-[10px] font-bold mb-2 relative z-10">Current Phase Focus</p>
+                                <h3 className="text-4xl md:text-5xl font-heading mb-4 text-white relative z-10">
+                                    {BP.rituals.focus}
+                                </h3>
+                                <p className="text-white/70 max-w-md mx-auto relative z-10">
+                                    Align your mindset with your biology.
+                                </p>
+                            </div>
 
-                            {/* Hormones Card */}
-                            <BlueprintCard className="bg-gradient-to-br from-rove-charcoal to-gray-900 text-white border-none py-8">
-                                <div className="flex items-start gap-5">
-                                    <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10">
-                                        <SnowIcon className="w-8 h-8 text-rove-cream" />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs font-bold uppercase tracking-widest text-rove-cream/60 mb-2">Hormone Status</div>
-                                        <h3 className="text-2xl font-heading mb-2">{BP.hormones.title}</h3>
-                                        <p className="text-rove-cream/80 leading-relaxed mb-4">{BP.hormones.desc}</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {BP.hormones.symptoms.map((s: string) => (
-                                                <span key={s} className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium backdrop-blur-sm">{s}</span>
-                                            ))}
-                                        </div>
+                            {/* Biology / Science Section */}
+                            <section>
+                                <SectionHeader title="The Science" icon={Beaker} />
+                                <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
+                                    <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4>
+                                    <p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p>
+                                    <p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {BP.hormones.symptoms.map((sym: string) => (
+                                            <div key={sym} className="px-3 py-2 rounded-xl bg-white/50 border border-white/60 text-xs font-bold text-rove-charcoal/70 text-center shadow-sm">
+                                                {sym}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            </BlueprintCard>
+                            </section>
 
-                            {/* Daily Flow Preview */}
-                            <div>
-                                <h3 className="text-lg font-heading text-rove-charcoal mb-4 ml-2">Today's Flow</h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {BP.daily_flow.map((d: any) => (
-                                        <div key={d.time} className="p-4 rounded-xl bg-white border border-rove-stone/10">
-                                            <div className="text-[10px] font-bold uppercase text-rove-stone mb-1">{d.time}</div>
-                                            <div className="text-xs font-medium text-rove-charcoal">{d.activity.split('→')[0]}...</div>
+                            <section>
+                                <SectionHeader title="Mind & Rituals" icon={Brain} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {BP.rituals.practices.map((practice: any, i: number) => (
+                                        <div key={i} className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex items-center gap-4 hover:bg-white/60 transition-all">
+                                            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-rove-charcoal">
+                                                <Sparkles className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-heading text-lg text-rove-charcoal">{practice.title}</h4>
+                                                <p className="text-sm text-rove-stone">{practice.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <div className="mt-4">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {BP.rituals.symptom_relief.map((item: any, i: number) => (
+                                        <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm">
+                                            <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">
+                                                For {item.symptom}
+                                            </div>
+                                            <div className="text-base font-heading text-emerald-900 flex items-center gap-2">
+                                                <Leaf className="w-4 h-4 text-emerald-600" />
+                                                {item.remedy}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -393,119 +484,126 @@ export default function DetailedPlanPage() {
                         </motion.div>
                     )}
 
-                    {/* NUTRITION TAB */}
-                    {activeTab === 'nutrition' && (
+                    {/* DIET TAB (Includes Calorie Tracker) */}
+                    {activeTab === 'diet' && (
                         <motion.div
-                            key="nutrition"
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                            className="space-y-8"
+                            key="diet"
+                            initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                            className="space-y-6"
                         >
+                            {/* Macro Visualizer (Custom Glass Card) */}
+                            <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm">
+                                <MacroVisualizer nutrition={data.nutrition} biometrics={data.biometrics} />
+                            </div>
+
                             {/* Diet Architecture */}
                             <section>
                                 <SectionHeader title="Dietary Architecture" icon={Utensils} />
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                                    {BP.diet.core_needs.map((n: any) => {
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+                                    {BP.diet.core_needs.map((n: any, i: number) => {
                                         const Icon = typeof n.icon === 'string' ? dIcon(n.icon) : n.icon;
                                         return (
-                                            <BlueprintCard key={n.id} className="p-4 flex flex-col items-center text-center gap-2 hover:shadow-md h-full">
+                                            <div key={n.id || i} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex flex-col items-center text-center gap-2 hover:shadow-md aspect-square justify-center">
                                                 <div className="p-2 bg-rove-green/10 text-rove-green rounded-full mb-1"><Icon className="w-5 h-5" /></div>
-                                                <div className="font-heading text-rove-charcoal text-sm">{n.title}</div>
-                                                <div className="text-[10px] text-rove-stone uppercase tracking-wide opacity-80">{n.desc}</div>
-                                            </BlueprintCard>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="space-y-4 mb-8">
-                                    <h3 className="text-lg font-heading text-rove-charcoal ml-1">Ideal Meals</h3>
-                                    {BP.diet.ideal_meals.map((meal: any, i: number) => {
-                                        const Icon = typeof meal.icon === 'string' ? dIcon(meal.icon) : meal.icon;
-                                        return (
-                                            <div key={i} className="flex gap-4 p-4 rounded-xl bg-white border border-rove-stone/10 hover:border-rove-charcoal/20 transition-colors">
-                                                <div className="flex flex-col items-center">
-                                                    <div className="p-2 bg-rove-cream rounded-full"><Icon className="w-5 h-5 text-rove-charcoal" /></div>
-                                                    <div className="h-full w-px bg-rove-stone/20 mt-2" />
-                                                </div>
-                                                <div className="pb-2 w-full">
-                                                    <div className="flex items-baseline justify-between mb-2">
-                                                        <span className="text-sm font-heading text-rove-charcoal text-lg">{meal.title}</span>
-                                                        <h4 className="font-bold text-xs uppercase tracking-wide text-rove-stone bg-rove-stone/5 px-2 py-1 rounded-md">{meal.time}</h4>
-                                                    </div>
-                                                    <ul className="text-sm text-rove-stone space-y-2">
-                                                        {meal.items.map((item: string) => <li key={item} className="flex items-center gap-3"><div className="w-1.5 h-1.5 bg-rove-green rounded-full flex-shrink-0" />{item}</li>)}
-                                                    </ul>
-                                                </div>
+                                                <div className="font-heading text-rove-charcoal text-sm leading-tight">{n.title}</div>
+                                                <div className="text-[9px] text-rove-stone uppercase tracking-wide opacity-80">{n.desc}</div>
                                             </div>
                                         );
                                     })}
                                 </div>
 
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <BlueprintCard className="bg-rove-green/5 border-rove-green/10">
-                                        <div className="flex items-center gap-2 mb-4 text-rove-green font-bold uppercase text-xs tracking-widest">
+                                <div className="space-y-4 mb-8">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Ideal Meals</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {BP.diet.ideal_meals.map((meal: any, i: number) => {
+                                            const Icon = typeof meal.icon === 'string' ? dIcon(meal.icon) : meal.icon;
+                                            return (
+                                                <div key={i} className="flex gap-4 p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 shadow-sm">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="p-2 bg-white rounded-full shadow-sm"><Icon className="w-5 h-5 text-rove-charcoal" /></div>
+                                                        <div className="h-full w-px bg-rove-stone/10 mt-2" />
+                                                    </div>
+                                                    <div className="pb-1 w-full">
+                                                        <div className="flex items-baseline justify-between mb-2">
+                                                            <span className="font-heading text-rove-charcoal text-lg">{meal.title}</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-wide text-rove-stone bg-white px-2 py-1 rounded-full border border-gray-100">{meal.time}</span>
+                                                        </div>
+                                                        <ul className="text-sm text-rove-stone space-y-1.5">
+                                                            {meal.items.map((item: string) => <li key={item} className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-rove-green rounded-full flex-shrink-0" />{item}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="p-5 rounded-[1.5rem] bg-emerald-50/60 backdrop-blur-xl border border-emerald-100 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-4 text-emerald-700 font-bold uppercase text-xs tracking-widest">
                                             <Heart className="w-4 h-4" /> Relief & Support
                                         </div>
                                         <ul className="space-y-3">
                                             {BP.diet.cramp_relief.map((item: string) => (
-                                                <li key={item} className="flex items-center gap-3 text-sm text-rove-charcoal">
-                                                    <CheckCircle2 className="w-4 h-4 text-rove-green flex-shrink-0" /> {item}
+                                                <li key={item} className="flex items-center gap-3 text-sm text-emerald-900">
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> {item}
                                                 </li>
                                             ))}
                                         </ul>
-                                    </BlueprintCard>
+                                    </div>
 
-                                    <BlueprintCard className="bg-red-50/50 border-red-100">
-                                        <div className="flex items-center gap-2 mb-4 text-red-500 font-bold uppercase text-xs tracking-widest">
+                                    <div className="p-5 rounded-[1.5rem] bg-rose-50/60 backdrop-blur-xl border border-rose-100 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-4 text-rose-700 font-bold uppercase text-xs tracking-widest">
                                             <Ban className="w-4 h-4" /> Avoid Now
                                         </div>
                                         <ul className="space-y-3">
                                             {BP.diet.avoid.map((item: string) => (
-                                                <li key={item} className="flex items-center gap-3 text-sm text-rove-charcoal">
-                                                    <div className="w-1.5 h-1.5 bg-red-300 rounded-full flex-shrink-0" /> {item}
+                                                <li key={item} className="flex items-center gap-3 text-sm text-rose-900">
+                                                    <div className="w-1.5 h-1.5 bg-rose-400 rounded-full flex-shrink-0" /> {item}
                                                 </li>
                                             ))}
                                         </ul>
-                                    </BlueprintCard>
+                                    </div>
                                 </div>
                             </section>
 
                             <section>
                                 <SectionHeader title="Supplement Specs" icon={Pill} />
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {BP.supplements.map((s: any) => (
-                                        <BlueprintCard key={s.name} className="p-4 text-center">
-                                            <div className="font-heading text-rove-charcoal text-sm md:text-lg mb-1">{s.name}</div>
-                                            <div className="text-[10px] md:text-xs bg-rove-charcoal/5 px-2 py-1 rounded-full inline-block mb-2 font-bold text-rove-stone">{s.dose}</div>
-                                            <div className="text-xs text-rove-stone/80 leading-tight">{s.why}</div>
-                                        </BlueprintCard>
+                                        <div key={s.name} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm text-center flex flex-col justify-center">
+                                            <div className="font-heading text-rove-charcoal text-sm md:text-base mb-1">{s.name}</div>
+                                            <div className="text-[10px] bg-white/60 px-2 py-0.5 rounded-full inline-block mx-auto mb-2 font-bold text-rove-stone">{s.dose}</div>
+                                            <div className="text-[10px] text-rove-stone/80 leading-tight">{s.why}</div>
+                                        </div>
                                     ))}
                                 </div>
                             </section>
                         </motion.div>
                     )}
 
-                    {/* MOVEMENT TAB */}
-                    {activeTab === 'movement' && (
+                    {/* EXERCISE TAB */}
+                    {activeTab === 'exercise' && (
                         <motion.div
-                            key="movement"
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                            key="exercise"
+                            initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                             className="space-y-8"
                         >
                             <section>
                                 <SectionHeader title="Movement Plan" icon={Activity} />
-                                <BlueprintCard className="mb-8 border-l-4 border-l-rove-charcoal">
+                                <div className="p-6 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border-l-4 border-l-rove-charcoal/80 border-t border-r border-b border-white/60 shadow-sm">
                                     <p className="text-rove-charcoal italic text-lg font-heading leading-relaxed">"{BP.exercise.summary}"</p>
-                                </BlueprintCard>
+                                </div>
 
-                                <div className="space-y-4 mb-8">
-                                    <h3 className="text-lg font-heading text-rove-charcoal ml-1">Best Practices</h3>
+                                <div className="space-y-4 mb-8 mt-8">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         {BP.exercise.best.map((ex: any, i: number) => (
-                                            <div key={i} className="p-5 rounded-2xl bg-white border border-rove-stone/10 flex gap-5 items-start shadow-sm hover:shadow-md transition-all">
+                                            <div key={i} className="p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 flex gap-4 items-start shadow-sm hover:shadow-md transition-all">
                                                 <div className="text-3xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
                                                 <div>
                                                     <h4 className="font-bold text-lg text-rove-charcoal mb-1">{ex.title}</h4>
-                                                    <Badge variant="outline" className="text-[10px] mb-2">{ex.time}</Badge>
+                                                    <Badge variant="outline" className="text-[10px] bg-white border-gray-200 mb-2">{ex.time}</Badge>
                                                     <p className="text-sm text-rove-stone leading-relaxed">{ex.desc}</p>
                                                 </div>
                                             </div>
@@ -513,13 +611,13 @@ export default function DetailedPlanPage() {
                                     </div>
                                 </div>
 
-                                <BlueprintCard className="bg-gray-50 border-gray-200">
+                                <div className="p-5 rounded-[1.5rem] bg-gray-50/80 border border-gray-200 backdrop-blur-sm">
                                     <h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
                                         <Ban className="w-4 h-4" /> Avoid High Intensity
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
                                         {BP.exercise.avoid.map((item: string) => (
-                                            <span key={item} className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 shadow-sm line-through decoration-gray-400">
+                                            <span key={item} className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 shadow-sm line-through decoration-gray-400">
                                                 {item}
                                             </span>
                                         ))}
@@ -527,10 +625,11 @@ export default function DetailedPlanPage() {
                                     <p className="text-xs text-gray-400 mt-4 max-w-md">
                                         Listen to your body. If you feel tired, rest.
                                     </p>
-                                </BlueprintCard>
+                                </div>
                             </section>
                         </motion.div>
                     )}
+
                 </AnimatePresence>
 
             </div>

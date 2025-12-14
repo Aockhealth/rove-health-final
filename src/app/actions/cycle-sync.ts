@@ -225,6 +225,11 @@ export async function fetchCycleIntelligence() {
             cramp_relief: content.plan.diet.cramp_relief,
             avoid: content.plan.diet.avoid
         },
+        rituals: {
+            focus: "Phase Focus", // Fallback text
+            practices: getRandomItems(content.rituals, 4),
+            symptom_relief: [] // Empty fallback to prevent crash, can be populated if data exists
+        },
         exercise: {
             summary: content.plan.exercise.summary,
             best: getRandomItems(content.move, 2).map(m => ({ ...m, time: "30 mins" })),
