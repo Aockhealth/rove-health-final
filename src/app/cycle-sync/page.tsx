@@ -75,14 +75,15 @@ function DailyFlowRiver({ data }: { data: any }) {
     const insights = mapItems(data?.insights, "text-rove-charcoal", "bg-white");
     const fuel = mapItems(data?.fuel, "text-rove-green", "bg-rove-green/10");
     const move = mapItems(data?.move, "text-rove-red", "bg-rove-red/10");
+    const rituals = mapItems(data?.rituals, "text-rove-purple", "bg-rove-purple/10"); // New Row
 
     if (!data) return <div className="p-4 text-center text-rove-stone text-xs">Loading flow...</div>;
 
     return (
         <div className="space-y-2 -mx-4 md:-mx-8">
-            <RiverTrack label="Daily Insights" items={insights} direction="left" speed={35} />
             <RiverTrack label="Recommended Fuel" items={fuel} direction="right" speed={40} />
             <RiverTrack label="Movement Plan" items={move} direction="left" speed={38} />
+            <RiverTrack label="Daily Rituals" items={rituals} direction="right" speed={42} />
         </div>
     );
 }
@@ -120,6 +121,120 @@ const phaseThemes: Record<string, any> = {
 };
 
 
+
+// --- Premium Animated Components ---
+
+function HormoneWave({ color = "#fb7185" }: { color?: string }) {
+    return (
+        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
+            <motion.path
+                d="M0 50 Q 25 30, 50 50 T 100 50"
+                fill="none"
+                stroke={color}
+                strokeWidth="8"
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1, pathOffset: [0, 1] }}
+                transition={{
+                    duration: 4,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                    repeatType: "mirror"
+                }}
+            />
+            <motion.path
+                d="M0 50 Q 25 70, 50 50 T 100 50"
+                fill="none"
+                stroke={color}
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="opacity-50"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1, pathOffset: [1, 0] }}
+                transition={{
+                    duration: 5,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                    repeatType: "mirror"
+                }}
+            />
+        </svg>
+    );
+}
+
+function BodyDNA({ color = "#22c55e" }: { color?: string }) {
+    return (
+        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
+            {/* Abstract Helix Links */}
+            {[10, 30, 50, 70, 90].map((y, i) => (
+                <motion.line
+                    key={i}
+                    x1="30" y1={y} x2="70" y2={y}
+                    stroke={color}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: [0.3, 1, 0.3] }}
+                    transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: "easeInOut"
+                    }}
+                />
+            ))}
+            {/* Side Strands */}
+            <motion.path d="M30 0 V100" stroke={color} strokeWidth="4" opacity="0.3" />
+            <motion.path d="M70 0 V100" stroke={color} strokeWidth="4" opacity="0.3" />
+        </svg>
+    );
+}
+
+function MindSynapse({ color = "#374151" }: { color?: string }) {
+    return (
+        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
+            <motion.circle cx="50" cy="50" r="15" fill={color} opacity="0.2"
+                animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <circle cx="50" cy="50" r="8" fill={color} />
+            {[0, 72, 144, 216, 288].map((angle, i) => (
+                <motion.line
+                    key={i}
+                    x1="50" y1="50"
+                    x2={50 + 35 * Math.cos(angle * Math.PI / 180)}
+                    y2={50 + 35 * Math.sin(angle * Math.PI / 180)}
+                    stroke={color}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: [0, 1, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.5, ease: "easeInOut" }}
+                />
+            ))}
+        </svg>
+    );
+}
+
+function GlowHalo({ color = "#f59e0b" }: { color?: string }) {
+    return (
+        <div className="w-full h-full relative flex items-center justify-center opacity-60">
+            <motion.div
+                className="absolute inset-0 rounded-full border-4 border-dashed"
+                style={{ borderColor: color }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+                className="absolute inset-4 rounded-full border-[6px]"
+                style={{ borderColor: color, opacity: 0.3 }}
+                animate={{ scale: [1, 0.9, 1] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <Sun className="w-8 h-8 opacity-50" style={{ color }} />
+        </div>
+    );
+}
 
 export default function CycleSyncDashboard() {
     const [data, setData] = useState<any>(null);
@@ -261,73 +376,88 @@ export default function CycleSyncDashboard() {
                             </div>
                         </motion.div>
 
-                        {/* Daily Flow Animation - Moved Up */}
+                        {/* Daily Flow Animation */}
                         <section className="relative">
-                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-2 px-2">Daily Flow</h3>
+                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4 px-2">Daily Flow</h3>
                             <DailyFlowRiver data={data} />
                         </section>
 
-                        {/* Glassmorphism Cards - Moved Down */}
+                        {/* Today's Snapshot - Premium Style */}
                         <section>
                             <div className="flex justify-between items-baseline mb-4">
                                 <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
-                                <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
+                                <Link href="/cycle-sync/plan">
+                                    <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
+                                </Link>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                                {/* Hormone Status */}
-                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-red">
-                                            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                        </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Hormones - Split Layout */}
+                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                    {/* Category Top-Left */}
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Hormones</span>
                                     </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Hormones</span>
-                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Estrogen Rising</p>
-                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Social skills are peaking today.</p>
+
+                                    {/* Icon Top-Right */}
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-rove-red">
+                                        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                                            <path
+                                                d="M0 50 Q 25 20, 50 50 T 100 50"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="10"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </div>
+
+                                    {/* Content Bottom-Left */}
+                                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.hormones?.title || "Balanced"}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.hormones?.desc || "Levels are stable."}</p>
                                     </div>
                                 </div>
 
-                                {/* Focus */}
-                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-charcoal">
-                                            <Brain className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                        </div>
+                                {/* Mind - Split Layout */}
+                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Mind</span>
                                     </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Mind</span>
-                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Deep Focus</p>
-                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Perfect for complex tasks.</p>
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
+                                        <MindSynapse color="#374151" />
                                     </div>
-                                </div>
-
-                                {/* Body */}
-                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-rove-green">
-                                            <Activity className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Body</span>
-                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">High Recovery</p>
-                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Push your limits in the gym.</p>
+                                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.mind?.title || "Focused"}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.mind?.desc || "Mental clarity is good."}</p>
                                     </div>
                                 </div>
 
-                                {/* Skin */}
-                                <div className="group p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-lg hover:bg-white/60 transition-all cursor-pointer aspect-square flex flex-col justify-between">
-                                    <div className="flex justify-between items-start">
-                                        <div className="p-1.5 md:p-2 bg-white rounded-xl shadow-sm text-amber-500">
-                                            <Sun className="w-4 h-4 md:w-5 md:h-5 stroke-2" />
-                                        </div>
+                                {/* Body - Split Layout */}
+                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Body</span>
                                     </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold uppercase tracking-wider text-rove-stone bg-white/50 px-2 py-0.5 rounded-full mb-1 inline-block">Glow</span>
-                                        <p className="text-sm md:text-base font-heading text-rove-charcoal leading-tight mb-0.5">Radiance Peak</p>
-                                        <p className="text-[9px] md:text-[10px] text-rove-stone leading-snug line-clamp-2">Collagen levels are optimal.</p>
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
+                                        <BodyDNA color="#22c55e" />
+                                    </div>
+                                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.body?.title || "Active"}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.body?.desc || "Energy for movement."}</p>
+                                    </div>
+                                </div>
+
+                                {/* Glow - Split Layout */}
+                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                    <div className="absolute top-4 left-4 z-20">
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Glow</span>
+                                    </div>
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
+                                        <GlowHalo color="#f59e0b" />
+                                    </div>
+                                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.skin?.title || "Radiant"}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.skin?.desc || "Skin is looking healthy."}</p>
                                     </div>
                                 </div>
                             </div>
