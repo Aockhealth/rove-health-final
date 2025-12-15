@@ -312,67 +312,70 @@ export default function CycleSyncDashboard() {
                                 <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
 
                                 {/* Phase Indicator - Animated Orb */}
-                                <motion.div
-                                    className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center"
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ duration: 0.8, ease: "easeOut" }}
-                                >
-                                    {/* Rotating Gradient Ring */}
+                                <Link href="/cycle-sync/tracker">
                                     <motion.div
-                                        className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                        style={{ willChange: "transform" }}
-                                    />
-
-                                    {/* Static Background Circle */}
-                                    <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
-
-                                    {/* Pulsing Glow Effect */}
-                                    <motion.div
-                                        className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
-                                        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                    />
-
-                                    {/* Content */}
-                                    <div className="relative text-center z-10">
-                                        <motion.p
-                                            className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.3 }}
-                                        >
-                                            Current Phase
-                                        </motion.p>
-                                        <motion.h2
-                                            className={`text-2xl md:text-5xl font-heading ${theme.color} mb-2`}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: 0.4 }}
-                                        >
-                                            {currentPhase.name}
-                                        </motion.h2>
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.5 }}
-                                        >
-                                            <Badge variant="secondary" className={`${theme.badge} px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs tracking-wider transition-colors duration-500`}>
-                                                <Sparkles className="w-3 h-3 mr-2 inline-block" />
-                                                {currentPhase.superpower}
-                                            </Badge>
-                                        </motion.div>
-                                    </div>
-
-                                    {/* Day Indicator - Pinned Top */}
-                                    <motion.div
-                                        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
+                                        className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center cursor-pointer group"
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        whileHover={{ scale: 1.05 }}
+                                        transition={{ duration: 0.8, ease: "easeOut" }}
                                     >
-                                        <span className="text-xs font-bold text-rove-charcoal whitespace-nowrap">Day {currentPhase.day}</span>
+                                        {/* Rotating Gradient Ring */}
+                                        <motion.div
+                                            className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                            style={{ willChange: "transform" }}
+                                        />
+
+                                        {/* Static Background Circle */}
+                                        <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
+
+                                        {/* Pulsing Glow Effect */}
+                                        <motion.div
+                                            className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
+                                            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                        />
+
+                                        {/* Content */}
+                                        <div className="relative text-center z-10">
+                                            <motion.p
+                                                className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.3 }}
+                                            >
+                                                Current Phase
+                                            </motion.p>
+                                            <motion.h2
+                                                className={`text-2xl md:text-5xl font-heading ${theme.color} mb-2`}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: 0.4 }}
+                                            >
+                                                {currentPhase.name}
+                                            </motion.h2>
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.5 }}
+                                            >
+                                                <Badge variant="secondary" className={`${theme.badge} px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs tracking-wider transition-colors duration-500`}>
+                                                    <Sparkles className="w-3 h-3 mr-2 inline-block" />
+                                                    {currentPhase.superpower}
+                                                </Badge>
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Day Indicator - Pinned Top */}
+                                        <motion.div
+                                            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
+                                        >
+                                            <span className="text-xs font-bold text-rove-charcoal whitespace-nowrap">Day {currentPhase.day}</span>
+                                        </motion.div>
                                     </motion.div>
-                                </motion.div>
+                                </Link>
                             </div>
                         </motion.div>
 

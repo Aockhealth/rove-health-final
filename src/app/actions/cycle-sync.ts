@@ -13,11 +13,14 @@ function getRandomItems<T>(items: T[], count: number): T[] {
 // 1. DYNAMIC CYCLE TRACKING LOGIC
 function calculatePhase(lastPeriodStart: string, cycleLength: number = 28, periodLength: number = 5) {
     const today = new Date();
-    const start = new Date(lastPeriodStart);
-
-    // Normalize dates to ignore time
+    // Normalize today to avoid time issues
     today.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
+
+    // Parse the start date (assuming YYYY-MM-DD string) as local midnight if possible, 
+    // or just standard parse. Since logic depends on diffDays, standard parse is often UTC.
+    // Let's ensure consistent diffing.
+    const start = new Date(lastPeriodStart);
+    start.setHours(0, 0, 0, 0); // Align to midnight
 
     const diffTime = today.getTime() - start.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -114,7 +117,7 @@ export async function fetchDashboardData() {
 }
 
 export interface LogDailySymptomsPayload {
-    date: Date;
+    date: string; // YYYY-MM-DD
     symptoms: string[];
     isPeriod: boolean;
     flowIntensity?: string;
@@ -135,7 +138,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
             user_id: user.id,
-            date: date.toISOString(), // Postgres will cast this to DATE type (YYYY-MM-DD)
+            date: date, // Passed correctly as YYYY-MM-DD string
             symptoms,
             is_period: isPeriod,
             flow_intensity: flowIntensity || null,
@@ -157,14 +160,14 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
 }
 
 // NEW: Helper to fetch a single day's log for the calendar
-export async function getDailyLog(date: Date) {
+export async function getDailyLog(date: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return null;
 
-    // Format date to YYYY-MM-DD to match the DATE column in Postgres
-    const searchDate = date.toISOString().split('T')[0];
+    // Use date string directly (YYYY-MM-DD)
+    const searchDate = date;
 
     const { data, error } = await supabase
         .from("daily_logs")
@@ -315,20 +318,76 @@ export async function fetchInsightsData() {
     const avgCycle = cycleSettings.cycle_length_days || 28;
     const avgPeriod = cycleSettings.period_length_days || 5;
 
-    // Generate Mock History (Last 6 Cycles)
+    // --- REAL DATA AGGREGATION ---
+    // Fetch last 60 days of logs for symptom analysis
+    const { data: logs } = await supabase
+        .from("daily_logs")
+        .select("date, symptoms, is_period")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false })
+        .limit(60);
+
+    const symptomStats: Record<string, { count: number, lastDate: string }> = {};
+
+    logs?.forEach(log => {
+        if (Array.isArray(log.symptoms)) {
+            log.symptoms.forEach((symptom: string) => {
+                // Skip "Flow" related tags if they are mixed in, or keep them if desired. 
+                // The tracker separates flow but saves it in symptoms too sometimes or purely in tags.
+                // Based on tracker code, they are saved in the same array.
+                if (!symptomStats[symptom]) {
+                    symptomStats[symptom] = { count: 0, lastDate: log.date };
+                }
+                symptomStats[symptom].count++;
+                // Keep most recent date
+                if (new Date(log.date) > new Date(symptomStats[symptom].lastDate)) {
+                    symptomStats[symptom].lastDate = log.date;
+                }
+            });
+        }
+    });
+
+    // Convert to array and sort
+    const topSymptoms = Object.entries(symptomStats)
+        .map(([name, stat]) => {
+            // Estimate phase for the last occurrence
+            const { phase } = calculatePhase(cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+            // Note: properly calculating phase for *past* dates requires passing that date to a calculator.
+            // For now, let's just use the current calculation or a simple fallback to "Variable" if complex.
+            // Actually, let's try to calculate it for the specific date if possible, but calculatePhase uses "today" inside.
+            // We'll skip precise phase calculation for history to avoid complexity for now, or use the current phase if it was recent.
+
+            let severity = "Low";
+            if (stat.count > 5) severity = "High";
+            else if (stat.count > 2) severity = "Medium";
+
+            return {
+                name,
+                count: stat.count,
+                severity,
+                phase: "Variable" // Placeholder as we'd need to refactor calculatePhase to accept a 'targetDate'
+            };
+        })
+        .filter(s => !["Spotting", "Light", "Medium", "Heavy"].includes(s.name)) // Filter out flow if desired, often separate
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5); // Top 5
+
+    // If no data, fallback to some defaults or empty
+    const finalSymptoms = topSymptoms.length > 0 ? topSymptoms : [
+        { name: "No Data Yet", count: 0, severity: "None", phase: "-" }
+    ];
+
+    // Generate Mock History (Last 6 Cycles) - STILL MOCKED as we need full cycle analysis logic
     const history = Array.from({ length: 6 }).map((_, i) => {
-        // Random variation +/- 2 days
         const variation = Math.floor(Math.random() * 5) - 2;
         const length = avgCycle + variation;
         const status = length > 35 || length < 21 ? "Abnormal" : "Normal";
-
         const date = new Date(cycleSettings.last_period_start);
         date.setMonth(date.getMonth() - (i + 1));
-
         return {
             month: date.toLocaleString('default', { month: 'short' }),
             length,
-            periodLength: avgPeriod + (Math.random() > 0.8 ? 1 : 0), // Occasional variation
+            periodLength: avgPeriod + (Math.random() > 0.8 ? 1 : 0),
             status
         };
     }).reverse();
@@ -340,15 +399,53 @@ export async function fetchInsightsData() {
         },
         history,
         lastCycle: history[history.length - 1],
-        symptoms: [
-            { name: "Cramps", count: 12, severity: "High", phase: "Menstrual" },
-            { name: "Bloating", count: 8, severity: "Medium", phase: "Luteal" },
-            { name: "Fatigue", count: 15, severity: "High", phase: "Menstrual" },
-            { name: "Anxiety", count: 5, severity: "Low", phase: "Luteal" }
-        ],
+        symptoms: finalSymptoms,
         vitals: {
             bbt: Array.from({ length: 30 }).map((_, i) => ({ day: i + 1, temp: 36.4 + Math.random() * 0.5 + (i > 14 ? 0.4 : 0) })),
-            weight: { current: 62, trend: "-0.5kg" }
+            weight: { current: 62, trend: "-0.5kg" } // Fixed for now as weight isn't in daily_logs
         }
     };
+}
+
+export async function fetchUserCycleSettings() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data: cycleSettings, error } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching cycle settings:", error);
+        return null;
+    }
+
+    return cycleSettings;
+}
+
+export async function updateLastPeriodDate(newDate: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: "Authentication required" };
+
+    const { error } = await supabase
+        .from("user_cycle_settings")
+        .update({
+            last_period_start: newDate, // Expecting YYYY-MM-DD string
+            updated_at: new Date().toISOString()
+        })
+        .eq("user_id", user.id);
+
+    if (error) {
+        console.error("Error updating period date:", error);
+        return { success: false, error: error.message };
+    }
+
+    // Revalidate paths if needed in a real app (revalidatePath)
+    return { success: true };
 }

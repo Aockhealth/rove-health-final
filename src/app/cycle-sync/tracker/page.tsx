@@ -2,89 +2,162 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight, Check, Droplets } from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Check, Droplets, Calendar as CalendarIcon, Edit2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { logDailySymptoms, getDailyLog } from "@/app/actions/cycle-sync";
+import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate } from "@/app/actions/cycle-sync";
+
+type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
 
 export default function TrackerPage() {
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [currentMonth, setCurrentMonth] = useState(new Date()); // Tracks the month being viewed
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-    const [isPeriodMode, setIsPeriodMode] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    const [cycleSettings, setCycleSettings] = useState<{
+        last_period_start: string;
+        cycle_length_days: number;
+        period_length_days: number;
+    } | null>(null);
+
+    // Edit Cycle Mode
+    const [isEditingCycle, setIsEditingCycle] = useState(false);
+
+    // Derived State
+    const hasFlow = selectedSymptoms.some(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s));
+
+    // Helper to format date as YYYY-MM-DD in local time
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // Fetch Cycle Settings
+    const loadSettings = async () => {
+        try {
+            const settings = await fetchUserCycleSettings();
+            if (settings) {
+                setCycleSettings({
+                    last_period_start: settings.last_period_start,
+                    cycle_length_days: settings.cycle_length_days || 28,
+                    period_length_days: settings.period_length_days || 5
+                });
+            }
+        } catch (err) {
+            console.error("Failed to load cycle settings", err);
+        }
+    };
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
 
     // Fetch existing log when date changes
     useEffect(() => {
         const fetchLog = async () => {
-            const data = await getDailyLog(selectedDate);
+            const data = await getDailyLog(formatDate(selectedDate));
             if (data) {
                 setSelectedSymptoms(data.symptoms || []);
-                setIsPeriodMode(data.is_period || false);
             } else {
                 setSelectedSymptoms([]);
-                setIsPeriodMode(false);
             }
         };
         fetchLog();
     }, [selectedDate]);
 
-    // Validation: Future dates
+    // Validation
     const isFutureDate = (date: Date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         return date > today;
     };
 
-    // UPDATED: Generate week based on selectedDate instead of "today"
-    const generateWeek = () => {
-        const anchorDate = new Date(selectedDate); // Use selectedDate as anchor
-        const week = [];
-        for (let i = -3; i <= 3; i++) {
-            const date = new Date(anchorDate);
-            date.setDate(anchorDate.getDate() + i);
-            week.push(date);
-        }
-        return week;
+    // --- PHASE CALCULATOR ---
+    const getPhaseForDate = (date: Date): Phase => {
+        if (!cycleSettings) return "Menstrual"; // Default
+
+        const start = new Date(cycleSettings.last_period_start);
+        start.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+
+        const diffTime = date.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        let dayInCycle = (diffDays % cycleSettings.cycle_length_days) + 1;
+        if (dayInCycle <= 0) dayInCycle += cycleSettings.cycle_length_days;
+
+        const lutealLength = 14;
+        const estimatedOvulationDay = cycleSettings.cycle_length_days - lutealLength;
+
+        if (dayInCycle <= cycleSettings.period_length_days) return "Menstrual";
+        if (dayInCycle < (estimatedOvulationDay - 1)) return "Follicular";
+        if (dayInCycle <= (estimatedOvulationDay + 1)) return "Ovulatory";
+        return "Luteal";
     };
 
-    const weekDates = generateWeek();
+    const getPhaseStyles = (phase: Phase) => {
+        switch (phase) {
+            case "Menstrual": return "bg-rove-red/10 text-rove-red border-rove-red/20";
+            case "Follicular": return "bg-blue-100/50 text-blue-600 border-blue-200";
+            case "Ovulatory": return "bg-amber-100/50 text-amber-600 border-amber-200";
+            case "Luteal": return "bg-emerald-100/50 text-emerald-600 border-emerald-200";
+            default: return "bg-white text-rove-stone border-transparent";
+        }
+    };
 
-    // NEW: Function to handle previous/next week navigation
-    const navigateWeek = (direction: "prev" | "next") => {
-        const newDate = new Date(selectedDate);
-        newDate.setDate(selectedDate.getDate() + (direction === "next" ? 7 : -7));
-        setSelectedDate(newDate);
+    // --- CALENDAR LOGIC ---
+    const getCalendarDays = () => {
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+
+        const days = [];
+        const startPadding = firstDayOfMonth.getDay(); // 0 is Sunday
+
+        // Padding days (previous month)
+        for (let i = 0; i < startPadding; i++) {
+            const d = new Date(year, month, 0 - i); // Just a placeholder, we won't render functionality for them heavily
+            days.unshift({ date: d, isPadding: true });
+        }
+
+        // Current month days
+        for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
+            days.push({ date: new Date(year, month, i), isPadding: false });
+        }
+
+        return days;
+    };
+
+    const calendarDays = getCalendarDays();
+
+    const nextMonth = () => {
+        const next = new Date(currentMonth);
+        next.setMonth(currentMonth.getMonth() + 1);
+        setCurrentMonth(next);
+    };
+
+    const prevMonth = () => {
+        const prev = new Date(currentMonth);
+        prev.setMonth(currentMonth.getMonth() - 1);
+        setCurrentMonth(prev);
     };
 
     const symptomCategories = [
         {
             name: "Flow",
             items: ["Spotting", "Light", "Medium", "Heavy"],
-            color: "bg-rove-red/10 border-rove-red/20 text-rove-red",
-            visible: isPeriodMode
         },
-        {
-            name: "Mood",
-            items: ["Calm", "Anxious", "Irritable", "Energetic", "Weepy"],
-            color: "bg-rove-red/10 border-rove-red/20 text-rove-red"
-        },
-        {
-            name: "Body",
-            items: ["Bloating", "Cramps", "Headache", "Acne", "Breast Tenderness"],
-            color: "bg-rove-green/10 border-rove-green/20 text-rove-green"
-        },
-        {
-            name: "Digestion",
-            items: ["Normal", "Constipation", "Diarrhea", "Cravings"],
-            color: "bg-amber-500/10 border-amber-500/20 text-amber-600"
-        }
+        { name: "Mood", items: ["Calm", "Anxious", "Irritable", "Energetic", "Weepy"] },
+        { name: "Body", items: ["Bloating", "Cramps", "Headache", "Acne", "Breast Tenderness"] },
+        { name: "Digestion", items: ["Normal", "Constipation", "Diarrhea", "Cravings"] }
     ];
 
-    // Reorder categories if period mode is on
-    const sortedCategories = isPeriodMode
-        ? [...symptomCategories].sort((a, b) => a.name === "Flow" ? -1 : 1)
-        : symptomCategories.filter(c => c.name !== "Flow").concat(symptomCategories.filter(c => c.name === "Flow"));
-
+    const sortedCategories = [...symptomCategories].sort((a, b) => a.name === "Flow" ? -1 : 1);
 
     const toggleSymptom = (symptom: string) => {
         if (selectedSymptoms.includes(symptom)) {
@@ -96,28 +169,36 @@ export default function TrackerPage() {
 
     const handleSave = () => {
         startTransition(async () => {
+            const isPeriod = selectedSymptoms.some(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s));
 
             await logDailySymptoms({
-                date: selectedDate,
+                date: formatDate(selectedDate),
                 symptoms: selectedSymptoms,
-                isPeriod: isPeriodMode,
-                flowIntensity: selectedSymptoms.find(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s)) // optional
+                isPeriod: isPeriod,
+                flowIntensity: selectedSymptoms.find(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s))
             });
-
-            // Show success via toast or UI state in real app
             alert("Entry Saved!");
         });
     }
 
+    const handleUpdatePeriod = () => {
+        startTransition(async () => {
+            // Call server action to update last_period_start used for calculations
+            const result = await updateLastPeriodDate(formatDate(selectedDate));
+            if (result.success) {
+                alert("Cycle Updated! Phases will recalculate.");
+                setIsEditingCycle(false);
+                // Optionally trigger a refresh of the page or context
+                window.location.reload();
+            } else {
+                alert("Error updating cycle: " + result.error);
+            }
+        });
+    };
+
     const containerVariants = {
         hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2
-            }
-        }
+        show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
     };
 
     const itemVariants = {
@@ -127,180 +208,244 @@ export default function TrackerPage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20">
-            {/* Immersive Background Gradient - Optimized */}
+            {/* Background */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className={cn("absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full blur-[80px] animate-pulse transition-colors duration-1000 will-change-[opacity,background-color]", isPeriodMode ? "bg-rove-red/20" : "bg-rove-red/5")} style={{ animationDuration: "8s" }} />
-                <div className="absolute bottom-[10%] left-[-10%] w-[300px] h-[300px] bg-rove-green/5 rounded-full blur-[60px] animate-pulse will-change-[opacity]" style={{ animationDuration: "12s" }} />
+                <div className={cn("absolute top-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full blur-[80px] animate-pulse transition-colors duration-1000", hasFlow ? "bg-rove-red/20" : "bg-rove-red/5")} style={{ animationDuration: "8s" }} />
+                <div className="absolute bottom-[10%] left-[-10%] w-[300px] h-[300px] bg-rove-green/5 rounded-full blur-[60px] animate-pulse" style={{ animationDuration: "12s" }} />
             </div>
 
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
-                className="relative z-10 p-4 md:p-8 space-y-8 pb-32"
+                className="relative z-10 p-4 md:p-8 space-y-8 pb-32 max-w-4xl mx-auto"
             >
-                <motion.header variants={itemVariants} className="flex justify-between items-center">
+                <motion.header variants={itemVariants} className="flex justify-between items-end">
                     <div>
-                        <h1 className="font-heading text-3xl text-rove-charcoal mb-1">Log Symptoms</h1>
-                        <p className="text-rove-stone text-sm">Track your daily rhythm.</p>
+                        <h1 className="font-heading text-3xl text-rove-charcoal mb-1">Tracker</h1>
+                        <p className="text-rove-stone text-sm">Log your daily rhythm.</p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md text-rove-charcoal border border-white/50 flex items-center justify-center shadow-sm">
-                        <Droplets className="w-5 h-5" />
-                    </div>
+
+                    <Button
+                        onClick={() => setIsEditingCycle(!isEditingCycle)}
+                        variant="outline"
+                        size="sm"
+                        className={cn("gap-2 border-white/40 bg-white/40 backdrop-blur-md text-rove-stone hover:text-rove-charcoal transition-colors", isEditingCycle && "bg-rove-charcoal text-white border-transparent hover:bg-rove-charcoal hover:text-white")}
+                    >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        {isEditingCycle ? "Cancel Edit" : "Edit Cycle"}
+                    </Button>
                 </motion.header>
 
-                {/* Calendar Strip */}
+                {/* Edit Mode Instructions */}
+                <AnimatePresence>
+                    {isEditingCycle && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="bg-rove-charcoal/5 border border-rove-charcoal/10 rounded-xl p-4 overflow-hidden"
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-rove-charcoal/10 rounded-full">
+                                    <CalendarIcon className="w-4 h-4 text-rove-charcoal" />
+                                </div>
+                                <div className="space-y-2 flex-1">
+                                    <h3 className="text-sm font-bold text-rove-charcoal">Update Period Start Date</h3>
+                                    <p className="text-xs text-rove-stone leading-relaxed">
+                                        Select the correct start date of your last period on the calendar below, then click "Update Start Date". This will recalibrate your entire cycle predictions.
+                                    </p>
+                                    <Button
+                                        onClick={handleUpdatePeriod}
+                                        size="sm"
+                                        disabled={isPending}
+                                        className="bg-rove-charcoal text-white rounded-full text-xs h-8 px-4"
+                                    >
+                                        {isPending ? "Updating..." : "Update Start Date to Selected"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* MONTHLY CALENDAR */}
                 <motion.div
                     variants={itemVariants}
-                    className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/40 shadow-sm p-4"
+                    className={cn(
+                        "bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-lg p-6 transition-all duration-300",
+                        isEditingCycle && "ring-2 ring-rove-charcoal/10 shadow-xl"
+                    )}
                 >
-                    <div className="flex justify-between items-center mb-4 px-2">
-                        <h2 className="font-heading text-lg text-rove-charcoal">
-                            {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="font-heading text-2xl text-rove-charcoal tracking-wide">
+                            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                         </h2>
-                        {/* UPDATED: Buttons now use navigateWeek */}
-                        <div className="flex gap-1">
-                            <Button
-                                onClick={() => navigateWeek("prev")}
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 rounded-full hover:bg-white/50"
-                            >
+                        <div className="flex gap-2">
+                            <Button onClick={prevMonth} size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-white/50 hover:bg-white shadow-sm border border-white/50">
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
-                            <Button
-                                onClick={() => navigateWeek("next")}
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 rounded-full hover:bg-white/50"
-                            >
+                            <Button onClick={nextMonth} size="icon" variant="ghost" className="h-9 w-9 rounded-full bg-white/50 hover:bg-white shadow-sm border border-white/50">
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
-                    <div className="flex justify-between gap-2 overflow-x-auto pb-2 no-scrollbar">
-                        {weekDates.map((date, i) => {
+
+                    {/* Days Header */}
+                    <div className="grid grid-cols-7 mb-2 text-center">
+                        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                            <div key={d} className="text-[11px] font-bold uppercase tracking-widest text-rove-stone/60 py-2">
+                                {d}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-y-3 gap-x-0">
+                        {calendarDays.map((dayItem, i) => {
+                            // Render empty slot for padding but keep layout consistent
+                            if (dayItem.isPadding) return <div key={i} className="" />;
+
+                            const date = dayItem.date;
                             const isSelected = date.toDateString() === selectedDate.toDateString();
                             const isToday = date.toDateString() === new Date().toDateString();
-
                             const isFuture = isFutureDate(date);
+                            const phase = getPhaseForDate(date);
+
+                            // --- STRIP LOGIC ---
+                            // Check neighbors to create continuous strip effect
+                            // Only connect if same phase AND within same row (week)
+
+                            const prevItem = calendarDays[i - 1];
+                            const nextItem = calendarDays[i + 1];
+
+                            // Check previous
+                            const isStartOfRow = i % 7 === 0;
+                            const samePhaseAsPrev = prevItem && !prevItem.isPadding && getPhaseForDate(prevItem.date) === phase;
+                            const connectLeft = samePhaseAsPrev && !isStartOfRow;
+
+                            // Check next
+                            const isEndOfRow = (i + 1) % 7 === 0;
+                            const samePhaseAsNext = nextItem && !nextItem.isPadding && getPhaseForDate(nextItem.date) === phase;
+                            const connectRight = samePhaseAsNext && !isEndOfRow;
+
+                            // Determine Radius classes
+                            const roundedClass = cn(
+                                connectLeft ? "rounded-l-none" : "rounded-l-2xl",
+                                connectRight ? "rounded-r-none" : "rounded-r-2xl"
+                            );
+
+                            // Pastel Phase Colors (Solid fills for strips)
+                            const getStripColor = (p: Phase) => {
+                                switch (p) {
+                                    case "Menstrual": return "bg-[#FFD6D6]"; // Soft Pink
+                                    case "Follicular": return "bg-[#E2F0D9]"; // Soft Sage/Green
+                                    case "Ovulatory": return "bg-[#FFF4C3]"; // Soft Gold/Yellow
+                                    case "Luteal": return "bg-[#FAE8D2]"; // Soft Beige/Peach
+                                    default: return "bg-gray-50";
+                                }
+                            };
+
+                            const stripColor = getStripColor(phase);
+
+                            // In edit mode, we allow selecting past dates freely
+                            const isDisabled = isEditingCycle ? false : isFuture;
+
                             return (
-                                <motion.button
-                                    key={i}
-                                    onClick={() => !isFuture && setSelectedDate(date)}
-                                    disabled={isFuture}
-                                    whileTap={!isFuture ? { scale: 0.9 } : {}}
-                                    whileHover={!isFuture ? { scale: 1.05 } : {}}
-                                    className={cn(
-                                        "flex flex-col items-center justify-center min-w-[3.5rem] h-16 rounded-2xl transition-all border",
-                                        isSelected
-                                            ? "bg-rove-charcoal text-white border-rove-charcoal shadow-lg shadow-rove-charcoal/20"
-                                            : isFuture
-                                                ? "bg-gray-100 text-gray-300 border-transparent cursor-not-allowed"
-                                                : "bg-white/50 border-white/50 text-rove-stone hover:bg-white"
-                                    )}
-                                >
-                                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1)}</span>
-                                    <span className={cn("text-xl font-heading", isSelected ? "text-white" : "text-rove-charcoal")}>
-                                        {date.getDate()}
-                                    </span>
-                                    {isToday && !isSelected && (
-                                        <span className="w-1 h-1 rounded-full bg-rove-red mt-1" />
-                                    )}
-                                </motion.button>
+                                <div key={i} className="relative w-full">
+                                    <motion.button
+                                        onClick={() => !isDisabled && setSelectedDate(date)}
+                                        disabled={isDisabled}
+                                        layout
+                                        className={cn(
+                                            "relative w-full aspect-square flex items-center justify-center transition-all focus:outline-none",
+                                            stripColor,
+                                            roundedClass,
+                                            isDisabled && "opacity-30 cursor-not-allowed grayscale bg-gray-100"
+                                        )}
+                                        whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                                    >
+                                        {/* Selection Circle Overlay */}
+                                        <div className={cn(
+                                            "w-9 h-9 rounded-full flex items-center justify-center z-10 transition-all",
+                                            isSelected
+                                                ? "bg-white text-rove-charcoal shadow-md scale-110 font-bold"
+                                                : "text-rove-charcoal/80"
+                                        )}>
+                                            <span className="text-sm font-heading">
+                                                {date.getDate()}
+                                            </span>
+                                        </div>
+
+                                        {/* Today Indicator (Small Dot below number) */}
+                                        {isToday && !isSelected && (
+                                            <div className="absolute bottom-1.5 w-1 h-1 rounded-full bg-rove-red/70" />
+                                        )}
+
+                                        {/* Label (Optional - hidden for cleaner aesthetic like screenshot) */}
+                                    </motion.button>
+                                </div>
                             );
                         })}
                     </div>
                 </motion.div>
 
-                {/* Period Toggle */}
-                <motion.div
-                    variants={itemVariants}
-                    className={cn(
-                        "relative overflow-hidden rounded-[2rem] border transition-all duration-500 cursor-pointer group",
-                        isPeriodMode
-                            ? "bg-gradient-to-r from-rove-red/10 to-rove-red/5 border-rove-red/20 shadow-[0_8px_32px_rgba(220,38,38,0.1)]"
-                            : "bg-white/30 border-white/40 hover:bg-white/40 shadow-sm"
-                    )}
-                    onClick={() => setIsPeriodMode(!isPeriodMode)}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    {isPeriodMode && (
-                        <div className="absolute inset-0 bg-rove-red/5 blur-xl" />
-                    )}
-
-                    <div className="relative z-10 flex items-center justify-between p-1.5 pl-5">
-                        <div className="flex flex-col">
-                            <span className={cn(
-                                "text-[10px] uppercase tracking-[0.2em] font-bold mb-0.5 transition-colors",
-                                isPeriodMode ? "text-rove-red/60" : "text-rove-charcoal/40"
-                            )}>
-                                Status
-                            </span>
-                            <span className={cn(
-                                "font-heading text-lg transition-colors flex items-center gap-2",
-                                isPeriodMode ? "text-rove-red" : "text-rove-charcoal"
-                            )}>
-                                {isPeriodMode ? "Period Started" : "Log Period"}
-                                {isPeriodMode && <span className="flex h-2 w-2 rounded-full bg-rove-red animate-pulse" />}
-                            </span>
+                {/* --- TRACKING TOOLS (Hidden in Edit Mode) --- */}
+                {!isEditingCycle && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="space-y-8"
+                    >
+                        {/* Symptom Tags */}
+                        <div className="space-y-6">
+                            {sortedCategories.map((category) => (
+                                <motion.section key={category.name} variants={itemVariants} layout>
+                                    <h3 className="font-heading text-lg text-rove-charcoal mb-4 ml-1">{category.name}</h3>
+                                    <div className="flex flex-wrap gap-2 sm:gap-3">
+                                        {category.items.map((item) => {
+                                            const isActive = selectedSymptoms.includes(item);
+                                            return (
+                                                <motion.button
+                                                    key={item}
+                                                    onClick={() => toggleSymptom(item)}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    className={cn(
+                                                        "px-5 py-3 rounded-2xl text-sm font-medium border transition-all flex items-center gap-2",
+                                                        isActive
+                                                            ? "bg-rove-charcoal text-white border-rove-charcoal shadow-lg shadow-rove-charcoal/10"
+                                                            : "bg-white/40 text-rove-charcoal/70 border-white/50 hover:bg-white hover:border-white shadow-sm"
+                                                    )}
+                                                >
+                                                    {isActive && (
+                                                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        </motion.span>
+                                                    )}
+                                                    {item}
+                                                </motion.button>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.section>
+                            ))}
                         </div>
 
-                        <div className={cn(
-                            "h-12 px-6 rounded-[1.5rem] flex items-center gap-2 transition-all duration-500",
-                            isPeriodMode ? "bg-rove-red text-white shadow-lg shadow-rove-red/20" : "bg-white/50 text-rove-charcoal/60"
-                        )}>
-                            <Droplets className={cn("w-4 h-4 transition-transform duration-500", isPeriodMode && "scale-110")} />
-                            <span className="text-xs font-medium tracking-wide">
-                                {isPeriodMode ? "Active" : "Start"}
-                            </span>
+                        {/* Save Block */}
+                        <div className="pt-8 flex justify-center">
+                            <Button
+                                onClick={handleSave}
+                                size="lg"
+                                disabled={isPending || isFutureDate(selectedDate)}
+                                className="w-full max-w-sm rounded-full h-14 text-lg font-heading bg-rove-charcoal text-white shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1"
+                            >
+                                {isPending ? "Saving Log..." : "Save Today's Log"}
+                            </Button>
                         </div>
-                    </div>
-                </motion.div>
-
-                {/* Symptom Logging */}
-                <div className="space-y-6">
-                    {sortedCategories.map((category, idx) => (
-                        <motion.section
-                            key={category.name}
-                            variants={itemVariants}
-                            layout // Animate layout changes when reordering
-                        >
-                            <h3 className="font-heading text-lg text-rove-charcoal mb-3 px-2">{category.name}</h3>
-                            <div className="flex flex-wrap gap-3">
-                                {category.items.map((item) => {
-                                    const isActive = selectedSymptoms.includes(item);
-                                    return (
-                                        <motion.button
-                                            key={item}
-                                            onClick={() => toggleSymptom(item)}
-                                            whileTap={{ scale: 0.9 }}
-                                            whileHover={{ scale: 1.05, y: -2 }}
-                                            className={cn(
-                                                "px-5 py-2.5 rounded-[1.5rem] text-sm font-medium border transition-all flex items-center gap-2 shadow-sm backdrop-blur-sm",
-                                                isActive
-                                                    ? "bg-rove-charcoal text-white border-rove-charcoal shadow-md"
-                                                    : "bg-white/60 text-rove-charcoal/80 border-white/60 hover:bg-white hover:border-white"
-                                            )}
-                                        >
-                                            {isActive && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}><Check className="w-3 h-3" /></motion.div>}
-                                            {item}
-                                        </motion.button>
-                                    );
-                                })}
-                            </div>
-                        </motion.section>
-                    ))}
-                </div>
-
-                {/* Save Button */}
-                <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/90 to-transparent md:static md:bg-none md:p-0 z-20">
-                    <motion.div variants={itemVariants} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button onClick={handleSave} size="lg" className="w-full max-w-md mx-auto rounded-full h-14 text-lg font-heading shadow-xl shadow-rove-charcoal/20 bg-rove-charcoal text-white hover:bg-rove-charcoal/90 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isPending || isFutureDate(selectedDate)}>
-                            {isFutureDate(selectedDate) ? "Future Date Locked" : (isPending ? "Saving..." : "Save Daily Log")}
-                        </Button>
                     </motion.div>
-                </div>
+                )}
             </motion.div>
         </div>
     );
