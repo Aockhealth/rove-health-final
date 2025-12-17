@@ -12,7 +12,7 @@ function getRandomItems<T>(items: T[], count: number): T[] {
 
 /**
  * Dynamic Cycle Tracking Logic
- * Calculates the current phase based on the last period start date.
+ * Calculates the current phase based on the target date and last period start.
  */
 function calculatePhase(
     targetDate: Date,
@@ -40,14 +40,12 @@ function calculatePhase(
     return { phase: "Luteal", day: dayInCycle };
 }
 
+
 // --- AI ACTIONS ---
 
 /**
  * Generates a scientific and empathetic insight using Groq LLM (llama-3.3-70b-versatile).
- * Securely handled via Server Action using native fetch.
  */
-// src/app/actions/cycle-sync.ts
-
 export async function generatePhaseAIInsight(phase: string, symptoms: string[]) {
     const apiKey = "REDACTED_API_KEY";
     
@@ -60,18 +58,17 @@ export async function generatePhaseAIInsight(phase: string, symptoms: string[]) 
             },
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
-                response_format: { type: "json_object" }, // Forces JSON output
+                response_format: { type: "json_object" }, 
                 messages: [
                     {
                         role: "system",
-                        content: `You are a menstrual health expert. Analyze the user's current phase and their specific symptoms to provide a personalized health report in JSON format.
+                        content: `You are a menstrual health expert. Analyze the user's current phase and symptoms to provide a personalized health report in JSON format.
                         
                         The JSON must contain:
-                        1. "insight": A 2-sentence empathetic scientific explanation of WHY they feel these specific symptoms in this phase.
-                        2. "moods": Array of 2 strings representing the emotional state based on symptoms.
-                        3. "focus": Array of 3 strings representing specific activities to help with their symptoms.
+                        1. "insight": A 2-sentence empathetic scientific explanation.
+                        2. "moods": Array of 2 strings representing emotional state.
+                        3. "focus": Array of 3 strings representing helpful activities.
                         
-                        Be highly specific. If they have 'Cramps', mention prostaglandins. If they have 'Bloating', mention progesterone. 
                         JSON structure: {"insight": "", "moods": [], "focus": []}`
                     },
                     {
@@ -85,7 +82,7 @@ export async function generatePhaseAIInsight(phase: string, symptoms: string[]) 
 
         const data = await response.json();
         const content = JSON.parse(data.choices?.[0]?.message?.content);
-        return content; // Returns { insight, moods, focus }
+        return content; 
     } catch (error) {
         console.error("Groq AI Error:", error);
         return null;
@@ -120,6 +117,7 @@ export async function fetchDashboardData() {
 
     if (!cycleSettings) return null;
 
+    // ✅ FIXED: Added new Date() as the first argument
     const { phase, day } = calculatePhase(
         new Date(), 
         cycleSettings.last_period_start, 
@@ -129,26 +127,145 @@ export async function fetchDashboardData() {
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems(content.river, 1)[0] || "Rest • Restore • Reload";
-    const fuel = getRandomItems(content.fuel, 2);
-    const move = getRandomItems(content.move, 2);
-    const rituals = getRandomItems(content.rituals, 2);
-
-    const snapshotSet = getRandomItems(content.snapshot, 1)[0];
-    const snapshot = {
-        hormones: snapshotSet?.hormones || { title: "", desc: "" },
-        mind: snapshotSet?.mind || { title: "", desc: "" },
-        body: snapshotSet?.body || { title: "", desc: "" },
-        skin: snapshotSet?.skin || { title: "" , desc: "" }
-    };
-
+    
     return {
         user: { ...user, name: profile?.full_name || "Rove Member" },
         phase: { name: phase, day, river: riverStr, superpower: "Resilience" },
-        fuel,
-        move,
-        rituals,
-        snapshot,
+        fuel: getRandomItems(content.fuel, 2),
+        move: getRandomItems(content.move, 2),
+        rituals: getRandomItems(content.rituals, 2),
+        snapshot: getRandomItems(content.snapshot, 1)[0],
         tracker_mode: onboarding?.tracker_mode || "menstruation"
+    };
+}
+
+export async function fetchCycleIntelligence() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!cycleSettings) return null;
+
+    // ✅ FIXED: Added new Date() as the first argument
+    const { phase, day } = calculatePhase(
+        new Date(), 
+        cycleSettings.last_period_start, 
+        cycleSettings.cycle_length_days, 
+        cycleSettings.period_length_days
+    );
+
+    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    const snapshotSet = getRandomItems(content.snapshot, 1)[0] || content.snapshot[0];
+
+    const blueprint = {
+        hormones: {
+            ...snapshotSet.hormones,
+            summary: content.plan.hormones.summary,
+            symptoms: content.plan.hormones.symptoms
+        },
+        diet: {
+            core_needs: getRandomItems(content.fuel, 3),
+            ideal_meals: content.plan.diet.ideal_meals,
+            cramp_relief: content.plan.diet.cramp_relief,
+            avoid: content.plan.diet.avoid
+        },
+        rituals: {
+            focus: "Phase Focus",
+            practices: getRandomItems(content.rituals, 4),
+            symptom_relief: [] 
+        },
+        exercise: {
+            summary: content.plan.exercise.summary,
+            best: getRandomItems(content.move, 2).map(m => ({ ...m, time: "30 mins" })),
+            avoid: content.plan.exercise.avoid
+        },
+        supplements: content.plan.supplements,
+        daily_flow: content.plan.daily_flow
+    };
+
+    // Static nutrition/biometrics logic
+    const phaseData: Record<string, any> = {
+        Menstrual: { calories: 1850, estrogen: "Low", reason: "Higher iron needs." },
+        Follicular: { calories: 1950, estrogen: "Rising", reason: "Estrogen supports energy." },
+        Ovulatory: { calories: 2000, estrogen: "Peak", reason: "Peak estrogen helps glycogen." },
+        Luteal: { calories: 2100, estrogen: "Moderate", reason: "Progesterone increases metabolism." }
+    };
+    const currentPhaseData = phaseData[phase] || phaseData.Menstrual;
+
+    return {
+        phase,
+        day,
+        nutrition: { calories: currentPhaseData.calories, hormones: { estrogen: currentPhaseData.estrogen, progesterone: "Varies" } },
+        biometrics: { reason: currentPhaseData.reason },
+        blueprint
+    };
+}
+
+export async function fetchInsightsData() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("last_period_start, cycle_length_days, period_length_days, is_irregular")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!cycleSettings) return null;
+
+    const { data: logs } = await supabase
+        .from("daily_logs")
+        .select("date, symptoms")
+        .eq("user_id", user.id);
+
+    const phaseCounts: Record<string, number> = {
+        "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0
+    };
+
+    const allLoggedSymptoms = new Set<string>();
+
+    if (logs) {
+        logs.forEach((log) => {
+            // ✅ FIXED: Passed log.date as the targetDate
+            const { phase } = calculatePhase(
+                new Date(log.date), 
+                cycleSettings.last_period_start, 
+                cycleSettings.cycle_length_days, 
+                cycleSettings.period_length_days
+            );
+            if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
+            log.symptoms?.forEach((s: string) => allLoggedSymptoms.add(s));
+        });
+    }
+
+    // ✅ FIXED: Added new Date() as the first argument
+    const currentStatus = calculatePhase(
+        new Date(), 
+        cycleSettings.last_period_start, 
+        cycleSettings.cycle_length_days, 
+        cycleSettings.period_length_days
+    );
+
+    return {
+        phase: { name: currentStatus.phase, day: currentStatus.day },
+        averages: {
+            cycle: cycleSettings.cycle_length_days,
+            period: cycleSettings.period_length_days,
+            lastPeriodStart: cycleSettings.last_period_start, 
+            isIrregular: cycleSettings.is_irregular
+        },
+        phaseCounts,
+        symptoms: Array.from(allLoggedSymptoms).map(name => ({
+            name,
+            count: logs?.filter(l => l.symptoms?.includes(name)).length || 0
+        }))
     };
 }
 
@@ -161,21 +278,16 @@ export interface LogDailySymptomsPayload {
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-        return { success: false, error: "User not authenticated" };
-    }
-
-    const { date, symptoms, isPeriod, flowIntensity } = payload;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "User not authenticated" };
 
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
             user_id: user.id,
-            date: date.toISOString(), 
-            symptoms,
-            is_period: isPeriod,
-            flow_intensity: flowIntensity || null,
+            date: payload.date.toISOString(), 
+            symptoms: payload.symptoms,
+            is_period: payload.isPeriod,
+            flow_intensity: payload.flowIntensity || null,
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
@@ -193,83 +305,11 @@ export async function getDailyLog(date: Date) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const searchDate = date.toISOString().split('T')[0];
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("daily_logs")
         .select("*")
         .eq("user_id", user.id)
-        .eq("date", searchDate)
+        .eq("date", date.toISOString().split('T')[0])
         .maybeSingle();
-
-    if (error) return null;
     return data;
-}
-
-export async function fetchInsightsData() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: cycleSettings } = await supabase
-        .from("user_cycle_settings")
-        .select("last_period_start, cycle_length_days, period_length_days, is_irregular")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!cycleSettings) return null;
-
-    const avgCycle = cycleSettings.cycle_length_days || 28;
-    const avgPeriod = cycleSettings.period_length_days || 5;
-
-    const { data: logs } = await supabase
-        .from("daily_logs")
-        .select("date, symptoms")
-        .eq("user_id", user.id);
-
-    const phaseCounts: Record<string, number> = {
-        "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0
-    };
-
-    const allLoggedSymptoms = new Set<string>();
-
-    if (logs && logs.length > 0) {
-        logs.forEach((log) => {
-            const { phase } = calculatePhase(
-                new Date(log.date), 
-                cycleSettings.last_period_start, 
-                avgCycle, 
-                avgPeriod
-            );
-
-            if (phaseCounts[phase] !== undefined) {
-                phaseCounts[phase] += 1;
-            }
-
-            if (Array.isArray(log.symptoms)) {
-                log.symptoms.forEach(s => allLoggedSymptoms.add(s));
-            }
-        });
-    }
-
-    const currentStatus = calculatePhase(
-        new Date(), 
-        cycleSettings.last_period_start, 
-        avgCycle, 
-        avgPeriod
-    );
-
-    return {
-        phase: { name: currentStatus.phase, day: currentStatus.day },
-        averages: {
-            cycle: avgCycle,
-            period: avgPeriod,
-            lastPeriodStart: cycleSettings.last_period_start, 
-            isIrregular: cycleSettings.is_irregular
-        },
-        phaseCounts: phaseCounts,
-        symptoms: Array.from(allLoggedSymptoms).map(name => ({
-            name,
-            count: logs?.filter(l => l.symptoms?.includes(name)).length || 0
-        }))
-    };
 }
