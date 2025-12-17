@@ -121,6 +121,9 @@ export interface LogDailySymptomsPayload {
     symptoms: string[];
     isPeriod: boolean;
     flowIntensity?: string;
+    moods?: string[];
+    medicine?: string[];
+    notes?: string;
 }
 
 // UPDATED: Uses upsert to prevent duplicates
@@ -133,7 +136,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
         return { success: false, error: "User not authenticated" };
     }
 
-    const { date, symptoms, isPeriod, flowIntensity } = payload;
+    const { date, symptoms, isPeriod, flowIntensity, moods, medicine, notes } = payload;
 
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
@@ -142,6 +145,9 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             symptoms,
             is_period: isPeriod,
             flow_intensity: flowIntensity || null,
+            moods: moods || [],
+            medicine: medicine || [],
+            notes: notes || "",
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date' // This matches the unique constraint we created in SQL

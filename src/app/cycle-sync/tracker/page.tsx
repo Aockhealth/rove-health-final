@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight, Check, Droplets, Calendar as CalendarIcon, Edit2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Droplets, Calendar as CalendarIcon, Edit2, Pill, Smile } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate } from "@/app/actions/cycle-sync";
@@ -13,6 +13,10 @@ export default function TrackerPage() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date()); // Tracks the month being viewed
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+    const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+    const [selectedMedicine, setSelectedMedicine] = useState<string[]>([]);
+    const [flowIntensity, setFlowIntensity] = useState<string | null>(null);
+    const [note, setNote] = useState("");
     const [isPending, startTransition] = useTransition();
 
     const [cycleSettings, setCycleSettings] = useState<{
@@ -25,7 +29,7 @@ export default function TrackerPage() {
     const [isEditingCycle, setIsEditingCycle] = useState(false);
 
     // Derived State
-    const hasFlow = selectedSymptoms.some(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s));
+    const hasFlow = !!flowIntensity;
 
     // Helper to format date as YYYY-MM-DD in local time
     const formatDate = (date: Date) => {
@@ -61,8 +65,16 @@ export default function TrackerPage() {
             const data = await getDailyLog(formatDate(selectedDate));
             if (data) {
                 setSelectedSymptoms(data.symptoms || []);
+                setSelectedMoods(data.moods || []);
+                setSelectedMedicine(data.medicine || []);
+                setFlowIntensity(data.flow_intensity || null);
+                setNote(data.notes || "");
             } else {
                 setSelectedSymptoms([]);
+                setSelectedMoods([]);
+                setSelectedMedicine([]);
+                setFlowIntensity(null);
+                setNote("");
             }
         };
         fetchLog();
@@ -147,37 +159,36 @@ export default function TrackerPage() {
         setCurrentMonth(prev);
     };
 
-    const symptomCategories = [
-        {
-            name: "Flow",
-            items: ["Spotting", "Light", "Medium", "Heavy"],
-        },
-        { name: "Mood", items: ["Calm", "Anxious", "Irritable", "Energetic", "Weepy"] },
-        { name: "Body", items: ["Bloating", "Cramps", "Headache", "Acne", "Breast Tenderness"] },
-        { name: "Digestion", items: ["Normal", "Constipation", "Diarrhea", "Cravings"] }
-    ];
+    const flowOptions = ["Spotting", "Low", "Normal", "High", "Heavy"];
+    const symptomOptions = ["Headache", "Cramps", "Bloating", "Acne", "Backache", "Fatigue", "Cravings", "Insomnia", "Nausea"];
+    const moodOptions = ["Normal", "Happy", "Angry", "Anxious", "Sad", "Energetic", "Irritable", "Weepy"];
+    const medicineOptions = ["Painkiller", "Contraceptive", "Supplements", "Other"];
 
-    const sortedCategories = [...symptomCategories].sort((a, b) => a.name === "Flow" ? -1 : 1);
-
-    const toggleSymptom = (symptom: string) => {
-        if (selectedSymptoms.includes(symptom)) {
-            setSelectedSymptoms(selectedSymptoms.filter(s => s !== symptom));
+    const toggleItem = (item: string, list: string[], setList: (l: string[]) => void) => {
+        if (list.includes(item)) {
+            setList(list.filter(i => i !== item));
         } else {
-            setSelectedSymptoms([...selectedSymptoms, symptom]);
+            setList([...list, item]);
         }
     };
 
     const handleSave = () => {
         startTransition(async () => {
-            const isPeriod = selectedSymptoms.some(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s));
-
-            await logDailySymptoms({
+            const result = await logDailySymptoms({
                 date: formatDate(selectedDate),
                 symptoms: selectedSymptoms,
-                isPeriod: isPeriod,
-                flowIntensity: selectedSymptoms.find(s => ["Spotting", "Light", "Medium", "Heavy"].includes(s))
+                moods: selectedMoods,
+                medicine: selectedMedicine,
+                isPeriod: !!flowIntensity,
+                flowIntensity: flowIntensity || undefined,
+                notes: note
             });
-            alert("Entry Saved!");
+
+            if (result.success) {
+                alert("Entry Saved!");
+            } else {
+                alert("Failed to save: " + result.error);
+            }
         });
     }
 
@@ -398,40 +409,122 @@ export default function TrackerPage() {
                         transition={{ delay: 0.2 }}
                         className="space-y-8"
                     >
-                        {/* Symptom Tags */}
-                        <div className="space-y-6">
-                            {sortedCategories.map((category) => (
-                                <motion.section key={category.name} variants={itemVariants} layout>
-                                    <h3 className="font-heading text-lg text-rove-charcoal mb-4 ml-1">{category.name}</h3>
-                                    <div className="flex flex-wrap gap-2 sm:gap-3">
-                                        {category.items.map((item) => {
-                                            const isActive = selectedSymptoms.includes(item);
-                                            return (
-                                                <motion.button
-                                                    key={item}
-                                                    onClick={() => toggleSymptom(item)}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    whileHover={{ scale: 1.02 }}
-                                                    className={cn(
-                                                        "px-5 py-3 rounded-2xl text-sm font-medium border transition-all flex items-center gap-2",
-                                                        isActive
-                                                            ? "bg-rove-charcoal text-white border-rove-charcoal shadow-lg shadow-rove-charcoal/10"
-                                                            : "bg-white/40 text-rove-charcoal/70 border-white/50 hover:bg-white hover:border-white shadow-sm"
-                                                    )}
-                                                >
-                                                    {isActive && (
-                                                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                                                            <Check className="w-3.5 h-3.5" />
-                                                        </motion.span>
-                                                    )}
-                                                    {item}
-                                                </motion.button>
-                                            );
-                                        })}
-                                    </div>
-                                </motion.section>
-                            ))}
-                        </div>
+                        {/* Flow Helper */}
+                        <motion.section variants={itemVariants} className="space-y-4">
+                            <h3 className="font-heading text-lg text-rove-charcoal ml-1">Flow</h3>
+                            <div className="flex flex-wrap gap-3">
+                                {flowOptions.map((f) => {
+                                    const isActive = flowIntensity === f;
+                                    return (
+                                        <button
+                                            key={f}
+                                            onClick={() => setFlowIntensity(isActive ? null : f)}
+                                            className={cn(
+                                                "px-6 py-3 rounded-2xl text-sm font-medium border transition-all flex items-center gap-2",
+                                                isActive
+                                                    ? "bg-rove-red text-white border-rove-red shadow-lg shadow-rove-red/20"
+                                                    : "bg-white/40 text-rove-charcoal/70 border-white/50 hover:bg-white hover:border-white shadow-sm"
+                                            )}
+                                        >
+                                            <Droplets className={cn("w-4 h-4", isActive ? "text-white" : "text-rove-red/50")} />
+                                            {f}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </motion.section>
+
+                        {/* Symptoms */}
+                        <motion.section variants={itemVariants} className="space-y-4">
+                            <h3 className="font-heading text-lg text-rove-charcoal ml-1">Symptoms</h3>
+                            <div className="flex flex-wrap gap-2 text text-sm">
+                                {symptomOptions.map(s => {
+                                    const isActive = selectedSymptoms.includes(s);
+                                    return (
+                                        <button
+                                            key={s}
+                                            onClick={() => toggleItem(s, selectedSymptoms, setSelectedSymptoms)}
+                                            className={cn(
+                                                "px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2",
+                                                isActive
+                                                    ? "bg-rove-charcoal text-white border-rove-charcoal shadow-md"
+                                                    : "bg-white/40 text-rove-stone border-white/50 hover:bg-white"
+                                            )}
+                                        >
+                                            {isActive && <Check className="w-3 h-3" />}
+                                            {s}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </motion.section>
+
+                        {/* Moods */}
+                        <motion.section variants={itemVariants} className="space-y-4">
+                            <h3 className="font-heading text-lg text-rove-charcoal ml-1">Moods</h3>
+                            <div className="flex flex-wrap gap-2 text-sm">
+                                {moodOptions.map(m => {
+                                    const isActive = selectedMoods.includes(m);
+                                    return (
+                                        <button
+                                            key={m}
+                                            onClick={() => toggleItem(m, selectedMoods, setSelectedMoods)}
+                                            className={cn(
+                                                "px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2",
+                                                isActive
+                                                    ? "bg-amber-100 text-amber-900 border-amber-200 shadow-md"
+                                                    : "bg-white/40 text-rove-stone border-white/50 hover:bg-white"
+                                            )}
+                                        >
+                                            {/* Simple visual indicator for mood if needed, user requested icons but text is okay for now */}
+                                            {isActive && <Check className="w-3 h-3" />}
+                                            {m}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </motion.section>
+
+                        {/* Medicine */}
+                        <motion.section variants={itemVariants} className="space-y-4">
+                            <h3 className="font-heading text-lg text-rove-charcoal ml-1">Medicine</h3>
+                            <div className="flex flex-wrap gap-2 text-sm">
+                                {medicineOptions.map(m => {
+                                    const isActive = selectedMedicine.includes(m);
+                                    return (
+                                        <button
+                                            key={m}
+                                            onClick={() => toggleItem(m, selectedMedicine, setSelectedMedicine)}
+                                            className={cn(
+                                                "px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2",
+                                                isActive
+                                                    ? "bg-purple-100 text-purple-900 border-purple-200 shadow-md"
+                                                    : "bg-white/40 text-rove-stone border-white/50 hover:bg-white"
+                                            )}
+                                        >
+                                            {isActive && <Check className="w-3 h-3" />}
+                                            {m}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </motion.section>
+
+                        {/* Notes */}
+                        <motion.section variants={itemVariants} className="space-y-4">
+                            <h3 className="font-heading text-lg text-rove-charcoal ml-1">Note</h3>
+                            <div className="relative">
+                                <textarea
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    placeholder="Add your note here..."
+                                    className="w-full bg-white/40 border border-white/60 rounded-2xl p-4 text-rove-charcoal placeholder:text-rove-stone/50 focus:outline-none focus:ring-2 focus:ring-rove-charcoal/10 focus:bg-white/60 transition-all resize-none h-32 text-sm"
+                                />
+                                <div className="absolute bottom-3 right-3 text-xs text-rove-stone/40">
+                                    {note.length} chars
+                                </div>
+                            </div>
+                        </motion.section>
 
                         {/* Save Block */}
                         <div className="pt-8 flex justify-center">
