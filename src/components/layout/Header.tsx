@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/utils/supabase/supabase-client";
+
 
 
 import { createClient } from "@/utils/supabase/client";
@@ -22,11 +22,13 @@ export default function Header({ user }: { user: any }) {
            router.refresh(); // Refresh server components
        }; */
     const handleSignOut = async () => {
+        const supabase = createClient();
         const { error } = await supabase.auth.signOut();
         if (error) {
             console.error('Sign out error:', error.message); // log if 401 happens
         } else {
-            router.push('/login'); // redirect after sign-out
+            router.replace('/login'); // redirect after sign-out
+            router.refresh();
         }
     };
     return (
@@ -69,7 +71,7 @@ export default function Header({ user }: { user: any }) {
                         <>
                             <Link href="/login" className="hidden sm:flex">
                                 <Button variant="outline" size="sm">
-                                    Sign In
+                                    Log In
                                 </Button>
                             </Link>
                             <Link href="/signup" className="hidden sm:flex">
