@@ -315,7 +315,48 @@ function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     return (
         <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-white/50 text-rove-charcoal rounded-full shadow-sm border border-white/60"><Icon className="w-5 h-5" /></div>
-            <h2 className="text-xl md:text-2xl font-heading text-rove-charcoal">{title}</h2>
+        </div>
+    );
+}
+
+import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
+import { DietHeader } from "@/components/cycle-sync/diet/DietHeader";
+import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
+import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
+import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+
+function RiverTrack({ items, direction = "left", speed = 20, label }: { items: any[], direction?: "left" | "right", speed?: number, label: string }) {
+    // Duplicate items for seamless loop
+    const riverItems = [...items, ...items, ...items, ...items];
+
+    return (
+        <div className="w-full overflow-hidden">
+            <div className="px-4 md:px-8 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70">{label}</span>
+            </div>
+            <motion.div
+                className="flex gap-3 w-max will-change-transform"
+                initial={{ x: direction === "left" ? 0 : "-50%" }}
+                animate={{ x: direction === "left" ? "-50%" : 0 }}
+                transition={{
+                    duration: speed,
+                    ease: "linear",
+                    repeat: Infinity
+                }}
+                style={{ backfaceVisibility: "hidden", WebkitFontSmoothing: "antialiased" }}
+            >
+                {riverItems.map((item, i) => (
+                    <div key={i} className="w-auto min-w-[180px] flex-shrink-0 p-2.5 rounded-[1.25rem] bg-white/40 backdrop-blur-md border border-white/40 shadow-sm flex items-center gap-3 hover:bg-white/60 transition-colors cursor-pointer group transform-gpu">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform", item.bg || "bg-white", item.color)}>
+                            <item.icon className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <h4 className="font-heading text-sm text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
+                            <p className="text-rove-stone text-[9px] whitespace-nowrap">{item.desc}</p>
+                        </div>
+                    </div>
+                ))}
+            </motion.div>
         </div>
     );
 }
@@ -340,6 +381,93 @@ const ICON_MAP: any = {
 
 const dIcon = (name: string) => ICON_MAP[name] || Sparkles;
 
+// Nutrition River Component with Pause on Hover
+function NutritionRiver({ items }: { items: any[] }) {
+    // Duplicate items 4 times for seamless loop
+    const riverItems = [...items, ...items, ...items, ...items];
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <div
+            className="w-full overflow-hidden -mx-4 px-4 py-2"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <motion.div
+                className="flex gap-4 w-max will-change-transform"
+                animate={{ x: "-50%" }}
+                initial={{ x: 0 }}
+                transition={{
+                    duration: 120, // Slower speed (approx 3s per card visibility depending on screen width)
+                    ease: "linear",
+                    repeat: Infinity,
+                }}
+                style={{
+                    animationPlayState: isHovered ? 'paused' : 'running',
+                }}
+            >
+                {riverItems.map((n: any, i: number) => {
+                    const Icon = typeof n.icon === 'string' ? dIcon(n.icon) : n.icon;
+                    return (
+                        <div key={i} className="w-[320px] md:w-[500px] flex-shrink-0 p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex flex-col items-start gap-4 hover:shadow-md transition-all hover:bg-white/60">
+                            <div className="flex w-full items-start gap-4">
+                                <div className="p-4 bg-white rounded-2xl shadow-sm text-rove-charcoal flex-shrink-0">
+                                    <Icon className="w-8 h-8" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="font-heading text-xl text-rove-charcoal truncate">{n.title}</h4>
+                                        <Badge variant="secondary" className="bg-rove-charcoal/5 text-rove-charcoal/60 text-[10px] uppercase font-bold tracking-wider flex-shrink-0">{n.desc}</Badge>
+                                    </div>
+                                    <p className="text-sm text-rove-stone leading-relaxed line-clamp-3">
+                                        <span className="font-bold text-rove-charcoal/80">Mechanism: </span>
+                                        {n.scientific_benefit || `Supports hormonal balance.`}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </motion.div>
+        </div>
+    );
+}
+// Phase Theme Logic - Ported from Home Dashboard
+const phaseThemes: Record<string, any> = {
+    "Menstrual": {
+        color: "text-rose-500", // Soft Rose
+        blob: "bg-rose-200/20",
+        orbRing: "from-rose-300 via-rose-100 to-rose-400",
+        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", // Soft pink glow
+        badge: "bg-rose-50 text-rose-600 border-rose-100",
+        accent: "bg-rose-500"
+    },
+    "Follicular": {
+        color: "text-teal-500", // Fresh Teal/Mint
+        blob: "bg-teal-200/20",
+        orbRing: "from-teal-300 via-teal-100 to-teal-400",
+        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", // Fresh Mint glow
+        badge: "bg-teal-50 text-teal-600 border-teal-100",
+        accent: "bg-teal-500"
+    },
+    "Ovulatory": {
+        color: "text-amber-500", // Champagne Gold
+        blob: "bg-amber-200/20",
+        orbRing: "from-amber-300 via-amber-100 to-amber-400",
+        glow: "shadow-[0_0_40px_rgba(251,191,36,0.2)]", // Golden glow
+        badge: "bg-amber-50 text-amber-600 border-amber-100",
+        accent: "bg-amber-500"
+    },
+    "Luteal": {
+        color: "text-indigo-500", // Calming Indigo/Purple
+        blob: "bg-indigo-200/20",
+        orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
+        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", // Deep calm glow
+        badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        accent: "bg-indigo-500"
+    }
+};
+
 export default function DetailedPlanPage() {
     const [data, setData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
@@ -361,6 +489,7 @@ export default function DetailedPlanPage() {
     // Select Blueprint: Prioritize AI Blueprint, else use Static Fallback
     const phaseName = data.phase || "Menstrual";
     const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+    const theme = phaseThemes[phaseName] || phaseThemes["Menstrual"];
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pb-24">
@@ -418,16 +547,13 @@ export default function DetailedPlanPage() {
                             className="space-y-6"
                         >
                             {/* Hero Focus Card */}
-                            <div className="p-8 rounded-[2.5rem] bg-[#1a1a1a] text-white relative overflow-hidden shadow-lg text-center">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-rove-gold/10 rounded-full blur-[60px]" />
-                                <Sparkles className="w-10 h-10 text-white/50 mx-auto mb-4 relative z-10" />
-                                <p className="text-white/50 uppercase tracking-widest text-[10px] font-bold mb-2 relative z-10">Current Phase Focus</p>
-                                <h3 className="text-4xl md:text-5xl font-heading mb-4 text-white relative z-10">
+                            <div className={cn("p-6 rounded-[2rem] relative overflow-hidden shadow-lg text-center transition-colors duration-500", BP.color)}>
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px]" />
+                                <Sparkles className="w-8 h-8 text-white/70 mx-auto mb-3 relative z-10" />
+                                <p className="text-white/60 uppercase tracking-widest text-[10px] font-bold mb-1 relative z-10">Current Focus</p>
+                                <h3 className="text-2xl md:text-3xl font-heading mb-2 text-white relative z-10">
                                     {BP.rituals.focus}
                                 </h3>
-                                <p className="text-white/70 max-w-md mx-auto relative z-10">
-                                    Align your mindset with your biology.
-                                </p>
                             </div>
 
                             {/* Biology / Science Section */}
@@ -484,88 +610,38 @@ export default function DetailedPlanPage() {
                         </motion.div>
                     )}
 
-                    {/* DIET TAB (Includes Calorie Tracker) */}
+                    {/* DIET TAB (Refreshed UX) */}
                     {activeTab === 'diet' && (
                         <motion.div
                             key="diet"
                             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                            className="space-y-6"
+                            className="space-y-10 md:space-y-14 pb-24"
                         >
-                            {/* Macro Visualizer (Custom Glass Card) */}
-                            <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm">
-                                <MacroVisualizer nutrition={data.nutrition} biometrics={data.biometrics} />
-                            </div>
+                            {/* 1. Phase Header & "Why" Insight */}
+                            {BP.nutrition_guide && (
+                                <DietHeader phase={phaseName} data={BP.nutrition_guide.header} theme={theme} />
+                            )}
 
-                            {/* Diet Architecture */}
-                            <section>
-                                <SectionHeader title="Dietary Architecture" icon={Utensils} />
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-                                    {BP.diet.core_needs.map((n: any, i: number) => {
-                                        const Icon = typeof n.icon === 'string' ? dIcon(n.icon) : n.icon;
-                                        return (
-                                            <div key={n.id || i} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex flex-col items-center text-center gap-2 hover:shadow-md aspect-square justify-center">
-                                                <div className="p-2 bg-rove-green/10 text-rove-green rounded-full mb-1"><Icon className="w-5 h-5" /></div>
-                                                <div className="font-heading text-rove-charcoal text-sm leading-tight">{n.title}</div>
-                                                <div className="text-[9px] text-rove-stone uppercase tracking-wide opacity-80">{n.desc}</div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                            {/* 2. The Symptom Decoder (Top Carousel) */}
+                            {BP.nutrition_guide?.symptom_decoder && (
+                                <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />
+                            )}
 
-                                <div className="space-y-4 mb-8">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Ideal Meals</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {BP.diet.ideal_meals.map((meal: any, i: number) => {
-                                            const Icon = typeof meal.icon === 'string' ? dIcon(meal.icon) : meal.icon;
-                                            return (
-                                                <div key={i} className="flex gap-4 p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 shadow-sm">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="p-2 bg-white rounded-full shadow-sm"><Icon className="w-5 h-5 text-rove-charcoal" /></div>
-                                                        <div className="h-full w-px bg-rove-stone/10 mt-2" />
-                                                    </div>
-                                                    <div className="pb-1 w-full">
-                                                        <div className="flex items-baseline justify-between mb-2">
-                                                            <span className="font-heading text-rove-charcoal text-lg">{meal.title}</span>
-                                                            <span className="text-[10px] font-bold uppercase tracking-wide text-rove-stone bg-white px-2 py-1 rounded-full border border-gray-100">{meal.time}</span>
-                                                        </div>
-                                                        <ul className="text-sm text-rove-stone space-y-1.5">
-                                                            {meal.items.map((item: string) => <li key={item} className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-rove-green rounded-full flex-shrink-0" />{item}</li>)}
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                            {/* 3. The Macro Fuel Gauge (Donut Chart) */}
+                            {BP.nutrition_guide?.macro_fuel && (
+                                <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />
+                            )}
 
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="p-5 rounded-[1.5rem] bg-emerald-50/60 backdrop-blur-xl border border-emerald-100 shadow-sm">
-                                        <div className="flex items-center gap-2 mb-4 text-emerald-700 font-bold uppercase text-xs tracking-widest">
-                                            <Heart className="w-4 h-4" /> Relief & Support
-                                        </div>
-                                        <ul className="space-y-3">
-                                            {BP.diet.cramp_relief.map((item: string) => (
-                                                <li key={item} className="flex items-center gap-3 text-sm text-emerald-900">
-                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" /> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
+                            {/* 4. Focus vs Avoid Cheat Sheet (T-Chart) */}
+                            {BP.nutrition_guide?.cheat_sheet && (
+                                <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />
+                            )}
 
-                                    <div className="p-5 rounded-[1.5rem] bg-rose-50/60 backdrop-blur-xl border border-rose-100 shadow-sm">
-                                        <div className="flex items-center gap-2 mb-4 text-rose-700 font-bold uppercase text-xs tracking-widest">
-                                            <Ban className="w-4 h-4" /> Avoid Now
-                                        </div>
-                                        <ul className="space-y-3">
-                                            {BP.diet.avoid.map((item: string) => (
-                                                <li key={item} className="flex items-center gap-3 text-sm text-rose-900">
-                                                    <div className="w-1.5 h-1.5 bg-rose-400 rounded-full flex-shrink-0" /> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </section>
+                            {/* 5. The AI Chef (Plate Builder) */}
+                            {BP.nutrition_guide?.ai_chef && (
+                                <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />
+                            )}
+
 
                             <section>
                                 <SectionHeader title="Supplement Specs" icon={Pill} />
@@ -633,6 +709,6 @@ export default function DetailedPlanPage() {
                 </AnimatePresence>
 
             </div>
-        </div>
+        </div >
     );
 }

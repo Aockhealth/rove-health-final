@@ -16,8 +16,8 @@ function getRandomItems<T>(items: T[], count: number): T[] {
  */
 function calculatePhase(
     targetDate: Date,
-    lastPeriodStart: string, 
-    cycleLength: number = 28, 
+    lastPeriodStart: string,
+    cycleLength: number = 28,
     periodLength: number = 5
 ) {
     const start = new Date(lastPeriodStart);
@@ -50,7 +50,7 @@ function calculatePhase(
 
 export async function generatePhaseAIInsight(phase: string, symptoms: string[]) {
     const apiKey = "REDACTED_API_KEY";
-    
+
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -121,9 +121,9 @@ export async function fetchDashboardData() {
     if (!cycleSettings) return null;
 
     const { phase, day } = calculatePhase(
-        new Date(), 
-        cycleSettings.last_period_start, 
-        cycleSettings.cycle_length_days, 
+        new Date(),
+        cycleSettings.last_period_start,
+        cycleSettings.cycle_length_days,
         cycleSettings.period_length_days
     );
 
@@ -138,7 +138,7 @@ export async function fetchDashboardData() {
         hormones: snapshotSet?.hormones || { title: "", desc: "" },
         mind: snapshotSet?.mind || { title: "", desc: "" },
         body: snapshotSet?.body || { title: "", desc: "" },
-        skin: snapshotSet?.skin || { title: "" , desc: "" }
+        skin: snapshotSet?.skin || { title: "", desc: "" }
     };
 
     return {
@@ -172,7 +172,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
             user_id: user.id,
-            date: date.toISOString(), 
+            date: date.toISOString(),
             symptoms,
             is_period: isPeriod,
             flow_intensity: flowIntensity || null,
@@ -235,9 +235,9 @@ export async function fetchInsightsData() {
     if (logs && logs.length > 0) {
         logs.forEach((log) => {
             const { phase } = calculatePhase(
-                new Date(log.date), 
-                cycleSettings.last_period_start, 
-                avgCycle, 
+                new Date(log.date),
+                cycleSettings.last_period_start,
+                avgCycle,
                 avgPeriod
             );
 
@@ -252,9 +252,9 @@ export async function fetchInsightsData() {
     }
 
     const currentStatus = calculatePhase(
-        new Date(), 
-        cycleSettings.last_period_start, 
-        avgCycle, 
+        new Date(),
+        cycleSettings.last_period_start,
+        avgCycle,
         avgPeriod
     );
 
@@ -263,7 +263,7 @@ export async function fetchInsightsData() {
         averages: {
             cycle: avgCycle,
             period: avgPeriod,
-            lastPeriodStart: cycleSettings.last_period_start, 
+            lastPeriodStart: cycleSettings.last_period_start,
             isIrregular: cycleSettings.is_irregular
         },
         phaseCounts: phaseCounts,
@@ -271,5 +271,109 @@ export async function fetchInsightsData() {
             name,
             count: logs?.filter(l => l.symptoms?.includes(name)).length || 0
         }))
+    };
+}
+
+export async function fetchCycleIntelligence() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!cycleSettings) return null;
+
+    const { phase, day } = calculatePhase(
+        new Date(),
+        cycleSettings.last_period_start,
+        cycleSettings.cycle_length_days,
+        cycleSettings.period_length_days
+    );
+
+    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+
+    // Nutrition & Biometrics logic based on phase
+    let nutrition = {
+        macros: {
+            protein: { g: 90, pct: 25 },
+            fats: { g: 70, pct: 30 },
+            carbs: { g: 150, pct: 45 }
+        },
+        calories: 1850
+    };
+
+    let biometrics = {
+        reason: "Balanced nutrition for general health."
+    };
+
+    if (phase === "Menstrual") {
+        nutrition = {
+            macros: { protein: { g: 80, pct: 20 }, fats: { g: 80, pct: 40 }, carbs: { g: 160, pct: 40 } },
+            calories: 1750
+        };
+        biometrics.reason = "Focus on iron and warming foods to replenish lost blood and soothe cramps.";
+    } else if (phase === "Follicular") {
+        nutrition = {
+            macros: { protein: { g: 100, pct: 30 }, fats: { g: 60, pct: 25 }, carbs: { g: 200, pct: 45 } },
+            calories: 1900
+        };
+        biometrics.reason = "Higher protein and fresh veggies to support rising estrogen and energy levels.";
+    } else if (phase === "Ovulatory") {
+        nutrition = {
+            macros: { protein: { g: 90, pct: 25 }, fats: { g: 70, pct: 30 }, carbs: { g: 180, pct: 45 } },
+            calories: 2000
+        };
+        biometrics.reason = "Antioxidants and fiber to help process peak hormones and sustain high activity.";
+    } else if (phase === "Luteal") {
+        nutrition = {
+            macros: { protein: { g: 85, pct: 25 }, fats: { g: 75, pct: 35 }, carbs: { g: 170, pct: 40 } },
+            calories: 1850
+        };
+        biometrics.reason = "Complex carbs and magnesium to combat PMS cravings and stabilize mood.";
+    }
+
+    // Map PHASE_CONTENT to the structure expected by the page (BLUEPRINTS format)
+    const blueprint = {
+        color: phase === "Menstrual" ? "bg-rove-red" :
+            phase === "Follicular" ? "bg-rove-peach" :
+                phase === "Ovulatory" ? "bg-rove-charcoal" : "bg-amber-500",
+        hormones: {
+            title: content.snapshot?.[0]?.hormones?.title || "Hormonal State",
+            summary: content.plan?.hormones?.summary || "",
+            desc: content.snapshot?.[0]?.hormones?.desc || "",
+            symptoms: content.plan?.hormones?.symptoms || []
+        },
+        rituals: {
+            focus: content.river?.[0] || "Rest & Restore",
+            practices: content.rituals || [],
+            symptom_relief: [] // Not present in PHASE_CONTENT, default to empty or hardcode if needed
+        },
+        diet: {
+            core_needs: content.fuel?.map((f: any) => ({ ...f, id: f.title })) || [],
+            ideal_meals: content.plan?.diet?.ideal_meals || [],
+            cramp_relief: content.plan?.diet?.cramp_relief || [],
+            avoid: content.plan?.diet?.avoid || []
+        },
+        exercise: {
+            summary: content.plan?.exercise?.summary || "",
+            best: content.move?.map((m: any) => ({ ...m, time: "20-30 mins" })) || [],
+            avoid: content.plan?.exercise?.avoid || []
+        },
+        supplements: content.plan?.supplements || [],
+        daily_flow: content.plan?.daily_flow || [],
+        nutrition_guide: content.nutrition_guide // Pass the new data through
+    };
+
+    return {
+        phase,
+        day,
+        nutrition,
+        biometrics,
+        blueprint: blueprint
     };
 }

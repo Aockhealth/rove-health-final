@@ -1,6 +1,45 @@
 
 export type PhaseContent = {
     river: string[];
+    nutrition_guide?: {
+        header: {
+            title: string;
+            hormone_insight: string;
+            narrative: string;
+            goal: string;
+            color: string;
+        };
+        nutrition_modules: {
+            title: string;
+            goal: string;
+            science: string;
+            key_ingredients: string[];
+            food_sources: { name: string; amount?: string; note?: string }[];
+        }[];
+        symptoms?: {
+            id: string;
+            name: string;
+            cause: string;
+            fix: string;
+            foods: string[];
+            deficiency: string;
+        }[];
+        superpowers: {
+            title: string;
+            desc: string;
+            metabolic_tip: string;
+        };
+        plate_ratios: {
+            protein: number;
+            fat: number;
+            carb: number;
+            veg: number;
+        };
+        quick_guide: {
+            focus: string[];
+            limit: string[];
+        };
+    };
     fuel: {
         title: string;
         desc: string;
@@ -40,91 +79,76 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             "Slow • Soft • Gentle", "Winter • Quiet • Deep", "Release • Renew • Reset",
             "Solitude • Silence • Peace", "Healing • Comfort • Warmth", "Drifting • Dreaming • Being"
         ],
+        nutrition_guide: {
+            header: {
+                title: "Menstrual Phase",
+                hormone_insight: "Progesterone & Estrogen at lowest point.",
+                narrative: "Your lining is shedding, which requires energy and nutrients.",
+                goal: "Replenish iron and warm your body to ease flow.",
+                color: "bg-red-500" // Optional accent
+            },
+            nutrition_modules: [
+                {
+                    title: "The Fatigue Fighters",
+                    goal: "Replenish Blood Loss & Boost Energy",
+                    science: "Menstrual bleeding depletes your iron stores, reducing oxygen flow to muscles and the brain. This is the primary cause of tiredness and brain fog.",
+                    key_ingredients: ["Iron (>70% deficient)", "Vitamin C (Absorption)"],
+                    food_sources: [
+                        { name: "Pumpkin Seeds", amount: "15 mg Iron", note: "Easy snack" },
+                        { name: "Dark Chocolate", amount: "12 mg Iron", note: "Magnesium boost" },
+                        { name: "Daal", amount: "3.3 mg", note: "Daily staple" },
+                        { name: "Spinach (Palak)", amount: "2.7 mg", note: "Cooked is better" },
+                        { name: "Guava", amount: "228 mg Vit C", note: "Absorption booster" },
+                        { name: "Capsicum", amount: "190 mg Vit C", note: "Raw in salad" }
+                    ]
+                },
+                {
+                    title: "The Natural Painkillers",
+                    goal: "Soothe Cramps & Backache",
+                    science: "Cramps are caused by inflammatory chemicals called prostaglandins. Omega-3s block these chemicals, while Magnesium physically relaxes the uterine muscles to stop spasms.",
+                    key_ingredients: ["Magnesium (>60% insufficient)", "Omega-3s"],
+                    food_sources: [
+                        { name: "Pumpkin Seeds", amount: "592 mg Mg", note: "Muscle relaxant powerhouse" },
+                        { name: "Flaxseeds", amount: "392 mg Mg", note: "Double-action pain relief" },
+                        { name: "Dark Chocolate 70%", amount: "228 mg Mg", note: "Mood + muscle support" },
+                        { name: "Walnuts", amount: "9g Omega-3", note: "Anti-inflammatory" },
+                        { name: "Almonds", amount: "270 mg Mg", note: "Easy snacking" }
+                    ]
+                },
+                {
+                    title: "The Mood Stabilizers",
+                    goal: "Combat Low Mood & Irritability",
+                    science: "As estrogen bottoms out, so do your 'happy hormones' (serotonin). Vitamin B6 is essential for the body to synthesize new serotonin to lift your mood.",
+                    key_ingredients: ["Vitamin B6"],
+                    food_sources: [
+                        { name: "Sunflower Seeds", amount: "1.35 mg", note: "Hits daily RDA in 100g" },
+                        { name: "Pistachios", amount: "1.7 mg", note: "Highest nut source" },
+                        { name: "Banana", amount: "0.4 mg", note: "Quick mood snack" },
+                        { name: "Chickpeas (Chole)", amount: "0.5 mg", note: "Sustained energy" }
+                    ]
+                }
+            ],
+            superpowers: {
+                title: "Deep Intuition",
+                desc: "Your connection to your inner self is strongest. Trust your gut.",
+                metabolic_tip: "Your metabolism is at its baseline. You need fewer calories but higher nutrient density (iron/zinc)."
+            },
+            plate_ratios: {
+                protein: 25,
+                fat: 35,
+                carb: 10,
+                veg: 30
+            },
+            quick_guide: {
+                focus: ["Warm Soups", "Cooked Veggies", "Iron-rich grains", "Ginger/Turmeric"],
+                limit: ["Cold Smoothies", "Raw Salads (hard to digest)", "Caffeine", "Sugar"]
+            }
+        },
         fuel: [
-            // VEGAN
-            { title: "Garden Cress (Halim)", desc: "Iron Bomb", icon: "Leaf", category: "vegan", scientific_benefit: "Richest plant source of iron; traditionally used to recover from blood loss." },
-            { title: "Beetroot", desc: "Blood Builder", icon: "Carrot", category: "vegan", scientific_benefit: "High nitrates improve blood flow; betalains support liver detox of hormones." },
-            { title: "Spinach (Palak)", desc: "Iron Refresh", icon: "Leaf", category: "vegan", scientific_benefit: "Essential non-heme iron to combat fatigue from menstruation." },
-            { title: "Black Raisins (Munakka)", desc: "Hemoglobin", icon: "Cherry", category: "vegan", scientific_benefit: "Soaked raisins purify blood and boost hemoglobin levels." },
-            { title: "Ginger", desc: "Pain Killer", icon: "Coffee", category: "vegan", scientific_benefit: "Gingerols inhibit inflammatory prostaglandins, reducing cramp pain." },
-            { title: "Turmeric (Haldi)", desc: "Anti-Inflammatory", icon: "Sun", category: "vegan", scientific_benefit: "Curcumin dramatically lowers CRP (inflammation markers) during menses." },
-            { title: "Dark Chocolate", desc: "Magnesium", icon: "Cookie", category: "vegan", scientific_benefit: "High magnesium content relaxes uterine muscle contractions." },
-            { title: "Sesame Seeds (Til)", desc: "Period Regulator", icon: "Divide", category: "vegan", scientific_benefit: "Lignans help balance hormones; rich in calcium for cramps." },
-            { title: "Jaggery (Gud)", desc: "Iron & Cleanse", icon: "Cookie", category: "vegan", scientific_benefit: "Provides immediate iron and aids in flushing out clots/toxins." },
-            { title: "Curry Leaves", desc: "Folate", icon: "Leaf", category: "vegan", scientific_benefit: "Extremely dense in iron and folate; prevents anemia." },
-            { title: "Fenugreek (Methi)", desc: "Uterine Cleanse", icon: "Leaf", category: "vegan", scientific_benefit: "Helps uterus contract efficiently to expel lining; improves insulin." },
-            { title: "Papaya (Raw/Ripe)", desc: "Flow Regulator", icon: "Apple", category: "vegan", scientific_benefit: "Carotene stimulates estrogen to induce/regulate proper flow." },
-            { title: "Ajwain (Carom)", desc: "Anti-Spasmodic", icon: "Star", category: "vegan", scientific_benefit: "Thymol relieves uterine spasms and bloating instantly." },
-            { title: "Cumin (Jeera)", desc: "Water Retention", icon: "Droplets", category: "vegan", scientific_benefit: "Natural diuretic that reduces period bloating." },
-            { title: "Pumpkin Seeds", desc: "Zinc", icon: "Circle", category: "vegan", scientific_benefit: "Zinc reduces prostaglandin production (less pain)." },
-            { title: "Flax Seeds", desc: "Hormone Mop", icon: "Divide", category: "vegan", scientific_benefit: "Fiber binds to old estrogen to ensure it leaves the body." },
-            { title: "Kidney Beans (Rajma)", desc: "Iron & Fiber", icon: "Bean", category: "vegan", scientific_benefit: "Replenishes iron; fiber stabilizes blood sugar to prevent mood swings." },
-            { title: "Brown Rice", desc: "Serotonin", icon: "Wheat", category: "vegan", scientific_benefit: "Complex carbs boost serotonin levels which drop during menses." },
-            { title: "Sweet Potato", desc: "B6 Boost", icon: "Carrot", category: "vegan", scientific_benefit: "Rich in Vitamin B6 which specifically targets PMS mood drops." },
-            { title: "Walnuts", desc: "Brain Fog", icon: "Nut", category: "vegan", scientific_benefit: "Omega-3s reduce brain inflammation and period pain." },
-            { title: "Amla", desc: "Iron Absorption", icon: "Cherry", category: "vegan", scientific_benefit: "Vitamin C is mandatory to absorb iron from plant sources." },
-            { title: "Moringa", desc: "Multivitamin", icon: "Leaf", category: "vegan", scientific_benefit: "Combats fatigue with high Iron, Vitamin A, and C." },
-            { title: "Buckwheat (Kuttu)", desc: "Magnesium", icon: "Wheat", category: "vegan", scientific_benefit: "Gluten-free grain high in magnesium for cramps." },
-            { title: "Fennel (Saunf)", desc: "Cramp Relief", icon: "Leaf", category: "vegan", scientific_benefit: "Clinically shown to be as effective as ibuprofen for cramps." },
-            { title: "Dates", desc: "Energy", icon: "Cookie", category: "vegan", scientific_benefit: "Quick source of iron and glucose for period fatigue." },
-            { title: "Black Gram (Kala Chana)", desc: "Protein", icon: "Bean", category: "vegan", scientific_benefit: "High protein aids tissue repair of the uterine lining." },
-            { title: "Mustard Greens (Sarson)", desc: "Warming", icon: "Leaf", category: "vegan", scientific_benefit: "Warming nature improves circulation to the pelvic area." },
-            { title: "Almonds", desc: "Vitamin E", icon: "Nut", category: "vegan", scientific_benefit: "Vitamin E reduces the severity of period pain and soreness." },
-            { title: "Chamomile", desc: "Sleep", icon: "Moon", category: "vegan", scientific_benefit: "Increases glycine (muscle relaxant) to help sleep through cramps." },
-            { title: "Pomegranate", desc: "Blood Tonic", icon: "Cherry", category: "vegan", scientific_benefit: "Traditionally used to support healthy blood levels." },
-
-            // VEGETARIAN
-            { title: "Warm Milk", desc: "Relaxant", icon: "Droplets", category: "vegetarian", scientific_benefit: "Calcium and tryptophan aid sleep and reduce muscle tension." },
-            { title: "Ghee", desc: "Lubrication", icon: "Droplets", category: "vegetarian", scientific_benefit: "Essential fatty acids support hormone synthesis and cellular repair." },
-            { title: "Paneer", desc: "Recovery", icon: "Cheese", category: "vegetarian", scientific_benefit: "Casein protein provides slow-release amino acids for overnight repair." },
-            { title: "Edible Gum (Gond)", desc: "Strengthening", icon: "Star", category: "vegetarian", scientific_benefit: "Traditionally used to strengthen the back and uterus." },
-            { title: "Yogurt (Probiotic)", desc: "Estrobolome", icon: "Beaker", category: "vegetarian", scientific_benefit: "Gut bacteria (estrobolome) are crucial for processing hormones." },
-            { title: "Ragi (Finger Millet)", desc: "Calcium", icon: "Wheat", category: "vegetarian", scientific_benefit: "Highest non-dairy calcium source; prevents bone ache during menses." },
-            { title: "Bajra (Pearl Millet)", desc: "Heat", icon: "Sun", category: "vegetarian", scientific_benefit: "Thermal effect keeps the body warm and flow regular." },
-            { title: "Moong Dal", desc: "Light Protein", icon: "Bean", category: "vegetarian", scientific_benefit: "Lowest inflammatory potential; easiest to digest when energy is low." },
-            { title: "Amaranth (Rajgira)", desc: "Iron + Lysine", icon: "Wheat", category: "vegetarian", scientific_benefit: "Lysine helps absorb calcium; iron prevents fatigue." },
-            { title: "Ashwagandha", desc: "Cortisol Control", icon: "Leaf", category: "vegetarian", scientific_benefit: "Lowers cortisol, which can otherwise worsen period pain." },
-            { title: "Masoor Dal", desc: "Iron", icon: "Bean", category: "vegetarian", scientific_benefit: "Red lentils are rich in iron and cook quickly (less effort)." },
-            { title: "Makhana (Fox Nuts)", desc: "Low GI", icon: "Circle", category: "vegetarian", scientific_benefit: "Magnesium-rich snack that doesn't spike insulin." },
-            { title: "Buttermilk (Chaas)", desc: "Cooling/Gut", icon: "CupSoda", category: "vegetarian", scientific_benefit: "Probiotic that settles acidity often triggered during menses." },
-            { title: "Shatavari", desc: "Reproductive Tonic", icon: "Leaf", category: "vegetarian", scientific_benefit: "Specific herb for nourishing female reproductive tissues." },
-            { title: "Nutmeg (Jaiphal)", desc: "Sedative", icon: "Moon", category: "vegetarian", scientific_benefit: "Small amounts act as a natural sleep aid for insomnia." },
-            { title: "Cinnamon", desc: "Flow Control", icon: "Coffee", category: "vegetarian", scientific_benefit: "Helps reduce heavy menstrual bleeding (menorrhagia)." },
-            { title: "Bathua (Chenopodium)", desc: "Blood Purifier", icon: "Leaf", category: "vegetarian", scientific_benefit: "Traditional green used to clear blood and improve flow." },
-            { title: "Colocasia (Arbi)", desc: "Energy", icon: "Carrot", category: "vegetarian", scientific_benefit: "Resistant starch provides sustained energy without crashes." },
-            { title: "Yam (Jimikand)", desc: "Hormone Precursor", icon: "Carrot", category: "vegetarian", scientific_benefit: "Contains diosgenin, which supports progesterone production." },
-            { title: "Sunflower Seeds", desc: "Breast Pain", icon: "Sun", category: "vegetarian", scientific_benefit: "Vitamin E reduces breast tenderness associated with menses." },
-            { title: "Clove", desc: "Numbing", icon: "Star", category: "vegetarian", scientific_benefit: "Eugenol acts as a natural analgesic for pain." },
-            { title: "Wild Rice", desc: "Zinc", icon: "Wheat", category: "vegetarian", scientific_benefit: "Higher zinc content than white rice for skin and immunity." },
-            { title: "Tulsi (Holy Basil)", desc: "Adaptogen", icon: "Leaf", category: "vegetarian", scientific_benefit: "Helps body adapt to the physical stress of menstruation." },
-            { title: "Red Rice", desc: "Antioxidant", icon: "Wheat", category: "vegetarian", scientific_benefit: "Anthocyanins reduce inflammation and cellular stress." },
-            { title: "Parsley/Coriander", desc: "Diuretic", icon: "Leaf", category: "vegetarian", scientific_benefit: "Helps kidneys flush out excess water weight (bloat)." },
-            { title: "Dill Leaves (Suva)", desc: "Flow Regulation", icon: "Leaf", category: "vegetarian", scientific_benefit: "Traditionally used to regulate scanty or irregular flow." },
-            { title: "Dried Apricots", desc: "Concentrated Iron", icon: "Apple", category: "vegetarian", scientific_benefit: "Easy snack to boost iron levels quickly." },
-            { title: "Banana", desc: "Potassium", icon: "Banana", category: "vegetarian", scientific_benefit: "Potassium helps stop muscle cramps and fluid retention." },
-            { title: "Pistachios", desc: "B6", icon: "Nut", category: "vegetarian", scientific_benefit: "Rich in B6 to help with mood stability." },
-            { title: "Oats", desc: "Fiber", icon: "Wheat", category: "vegetarian", scientific_benefit: "Beta-glucan helps clear hormones via the gut." },
-            { title: "Barley Water", desc: "Flush", icon: "Droplets", category: "vegetarian", scientific_benefit: "Reduces water retention and supports kidney function." },
-            { title: "Soaked Almonds", desc: "Nutrients", icon: "Nut", category: "vegetarian", scientific_benefit: "Peeling almonds makes nutrients more bioavailable for digestion." },
-            { title: "Cardamom", desc: "Mood Lifter", icon: "Star", category: "vegetarian", scientific_benefit: "Aromatic compounds help alleviate low mood/depression." },
-            { title: "Besan (Gram Flour)", desc: "Protein", icon: "Wheat", category: "vegetarian", scientific_benefit: "Gluten-free protein source good for PCOS insulin management." },
-            { title: "Peanuts", desc: "Resveratrol", icon: "Nut", category: "vegetarian", scientific_benefit: "Contains resveratrol which helps hormonal balance." },
-            { title: "Sabudana", desc: "Easy Energy", icon: "Circle", category: "vegetarian", scientific_benefit: "Simple starch that is very easy to digest during nausea." },
-            { title: "Semolina (Suji)", desc: "Comfort", icon: "Wheat", category: "vegetarian", scientific_benefit: "Warm, soft texture is comforting for sensitive stomachs." },
-            { title: "Coconut Water", desc: "Electrolytes", icon: "Waves", category: "vegetarian", scientific_benefit: "Replenishes minerals lost through sweat and stress." },
-            { title: "Lemongrass", desc: "Analgesic", icon: "Leaf", category: "vegetarian", scientific_benefit: "Tea reduces pain and bloating." },
-
-            // NON-VEGETARIAN
-            { title: "Bone Broth", desc: "Collagen", icon: "Soup", category: "non_vegetarian", scientific_benefit: "Rich in glycine and collagen for uterine tissue repair." },
-            { title: "Mutton/Lamb", desc: "Heme Iron", icon: "Utensils", category: "non_vegetarian", scientific_benefit: "The most absorbable form of iron to fix menstrual fatigue." },
-            { title: "Chicken Liver", desc: "Superfood", icon: "Sparkles", category: "non_vegetarian", scientific_benefit: "Dense in Vitamin A and Iron for reproductive health." },
-            { title: "Salmon/Fish", desc: "Omega-3", icon: "Fish", category: "non_vegetarian", scientific_benefit: "Potent anti-inflammatory that significantly reduces pain." },
-            { title: "Eggs (Whole)", desc: "Choline", icon: "Egg", category: "non_vegetarian", scientific_benefit: "Choline and fats support hormone synthesis and brain health." },
-            { title: "Sardines", desc: "Calcium", icon: "Fish", category: "non_vegetarian", scientific_benefit: "High calcium content (bones) supports muscle function." },
-            { title: "Chicken Soup", desc: "Immunity", icon: "Soup", category: "non_vegetarian", scientific_benefit: "Contains cysteine which thins mucus and supports immunity." },
-            { title: "Oysters/Shellfish", desc: "Zinc", icon: "Fish", category: "non_vegetarian", scientific_benefit: "Highest natural zinc source; vital for cycle regularity." },
-            { title: "Paya (Trotters)", desc: "Joints", icon: "Soup", category: "non_vegetarian", scientific_benefit: "Collagen and gelatin soothe joints that ache during periods." },
-            { title: "Anchovies", desc: "Omega-3", icon: "Fish", category: "non_vegetarian", scientific_benefit: "Small fish with high omega-3s and low mercury." }
+            { title: "Iron-Rich Sources", desc: "Blood Replenishment", icon: "Droplets", scientific_benefit: "Crucial to replenish hemoglobin lost during menstruation and prevent fatigue." },
+            { title: "Magnesium", desc: "Muscle Relaxation", icon: "Sparkles", scientific_benefit: "Natural muscle relaxant that reduces uterine contractions (cramps) and promotes sleep." },
+            { title: "Omega-3 Fatty Acids", desc: "Anti-Inflammatory", icon: "Fish", scientific_benefit: "Inhibits prostaglandin production to significantly lower inflammation and pain sensitivity." },
+            { title: "Warming Foods", desc: "Circulation", icon: "Soup", scientific_benefit: "Improves pelvic blood flow and prevents stagnation-related clotting and pain." }
         ],
         move: [
             { title: "Yin Yoga", desc: "Stretch", icon: "Moon" },
@@ -205,17 +229,45 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             "Dream • Plan • Initiate", "Spark • Begin • Rise", "Fresh • New • Start",
             "Bloom • Open • Grow", "Energy • Ideas • Action", "Spring • Awakening • Light"
         ],
+        nutrition_guide: {
+            header: {
+                title: "Follicular Phase",
+                hormone_insight: "Estrogen is rising, energy is climbing.",
+                narrative: "Your body is preparing to release an egg. Energy is returning.",
+                goal: "Fuel rising energy with fresh, light, fermented foods.",
+                color: "bg-pink-400"
+            },
+            symptom_decoder: {
+                title: "Follicular Phase",
+                subtitle: "Dream, Plan, Initiate",
+                cards: [
+                    { title: "Restless Energy", condition: "Anxiety", biology: "Estrogen rising rapidly.", fix: "Clean Protein stabilizes blood sugar." },
+                    { title: "Histamine Flare", condition: "Allergies", biology: "Estrogen triggers mast cells.", fix: "Vitamin C to stabilize cells." },
+                    { title: "Sluggish Gut", condition: "Bloat", biology: "Hormone shift.", fix: "Probiotics to support estrobolome." }
+                ]
+            },
+            macro_fuel: {
+                title: "Today's Fuel Mix",
+                protein: 30, fats: 20, carbs: 50
+            },
+            cheat_sheet: {
+                focus: { title: "FOCUS ON", items: ["Sprouted Grains", "Fermented Foods", "Fresh Fruit"] },
+                avoid: { title: "AVOID", items: ["Heavy Fats", "Alcohol", "Processed Food"] }
+            },
+            ai_chef: {
+                prompt: "👩‍🍳 Tap your goal:",
+                options: [
+                    { label: "⚡ Energy", meal_name: "The Power Bowl", ingredients: "Quinoa + Chicken + Kimchi", why: "Sustained energy for rising hormones." },
+                    { label: "🤧 Clear Skin", meal_name: "The Glow Salad", ingredients: "Spinach + Citrus + Salmon", why: "Vitamin C fights histamine." },
+                    { label: "🧠 Focus", meal_name: "Brain Breakfast", ingredients: "Oats + Berries + Walnuts", why: "Complex carbs for ideation." }
+                ]
+            }
+        },
         fuel: [
-            { title: "Fermented Foods", desc: "Gut Health", icon: "Beaker" },
-            { title: "Avocado", desc: "Healthy Fats", icon: "Leaf" },
-            { title: "Oats", desc: "Energy", icon: "Wheat" },
-            { title: "Pumpkin Seeds", desc: "Zinc", icon: "Circle" },
-            { title: "Green Smoothie", desc: "Fresh", icon: "CupSoda" },
-            { title: "Citrus", desc: "Vitamin C", icon: "Sun" },
-            { title: "Sprouts", desc: "Living Food", icon: "Leaf" },
-            { title: "Pomegranate", desc: "Antioxidants", icon: "Cherry" },
-            { title: "Lentils", desc: "Protein", icon: "Bean" },
-            { title: "Chia Pudding", desc: "Omega 3", icon: "Bowl" }
+            { title: "Probiotic Foods", desc: "Gut Health", icon: "Beaker", scientific_benefit: "Optimizes the gut estrobolome to metabolize rising estrogen efficiently." },
+            { title: "Healthy Fats", desc: "Hormone Synthesis", icon: "Leaf", scientific_benefit: "Provides cholesterol, the primary building block for steroid hormones." },
+            { title: "Lean Protein", desc: "Follicle Structure", icon: "Bean", scientific_benefit: "Essential amino acids support the structural development of the dominant follicle." },
+            { title: "Zinc-Rich Foods", desc: "Cell Division", icon: "Circle", scientific_benefit: "Supports rapid cell division and maturation of the egg before ovulation." }
         ],
         move: [
             { title: "Cardio Run", desc: "Endurance", icon: "Wind" },
@@ -286,16 +338,45 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             "Connect • Shine • Magnetize", "Peak • Power • Glow", "Yes • Open • Receive",
             "Fire • Passion • Express", "Radiate • Attract • Be"
         ],
+        nutrition_guide: {
+            header: {
+                title: "Ovulatory Phase",
+                hormone_insight: "Peak Estrogen & Testosterone.",
+                narrative: "You are at your most magnetic and energetic.",
+                goal: "Support liver detox and cool down high internal heat.",
+                color: "bg-purple-500"
+            },
+            symptom_decoder: {
+                title: "Ovulatory Phase",
+                subtitle: "Connect, Shine, Magnetize",
+                cards: [
+                    { title: "Hormonal Acne", condition: "Breakouts", biology: "Peak testosterone leads to oil.", fix: "Zinc to regulate oil production." },
+                    { title: "Ovulation Bloat", condition: "Puffy", biology: "Egg release is inflammatory.", fix: "Anti-inflammatory foods." },
+                    { title: "High Body Heat", condition: "Hot Flashes", biology: "Metabolic peak.", fix: "Cooling hydrating foods." }
+                ]
+            },
+            macro_fuel: {
+                title: "Today's Fuel Mix",
+                protein: 25, fats: 25, carbs: 50
+            },
+            cheat_sheet: {
+                focus: { title: "FOCUS ON", items: ["Raw Veggies", "Cruciferous Veg", "Berries"] },
+                avoid: { title: "AVOID", items: ["Red Meat", "Fried Food", "Sugar"] }
+            },
+            ai_chef: {
+                prompt: "👩‍🍳 Tap for support:",
+                options: [
+                    { label: "✨ Glow", meal_name: "Skin Clearing Salad", ingredients: "Chickpeas + Pumpkin Seeds + Greens", why: "Zinc clears skin congestion." },
+                    { label: "🧊 Cool Down", meal_name: "Hydration Bowl", ingredients: "Cucumber + Melon + Mint", why: "Cools internal body heat." },
+                    { label: "🎈 De-Bloat", meal_name: "Anti-Inflammatory Wrap", ingredients: "Turmeric Tofu + Lettuce Wrap", why: "Reduces ovulation inflammation." }
+                ]
+            }
+        },
         fuel: [
-            { title: "Raw Salads", desc: "Fiber", icon: "Carrot" },
-            { title: "Berries", desc: "Antioxidants", icon: "Cherry" },
-            { title: "Quinoa", desc: "Protein", icon: "Wheat" },
-            { title: "Almonds", desc: "Energy", icon: "Nut" },
-            { title: "Spinach", desc: "Iron", icon: "Leaf" },
-            { title: "Salmon", desc: "Omegas", icon: "Fish" },
-            { title: "Red Pepper", desc: "Vitamin C", icon: "Pepper" },
-            { title: "Cucumber", desc: "Cooling", icon: "Droplets" },
-            { title: "Coconut water", desc: "Electrolytes", icon: "Waves" }
+            { title: "High Fiber", desc: "Estrogen Detox", icon: "Wheat", scientific_benefit: "Binds to excess estrogen in the gut to prevent dominance symptoms like acne." },
+            { title: "Antioxidants", desc: "Cell Protection", icon: "Shield", scientific_benefit: "Protects the ovum from oxidative damage during the inflammatory process of ovulation." },
+            { title: "Glutathione Support", desc: "Liver Health", icon: "Beaker", scientific_benefit: "Supports the liver's phase 2 detoxification pathway to clear hormones." },
+            { title: "Cooling Foods", desc: "Thermoregulation", icon: "Droplets", scientific_benefit: "Balances the natural spike in basal body temperature post-ovulation." }
         ],
         move: [
             { title: "HIIT", desc: "Intensity", icon: "Zap" },
@@ -365,16 +446,50 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             "Organize • Nest • Complete", "Focus • Finish • Ground", "Settle • Sort • Slow",
             "Root • Anchor • Hold", "Detail • Depth • Clarity"
         ],
+        nutrition_guide: {
+            header: {
+                title: "Luteal Phase",
+                hormone_insight: "Progesterone rises, then drops.",
+                narrative: "Your body is winding down. Cravings signal energy needs.",
+                goal: "Stabilize blood sugar and boost mood with complex carbs.",
+                color: "bg-orange-400"
+            },
+            symptom_decoder: {
+                title: "Luteal Phase",
+                subtitle: "Organize, Nest, Complete",
+                cards: [
+                    { title: "PMS Moodiness", condition: "Irritable", biology: "Serotonin dropping.", fix: "B6 for mood boost." },
+                    { title: "Sugar Cravings", condition: "Hungry", biology: "Blood sugar unstable.", fix: "Complex carbs stabilize." },
+                    { title: "Water Retention", condition: "Bloated", biology: "Progesterone spike.", fix: "Potassium flushes sodium." }
+                ]
+            },
+            macro_fuel: {
+                title: "Today's Fuel Mix",
+                protein: 25, fats: 35, carbs: 40
+            },
+            cheat_sheet: {
+                focus: { title: "FOCUS ON", items: ["Roasted Root Veggies", "Wholegrains", "Magnesium Foods"] },
+                avoid: { title: "AVOID", items: ["Salt", "Raw Salads", "Caffeine"] }
+            },
+            ai_chef: {
+                prompt: "👩‍🍳 Tap for support:",
+                options: [
+                    { label: "🍫 Cravings", meal_name: "Comfort Cacao Oats", ingredients: "Oats + Cacao + Walnuts", why: "Magnesium fights cravings." },
+                    { label: "😭 PMS", meal_name: "Happy Hummus Toast", ingredients: "Chickpeas + Toast + Seeds", why: "B6 boosts serotonin." },
+                    { label: "🎈 Bloat", meal_name: "Flush Smoothie", ingredients: "Banana + Coconut Water", why: "Potassium reduces retention." }
+                ]
+            }
+        },
         fuel: [
-            { title: "Sweet Potato", desc: "Carbs", icon: "Carrot" },
-            { title: "Brown Rice", desc: "Stability", icon: "Soup" },
-            { title: "Walnuts", desc: "Omega-3", icon: "Nut" },
-            { title: "Dark Leafy Greens", desc: "Magnesium", icon: "Leaf" },
-            { title: "Chickpeas", desc: "B6", icon: "Bean" },
-            { title: "Banana", desc: "Potassium", icon: "Banana" },
-            { title: "Dark Chocolate", desc: "Cravings", icon: "Cookie" },
-            { title: "Peppermint Tea", desc: "Bloat", icon: "Leaf" },
-            { title: "Apple", desc: "Fiber", icon: "Apple" }
+            { title: "Sweet Potato", desc: "Carbs", icon: "Carrot", scientific_benefit: "Promotes serotonin production to combat PMS mood dips and irritability." },
+            { title: "Brown Rice", desc: "Stability", icon: "Soup", scientific_benefit: "Vitamin B6 helps liver metabolize estrogen, reducing breast tenderness." },
+            { title: "Walnuts", desc: "Omega-3", icon: "Nut", scientific_benefit: "Essential fatty acids reduce prostaglandin production and pre-period cramping." },
+            { title: "Dark Leafy Greens", desc: "Magnesium", icon: "Leaf", scientific_benefit: "Magnesium is critical for preventing water retention and sugar cravings." },
+            { title: "Chickpeas", desc: "B6", icon: "Bean", scientific_benefit: "Vitamin B6 helps synthesize neurotransmitters like dopamine to improve focus." },
+            { title: "Banana", desc: "Potassium", icon: "Banana", scientific_benefit: "Reduces water retention and bloating by balancing sodium levels." },
+            { title: "Dark Chocolate", desc: "Cravings", icon: "Cookie", scientific_benefit: "Magnesium content relaxes muscles and reduces anxiety." },
+            { title: "Peppermint Tea", desc: "Bloat", icon: "Leaf", scientific_benefit: "Antispasmodic properties soothe the digestive tract and reduce bloating." },
+            { title: "Apple", desc: "Fiber", icon: "Apple", scientific_benefit: "Pectin fiber aids in elimination, preventing constipation common in luteal phase." }
         ],
         move: [
             { title: "Pilates", desc: "Core", icon: "Activity" },
