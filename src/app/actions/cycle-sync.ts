@@ -408,4 +408,4 @@ export async function getDailyLog(date: string) {
         .eq("date", date)
         .maybeSingle();
     return data;
-}}
+}
