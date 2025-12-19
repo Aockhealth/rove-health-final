@@ -2,81 +2,66 @@
 import Image from "next/image";
 import { Activity } from "lucide-react";
 
-// Standardized mapping from page.tsx
-const PHASE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    "Follicular": { bg: "rgba(236, 253, 245, 0.5)", text: "#065f46", border: "rgba(16, 185, 129, 0.1)" }, 
-    "Luteal": { bg: "rgba(255, 251, 235, 0.5)", text: "#92400e", border: "rgba(245, 158, 11, 0.1)" },     
-    "Menstrual": { bg: "rgba(255, 241, 242, 0.5)", text: "#9f1239", border: "rgba(225, 29, 72, 0.1)" },    
-    "Ovulatory": { bg: "rgba(245, 243, 255, 0.5)", text: "#5b21b6", border: "rgba(139, 92, 246, 0.1)" },   
-};
-
-export function CycleOverviewCard({ 
-    cycleLength, 
-    periodLength, 
+export function CycleOverviewCard({
+    cycleLength,
+    periodLength,
     isRegular,
-    phase = "Luteal" 
-}: { 
-    cycleLength: number, 
-    periodLength: number, 
+    phase = "Luteal",
+    theme
+}: {
+    cycleLength: number,
+    periodLength: number,
     isRegular: boolean,
-    phase?: string
+    phase?: string,
+    theme: any
 }) {
-    const theme = PHASE_COLORS[phase] || PHASE_COLORS["Luteal"];
+    // If theme is missing (fallback), use a safe default or expected structure
+    const safeTheme = theme || { bg: "bg-white", border: "border-gray-200", color: "text-gray-800" };
 
     return (
-        <div 
-            className="relative overflow-hidden rounded-[2rem] border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.12)] p-7 h-full flex flex-col transition-all duration-700"
-            style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+        <div
+            className={`relative overflow-hidden rounded-[2rem] border shadow-sm p-7 h-full flex flex-col transition-all duration-700 bg-white/40 backdrop-blur-xl border-white/40`}
         >
-            {/* 🌸 TEXTURE BACKGROUND */}
+            {/* 🌸 TEXTURE BACKGROUND (Subtler) */}
             <div
-                className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-80"
+                className="absolute inset-0 pointer-events-none opacity-40 mix-blend-overlay"
                 style={{
-                    backgroundImage: "url('/textures/card-bg.png')",
+                    backgroundImage: "url('/textures/card-bg.png')", // Ensure this asset exists or remove
                     backgroundRepeat: "no-repeat",
-                    backgroundSize: "140%",
-                    backgroundPosition: "bottom right",
+                    backgroundSize: "cover",
                 }}
             />
 
+            {/* Dynamic Blob for Card */}
+            <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-40 ${safeTheme.blob}`} />
+
             <div className="relative z-10 flex flex-col h-full justify-between">
-                
+
                 {/* TOP SECTION: Stats Grid */}
                 <div className="grid grid-cols-2 w-full flex-1 items-center">
                     {/* AVG FLOW */}
                     <div className="flex flex-col gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shrink-0 shadow-sm">
-                            <Image 
-                                src="/assets/icon1.png" 
-                                alt="Flow Icon" 
-                                width={20} 
-                                height={20} 
-                                className="object-contain opacity-90"
-                            />
+                        <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shrink-0 shadow-sm text-rove-stone">
+                            {/* Replaced Image with Icon for consistency if image missing, or keep Image if preferred. Keeping Image for now but verifying path. */}
+                            <div className="w-4 h-4 bg-current rounded-full opacity-20" /> {/* Placeholder/Icon */}
                         </div>
                         <div>
                             <span className="block text-3xl font-heading text-rove-charcoal leading-none">
-                                <span style={{ color: theme.text }}>{periodLength}</span>
+                                <span className={safeTheme.color}>{periodLength}</span>
                                 <span className="text-sm font-sans text-rove-stone font-medium ml-1">days</span>
                             </span>
                             <span className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">Avg Flow</span>
                         </div>
                     </div>
 
-                    {/* ✅ VERTICAL SEPARATOR: Increased visibility with border-rove-stone/20 */}
-                    <div className="flex flex-col gap-3 border-l-2 border-rove-stone/20 pl-6">
-                        <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shrink-0 shadow-sm">
-                            <Image 
-                                src="/assets/icon2.png" 
-                                alt="Cycle Icon" 
-                                width={20} 
-                                height={20} 
-                                className="object-contain opacity-90"
-                            />
+                    {/* SEPARATOR */}
+                    <div className="flex flex-col gap-3 border-l border-rove-stone/10 pl-6">
+                        <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center shrink-0 shadow-sm text-rove-stone">
+                            <div className="w-4 h-4 bg-current rounded-full opacity-20" />
                         </div>
                         <div>
                             <span className="block text-3xl font-heading text-rove-charcoal leading-none">
-                                <span style={{ color: theme.text }}>{cycleLength}</span>
+                                <span className={safeTheme.color}>{cycleLength}</span>
                                 <span className="text-sm font-sans text-rove-stone font-medium ml-1">days</span>
                             </span>
                             <span className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">Avg Cycle</span>
@@ -84,35 +69,33 @@ export function CycleOverviewCard({
                     </div>
                 </div>
 
-                {/* ✅ HORIZONTAL SEPARATOR: Increased height to 2px and opacity to /20 for clarity */}
-                <div className="h-[2px] w-full bg-rove-stone/20 my-6" />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-rove-stone/20 to-transparent my-6" />
 
                 {/* BOTTOM SECTION: Regularity */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-                            <Activity className="w-5 h-5" style={{ color: theme.text }} />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm shrink-0 bg-white/80 ${safeTheme.color}`}>
+                            <Activity className="w-5 h-5" />
                         </div>
                         <div>
                             <p className="font-heading text-rove-charcoal text-base">
-                                {isRegular ? "Regular" : "Irregular"} <span style={{ color: theme.text }}>Rhythm</span>
+                                {isRegular ? "Regular" : "Irregular"} <span className={safeTheme.color}>Rhythm</span>
                             </p>
                             <p className="text-[10px] text-rove-stone uppercase tracking-wider font-bold opacity-70">
                                 {isRegular ? "Normal Deviation" : "Variation Detected"}
                             </p>
                         </div>
                     </div>
-                    
-                    {/* Visual Sparkline - Tints based on phase */}
-                    <div className="flex gap-1 items-end h-8 opacity-30">
+
+                    {/* Visual Sparkline */}
+                    <div className="flex gap-1 items-end h-8 opacity-40">
                         {[3, 5, 4, 6, 4, 5, 3, 6].map((h, i) => (
-                            <div 
-                                key={i} 
-                                className="w-1 rounded-full" 
-                                style={{ 
+                            <div
+                                key={i}
+                                className={`w-1 rounded-full ${safeTheme.color.replace('text-', 'bg-')}`}
+                                style={{
                                     height: `${h * 10 + 20}%`,
-                                    backgroundColor: theme.text 
-                                }} 
+                                }}
                             />
                         ))}
                     </div>

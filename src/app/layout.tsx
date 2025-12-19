@@ -32,10 +32,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${outfit.variable} antialiased`}
       >
-        <Header user={user} />
-        <div className="pt-16">
-          {children}
-        </div>
+        {children}
       </body>
     </html>
   );

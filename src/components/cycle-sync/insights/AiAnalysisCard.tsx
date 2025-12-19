@@ -5,33 +5,25 @@ import { Sparkles } from "lucide-react";
 import { SegmentedDoughnut } from "@/components/ui/SegmentedDoughnut";
 import { motion, AnimatePresence } from "framer-motion";
 
-/** * Mapping colors from page.tsx
- */
-const PHASE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    "Follicular": { bg: "rgba(236, 253, 245, 0.5)", text: "#065f46", border: "rgba(16, 185, 129, 0.1)" }, 
-    "Luteal": { bg: "rgba(255, 251, 235, 0.5)", text: "#92400e", border: "rgba(245, 158, 11, 0.1)" },     
-    "Menstrual": { bg: "rgba(255, 241, 242, 0.5)", text: "#9f1239", border: "rgba(225, 29, 72, 0.1)" },    
-    "Ovulatory": { bg: "rgba(245, 243, 255, 0.5)", text: "#5b21b6", border: "rgba(139, 92, 246, 0.1)" },   
-};
-
 interface Segment {
   value: number;
-  id: string;   
-  hex: string;  
+  id: string;
+  hex: string;
   label: string;
 }
 
 export function AiAnalysisCard({
   logs,
   phaseCounts,
-  phase = "Luteal" // ✅ Prop passed from page.tsx
+  phase = "Luteal",
+  theme
 }: {
   logs: any[];
   phaseCounts: Record<string, number>;
   phase?: string;
+  theme: any;
 }) {
-  /* ---------------- THEME ---------------- */
-  const theme = PHASE_COLORS[phase] || PHASE_COLORS["Luteal"];
+  const safeTheme = theme || { bg: "bg-white", border: "border-gray-200", color: "text-gray-800", blob: "bg-gray-100" };
 
   /* ---------------- DATA ---------------- */
   const rawData: Segment[] = [
@@ -43,7 +35,7 @@ export function AiAnalysisCard({
 
   const chartData = rawData
     .filter(d => d.value > 0)
-    .map(d => ({ ...d, color: d.id })); 
+    .map(d => ({ ...d, color: d.id }));
 
   const hasData = chartData.length > 0;
 
@@ -54,30 +46,26 @@ export function AiAnalysisCard({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
-    <div 
-      className="relative p-6 rounded-[2rem] border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.15)] overflow-hidden transition-all duration-700"
-      style={{ 
-        backgroundColor: theme.bg, // 🎨 Background wash from props
-        borderColor: theme.border 
-      }}
+    <div
+      className="relative p-6 rounded-[2rem] border shadow-sm overflow-hidden transition-all duration-700 bg-white/40 backdrop-blur-xl border-white/40"
     >
 
-      {/* BACKGROUND TEXTURE: Picking up phase color via multiply */}
+      {/* BACKGROUND TEXTURE (Subtle) */}
       <div
-        className="absolute inset-0 pointer-events-none mix-blend-multiply"
+        className="absolute inset-0 pointer-events-none opacity-20"
         style={{
           backgroundImage: "url('/textures/card-bg.png')",
           backgroundRepeat: "no-repeat",
-          backgroundSize: "140%",
-          backgroundPosition: "bottom right",
-          opacity: 0.85, 
+          backgroundSize: "cover",
         }}
       />
+      {/* Dynamic Blob */}
+      <div className={`absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl opacity-30 ${safeTheme.blob}`} />
 
       <div className="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12 items-center justify-between">
         <div className="flex-1 space-y-5 w-full">
           <h3 className="font-heading text-lg text-rove-charcoal flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className={`w-4 h-4 ${safeTheme.color}`} />
             Pattern Analysis
           </h3>
 
@@ -89,17 +77,16 @@ export function AiAnalysisCard({
             <span
               className={`
                 inline-flex items-center px-4 py-1.5 rounded-full
-                text-sm font-semibold shadow-sm w-fit
-                ${
-                  dominantPhase === "Period"
-                    ? "bg-rose-100 text-rose-700"
-                    : dominantPhase === "Follicular"
-                    ? "bg-pink-100 text-pink-700"
+                text-sm font-semibold shadow-sm w-fit border border-white/50
+                ${dominantPhase === "Period"
+                  ? "bg-rose-100/80 text-rose-700"
+                  : dominantPhase === "Follicular"
+                    ? "bg-teal-100/80 text-teal-700"
                     : dominantPhase === "Ovulatory"
-                    ? "bg-indigo-100 text-indigo-700"
-                    : dominantPhase === "Luteal"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-stone-100 text-stone-600"
+                      ? "bg-amber-100/80 text-amber-800"
+                      : dominantPhase === "Luteal"
+                        ? "bg-indigo-100/80 text-indigo-700"
+                        : "bg-stone-100/80 text-stone-600"
                 }
               `}
             >
@@ -116,11 +103,10 @@ export function AiAnalysisCard({
                   key={d.label}
                   onMouseEnter={() => setActiveIndex(i)}
                   onMouseLeave={() => setActiveIndex(null)}
-                  className={`flex items-center gap-2 cursor-pointer transition-opacity ${
-                    activeIndex !== null && activeIndex !== i
+                  className={`flex items-center gap-2 cursor-pointer transition-opacity ${activeIndex !== null && activeIndex !== i
                       ? "opacity-40"
                       : "opacity-100"
-                  }`}
+                    }`}
                 >
                   <span
                     className="w-2.5 h-2.5 rounded-full shadow-sm"
