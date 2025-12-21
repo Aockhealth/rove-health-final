@@ -345,6 +345,7 @@ export interface LogDailySymptomsPayload {
     moods?: string[];
     medicine?: string[];
     notes?: string;
+    cervicalDischarge?: string;
 }
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
@@ -362,6 +363,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             moods: payload.moods || [],
             medicine: payload.medicine || [],
             notes: payload.notes || "",
+            cervical_discharge: payload.cervicalDischarge || null,
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
@@ -408,4 +410,22 @@ export async function getDailyLog(date: string) {
         .eq("date", date)
         .maybeSingle();
     return data;
+}
+
+export async function updateCycleLength(periodLength?: number, cycleLength?: number) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Authentication required" };
+
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (periodLength) updates.period_length_days = periodLength;
+    if (cycleLength) updates.cycle_length_days = cycleLength;
+
+    const { error } = await supabase
+        .from("user_cycle_settings")
+        .update(updates)
+        .eq("user_id", user.id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
 }
