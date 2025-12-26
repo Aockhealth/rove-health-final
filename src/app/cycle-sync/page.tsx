@@ -2,16 +2,19 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Plus, ChevronRight, Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2 } from "lucide-react";
+import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// --- 1. Helper Components ---
 
 function RiverTrack({ items, direction = "left", speed = 20, label }: { items: any[], direction?: "left" | "right", speed?: number, label: string }) {
-    // Duplicate items for seamless loop
     const riverItems = [...items, ...items, ...items, ...items];
+    if (!items || items.length === 0) return null;
 
     return (
         <div className="w-full overflow-hidden">
@@ -22,11 +25,7 @@ function RiverTrack({ items, direction = "left", speed = 20, label }: { items: a
                 className="flex gap-3 w-max will-change-transform"
                 initial={{ x: direction === "left" ? 0 : "-50%" }}
                 animate={{ x: direction === "left" ? "-50%" : 0 }}
-                transition={{
-                    duration: speed,
-                    ease: "linear",
-                    repeat: Infinity
-                }}
+                transition={{ duration: speed, ease: "linear", repeat: Infinity }}
                 style={{ backfaceVisibility: "hidden", WebkitFontSmoothing: "antialiased" }}
             >
                 {riverItems.map((item, i) => (
@@ -45,25 +44,13 @@ function RiverTrack({ items, direction = "left", speed = 20, label }: { items: a
     );
 }
 
-// Icon mapping helper
 const iconMap: Record<string, any> = {
-    "Moon": Moon,
-    "Sparkles": Sparkles,
-    "Brain": Brain,
-    "Utensils": Utensils,
-    "Activity": Activity,
-    "Leaf": Droplets,
-    "Dumbbell": Dumbbell,
-    "Zap": Zap,
-    "Sun": Sun,
-    "TrendingUp": TrendingUp,
-    "Heart": Heart,
-    "Wind": Wind
+    "Moon": Moon, "Sparkles": Sparkles, "Brain": Brain, "Utensils": Utensils,
+    "Activity": Activity, "Leaf": Droplets, "Dumbbell": Dumbbell, "Zap": Zap,
+    "Sun": Sun, "TrendingUp": TrendingUp, "Heart": Heart, "Wind": Wind
 };
-import { Heart, Wind } from "lucide-react"; // Add missing imports
 
 function DailyFlowRiver({ data }: { data: any }) {
-
     const mapItems = (items: any[], colorClass: string, bgClass: string) =>
         (items || []).map(item => ({
             ...item,
@@ -72,12 +59,18 @@ function DailyFlowRiver({ data }: { data: any }) {
             bg: bgClass
         }));
 
-    const insights = mapItems(data?.insights, "text-rove-charcoal", "bg-white");
     const fuel = mapItems(data?.fuel, "text-rove-green", "bg-rove-green/10");
     const move = mapItems(data?.move, "text-rove-red", "bg-rove-red/10");
-    const rituals = mapItems(data?.rituals, "text-rove-purple", "bg-rove-purple/10"); // New Row
+    const rituals = mapItems(data?.rituals, "text-rove-purple", "bg-rove-purple/10");
 
-    if (!data) return <div className="p-4 text-center text-rove-stone text-xs">Loading flow...</div>;
+    if (!data || (!fuel.length && !move.length)) return (
+        <div className="p-8 text-center border-2 border-dashed border-rove-stone/10 rounded-3xl bg-white/30">
+            <p className="text-rove-stone text-sm mb-2">No flow data yet.</p>
+            <Link href="/cycle-sync/tracker">
+                <Button variant="link" className="text-rove-green">Set up your cycle →</Button>
+            </Link>
+        </div>
+    );
 
     return (
         <div className="space-y-2 -mx-4 md:-mx-8">
@@ -88,76 +81,21 @@ function DailyFlowRiver({ data }: { data: any }) {
     );
 }
 
-// Phase Theme Logic - Refined for Subtlety
+// Phase Theme Logic
 const phaseThemes: Record<string, any> = {
-    "Menstrual": {
-        color: "text-rose-500", // Soft Rose
-        blob: "bg-rose-200/20",
-        orbRing: "from-rose-300 via-rose-100 to-rose-400",
-        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", // Soft pink glow
-        badge: "bg-rose-50 text-rose-600 border-rose-100"
-    },
-    "Follicular": {
-        color: "text-teal-600", // Muted Teal
-        blob: "bg-teal-200/15", // Very subtle mint
-        orbRing: "from-teal-300 via-emerald-100 to-teal-400",
-        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", // Mint glow
-        badge: "bg-teal-50 text-teal-700 border-teal-100"
-    },
-    "Ovulatory": {
-        color: "text-amber-500/90", // Chanpagne Gold
-        blob: "bg-amber-100/30",
-        orbRing: "from-amber-300 via-yellow-100 to-amber-400",
-        glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]", // Golden hour glow
-        badge: "bg-amber-50 text-amber-700 border-amber-100"
-    },
-    "Luteal": {
-        color: "text-indigo-500", // Soft Periwinkle
-        blob: "bg-indigo-200/15",
-        orbRing: "from-indigo-300 via-blue-100 to-indigo-400",
-        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", // Lavender glow
-        badge: "bg-indigo-50 text-indigo-600 border-indigo-100"
-    }
+    "Menstrual": { color: "text-rose-500", blob: "bg-rose-200/20", orbRing: "from-rose-300 via-rose-100 to-rose-400", glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", badge: "bg-rose-50 text-rose-600 border-rose-100" },
+    "Follicular": { color: "text-teal-600", blob: "bg-teal-200/15", orbRing: "from-teal-300 via-emerald-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-700 border-teal-100" },
+    "Ovulatory": { color: "text-amber-500/90", blob: "bg-amber-100/30", orbRing: "from-amber-300 via-yellow-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]", badge: "bg-amber-50 text-amber-700 border-amber-100" },
+    "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/15", orbRing: "from-indigo-300 via-blue-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100" }
 };
 
-
-
-// --- Premium Animated Components ---
+// --- 3. Animated Components ---
 
 function HormoneWave({ color = "#fb7185" }: { color?: string }) {
     return (
         <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
-            <motion.path
-                d="M0 50 Q 25 30, 50 50 T 100 50"
-                fill="none"
-                stroke={color}
-                strokeWidth="8"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1, pathOffset: [0, 1] }}
-                transition={{
-                    duration: 4,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    repeatType: "mirror"
-                }}
-            />
-            <motion.path
-                d="M0 50 Q 25 70, 50 50 T 100 50"
-                fill="none"
-                stroke={color}
-                strokeWidth="4"
-                strokeLinecap="round"
-                className="opacity-50"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1, pathOffset: [1, 0] }}
-                transition={{
-                    duration: 5,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    repeatType: "mirror"
-                }}
-            />
+            <motion.path d="M0 50 Q 25 30, 50 50 T 100 50" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1, pathOffset: [0, 1] }} transition={{ duration: 4, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }} />
+            <motion.path d="M0 50 Q 25 70, 50 50 T 100 50" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" className="opacity-50" initial={{ pathLength: 0 }} animate={{ pathLength: 1, pathOffset: [1, 0] }} transition={{ duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "mirror" }} />
         </svg>
     );
 }
@@ -165,25 +103,9 @@ function HormoneWave({ color = "#fb7185" }: { color?: string }) {
 function BodyDNA({ color = "#22c55e" }: { color?: string }) {
     return (
         <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
-            {/* Abstract Helix Links */}
             {[10, 30, 50, 70, 90].map((y, i) => (
-                <motion.line
-                    key={i}
-                    x1="30" y1={y} x2="70" y2={y}
-                    stroke={color}
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    initial={{ scaleX: 0, opacity: 0 }}
-                    animate={{ scaleX: 1, opacity: [0.3, 1, 0.3] }}
-                    transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        delay: i * 0.2,
-                        ease: "easeInOut"
-                    }}
-                />
+                <motion.line key={i} x1="30" y1={y} x2="70" y2={y} stroke={color} strokeWidth="6" strokeLinecap="round" initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: [0.3, 1, 0.3] }} transition={{ duration: 3, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }} />
             ))}
-            {/* Side Strands */}
             <motion.path d="M30 0 V100" stroke={color} strokeWidth="4" opacity="0.3" />
             <motion.path d="M70 0 V100" stroke={color} strokeWidth="4" opacity="0.3" />
         </svg>
@@ -193,24 +115,10 @@ function BodyDNA({ color = "#22c55e" }: { color?: string }) {
 function MindSynapse({ color = "#374151" }: { color?: string }) {
     return (
         <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible opacity-50">
-            <motion.circle cx="50" cy="50" r="15" fill={color} opacity="0.2"
-                animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
+            <motion.circle cx="50" cy="50" r="15" fill={color} opacity="0.2" animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
             <circle cx="50" cy="50" r="8" fill={color} />
             {[0, 72, 144, 216, 288].map((angle, i) => (
-                <motion.line
-                    key={i}
-                    x1="50" y1="50"
-                    x2={50 + 35 * Math.cos(angle * Math.PI / 180)}
-                    y2={50 + 35 * Math.sin(angle * Math.PI / 180)}
-                    stroke={color}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: [0, 1, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.5, ease: "easeInOut" }}
-                />
+                <motion.line key={i} x1="50" y1="50" x2={50 + 35 * Math.cos(angle * Math.PI / 180)} y2={50 + 35 * Math.sin(angle * Math.PI / 180)} stroke={color} strokeWidth="4" strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: [0, 1, 0] }} transition={{ duration: 3, repeat: Infinity, delay: i * 0.5, ease: "easeInOut" }} />
             ))}
         </svg>
     );
@@ -219,40 +127,35 @@ function MindSynapse({ color = "#374151" }: { color?: string }) {
 function GlowHalo({ color = "#f59e0b" }: { color?: string }) {
     return (
         <div className="w-full h-full relative flex items-center justify-center opacity-60">
-            <motion.div
-                className="absolute inset-0 rounded-full border-4 border-dashed"
-                style={{ borderColor: color }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-                className="absolute inset-4 rounded-full border-[6px]"
-                style={{ borderColor: color, opacity: 0.3 }}
-                animate={{ scale: [1, 0.9, 1] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
+            <motion.div className="absolute inset-0 rounded-full border-4 border-dashed" style={{ borderColor: color }} animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} />
+            <motion.div className="absolute inset-4 rounded-full border-[6px]" style={{ borderColor: color, opacity: 0.3 }} animate={{ scale: [1, 0.9, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} />
             <Sun className="w-8 h-8 opacity-50" style={{ color }} />
         </div>
     );
 }
 
+// --- 4. Main Component ---
+
 export default function CycleSyncDashboard() {
     const [data, setData] = useState<any>(null);
-
+    const router = useRouter();
 
     useEffect(() => {
         const load = async () => {
-            const res = await fetchDashboardData();
-            if (res) {
-                setData(res);
-            } else {
-                // If no data, redirect or show empty state. 
-                // For now, let's just stay here to avoid loops, or redirect to onboarding.
-                window.location.href = "/onboarding";
+            try {
+                const res = await fetchDashboardData();
+                if (res) {
+                    setData(res);
+                } else {
+                    // Safety Net: If no data found, redirect to Onboarding
+                    router.push("/onboarding");
+                }
+            } catch (error) {
+                console.error("Dashboard Load Error:", error);
             }
         }
         load();
-    }, []);
+    }, [router]);
 
     if (!data) return (
         <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
@@ -269,7 +172,6 @@ export default function CycleSyncDashboard() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20">
-            {/* Immersive Background Gradient - Dynamic */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className={`absolute top-[-10%] left-[-10%] w-[500px] h-[500px] ${theme.blob} rounded-full blur-[80px] animate-pulse will-change-[opacity]`} style={{ animationDuration: "10s" }} />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rove-charcoal/5 rounded-full blur-[80px] animate-pulse will-change-[opacity]" style={{ animationDuration: "15s" }} />
@@ -281,7 +183,9 @@ export default function CycleSyncDashboard() {
                 <header className="flex justify-between items-start">
                     <div>
                         <h1 className="font-heading text-2xl md:text-4xl text-rove-charcoal mb-1">Good Morning, {user?.name || "Rove Member"}</h1>
-                        <p className="text-rove-stone font-light text-base md:text-lg">It's Day {currentPhase.day} of your cycle.</p>
+                        <p className="text-rove-stone font-light text-base md:text-lg">
+                            It's Day {currentPhase.day} of your cycle.
+                        </p>
                     </div>
                     <Button size="icon" variant="ghost" className="rounded-full hover:bg-white/50 transition-colors">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/80 backdrop-blur-md text-rove-charcoal border border-white/50 flex items-center justify-center font-heading text-base md:text-lg shadow-sm">
@@ -306,12 +210,11 @@ export default function CycleSyncDashboard() {
                             transition={{ duration: 0.8, ease: "easeOut" }}
                             className="relative flex flex-col items-center justify-center py-1 md:py-6"
                         >
-                            {/* Glowing Orb Container */}
                             <div className="relative w-56 h-56 md:w-[300px] md:h-[300px] flex items-center justify-center">
                                 {/* Outer Glow */}
                                 <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
 
-                                {/* Phase Indicator - Animated Orb */}
+                                {/* Link to Tracker */}
                                 <Link href="/cycle-sync/tracker">
                                     <motion.div
                                         className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center cursor-pointer group"
@@ -328,18 +231,16 @@ export default function CycleSyncDashboard() {
                                             style={{ willChange: "transform" }}
                                         />
 
-                                        {/* Static Background Circle */}
                                         <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
 
-                                        {/* Pulsing Glow Effect */}
                                         <motion.div
                                             className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
                                             animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
                                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                         />
 
-                                        {/* Content */}
-                                        <div className="relative text-center z-10">
+                                        {/* ORB CONTENT */}
+                                        <div className="relative text-center z-10 px-4">
                                             <motion.p
                                                 className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
                                                 initial={{ opacity: 0, y: 10 }}
@@ -368,7 +269,7 @@ export default function CycleSyncDashboard() {
                                             </motion.div>
                                         </div>
 
-                                        {/* Day Indicator - Pinned Top */}
+                                        {/* Day Indicator */}
                                         <motion.div
                                             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
                                         >
@@ -385,7 +286,7 @@ export default function CycleSyncDashboard() {
                             <DailyFlowRiver data={data} />
                         </section>
 
-                        {/* Today's Snapshot - Premium Style */}
+                        {/* Today's Snapshot */}
                         <section>
                             <div className="flex justify-between items-baseline mb-4">
                                 <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
@@ -395,34 +296,21 @@ export default function CycleSyncDashboard() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Hormones - Split Layout */}
+                                {/* Hormones */}
                                 <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
-                                    {/* Category Top-Left */}
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Hormones</span>
                                     </div>
-
-                                    {/* Icon Top-Right */}
                                     <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-rove-red">
-                                        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
-                                            <path
-                                                d="M0 50 Q 25 20, 50 50 T 100 50"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="10"
-                                                strokeLinecap="round"
-                                            />
-                                        </svg>
+                                        <HormoneWave />
                                     </div>
-
-                                    {/* Content Bottom-Left */}
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
                                         <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.hormones?.title || "Balanced"}</h4>
                                         <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.hormones?.desc || "Levels are stable."}</p>
                                     </div>
                                 </div>
 
-                                {/* Mind - Split Layout */}
+                                {/* Mind */}
                                 <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Mind</span>
@@ -436,7 +324,7 @@ export default function CycleSyncDashboard() {
                                     </div>
                                 </div>
 
-                                {/* Body - Split Layout */}
+                                {/* Body */}
                                 <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Body</span>
@@ -450,7 +338,7 @@ export default function CycleSyncDashboard() {
                                     </div>
                                 </div>
 
-                                {/* Glow - Split Layout */}
+                                {/* Glow */}
                                 <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Glow</span>

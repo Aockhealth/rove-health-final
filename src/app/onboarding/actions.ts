@@ -1,82 +1,89 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-export async function submitOnboarding(data: {
-    dob: string;
-    height: number;
-    weight: number;
-    activity: string;
-    goals: string[];
-    conditions: string[];
-    diet: string[];
-    lastPeriod: string;
-    cycleLength: number;
-    periodLength: number;
-    irregular: boolean;
-    tracker_mode: string;
-}) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-    if (!user) {
-        redirect("/login");
-    }
+type SymptomEntry = {
+  name: string;
+  category: "Physical" | "Emotional";
+  severity: number;
+};
 
-    // 0. Self-healing: Ensure Profile Exists
-    // This handles cases where the signup trigger failed or user existed before the trigger.
-    const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || "",
-        updated_at: new Date().toISOString(),
-    });
+type OnboardingData = {
+  name: string;
+  goals: string[];
+  conditions: string[];
+  symptoms: SymptomEntry[];
+  lastPeriod: string;
+  cycleLength: number;
+  periodLength: number;
+  isIrregular: boolean;
+};
+
+export async function submitOnboarding(data: OnboardingData) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    console.error("Auth error:", authError);
+    throw new Error("User not authenticated");
+  }
+
+  try {
+    // 1. Update Profile (Name)
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ 
+          full_name: data.name,
+          onboarding_completed: true 
+      })
+      .eq("id", user.id);
 
     if (profileError) {
-        console.error("Profile Healing Error:", profileError);
-        // Continue anyway, maybe it exists but upsert failed due to permissions? 
-        // But if it fails here, the next step will likely fail too if it doesn't exist.
+      console.error("Profile update error:", profileError);
+      throw new Error("Failed to update profile");
     }
 
-    // 1. Save Health Metrics to user_onboarding
-    const onboardingData = {
-        user_id: user.id,
-        date_of_birth: data.dob,
-        height_cm: data.height,
-        weight_kg: data.weight,
-        activity_level: data.activity,
-        primary_goal: data.goals.join(", "),
-        metabolic_conditions: data.conditions,
-        dietary_preferences: data.diet,
-        tracker_mode: data.tracker_mode,
-    };
-
+    // 2. Save Onboarding Details (Goals, Conditions, Symptoms)
     const { error: onboardingError } = await supabase
-        .from("user_onboarding")
-        .upsert(onboardingData);
+      .from("user_onboarding")
+      .upsert({
+        user_id: user.id,
+        goals: data.goals,
+        conditions: data.conditions,
+        typical_symptoms: data.symptoms,
+        updated_at: new Date().toISOString()
+      });
 
     if (onboardingError) {
-        console.error("Onboarding Error:", onboardingError);
-        return { error: onboardingError.message };
+      console.error("Onboarding save error:", onboardingError);
+      // Continue even if this fails - not critical
     }
 
-    // 2. Save Cycle Settings to user_cycle_settings
-    const cycleData = {
+    // 3. Save Cycle Stats
+    const { error: cycleError } = await supabase
+      .from("user_cycle_settings")
+      .upsert({
         user_id: user.id,
         last_period_start: data.lastPeriod,
         cycle_length_days: data.cycleLength,
         period_length_days: data.periodLength,
-        is_irregular: data.irregular,
-    };
-
-    const { error: cycleError } = await supabase
-        .from("user_cycle_settings")
-        .upsert(cycleData);
+        is_irregular: data.isIrregular,
+        updated_at: new Date().toISOString()
+      });
 
     if (cycleError) {
-        console.error("Cycle Error:", cycleError);
-        throw new Error("Failed to save cycle data: " + cycleError.message);
+      console.error("Cycle settings error:", cycleError);
+      throw new Error("Failed to save cycle settings");
     }
 
+    revalidatePath("/cycle-sync"); 
+    
+    // ✅ FIXED: Redirect to Dashboard instead of Tracker
     redirect("/cycle-sync");
+  } catch (error) {
+    console.error("Onboarding submission error:", error);
+    throw error; // Re-throw to be caught by the client
+  }
 }
