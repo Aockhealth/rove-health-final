@@ -291,71 +291,38 @@ export default function TrackerPageRedesigned() {
     const flowOptions = ["Spotting", "Low", "Normal", "High", "Heavy"];
     // Legacy mapping support
     // const cervicalDischargeOptions = ["Dry", "Sticky", "Creamy", "Watery", "Egg White"];
-    const symptomOptions = ["Headache", "Cramps", "Bloating", "Acne", "Backache", "Fatigue", "Cravings", "Insomnia", "Nausea"];
+    const symptomOptions = ["Headache", "Cramps", "Bloating", "Acne", "Backache", "Fatigue", "Breast Pain", "Nausea"];
 
     const moodsList = [
-        // Positive (Green)
-        { label: "Happy", type: "positive" },
-        { label: "Grateful", type: "positive" },
-        { label: "Excited", type: "positive" },
-
-        // Focus/Calm (Blue)
-        { label: "Focused", type: "blue" },
+        { label: "Energetic", type: "blue" },
         { label: "Calm", type: "blue" },
-        { label: "Optimistic", type: "blue" },
-        { label: "Confident", type: "blue" },
-        { label: "Creative", type: "blue" },
-        { label: "High Energy", type: "blue" },
-
-        // Anxious/Orange (Orange)
-        { label: "Unfocused", type: "orange" },
-        { label: "Self-Critical", type: "orange" },
-        { label: "Tearful", type: "orange" },
         { label: "Anxious", type: "orange" },
-        { label: "Mood Swings", type: "orange" },
-        { label: "Sadness", type: "orange" },
-        { label: "Low Energy", type: "orange" },
-        { label: "Apathetic", type: "orange" },
-        { label: "Confused", type: "orange" },
-
-        // Negative (Red)
+        { label: "Unfocused", type: "orange" },
         { label: "Irritable", type: "negative" },
-        { label: "Panic", type: "negative" },
-        { label: "Depressed", type: "negative" },
+        { label: "Low mood", type: "negative" },
         { label: "Overwhelmed", type: "negative" },
-        { label: "Annoyed", type: "negative" },
-        { label: "Angry", type: "negative" },
     ];
 
 
-    const exerciseOptions = ["Agility", "Cardio", "Gym", "Light Movement", "Cycling", "Swimming", "Yoga"];
-    const selfLoveOptions = ["Travel", "Stress", "Meditation", "Journal", "Hobbies"];
+    const exerciseOptions = ["Rest Day", "Light (Walk, Yoga)", "Moderate (Gym, Pilates)", "Intense (HIIT, Run)"];
+    const selfLoveOptions = ["Travel", "Meditation", "Journal", "Hobbies"];
     const sleepOptions = [
-        { label: "Refreshed", type: "positive" },
         { label: "Restful", type: "positive" },
-        { label: "Deep Sleep", type: "positive" },
-        { label: "Vivid Dreams", type: "positive" },
-        { label: "Normal Sleep", type: "neutral" },
-        { label: "Wake Often", type: "negative" },
+        { label: "Light/Broken", type: "negative" },
+        { label: "Vivid dreams", type: "orange" },
         { label: "Insomnia", type: "negative" },
-        { label: "No Sleep", type: "negative" },
-        { label: "Nightmares", type: "negative" },
+        { label: "Night sweats", type: "negative" },
     ];
 
     const disruptorsList = [
-        { label: "Stress", type: "negative" },
-        { label: "Smoking", type: "negative" },
         { label: "Alcohol", type: "negative" },
-        { label: "Meds side-effects", type: "orange" },
-        { label: "Overexercise", type: "orange" },
-        { label: "Caffeine", type: "orange" },
-        { label: "Inactivity", type: "orange" },
-        { label: "Poor Diet", type: "orange" },
-        { label: "Sugary Food", type: "orange" },
-        { label: "Travel", type: "orange" },
-        { label: "Late Night", type: "orange" },
-        { label: "Screen Time", type: "orange" },
-        { label: "Pollution", type: "orange" },
+        { label: "Caffeine overload", type: "orange" },
+        { label: "High sugar", type: "orange" },
+        { label: "Travel/Jet lag", type: "orange" },
+        { label: "Illness", type: "negative" },
+        { label: "High stress event", type: "negative" },
+        { label: "Painkillers", type: "orange" },
+        { label: "Contraceptive", type: "orange" },
     ];
 
     const toggleItem = (item: string, list: string[], setList: (l: string[]) => void) => {
@@ -1247,50 +1214,6 @@ export default function TrackerPageRedesigned() {
 
 
 
-                        {/* Self Love Card */}
-                        <div className="bg-gradient-to-br from-white to-pink-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-pink-100/20 border border-pink-100">
-                            <div className="flex items-center gap-3 mb-4">
-                                <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                    className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center"
-                                >
-                                    <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
-                                </motion.div>
-                                <h3 className="text-base font-semibold text-gray-900">Self Love Log</h3>
-                            </div>
-
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-wrap gap-2">
-                                    {selfLoveOptions.map(option => {
-                                        const isActive = selectedSelfLove.includes(option);
-                                        return (
-                                            <button
-                                                key={option}
-                                                onClick={() => toggleItem(option, selectedSelfLove, setSelectedSelfLove)}
-                                                className={cn(
-                                                    "px-3.5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 border",
-                                                    isActive
-                                                        ? "bg-pink-100 text-pink-800 border-pink-300 shadow-sm"
-                                                        : "bg-white border-pink-100/50 text-gray-600 hover:border-pink-200 hover:bg-pink-50/30"
-                                                )}
-                                            >
-                                                {isActive && <Check className="w-3.5 h-3.5" />}
-                                                {option}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <input
-                                    type="text"
-                                    placeholder="Others (log here)..."
-                                    value={selfLoveOther}
-                                    onChange={(e) => setSelfLoveOther(e.target.value)}
-                                    className="w-full bg-white/60 border border-pink-100/50 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-100 transition-all shadow-sm"
-                                />
-                            </div>
-                        </div>
 
                         {/* Sleep Card */}
                         <div className="bg-gradient-to-br from-white to-indigo-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-indigo-100/20 border border-indigo-100">
@@ -1402,6 +1325,51 @@ export default function TrackerPageRedesigned() {
                                         </button>
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        {/* Self Love Card */}
+                        <div className="bg-gradient-to-br from-white to-pink-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-pink-100/20 border border-pink-100">
+                            <div className="flex items-center gap-3 mb-4">
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center"
+                                >
+                                    <Heart className="w-4 h-4 text-pink-500 fill-pink-500" />
+                                </motion.div>
+                                <h3 className="text-base font-semibold text-gray-900">Self Love Log</h3>
+                            </div>
+
+                            <div className="flex flex-col gap-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {selfLoveOptions.map(option => {
+                                        const isActive = selectedSelfLove.includes(option);
+                                        return (
+                                            <button
+                                                key={option}
+                                                onClick={() => toggleItem(option, selectedSelfLove, setSelectedSelfLove)}
+                                                className={cn(
+                                                    "px-3.5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 border",
+                                                    isActive
+                                                        ? "bg-pink-100 text-pink-800 border-pink-300 shadow-sm"
+                                                        : "bg-white border-pink-100/50 text-gray-600 hover:border-pink-200 hover:bg-pink-50/30"
+                                                )}
+                                            >
+                                                {isActive && <Check className="w-3.5 h-3.5" />}
+                                                {option}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <input
+                                    type="text"
+                                    placeholder="Others (log here)..."
+                                    value={selfLoveOther}
+                                    onChange={(e) => setSelfLoveOther(e.target.value)}
+                                    className="w-full bg-white/60 border border-pink-100/50 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-100 transition-all shadow-sm"
+                                />
                             </div>
                         </div>
 
