@@ -343,9 +343,16 @@ export interface LogDailySymptomsPayload {
     isPeriod: boolean;
     flowIntensity?: string;
     moods?: string[];
-    medicine?: string[];
     notes?: string;
     cervicalDischarge?: string;
+    exerciseTypes?: string[];
+    exerciseMinutes?: number | null;
+    waterIntake?: number | null;
+    selfLoveTags?: string[];
+    selfLoveOther?: string;
+    sleepQuality?: string[];
+    sleepMinutes?: number | null;
+    disruptors?: string[];
 }
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
@@ -361,9 +368,16 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             is_period: payload.isPeriod,
             flow_intensity: payload.flowIntensity || null,
             moods: payload.moods || [],
-            medicine: payload.medicine || [],
             notes: payload.notes || "",
             cervical_discharge: payload.cervicalDischarge || null,
+            exercise_types: payload.exerciseTypes || [],
+            exercise_minutes: payload.exerciseMinutes || null,
+            water_intake: payload.waterIntake || 0,
+            self_love_tags: payload.selfLoveTags || [],
+            self_love_other: payload.selfLoveOther || "",
+            sleep_quality: payload.sleepQuality || [],
+            sleep_minutes: payload.sleepMinutes || null,
+            disruptors: payload.disruptors || [],
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
