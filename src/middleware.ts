@@ -40,12 +40,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Redirect to login if not authenticated and trying to access protected route
-  const protectedRoutes = ['/cycle-sync', '/onboarding']
+  /* const protectedRoutes = ['/cycle-sync', '/onboarding']
   if (!user && protectedRoutes.some((path) => request.nextUrl.pathname.startsWith(path))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
-  }
+  } */
 
   return response
 }

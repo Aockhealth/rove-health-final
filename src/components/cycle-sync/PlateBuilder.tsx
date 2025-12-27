@@ -40,93 +40,87 @@ export function PlateBuilder({ phase, data, theme }: PlateBuilderProps) {
     };
 
     return (
-        <div className="w-full bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/40 shadow-sm overflow-hidden relative group">
-            {/* Decorative Background from Theme */}
-            <div className={`absolute top-0 right-0 w-64 h-64 ${theme.blob} rounded-full blur-[80px] pointer-events-none opacity-50`} />
+        <div className="w-full bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/40 shadow-sm overflow-hidden relative group">
+            {/* Decorative Background */}
+            <div className={`absolute top-0 right-0 w-64 h-64 ${theme.blob} rounded-full blur-[80px] pointer-events-none opacity-30`} />
 
-            <div className="p-6 md:p-8 relative z-10">
-                <header className="mb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className={`w-4 h-4 ${theme.color}`} />
-                        <span className={`text-xs font-bold uppercase tracking-widest ${theme.color} opacity-80`}>AI Chef</span>
+            <div className="p-5 md:p-6 relative z-10">
+                <header className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg ${theme.color} bg-white/50 border border-white/60`}>
+                            <ChefHat className="w-4 h-4" />
+                        </div>
+                        <h3 className="font-heading text-lg text-rove-charcoal">AI Chef</h3>
                     </div>
-                    <h3 className="font-heading text-2xl md:text-3xl text-rove-charcoal mb-2">Build Your Bio-Individual Plate</h3>
-                    <p className="text-sm text-rove-stone">
-                        {data.prompt}
-                    </p>
+                    {result && !isGenerating && (
+                        <button
+                            onClick={() => setResult(null)}
+                            className="text-xs font-bold uppercase tracking-wider text-rove-stone hover:text-rove-charcoal transition-colors md:hidden"
+                        >
+                            Reset
+                        </button>
+                    )}
                 </header>
 
-                {/* Symptom Buttons */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    {data.options.map((opt, idx) => (
-                        <Button
-                            key={idx}
-                            onClick={() => handleGenerate(idx)}
-                            variant="outline"
-                            className={cn(
-                                "h-16 rounded-2xl text-lg font-medium transition-all duration-300 border-2",
-                                selectedOption === idx
-                                    ? `bg-white ${theme.color} ${theme.blob.replace('bg-', 'border-')} shadow-lg scale-[1.02]`
-                                    : "bg-white/40 border-white/40 text-rove-charcoal hover:bg-white/60"
-                            )}
-                        >
-                            {opt.label}
-                        </Button>
-                    ))}
-                </div>
-
-                {/* Loading State */}
                 <AnimatePresence mode="wait">
-                    {isGenerating && (
+                    {!result && !isGenerating ? (
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-12"
+                            key="input"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="space-y-3"
                         >
-                            <RefreshCw className="w-10 h-10 text-rove-charcoal/40 animate-spin mb-4" />
-                            <p className="text-sm font-medium text-rove-charcoal/60 animate-pulse">
-                                Analyzing your biology...
+                            <p className="text-sm text-rove-stone/80 mb-4 leading-relaxed line-clamp-2">
+                                {data.prompt}
                             </p>
+                            <div className="grid grid-cols-1 gap-2">
+                                {data.options.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleGenerate(idx)}
+                                        className="w-full text-left p-4 rounded-xl bg-white/50 hover:bg-white/80 border border-white/50 transition-all flex items-center justify-between group"
+                                    >
+                                        <span className="font-medium text-rove-charcoal text-sm">{opt.label}</span>
+                                        <ArrowRight className="w-4 h-4 text-rove-stone opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                                    </button>
+                                ))}
+                            </div>
                         </motion.div>
-                    )}
-
-                    {/* Result Card */}
-                    {result && !isGenerating && (
+                    ) : isGenerating ? (
                         <motion.div
-                            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ type: "spring", damping: 20 }}
-                            className="bg-white/60 rounded-[2.5rem] p-6 md:p-8 border border-white/60 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.05)] overflow-hidden relative backdrop-blur-md"
+                            key="loading"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="py-12 flex flex-col items-center justify-center text-center"
                         >
-                            <div className={`absolute top-0 right-0 w-32 h-32 ${theme.blob} rounded-full blur-2xl -mr-10 -mt-10 opacity-70`} />
-
-                            <div className="flex flex-col md:flex-row items-start gap-6 relative z-10">
-                                <div className={`w-16 h-16 rounded-full bg-white flex items-center justify-center ${theme.color} flex-shrink-0 shadow-sm border border-white/50`}>
-                                    <ChefHat className="w-8 h-8" />
+                            <RefreshCw className="w-8 h-8 text-rove-charcoal/30 animate-spin mb-3" />
+                            <p className="text-xs font-bold uppercase tracking-widest text-rove-stone/60 animate-pulse">Designing Meal...</p>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="result"
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/60 rounded-2xl p-5 border border-white/50 relative overflow-hidden"
+                        >
+                            <div className="flex items-start gap-4 relative z-10">
+                                <div className={`w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center ${theme.color} bg-white shadow-sm border border-white/50`}>
+                                    <Utensils className="w-5 h-5" />
                                 </div>
-                                <div className="space-y-4 w-full">
-                                    <div>
-                                        <div className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2 bg-white/60 w-fit px-2 py-1 rounded-md border border-white/40">
-                                            Recommended Meal
-                                        </div>
-                                        <h4 className="font-heading text-3xl text-rove-charcoal mb-3 leading-tight">
-                                            {result.meal_name}
-                                        </h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            <div className={`flex items-center gap-2 text-sm font-bold ${theme.color} bg-white/50 px-4 py-2 rounded-xl border border-white/60`}>
-                                                <Utensils className="w-4 h-4" />
-                                                {result.ingredients}
-                                            </div>
-                                        </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone opacity-70">Recommended</span>
+                                        <button onClick={() => setResult(null)} className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-rove-charcoal hover:opacity-70">New Meal</button>
                                     </div>
+                                    <h4 className="font-heading text-xl text-rove-charcoal mb-1 truncate leading-tight">{result!.meal_name}</h4>
+                                    <p className="text-xs font-medium text-rove-charcoal/80 mb-3">{result!.ingredients}</p>
 
-                                    <div className="bg-white/40 p-5 rounded-[1.5rem] border border-white/50 backdrop-blur-sm">
-                                        <p className="text-base text-rove-charcoal/80 leading-relaxed font-medium">
-                                            <span className={`font-bold ${theme.color} block mb-2 text-xs uppercase tracking-widest`}>Scientific Benefit</span>
-                                            "{result.why}"
+                                    <div className="p-3 bg-white/40 rounded-xl border border-white/40">
+                                        <p className="text-xs text-rove-stone leading-relaxed italic">
+                                            "{result!.why}"
                                         </p>
                                     </div>
+
+                                    <button onClick={() => setResult(null)} className="mt-3 md:hidden w-full py-2 text-center text-xs font-bold uppercase tracking-widest text-rove-charcoal bg-white/30 rounded-lg">
+                                        Try Another
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

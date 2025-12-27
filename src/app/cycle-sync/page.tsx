@@ -9,58 +9,7 @@ import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync";
 import Link from "next/link";
 
-function RiverTrack({ items, direction = "left", speed = 20, label }: { items: any[], direction?: "left" | "right", speed?: number, label: string }) {
-    // Duplicate items for seamless loop
-    const riverItems = [...items, ...items, ...items, ...items];
-
-    return (
-        <div className="w-full overflow-hidden">
-            <div className="px-4 md:px-8 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70">{label}</span>
-            </div>
-            <motion.div
-                className="flex gap-3 w-max will-change-transform"
-                initial={{ x: direction === "left" ? 0 : "-50%" }}
-                animate={{ x: direction === "left" ? "-50%" : 0 }}
-                transition={{
-                    duration: speed,
-                    ease: "linear",
-                    repeat: Infinity
-                }}
-                style={{ backfaceVisibility: "hidden", WebkitFontSmoothing: "antialiased" }}
-            >
-                {riverItems.map((item, i) => (
-                    <div key={i} className="w-auto min-w-[180px] flex-shrink-0 p-2.5 rounded-[1.25rem] bg-white/40 backdrop-blur-md border border-white/40 shadow-sm flex items-center gap-3 hover:bg-white/60 transition-colors cursor-pointer group transform-gpu">
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform", item.bg || "bg-white", item.color)}>
-                            <item.icon className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <h4 className="font-heading text-sm text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
-                            <p className="text-rove-stone text-[9px] whitespace-nowrap">{item.desc}</p>
-                        </div>
-                    </div>
-                ))}
-            </motion.div>
-        </div>
-    );
-}
-
-// Icon mapping helper
-const iconMap: Record<string, any> = {
-    "Moon": Moon,
-    "Sparkles": Sparkles,
-    "Brain": Brain,
-    "Utensils": Utensils,
-    "Activity": Activity,
-    "Leaf": Droplets,
-    "Dumbbell": Dumbbell,
-    "Zap": Zap,
-    "Sun": Sun,
-    "TrendingUp": TrendingUp,
-    "Heart": Heart,
-    "Wind": Wind
-};
-import { Heart, Wind } from "lucide-react"; // Add missing imports
+import { RiverTrack, iconMap } from "@/components/cycle-sync/RiverTrack";
 
 function DailyFlowRiver({ data }: { data: any }) {
 

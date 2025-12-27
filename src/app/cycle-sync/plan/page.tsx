@@ -13,6 +13,7 @@ import {
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft
 } from "lucide-react";
+import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 
 // --- Data: Phase Blueprints ---
 const BLUEPRINTS: any = {
@@ -280,11 +281,51 @@ function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     );
 }
 
+function RitualCheckbox({ item, theme, index, total }: { item: any, theme: any, index: number, total: number }) {
+    const [checked, setChecked] = useState(false);
+    return (
+        <div
+            onClick={() => setChecked(!checked)}
+            className={cn(
+                "group flex items-center gap-4 p-4 cursor-pointer transition-all duration-300 hover:bg-white/40",
+                index !== total - 1 && "border-b border-white/40"
+            )}
+        >
+            <div className={cn(
+                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                checked
+                    ? cn("border-transparent scale-110", theme.accent, "text-white shadow-sm")
+                    : "border-rove-stone/30 bg-white/50 group-hover:border-rove-stone/50"
+            )}>
+                {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
+            </div>
+
+            <div className="flex-1 opacity-90 transition-opacity duration-300" style={{ opacity: checked ? 0.5 : 1 }}>
+                <h4 className={cn(
+                    "font-bold text-rove-charcoal text-sm transition-all duration-300",
+                    checked && "line-through text-rove-stone"
+                )}>
+                    {item.title}
+                </h4>
+                <p className="text-xs text-rove-stone/80">{item.desc}</p>
+            </div>
+
+            <div className={cn(
+                "p-2 rounded-full bg-white/40 text-rove-stone/40 opacity-0 group-hover:opacity-100 transition-all duration-300",
+                checked && "opacity-0"
+            )}>
+                <Sparkles className="w-3 h-3" />
+            </div>
+        </div>
+    );
+}
+
 import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
-import { DietHeader } from "@/components/cycle-sync/diet/DietHeader";
+import { RiverTrack } from "@/components/cycle-sync/RiverTrack";
 import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
 import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 
 // Phase Theme Logic - Ported from Home Dashboard
 const phaseThemes: Record<string, any> = {
@@ -341,6 +382,8 @@ export default function DetailedPlanPage() {
         load();
     }, []);
 
+
+
     if (!data) return (
         <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
             <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
@@ -357,248 +400,269 @@ export default function DetailedPlanPage() {
     return (
         <div className="min-h-screen bg-[#FBFAF8]">
 
-            {/* 1. HERO IMAGE (Insight Style) */}
-            <div className="relative w-full h-[30vh] md:h-[40vh] bg-slate-900 z-0 transition-all duration-700">
-                <Image
-                    src={headerImage}
-                    alt={phaseName}
-                    fill
-                    sizes="100vw"
-                    className="object-cover object-center opacity-90 transition-opacity duration-700"
-                    priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+            {/* 1. TOP NAVIGATION (High Density) */}
+            <div className="sticky top-0 z-50 bg-[#FBFAF8]/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+                <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
+                    <Link href="/cycle-sync" className="p-2 -ml-2 text-rove-stone hover:text-rove-charcoal transition-colors">
+                        <ChevronLeft className="w-5 h-5" />
+                    </Link>
 
-                <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-12 pb-14 md:pb-24 z-20 container mx-auto">
-                    <div className="flex justify-between items-center text-white pt-2">
-                        <Link href="/cycle-sync" className="p-2 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-colors border border-white/10">
-                            <ChevronLeft className="w-5 h-5" />
-                        </Link>
-
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] opacity-90 drop-shadow-md">Daily Intelligence</span>
-                            <span className="text-[9px] uppercase tracking-widest opacity-60">{todayStr}</span>
-                        </div>
-                        <div className="w-10" />
+                    <div className="flex flex-col items-center">
+                        <h1 className={cn("text-lg font-heading leading-none mb-0.5", theme.color)}>{phaseName}</h1>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone/60">Day {data.day} of Cycle</span>
                     </div>
 
-                    <div className="space-y-2 animate-in slide-in-from-bottom-6 duration-700 fade-in">
-                        <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                            Day {data.day || "?"}
-                        </span>
-                        <h1 className="font-heading text-3xl md:text-5xl text-white drop-shadow-xl leading-tight">
-                            {phaseName} Blueprint
-                        </h1>
+                    <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+                        <span className="text-xs font-bold text-gray-500">{data.day}</span>
                     </div>
                 </div>
             </div>
 
-            {/* 2. MAIN CONTENT SHEET (Overlapping) */}
-            <div className="relative z-30 -mt-16 md:-mt-24 bg-[#FBFAF8] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden shadow-2xl min-h-screen">
-                {/* Ambient Blobs inside the sheet for continuity */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className={cn("absolute -top-[10%] -left-[10%] w-[50vh] h-[50vh] rounded-full blur-[100px] opacity-40 mix-blend-multiply", theme.blob)} />
+            <div className="container mx-auto px-4 py-6 max-w-5xl">
+
+                {/* 2. TABS (Moved Up) */}
+                {/* Tabs - Floating Glass Pill */}
+                <div className="flex p-1 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/40 shadow-sm mx-auto w-full max-w-md mb-6">
+                    {[
+                        { id: 'guide', label: 'Guide', icon: Sparkles },
+                        { id: 'diet', label: 'Diet', icon: Utensils },
+                        { id: 'exercise', label: 'Move', icon: Dumbbell }
+                    ].map(tab => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={cn(
+                                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300",
+                                    isActive ? "bg-white text-rove-charcoal shadow-sm" : "text-rove-charcoal/60 hover:bg-white/30"
+                                )}
+                            >
+                                <tab.icon className="w-3.5 h-3.5" />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
-                <div className="relative z-10 container mx-auto px-4 py-5 md:p-10 md:pt-12 max-w-5xl">
+                <AnimatePresence mode="wait">
 
-                    {/* Tabs - Floating Glass Pill */}
-                    <div className="flex p-1.5 bg-white/60 backdrop-blur-xl rounded-full border border-white/40 shadow-lg shadow-rove-charcoal/5 mx-auto max-w-md sticky top-4 z-50 mb-6">
-                        {[
-                            { id: 'guide', label: 'Phase Guide', icon: Sparkles },
-                            { id: 'diet', label: 'Diet', icon: Utensils },
-                            { id: 'exercise', label: 'Exercise', icon: Dumbbell }
-                        ].map(tab => {
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
-                                    className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                                        isActive ? "bg-white text-rove-charcoal shadow-md" : "text-rove-charcoal/60 hover:bg-white/20"
-                                    )}
-                                >
-                                    <tab.icon className="w-4 h-4" />
-                                    <span className="hidden md:inline">{tab.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {/* PHASE GUIDE TAB (Science + Rituals) */}
+                    {activeTab === 'guide' && (
+                        <motion.div
+                            key="guide"
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                            className="space-y-6"
+                        >
+                            {/* Slim Focus Banner */}
+                            <div className={cn("p-5 rounded-2xl relative overflow-hidden shadow-sm flex items-center justify-between gap-4", BP.color)}>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none" />
 
-                    <AnimatePresence mode="wait">
-
-                        {/* PHASE GUIDE TAB (Science + Rituals) */}
-                        {activeTab === 'guide' && (
-                            <motion.div
-                                key="guide"
-                                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-6"
-                            >
-                                {/* Hero Focus Card */}
-                                <div className={cn("p-6 rounded-[2rem] relative overflow-hidden shadow-lg text-center transition-colors duration-500", BP.color)}>
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px]" />
-                                    <Sparkles className="w-8 h-8 text-white/70 mx-auto mb-3 relative z-10" />
-                                    <p className="text-white/60 uppercase tracking-widest text-[10px] font-bold mb-1 relative z-10">Current Focus</p>
-                                    <h3 className="text-2xl md:text-3xl font-heading mb-2 text-white relative z-10">
+                                <div className="relative z-10 text-white text-left">
+                                    <p className="opacity-80 uppercase tracking-widest text-[9px] font-bold mb-1">Current Focus</p>
+                                    <h3 className="text-xl md:text-2xl font-heading leading-tight">
                                         {BP.rituals.focus}
                                     </h3>
                                 </div>
+                                <div className="relative z-10 bg-white/20 p-2.5 rounded-full backdrop-blur-md border border-white/10">
+                                    <Sparkles className="w-5 h-5 text-white" />
+                                </div>
+                            </div>
 
-                                {/* Biology / Science Section */}
-                                <section>
-                                    <SectionHeader title="The Science" icon={Beaker} />
-                                    <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
-                                        <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4>
-                                        <p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p>
-                                        <p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
+                            {/* Biology / Science Section */}
+                            <section>
+                                <SectionHeader title="The Science" icon={Beaker} />
+                                <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
+                                    <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4>
+                                    <p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p>
+                                    <p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
 
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {BP.hormones.symptoms.map((sym: string) => (
-                                                <div key={sym} className="px-3 py-2 rounded-xl bg-white/50 border border-white/60 text-xs font-bold text-rove-charcoal/70 text-center shadow-sm">
-                                                    {sym}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section>
-                                    <SectionHeader title="Mind & Rituals" icon={Brain} />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {BP.rituals.practices.map((practice: any, i: number) => (
-                                            <div key={i} className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex items-center gap-4 hover:bg-white/60 transition-all">
-                                                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-rove-charcoal">
-                                                    <Sparkles className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-heading text-lg text-rove-charcoal">{practice.title}</h4>
-                                                    <p className="text-sm text-rove-stone">{practice.desc}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-
-                                <div className="mt-4">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {BP.rituals.symptom_relief.map((item: any, i: number) => (
-                                            <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm">
-                                                <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">
-                                                    For {item.symptom}
-                                                </div>
-                                                <div className="text-base font-heading text-emerald-900 flex items-center gap-2">
-                                                    <Leaf className="w-4 h-4 text-emerald-600" />
-                                                    {item.remedy}
-                                                </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {BP.hormones.symptoms.map((sym: string) => (
+                                            <div key={sym} className="px-3 py-2 rounded-xl bg-white/50 border border-white/60 text-xs font-bold text-rove-charcoal/70 text-center shadow-sm">
+                                                {sym}
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                            </motion.div>
-                        )}
+                            </section>
 
-                        {/* DIET TAB (Refreshed UX) */}
-                        {activeTab === 'diet' && (
-                            <motion.div
-                                key="diet"
-                                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-10 md:space-y-14 pb-24"
-                            >
-                                {/* 1. Phase Header & "Why" Insight */}
-                                {BP.nutrition_guide && (
-                                    <DietHeader phase={phaseName} data={BP.nutrition_guide.header} theme={theme} />
-                                )}
+                            <section>
+                                <SectionHeader title="Daily Rituals" icon={CheckCircle2} />
+                                <div className="bg-white/40 backdrop-blur-xl rounded-[1.5rem] border border-white/60 shadow-sm overflow-hidden p-1">
+                                    {BP.rituals.practices.map((practice: any, i: number) => (
+                                        <RitualCheckbox
+                                            key={i}
+                                            item={practice}
+                                            theme={theme}
+                                            index={i}
+                                            total={BP.rituals.practices.length}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
 
-                                {/* 2. The Symptom Decoder (Top Carousel) */}
-                                {BP.nutrition_guide?.symptom_decoder && (
-                                    <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />
-                                )}
-
-                                {/* 3. The Macro Fuel Gauge (Donut Chart) */}
-                                {BP.nutrition_guide?.macro_fuel && (
-                                    <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />
-                                )}
-
-                                {/* 4. Focus vs Avoid Cheat Sheet (T-Chart) */}
-                                {BP.nutrition_guide?.cheat_sheet && (
-                                    <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />
-                                )}
-
-                                {/* 5. The AI Chef (Plate Builder) */}
-                                {BP.nutrition_guide?.ai_chef && (
-                                    <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />
-                                )}
-
-
-                                <section>
-                                    <SectionHeader title="Supplement Specs" icon={Pill} />
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {BP.supplements.map((s: any) => (
-                                            <div key={s.name} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm text-center flex flex-col justify-center">
-                                                <div className="font-heading text-rove-charcoal text-sm md:text-base mb-1">{s.name}</div>
-                                                <div className="text-[10px] bg-white/60 px-2 py-0.5 rounded-full inline-block mx-auto mb-2 font-bold text-rove-stone">{s.dose}</div>
-                                                <div className="text-[10px] text-rove-stone/80 leading-tight">{s.why}</div>
+                            <div className="mt-4">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {BP.rituals.symptom_relief.map((item: any, i: number) => (
+                                        <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm">
+                                            <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">
+                                                For {item.symptom}
                                             </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            </motion.div>
-                        )}
+                                            <div className="text-base font-heading text-emerald-900 flex items-center gap-2">
+                                                <Leaf className="w-4 h-4 text-emerald-600" />
+                                                {item.remedy}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
 
-                        {/* EXERCISE TAB */}
-                        {activeTab === 'exercise' && (
+                    {/* DIET TAB (Refreshed UX) */}
+                    {activeTab === 'diet' && (
+                        <motion.div
+                            key="diet"
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                            className="space-y-10 md:space-y-14 pb-24"
+                        >
+                            {/* 1. The Macro Fuel Gauge (Visual Top) */}
+                            {BP.nutrition_guide?.macro_fuel && (
+                                <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />
+                            )}
+
+                            {/* 2. Recommended Fuel (River Flow - Aggregated) */}
+                            <section>
+                                <SectionHeader title="Recommended Fuel" icon={Utensils} />
+                                <div className="space-y-3 mt-4">
+                                    {(() => {
+                                        // 1. Determine User Preference (Simulated - in real app, comes from user profile)
+                                        // Hierarchy: non_veg > vegetarian > vegan > jain
+                                        const userDietPref: DietType = 'non_veg';
+
+                                        // 2. Aggregate Data based on hierarchy
+                                        const phaseMap: Record<string, keyof typeof DIET_RECOMMENDATIONS.phases> = {
+                                            "Menstrual": "menstrual", "Follicular": "follicular",
+                                            "Ovulatory": "ovulatory", "Ovulation": "ovulatory", "Luteal": "luteal"
+                                        };
+                                        const phaseKey = phaseMap[phaseName] || "menstrual";
+                                        const phaseData = DIET_RECOMMENDATIONS.phases[phaseKey]?.diet_types;
+
+                                        if (!phaseData) return null;
+
+                                        let categories: DietType[] = [];
+                                        if (userDietPref === 'non_veg') categories = ['non_veg', 'vegetarian', 'vegan', 'jain'];
+                                        else if (userDietPref === 'vegetarian') categories = ['vegetarian', 'vegan', 'jain'];
+                                        else if (userDietPref === 'vegan') categories = ['vegan', 'jain'];
+                                        else if (userDietPref === 'jain') categories = ['jain'];
+
+                                        // 3. Flatten and Deduplicate
+                                        const allItems = categories.flatMap(cat => phaseData[cat] || []);
+                                        const seen = new Set();
+                                        const uniqueItems = allItems.filter(item => {
+                                            const key = item.title.trim().toLowerCase();
+                                            if (seen.has(key)) return false;
+                                            seen.add(key);
+                                            return true;
+                                        });
+
+                                        // 4. Split for River Flow
+                                        const isLarge = uniqueItems.length > 6;
+                                        const chunk = Math.ceil(uniqueItems.length / 3);
+
+                                        const row1 = uniqueItems.slice(0, chunk);
+                                        const row2 = uniqueItems.slice(chunk, chunk * 2);
+                                        const row3 = uniqueItems.slice(chunk * 2);
+
+                                        return (
+                                            <>
+                                                <RiverTrack label="Core Nutrients" items={row1} speed={80} />
+                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={95} />
+                                                <RiverTrack label="Replenishing" items={row3} speed={90} />
+                                            </>
+                                        )
+                                    })()}
+                                </div>
+                            </section>
+
+                            {/* 3. The Symptom Decoder (Top Carousel) */}
+                            {BP.nutrition_guide?.symptom_decoder && (
+                                <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />
+                            )}
+
+                            {/* 4. Focus vs Avoid Cheat Sheet (T-Chart) */}
+                            {BP.nutrition_guide?.cheat_sheet && (
+                                <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />
+                            )}
+
+                            {/* 5. The AI Chef (Plate Builder) */}
+                            {BP.nutrition_guide?.ai_chef && (
+                                <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />
+                            )}
+                        </motion.div>
+                    )}
+
+
+                    {/* EXERCISE TAB */}
+                    {
+                        activeTab === 'exercise' && (
                             <motion.div
                                 key="exercise"
                                 initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-8"
+                                className="space-y-6"
                             >
                                 <section>
                                     <SectionHeader title="Movement Plan" icon={Activity} />
-                                    <div className="p-6 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border-l-4 border-l-rove-charcoal/80 border-t border-r border-b border-white/60 shadow-sm">
-                                        <p className="text-rove-charcoal italic text-lg font-heading leading-relaxed">"{BP.exercise.summary}"</p>
+                                    {/* Compact Summary */}
+                                    <div className="p-5 rounded-[1.5rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-6">
+                                        <p className="text-rove-charcoal italic text-base font-heading leading-relaxed">"{BP.exercise.summary}"</p>
                                     </div>
 
-                                    <div className="space-y-4 mb-8 mt-8">
-                                        <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
-                                        <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-3 mb-6">
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
+                                        {/* Horizontal Scroll Carousel */}
+                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4">
                                             {BP.exercise.best.map((ex: any, i: number) => (
-                                                <div key={i} className="p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 flex gap-4 items-start shadow-sm hover:shadow-md transition-all">
-                                                    <div className="text-3xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
+                                                <div key={i} className="min-w-[260px] snap-center p-4 rounded-[1.25rem] bg-white/60 backdrop-blur-sm border border-white/80 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
                                                     <div>
-                                                        <h4 className="font-bold text-lg text-rove-charcoal mb-1">{ex.title}</h4>
-                                                        <Badge variant="outline" className="text-[10px] bg-white border-gray-200 mb-2">{ex.time}</Badge>
-                                                        <p className="text-sm text-rove-stone leading-relaxed">{ex.desc}</p>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h4 className="font-bold text-base text-rove-charcoal">{ex.title}</h4>
+                                                            <div className="text-2xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
+                                                        </div>
+                                                        <p className="text-xs text-rove-stone leading-relaxed mb-3 h-8 overflow-hidden line-clamp-2">{ex.desc}</p>
                                                     </div>
+                                                    <Badge variant="outline" className="w-fit text-[9px] bg-white border-gray-200 self-start">{ex.time}</Badge>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
-                                    <div className="p-5 rounded-[1.5rem] bg-gray-50/80 border border-gray-200 backdrop-blur-sm">
-                                        <h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
-                                            <Ban className="w-4 h-4" /> Avoid High Intensity
+                                    {/* Compact Avoid Section */}
+                                    <div className="p-4 rounded-[1.5rem] bg-gray-50/60 border border-gray-200/60 backdrop-blur-sm">
+                                        <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
+                                            <Ban className="w-3 h-3" /> Avoid High Intensity
                                         </h4>
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                                             {BP.exercise.avoid.map((item: string) => (
-                                                <span key={item} className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 shadow-sm line-through decoration-gray-400">
+                                                <span key={item} className="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-100 rounded-full text-xs text-gray-500 shadow-sm opacity-80 decoration-gray-300">
                                                     {item}
                                                 </span>
                                             ))}
                                         </div>
-                                        <p className="text-xs text-gray-400 mt-4 max-w-md">
-                                            Listen to your body. If you feel tired, rest.
-                                        </p>
                                     </div>
                                 </section>
+
+                                {/* AI Exercise Builder */}
+                                <ExerciseBuilder phase={phaseName} theme={theme} />
                             </motion.div>
-                        )}
+                        )
+                    }
 
-                    </AnimatePresence>
+                </AnimatePresence >
 
-                </div>
-            </div >
+            </div>
         </div>
     );
 }
