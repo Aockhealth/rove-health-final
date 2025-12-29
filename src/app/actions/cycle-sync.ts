@@ -657,7 +657,7 @@ export async function getDailyLog(date: string) {
     return data;
 }
 
-export async function updateCycleLength(periodLength?: number, cycleLength?: number) {
+export async function updateCycleLength(periodLength?: number, cycleLength?: number, isIrregular?: boolean) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Authentication required" };
@@ -665,6 +665,7 @@ export async function updateCycleLength(periodLength?: number, cycleLength?: num
     const updates: any = { updated_at: new Date().toISOString() };
     if (periodLength) updates.period_length_days = periodLength;
     if (cycleLength) updates.cycle_length_days = cycleLength;
+    if (isIrregular !== undefined) updates.is_irregular = isIrregular;
 
     const { error } = await supabase
         .from("user_cycle_settings")

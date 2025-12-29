@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, Check, Droplets, Calendar, Edit2, X, Info, Waves, Shield, Dumbbell, Clock, Plus, Minus, Droplet, Heart, Moon, ZapOff, Smile, Activity, PenLine, Coffee } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +39,8 @@ const sensationOptions: { label: Sensation; score: number; desc: string }[] = [
 export default function TrackerPageRedesigned() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const router = useRouter();
+    const [isLocked, setIsLocked] = useState(true);
 
     // Standard Tracker State
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
@@ -79,16 +82,32 @@ export default function TrackerPageRedesigned() {
         return `${year}-${month}-${day}`;
     };
 
+    // Helper to safely parse YYYY-MM-DD string into Local Midnight Date
+    const parseLocalString = (dateStr: string) => {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
     // Load cycle settings on mount
     useEffect(() => {
         const loadSettings = async () => {
             const settings = await fetchUserCycleSettings();
             if (settings) {
+                // Sanitize corrupted data immediately
+                const safeCycleLength = (!settings.cycle_length_days || settings.cycle_length_days < 21) ? 28 : settings.cycle_length_days;
+                const safePeriodLength = (!settings.period_length_days || settings.period_length_days <= 1) ? 5 : settings.period_length_days;
+
                 setCycleSettings({
                     last_period_start: settings.last_period_start,
-                    cycle_length_days: settings.cycle_length_days || 28,
-                    period_length_days: settings.period_length_days || 5
+                    cycle_length_days: safeCycleLength,
+                    period_length_days: safePeriodLength
                 });
+                setIsLocked(false);
+            } else {
+                // ✅ SAFETY NET: If no settings, redirect to onboarding silently
+                setIsLocked(true);
+                router.push("/onboarding");
             }
         };
         loadSettings();
@@ -252,12 +271,16 @@ export default function TrackerPageRedesigned() {
 
     const getCycleDay = (date: Date) => {
         if (!cycleSettings.last_period_start) return 1;
-        const start = new Date(cycleSettings.last_period_start);
-        start.setHours(0, 0, 0, 0);
+        const start = parseLocalString(cycleSettings.last_period_start);
+        if (!start) return 1;
+
+        // Ensure apple-to-apple comparison
         const checkDate = new Date(date);
         checkDate.setHours(0, 0, 0, 0);
+
         const diffTime = checkDate.getTime() - start.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // Round for safety
+
         let dayInCycle = (diffDays % cycleSettings.cycle_length_days) + 1;
         if (dayInCycle <= 0) dayInCycle += cycleSettings.cycle_length_days;
         return dayInCycle;
@@ -266,9 +289,14 @@ export default function TrackerPageRedesigned() {
     const getPhaseForDate = (date: Date): Phase => {
         const dayInCycle = getCycleDay(date);
         const { cycle_length_days, period_length_days } = cycleSettings;
-        const ovulationDay = (cycle_length_days || 28) - 14;
 
-        if (dayInCycle <= (period_length_days || 5)) return "Menstrual";
+        // Visual Patch: Sanitize Corrupted Data
+        const safePeriodLength = (!period_length_days || period_length_days <= 1) ? 5 : period_length_days;
+        const safeCycleLength = (!cycle_length_days || cycle_length_days < 21) ? 28 : cycle_length_days;
+
+        const ovulationDay = safeCycleLength - 14;
+
+        if (dayInCycle <= safePeriodLength) return "Menstrual";
         if (dayInCycle < ovulationDay - 1) return "Follicular";
         if (dayInCycle <= ovulationDay + 1) return "Ovulatory";
         return "Luteal";
@@ -386,45 +414,50 @@ export default function TrackerPageRedesigned() {
                 if (!cycleSettings.last_period_start) {
                     await updateLastPeriodDate(formatDate(selectedDate));
                 } else {
-                    const lastStart = new Date(cycleSettings.last_period_start);
-                    lastStart.setHours(0, 0, 0, 0);
-
+                    const lastStart = parseLocalString(cycleSettings.last_period_start);
                     const current = new Date(selectedDate);
                     current.setHours(0, 0, 0, 0);
 
-                    const diffDays = Math.floor(
-                        (current.getTime() - lastStart.getTime()) / (1000 * 60 * 60 * 24)
-                    );
+                    if (lastStart) {
+                        const diffDays = Math.round(
+                            (current.getTime() - lastStart.getTime()) / (1000 * 60 * 60 * 24)
+                        );
 
-                    // New Cycle Logic (Check if at least 14 days since last period to detect new cycle vs long period)
-                    if (diffDays >= 14 || diffDays < 0) {
-                        await updateLastPeriodDate(formatDate(selectedDate));
-                        // Only update cycle length if it's a reasonable positive duration
-                        if (diffDays > 0) {
-                            await updateCycleLength(1, diffDays); // Reset period len to 1, update cycle len
+                        // New Cycle Logic
+                        if (diffDays >= 14 || diffDays < 0) {
+                            await updateLastPeriodDate(formatDate(selectedDate));
+                            if (diffDays > 0) {
+                                await updateCycleLength(undefined, diffDays);
+                            }
+                            // Auto-correct period length if it was previously corrupted to 1
+                            if (cycleSettings.period_length_days <= 1) {
+                                await updateCycleLength(5);
+                            }
+                            // Auto-correct cycle length if corrupted to < 21 (due to prev bug)
+                            if (cycleSettings.cycle_length_days < 21) {
+                                await updateCycleLength(undefined, 28);
+                            }
                         } else {
-                            await updateCycleLength(1); // Just reset period length
-                        }
-                    } else {
-                        // Extending current period logic
-                        const newLength = diffDays + 1;
-                        if (newLength > cycleSettings.period_length_days) {
-                            await updateCycleLength(newLength);
+                            // Extending current period
+                            const newLength = diffDays + 1;
+                            if (newLength > cycleSettings.period_length_days) {
+                                await updateCycleLength(newLength);
+                            }
                         }
                     }
                 }
             } else if (!isPeriodMode && cycleSettings.last_period_start) {
-                const start = new Date(cycleSettings.last_period_start);
-                start.setHours(0, 0, 0, 0);
+                const start = parseLocalString(cycleSettings.last_period_start);
+                if (start) {
+                    const end = new Date(selectedDate);
+                    end.setHours(0, 0, 0, 0);
 
-                const end = new Date(selectedDate);
-                end.setHours(0, 0, 0, 0);
+                    const diffTime = end.getTime() - start.getTime();
+                    const length = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-                const diffTime = end.getTime() - start.getTime();
-                const length = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive of selected date
-
-                if (length > 0 && length <= 10) {
-                    await updateCycleLength(length);
+                    if (length > 0 && length <= 10) {
+                        await updateCycleLength(length);
+                    }
                 }
             }
 
@@ -645,7 +678,7 @@ export default function TrackerPageRedesigned() {
 
                                         // Interaction
                                         !isSelected && !isDisabled && "hover:brightness-95",
-                                        isDisabled && "opacity-30 cursor-not-allowed grayscale"
+                                        isDisabled && "opacity-60 cursor-not-allowed" // Removed grayscale to show predictions
                                     )}
                                 >
                                     <span className={cn(
@@ -682,28 +715,28 @@ export default function TrackerPageRedesigned() {
                         className="space-y-4"
                     >
                         {/* Toggle Track Mode */}
-                        <div className="flex bg-gray-100/50 p-1 rounded-full mb-2">
+                        <div className="flex items-center justify-between bg-white/60 p-4 rounded-2xl border border-white/50 mb-2">
+                            <div className="flex items-center gap-3">
+                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors", trackMode === "period" ? "bg-rose-100 text-rose-600" : "bg-gray-100 text-gray-500")}>
+                                    <Droplets className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900">Period Flow</h3>
+                                    <p className="text-xs text-gray-500">Log menstruation for today</p>
+                                </div>
+                            </div>
                             <button
-                                onClick={() => setTrackMode("period")}
+                                onClick={() => setTrackMode(trackMode === "period" ? "discharge" : "period")}
                                 className={cn(
-                                    "flex-1 py-2 text-sm font-medium rounded-full transition-all",
-                                    trackMode === "period"
-                                        ? "bg-white text-rose-600 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
+                                    "relative w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none",
+                                    trackMode === "period" ? "bg-rose-500" : "bg-gray-200"
                                 )}
                             >
-                                Start Period
-                            </button>
-                            <button
-                                onClick={() => setTrackMode("discharge")}
-                                className={cn(
-                                    "flex-1 py-2 text-sm font-medium rounded-full transition-all",
-                                    trackMode === "discharge"
-                                        ? "bg-white text-rose-600 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
-                                )}
-                            >
-                                End Period
+                                <motion.div
+                                    className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm"
+                                    animate={{ x: trackMode === "period" ? 24 : 0 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                />
                             </button>
                         </div>
 
