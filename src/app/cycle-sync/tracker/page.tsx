@@ -2,16 +2,19 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { ChevronLeft, ChevronRight, Check, Droplets, Calendar as CalendarIcon, Edit2, Pill, Smile } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Droplets, Calendar as CalendarIcon, Edit2, Pill, Smile, Lock, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate } from "@/app/actions/cycle-sync";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
 
 export default function TrackerPage() {
+    const router = useRouter();
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [currentMonth, setCurrentMonth] = useState(new Date()); // Tracks the month being viewed
+    const [currentMonth, setCurrentMonth] = useState(new Date()); 
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
     const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
     const [selectedMedicine, setSelectedMedicine] = useState<string[]>([]);
@@ -24,6 +27,9 @@ export default function TrackerPage() {
         cycle_length_days: number;
         period_length_days: number;
     } | null>(null);
+
+    const [isLocked, setIsLocked] = useState(false);
+    const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
     // Edit Cycle Mode
     const [isEditingCycle, setIsEditingCycle] = useState(false);
@@ -49,9 +55,17 @@ export default function TrackerPage() {
                     cycle_length_days: settings.cycle_length_days || 28,
                     period_length_days: settings.period_length_days || 5
                 });
+                setIsLocked(false);
+            } else {
+                // ✅ SAFETY NET: If no settings, redirect to onboarding silently
+                setIsLocked(true);
+                router.push("/onboarding"); 
             }
         } catch (err) {
             console.error("Failed to load cycle settings", err);
+            setIsLocked(true);
+        } finally {
+            setIsLoadingSettings(false);
         }
     };
 
@@ -89,7 +103,7 @@ export default function TrackerPage() {
 
     // --- PHASE CALCULATOR ---
     const getPhaseForDate = (date: Date): Phase => {
-        if (!cycleSettings) return "Menstrual"; // Default
+        if (!cycleSettings) return "Menstrual"; 
 
         const start = new Date(cycleSettings.last_period_start);
         start.setHours(0, 0, 0, 0);
@@ -110,16 +124,6 @@ export default function TrackerPage() {
         return "Luteal";
     };
 
-    const getPhaseStyles = (phase: Phase) => {
-        switch (phase) {
-            case "Menstrual": return "bg-rove-red/10 text-rove-red border-rove-red/20";
-            case "Follicular": return "bg-blue-100/50 text-blue-600 border-blue-200";
-            case "Ovulatory": return "bg-amber-100/50 text-amber-600 border-amber-200";
-            case "Luteal": return "bg-emerald-100/50 text-emerald-600 border-emerald-200";
-            default: return "bg-white text-rove-stone border-transparent";
-        }
-    };
-
     // --- CALENDAR LOGIC ---
     const getCalendarDays = () => {
         const year = currentMonth.getFullYear();
@@ -133,7 +137,7 @@ export default function TrackerPage() {
 
         // Padding days (previous month)
         for (let i = 0; i < startPadding; i++) {
-            const d = new Date(year, month, 0 - i); // Just a placeholder, we won't render functionality for them heavily
+            const d = new Date(year, month, 0 - i); 
             days.unshift({ date: d, isPadding: true });
         }
 
@@ -194,12 +198,10 @@ export default function TrackerPage() {
 
     const handleUpdatePeriod = () => {
         startTransition(async () => {
-            // Call server action to update last_period_start used for calculations
             const result = await updateLastPeriodDate(formatDate(selectedDate));
             if (result.success) {
                 alert("Cycle Updated! Phases will recalculate.");
                 setIsEditingCycle(false);
-                // Optionally trigger a refresh of the page or context
                 window.location.reload();
             } else {
                 alert("Error updating cycle: " + result.error);
@@ -216,6 +218,19 @@ export default function TrackerPage() {
         hidden: { opacity: 0, y: 20 },
         show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 50 } }
     };
+
+    // ✅ REPLACED: "Lock Screen" with Loading Spinner
+    // If settings are missing, we redirect. While redirecting, just show spinner.
+    if (isLoadingSettings || isLocked || !cycleSettings) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full border-4 border-rove-red/20 border-t-rove-red animate-spin" />
+                    <p className="text-rove-stone font-medium">Loading Tracker...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20">
@@ -314,7 +329,6 @@ export default function TrackerPage() {
                     {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-y-3 gap-x-0">
                         {calendarDays.map((dayItem, i) => {
-                            // Render empty slot for padding but keep layout consistent
                             if (dayItem.isPadding) return <div key={i} className="" />;
 
                             const date = dayItem.date;
@@ -323,43 +337,31 @@ export default function TrackerPage() {
                             const isFuture = isFutureDate(date);
                             const phase = getPhaseForDate(date);
 
-                            // --- STRIP LOGIC ---
-                            // Check neighbors to create continuous strip effect
-                            // Only connect if same phase AND within same row (week)
-
                             const prevItem = calendarDays[i - 1];
                             const nextItem = calendarDays[i + 1];
-
-                            // Check previous
                             const isStartOfRow = i % 7 === 0;
                             const samePhaseAsPrev = prevItem && !prevItem.isPadding && getPhaseForDate(prevItem.date) === phase;
                             const connectLeft = samePhaseAsPrev && !isStartOfRow;
-
-                            // Check next
                             const isEndOfRow = (i + 1) % 7 === 0;
                             const samePhaseAsNext = nextItem && !nextItem.isPadding && getPhaseForDate(nextItem.date) === phase;
                             const connectRight = samePhaseAsNext && !isEndOfRow;
 
-                            // Determine Radius classes
                             const roundedClass = cn(
                                 connectLeft ? "rounded-l-none" : "rounded-l-2xl",
                                 connectRight ? "rounded-r-none" : "rounded-r-2xl"
                             );
 
-                            // Pastel Phase Colors (Solid fills for strips)
                             const getStripColor = (p: Phase) => {
                                 switch (p) {
-                                    case "Menstrual": return "bg-[#FFD6D6]"; // Soft Pink
-                                    case "Follicular": return "bg-[#E2F0D9]"; // Soft Sage/Green
-                                    case "Ovulatory": return "bg-[#FFF4C3]"; // Soft Gold/Yellow
-                                    case "Luteal": return "bg-[#FAE8D2]"; // Soft Beige/Peach
+                                    case "Menstrual": return "bg-[#FFD6D6]"; 
+                                    case "Follicular": return "bg-[#E2F0D9]";
+                                    case "Ovulatory": return "bg-[#FFF4C3]";
+                                    case "Luteal": return "bg-[#FAE8D2]"; 
                                     default: return "bg-gray-50";
                                 }
                             };
 
                             const stripColor = getStripColor(phase);
-
-                            // In edit mode, we allow selecting past dates freely
                             const isDisabled = isEditingCycle ? false : isFuture;
 
                             return (
@@ -376,7 +378,6 @@ export default function TrackerPage() {
                                         )}
                                         whileTap={!isDisabled ? { scale: 0.95 } : {}}
                                     >
-                                        {/* Selection Circle Overlay */}
                                         <div className={cn(
                                             "w-9 h-9 rounded-full flex items-center justify-center z-10 transition-all",
                                             isSelected
@@ -387,13 +388,9 @@ export default function TrackerPage() {
                                                 {date.getDate()}
                                             </span>
                                         </div>
-
-                                        {/* Today Indicator (Small Dot below number) */}
                                         {isToday && !isSelected && (
                                             <div className="absolute bottom-1.5 w-1 h-1 rounded-full bg-rove-red/70" />
                                         )}
-
-                                        {/* Label (Optional - hidden for cleaner aesthetic like screenshot) */}
                                     </motion.button>
                                 </div>
                             );
@@ -437,7 +434,7 @@ export default function TrackerPage() {
                         {/* Symptoms */}
                         <motion.section variants={itemVariants} className="space-y-4">
                             <h3 className="font-heading text-lg text-rove-charcoal ml-1">Symptoms</h3>
-                            <div className="flex flex-wrap gap-2 text text-sm">
+                            <div className="flex flex-wrap gap-2 text-sm">
                                 {symptomOptions.map(s => {
                                     const isActive = selectedSymptoms.includes(s);
                                     return (
@@ -476,7 +473,6 @@ export default function TrackerPage() {
                                                     : "bg-white/40 text-rove-stone border-white/50 hover:bg-white"
                                             )}
                                         >
-                                            {/* Simple visual indicator for mood if needed, user requested icons but text is okay for now */}
                                             {isActive && <Check className="w-3 h-3" />}
                                             {m}
                                         </button>

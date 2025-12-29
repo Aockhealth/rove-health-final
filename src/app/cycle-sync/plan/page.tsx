@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useTransition } from "react";
 import { fetchCycleIntelligence } from "@/app/actions/cycle-sync";
+import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,11 +13,20 @@ import {
     Activity, ArrowRight, Battery, Brain, CheckCircle2,
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
-    Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft
+    Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
+    Flower2
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 
-// --- Data: Phase Blueprints ---
+// --- Custom Components ---
+import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
+import { RiverTrack } from "@/components/cycle-sync/RiverTrack";
+import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
+import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
+import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
+import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+
+// --- Data: Phase Blueprints (PRESERVED) ---
 const BLUEPRINTS: any = {
     "Menstrual": {
         color: "bg-rove-red",
@@ -259,8 +270,21 @@ const BLUEPRINTS: any = {
     }
 };
 
-// --- Components ---
+// --- Setup Constants ---
+const ACTIVITY_LEVELS = [
+    { id: "Sedentary", label: "Inactive", desc: "Mostly sitting, no regular exercise." },
+    { id: "Active", label: "Active", desc: ">2h/week moderate or yoga." },
+    { id: "Highly Active", label: "Highly Active", desc: ">5h/week or intense training." }
+];
 
+const DIET_OPTIONS = [
+    { id: "Veg", label: "Vegetarian", icon: <Carrot size={24} /> },
+    { id: "Non-Veg", label: "Non-Veg", icon: <Drumstick size={24} /> },
+    { id: "Jain", label: "Jain", icon: <Flower2 size={24} /> },
+    { id: "Vegan", label: "Vegan", icon: <Leaf size={24} /> }
+];
+
+// --- Helpers ---
 function Counter({ from, to }: { from: number; to: number }) {
     const nodeRef = useRef<HTMLSpanElement>(null);
     useEffect(() => {
@@ -320,47 +344,14 @@ function RitualCheckbox({ item, theme, index, total }: { item: any, theme: any, 
     );
 }
 
-import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
-import { RiverTrack } from "@/components/cycle-sync/RiverTrack";
-import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
-import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
-import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
-import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 
-// Phase Theme Logic - Ported from Home Dashboard
+
+// Phase Theme Logic
 const phaseThemes: Record<string, any> = {
-    "Menstrual": {
-        color: "text-rose-500", // Soft Rose
-        blob: "bg-rose-200/20",
-        orbRing: "from-rose-300 via-rose-100 to-rose-400",
-        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", // Soft pink glow
-        badge: "bg-rose-50 text-rose-600 border-rose-100",
-        accent: "bg-rose-500"
-    },
-    "Follicular": {
-        color: "text-teal-500", // Fresh Teal/Mint
-        blob: "bg-teal-200/20",
-        orbRing: "from-teal-300 via-teal-100 to-teal-400",
-        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", // Fresh Mint glow
-        badge: "bg-teal-50 text-teal-600 border-teal-100",
-        accent: "bg-teal-500"
-    },
-    "Ovulatory": {
-        color: "text-amber-500", // Champagne Gold
-        blob: "bg-amber-200/20",
-        orbRing: "from-amber-300 via-amber-100 to-amber-400",
-        glow: "shadow-[0_0_40px_rgba(251,191,36,0.2)]", // Golden glow
-        badge: "bg-amber-50 text-amber-600 border-amber-100",
-        accent: "bg-amber-500"
-    },
-    "Luteal": {
-        color: "text-indigo-500", // Calming Indigo/Purple
-        blob: "bg-indigo-200/20",
-        orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
-        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", // Deep calm glow
-        badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
-        accent: "bg-indigo-500"
-    }
+    "Menstrual": { color: "text-rose-500", blob: "bg-rose-200/20", orbRing: "from-rose-300 via-rose-100 to-rose-400", glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", badge: "bg-rose-50 text-rose-600 border-rose-100", accent: "bg-rose-500" },
+    "Follicular": { color: "text-teal-500", blob: "bg-teal-200/20", orbRing: "from-teal-300 via-teal-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-600 border-teal-100", accent: "bg-teal-500" },
+    "Ovulatory": { color: "text-amber-500", blob: "bg-amber-200/20", orbRing: "from-amber-300 via-amber-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.2)]", badge: "bg-amber-50 text-amber-600 border-amber-100", accent: "bg-amber-500" },
+    "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/20", orbRing: "from-indigo-300 via-indigo-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", accent: "bg-indigo-500" }
 };
 
 const PHASE_IMAGES: Record<string, string> = {
@@ -371,26 +362,318 @@ const PHASE_IMAGES: Record<string, string> = {
 };
 
 export default function DetailedPlanPage() {
+    const [hasPlanSetup, setHasPlanSetup] = useState(false);
+    const [setupLoading, setSetupLoading] = useState(true);
+    const [setupStep, setSetupStep] = useState(1);
+    const [isPending, startTransition] = useTransition();
+
+    const [height, setHeight] = useState("");
+    const [weight, setWeight] = useState("");
+    const [activity, setActivity] = useState("");
+    const [diet, setDiet] = useState("");
+
     const [data, setData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
 
     useEffect(() => {
         const load = async () => {
-            const res = await fetchCycleIntelligence();
-            if (res) setData(res);
+            try {
+                const planSettings = await fetchPlanSettings();
+                if (planSettings) {
+                    setHasPlanSetup(true);
+                    const res = await fetchCycleIntelligence();
+                    if (res) setData(res);
+                } else {
+                    setHasPlanSetup(false);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setSetupLoading(false);
+            }
         };
         load();
     }, []);
+    const handleSetupNext = () => {
+        if (setupStep === 1) {
+            if (!height || !weight) return alert("Please enter height and weight.");
+            setSetupStep(2);
+        } else if (setupStep === 2) {
+            if (!activity) return alert("Please select an activity level.");
+            setSetupStep(3);
+        }
+    };
 
+    const handleSetupSubmit = () => {
+        if (!diet) return alert("Please select a diet preference.");
+        startTransition(async () => {
+            const res = await savePlanSettings({
+                height: parseFloat(height),
+                weight: parseFloat(weight),
+                activityLevel: activity,
+                diet: diet
+            });
+            if (res.success) {
+                setHasPlanSetup(true);
+                const cycleData = await fetchCycleIntelligence();
+                if (cycleData) setData(cycleData);
+            } else {
+                alert("Failed to save settings. Please try again.");
+            }
+        });
+    };
 
+    if (setupLoading) return (
+        <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
+            <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
+        </div>
+    );
 
+    // --- 5. RENDER: SETUP WIZARD (REDESIGNED) ---
+    if (!hasPlanSetup) {
+        return (
+            // ✅ Updated Background (#FDFBF7)
+            <div className="min-h-screen bg-[#FDFBF7] relative overflow-hidden flex justify-center items-center p-4">
+
+                {/* ✅ Updated Visuals: Only Peach Blob + Orbs (Privacy Style) */}
+                <div className="blob-glow-peach" />
+                <div className="glass-orb glass-orb-1" />
+                <div className="glass-orb glass-orb-3" />
+
+                {/* ✅ Updated Card Style: Privacy Border & Shadow */}
+                <div className="glass-panel relative z-10 w-full max-w-2xl p-8 md:p-12 flex flex-col border-rove-peach/30 shadow-2xl">
+
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-rove-stone/60 block mb-1">
+                                Step {setupStep} of 3
+                            </span>
+                            <h1 className="font-heading text-2xl md:text-3xl text-rove-charcoal">
+                                Personalize Plan
+                            </h1>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar (Charcoal for Elegance) */}
+                    <div className="flex gap-2 mb-10">
+                        {[1, 2, 3].map((s) => {
+                            const isActive = s <= setupStep;
+                            return (
+                                <div
+                                    key={s}
+                                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${isActive ? "bg-rove-charcoal shadow-md" : "bg-black/5"
+                                        }`}
+                                />
+                            );
+                        })}
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={setupStep}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="space-y-8 min-h-[300px]"
+                        >
+                            {/* STEP 1: METRICS */}
+                            {setupStep === 1 && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
+                                            <Ruler className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-heading text-rove-charcoal">Body Metrics</h2>
+                                    </div>
+                                    <p className="text-rove-stone text-sm">We use this to calculate your precise caloric & hydration needs.</p>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Height Input */}
+                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex items-center justify-between transition-all hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10 focus-within:border-rove-red/30">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-rove-red shadow-sm border border-white/50">
+                                                    <Ruler className="w-6 h-6" />
+                                                </div>
+                                                <label className="text-xs font-bold uppercase tracking-widest text-rove-stone block">Height</label>
+                                            </div>
+                                            <div className="flex items-end gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={height}
+                                                    onChange={e => setHeight(e.target.value)}
+                                                    placeholder="165"
+                                                    className="w-16 text-right text-3xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20"
+                                                    autoFocus
+                                                />
+                                                <span className="text-sm font-medium text-rove-stone mb-1">cm</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Weight Input */}
+                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex items-center justify-between transition-all hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10 focus-within:border-rove-red/30">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-rove-red shadow-sm border border-white/50">
+                                                    <Weight className="w-6 h-6" />
+                                                </div>
+                                                <label className="text-xs font-bold uppercase tracking-widest text-rove-stone block">Weight</label>
+                                            </div>
+                                            <div className="flex items-end gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={weight}
+                                                    onChange={e => setWeight(e.target.value)}
+                                                    placeholder="60"
+                                                    className="w-16 text-right text-3xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20"
+                                                />
+                                                <span className="text-sm font-medium text-rove-stone mb-1">kg</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STEP 2: ACTIVITY */}
+                            {setupStep === 2 && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
+                                            <Activity className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-heading text-rove-charcoal">Activity Level</h2>
+                                    </div>
+                                    <p className="text-rove-stone text-sm">How active are you on a typical week?</p>
+
+                                    <div className="space-y-4">
+                                        {ACTIVITY_LEVELS.map((opt) => {
+                                            const isSelected = activity === opt.id;
+                                            return (
+                                                <button
+                                                    key={opt.id}
+                                                    onClick={() => setActivity(opt.id)}
+                                                    className={`w-full p-5 rounded-[1.5rem] border text-left transition-all duration-300 flex items-center justify-between group ${isSelected
+                                                        ? "bg-white border-rove-red/40 ring-4 ring-rove-red/5 shadow-xl scale-[1.01]"
+                                                        : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md"
+                                                        }`}
+                                                >
+                                                    <div>
+                                                        <h3 className={`font-heading font-bold text-lg mb-1 transition-colors ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
+                                                            {opt.label}
+                                                        </h3>
+                                                        <p className={`text-xs transition-colors ${isSelected ? "text-rove-stone" : "text-rove-stone/70"}`}>
+                                                            {opt.desc}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Selection Circle */}
+                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "border-rove-red bg-rove-red text-white" : "border-rove-stone/20"
+                                                        }`}>
+                                                        {isSelected && <Check size={14} strokeWidth={4} />}
+                                                    </div>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STEP 3: DIET */}
+                            {setupStep === 3 && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
+                                            <Utensils className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-heading text-rove-charcoal">Diet Preference</h2>
+                                    </div>
+                                    <p className="text-rove-stone text-sm">This helps us customize your meal plan.</p>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {DIET_OPTIONS.map((opt) => {
+                                            const isSelected = diet === opt.id;
+                                            return (
+                                                <button
+                                                    key={opt.id}
+                                                    onClick={() => setDiet(opt.id)}
+                                                    className={`
+                                                        relative p-6 rounded-[2rem] border transition-all duration-300 flex flex-col items-center justify-center h-40 group cursor-pointer text-center gap-3
+                                                        ${isSelected
+                                                            ? "bg-white border-rove-red/40 ring-4 ring-rove-red/5 shadow-xl scale-[1.02]"
+                                                            : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md hover:scale-[1.01]"
+                                                        }
+                                                    `}
+                                                >
+                                                    {/* Icon Container */}
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-300 ${isSelected
+                                                        ? "bg-rove-red text-white shadow-lg shadow-rove-red/20"
+                                                        : "bg-white text-rove-stone border border-white/80 shadow-sm"
+                                                        }`}>
+                                                        {opt.icon}
+                                                    </div>
+
+                                                    <span className={`font-heading font-bold text-base transition-colors ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
+                                                        {opt.label}
+                                                    </span>
+
+                                                    {isSelected && (
+                                                        <div className="absolute top-4 right-4 text-rove-red">
+                                                            <CheckCircle2 size={18} fill="currentColor" className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Footer / Navigation */}
+                    <div className="mt-auto pt-10 flex justify-between items-center">
+                        {setupStep > 1 && (
+                            <button
+                                onClick={() => setSetupStep(s => s - 1)}
+                                className="text-rove-stone font-medium hover:text-rove-charcoal transition-colors flex items-center gap-1 pl-1"
+                            >
+                                <ChevronLeft size={18} /> Back
+                            </button>
+                        )}
+
+                        <div className="ml-auto">
+                            {setupStep < 3 ? (
+                                <Button
+                                    onClick={handleSetupNext}
+                                    className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    Next Step <ArrowRight size={18} className="ml-2" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSetupSubmit}
+                                    disabled={isPending}
+                                    className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    {isPending ? "Generating Plan..." : "Generate Plan"}
+                                    {!isPending && <Sparkles size={18} className="ml-2" />}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        );
+    }
+
+    // --- 6. RENDER: MAIN DASHBOARD (PRESERVED) ---
     if (!data) return (
         <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
             <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
         </div>
     );
 
-    // Select Blueprint: Prioritize AI Blueprint, else use Static Fallback
     const phaseName = data.phase || "Menstrual";
     const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
     const theme = phaseThemes[phaseName] || phaseThemes["Menstrual"];
@@ -455,7 +738,7 @@ export default function DetailedPlanPage() {
                             className="space-y-6"
                         >
                             {/* Slim Focus Banner */}
-                            <div className={cn("p-5 rounded-2xl relative overflow-hidden shadow-sm flex items-center justify-between gap-4", BP.color)}>
+                            <div className="p-5 rounded-2xl relative overflow-hidden shadow-sm flex items-center justify-between gap-4 bg-rove-red text-white">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none" />
 
                                 <div className="relative z-10 text-white text-left">
