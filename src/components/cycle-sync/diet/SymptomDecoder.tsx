@@ -14,8 +14,10 @@ interface SymptomDecoderProps {
             biology: string;
             fix: string;
         }[];
+
+
     };
-    theme: any;
+    theme?: any;
 }
 
 export function SymptomDecoder({ data, theme }: SymptomDecoderProps) {

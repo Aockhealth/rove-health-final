@@ -517,8 +517,16 @@ export interface LogDailySymptomsPayload {
     isPeriod: boolean;
     flowIntensity?: string;
     moods?: string[];
-    medicine?: string[];
     notes?: string;
+    cervicalDischarge?: string;
+    exerciseTypes?: string[];
+    exerciseMinutes?: number | null;
+    waterIntake?: number | null;
+    selfLoveTags?: string[];
+    selfLoveOther?: string;
+    sleepQuality?: string[];
+    sleepMinutes?: number | null;
+    disruptors?: string[];
 }
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
@@ -534,8 +542,16 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             is_period: payload.isPeriod,
             flow_intensity: payload.flowIntensity || null,
             moods: payload.moods || [],
-            medicine: payload.medicine || [],
             notes: payload.notes || "",
+            cervical_discharge: payload.cervicalDischarge || null,
+            exercise_types: payload.exerciseTypes || [],
+            exercise_minutes: payload.exerciseMinutes || null,
+            water_intake: payload.waterIntake || 0,
+            self_love_tags: payload.selfLoveTags || [],
+            self_love_other: payload.selfLoveOther || "",
+            sleep_quality: payload.sleepQuality || [],
+            sleep_minutes: payload.sleepMinutes || null,
+            disruptors: payload.disruptors || [],
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
@@ -639,4 +655,22 @@ export async function getDailyLog(date: string) {
         .eq("date", date)
         .maybeSingle();
     return data;
+}
+
+export async function updateCycleLength(periodLength?: number, cycleLength?: number) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Authentication required" };
+
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (periodLength) updates.period_length_days = periodLength;
+    if (cycleLength) updates.cycle_length_days = cycleLength;
+
+    const { error } = await supabase
+        .from("user_cycle_settings")
+        .update(updates)
+        .eq("user_id", user.id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
 }
