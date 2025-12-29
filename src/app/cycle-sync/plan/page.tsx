@@ -24,7 +24,7 @@ import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
 import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
 
-// --- Data: Phase Blueprints (PRESERVED) ---
+// --- Data: Phase Blueprints (Fully Restored) ---
 const BLUEPRINTS: any = {
     "Menstrual": {
         color: "bg-rove-red",
@@ -46,6 +46,29 @@ const BLUEPRINTS: any = {
                 { symptom: "Cramps", remedy: "Castor Oil Pack" },
                 { symptom: "Fatigue", remedy: "Legs Up The Wall" }
             ]
+        },
+        nutrition_guide: {
+            header: {
+                title: "Replenish & Warm",
+                desc: "Your body is working hard to shed the uterine lining. Focus on iron-rich, warm, and easily digestible foods to restore energy.",
+                tags: ["Iron Rich", "Warm Foods", "Comfort"]
+            },
+            symptom_decoder: [
+                { symptom: "Cramps", trigger: "Inflammation", fix: "Omega-3s & Magnesium" },
+                { symptom: "Fatigue", trigger: "Low Iron", fix: "Lentils, Spinach, Red Meat" },
+                { symptom: "Bloating", trigger: "Water Retention", fix: "Cucumber, Ginger Tea" }
+            ],
+            macro_fuel: { carbs: 40, protein: 30, fats: 30 },
+            cheat_sheet: {
+                focus: ["Soups & Stews", "Root Vegetables", "Herbal Teas", "Dark Chocolate"],
+                avoid: ["Ice Cold Drinks", "Raw Salads", "Excess Caffeine", "Alcohol"]
+            },
+            ai_chef: {
+                meal_options: [
+                    { name: "Lentil Soup", type: "Lunch", calories: 400, protein: "18g" },
+                    { name: "Ginger Tea", type: "Drink", calories: 10, protein: "0g" }
+                ]
+            }
         },
         diet: {
             core_needs: [
@@ -107,6 +130,28 @@ const BLUEPRINTS: any = {
                 { symptom: "Overthinking", remedy: "Brain Dump Journaling" }
             ]
         },
+        nutrition_guide: {
+            header: {
+                title: "Fresh & Energizing",
+                desc: "Rising estrogen improves insulin sensitivity. Incorporate fresh veggies, fermented foods, and lean proteins.",
+                tags: ["Probiotics", "Fresh Greens", "Lean Protein"]
+            },
+            symptom_decoder: [
+                { symptom: "Anxiety", trigger: "Rising Energy", fix: "Grounding Root Veggies" },
+                { symptom: "Restlessness", trigger: "High Cortisol", fix: "Chamomile Tea" }
+            ],
+            macro_fuel: { carbs: 50, protein: 25, fats: 25 },
+            cheat_sheet: {
+                focus: ["Salads", "Kimchi/Sauerkraut", "Sprouted Grains", "Chicken/Tofu"],
+                avoid: ["Heavy Cream", "Deep Fried Foods", "Excess Sugar"]
+            },
+            ai_chef: {
+                meal_options: [
+                    { name: "Quinoa Salad", type: "Lunch", calories: 450, protein: "15g" },
+                    { name: "Green Smoothie", type: "Breakfast", calories: 300, protein: "10g" }
+                ]
+            }
+        },
         diet: {
             core_needs: [
                 { id: "fresh", title: "Fresh Veggies", desc: "Support liver detox", icon: Leaf },
@@ -167,6 +212,28 @@ const BLUEPRINTS: any = {
                 { symptom: "Skin Breakout", remedy: "Ice Roller" }
             ]
         },
+        nutrition_guide: {
+            header: {
+                title: "Fiber & Cool",
+                desc: "High estrogen requires fiber for detoxification. Focus on cooling foods like cucumber and cruciferous veggies.",
+                tags: ["Fiber", "Cooling", "Antioxidants"]
+            },
+            symptom_decoder: [
+                { symptom: "Acne", trigger: "Oil Production", fix: "Zinc & Hydration" },
+                { symptom: "Heat", trigger: "High Metabolism", fix: "Mint & Cucumber" }
+            ],
+            macro_fuel: { carbs: 45, protein: 25, fats: 30 },
+            cheat_sheet: {
+                focus: ["Broccoli", "Berries", "Almonds", "Raw Veggies"],
+                avoid: ["Spicy Foods", "Greasy Fast Food", "Excess Alcohol"]
+            },
+            ai_chef: {
+                meal_options: [
+                    { name: "Raw Pad Thai", type: "Dinner", calories: 500, protein: "20g" },
+                    { name: "Berry Bowl", type: "Snack", calories: 200, protein: "5g" }
+                ]
+            }
+        },
         diet: {
             core_needs: [
                 { id: "fiber", title: "Fiber", desc: "Bind excess estrogen", icon: Wheat },
@@ -226,6 +293,28 @@ const BLUEPRINTS: any = {
                 { symptom: "PMS", remedy: "Magnesium Spray" },
                 { symptom: "Anxiety", remedy: "Box Breathing" }
             ]
+        },
+        nutrition_guide: {
+            header: {
+                title: "Stabilize & Comfort",
+                desc: "Blood sugar instability is common. Prioritize complex carbs like sweet potatoes and brown rice to fight cravings.",
+                tags: ["Complex Carbs", "B-Vitamins", "Magnesium"]
+            },
+            symptom_decoder: [
+                { symptom: "Cravings", trigger: "Drop in Serotonin", fix: "Dark Chocolate" },
+                { symptom: "Bloating", trigger: "Progesterone", fix: "Less Salt, More Water" }
+            ],
+            macro_fuel: { carbs: 40, protein: 30, fats: 30 },
+            cheat_sheet: {
+                focus: ["Sweet Potato", "Brown Rice", "Chickpeas", "Turkey"],
+                avoid: ["Processed Sugar", "Salty Snacks", "Caffeine"]
+            },
+            ai_chef: {
+                meal_options: [
+                    { name: "Buddha Bowl", type: "Lunch", calories: 550, protein: "22g" },
+                    { name: "Golden Milk", type: "Drink", calories: 120, protein: "4g" }
+                ]
+            }
         },
         diet: {
             core_needs: [
@@ -324,8 +413,14 @@ export default function DetailedPlanPage() {
     const [setupStep, setSetupStep] = useState(1);
     const [isPending, startTransition] = useTransition();
 
-    const [height, setHeight] = useState("");
-    const [weight, setWeight] = useState("");
+    // Form State
+    // Height is calculated from Ft/In
+    const [heightFt, setHeightFt] = useState("");
+    const [heightIn, setHeightIn] = useState("");
+    
+    // Weight is always KG
+    const [weight, setWeight] = useState(""); 
+
     const [activity, setActivity] = useState("");
     const [diet, setDiet] = useState("");
 
@@ -354,7 +449,8 @@ export default function DetailedPlanPage() {
 
     const handleSetupNext = () => {
         if (setupStep === 1) {
-            if (!height || !weight) return alert("Please enter height and weight.");
+            // Validate Height (Ft/In)
+            if (!heightFt || !weight) return alert("Please enter all fields.");
             setSetupStep(2);
         } else if (setupStep === 2) {
             if (!activity) return alert("Please select an activity level.");
@@ -364,10 +460,16 @@ export default function DetailedPlanPage() {
 
     const handleSetupSubmit = () => {
         if (!diet) return alert("Please select a diet preference.");
+        
+        // Convert Ft/In to CM for backend storage
+        const ft = parseInt(heightFt) || 0;
+        const inch = parseInt(heightIn) || 0;
+        const totalCm = (ft * 30.48) + (inch * 2.54);
+
         startTransition(async () => {
             const res = await savePlanSettings({
-                height: parseFloat(height),
-                weight: parseFloat(weight),
+                height: parseFloat(totalCm.toFixed(2)), // Save as CM float
+                weight: parseFloat(weight), // Already KG
                 activityLevel: activity,
                 diet: diet
             });
@@ -387,18 +489,15 @@ export default function DetailedPlanPage() {
         </div>
     );
 
-    // --- 5. RENDER: SETUP WIZARD (REDESIGNED) ---
+    // --- RENDER: SETUP WIZARD ---
     if (!hasPlanSetup) {
         return (
-            // ✅ Updated Background (#FDFBF7)
             <div className="min-h-screen bg-[#FDFBF7] relative overflow-hidden flex justify-center items-center p-4">
                 
-                {/* ✅ Updated Visuals: Only Peach Blob + Orbs (Privacy Style) */}
                 <div className="blob-glow-peach" />
                 <div className="glass-orb glass-orb-1" />
                 <div className="glass-orb glass-orb-3" />
 
-                {/* ✅ Updated Card Style: Privacy Border & Shadow */}
                 <div className="glass-panel relative z-10 w-full max-w-2xl p-8 md:p-12 flex flex-col border-rove-peach/30 shadow-2xl">
                     
                     {/* Header */}
@@ -413,7 +512,7 @@ export default function DetailedPlanPage() {
                         </div>
                     </div>
 
-                    {/* Progress Bar (Charcoal for Elegance) */}
+                    {/* Progress Bar */}
                     <div className="flex gap-2 mb-10">
                         {[1, 2, 3].map((s) => {
                             const isActive = s <= setupStep;
@@ -437,56 +536,62 @@ export default function DetailedPlanPage() {
                             transition={{ duration: 0.3 }}
                             className="space-y-8 min-h-[300px]"
                         >
-                            {/* STEP 1: METRICS */}
+                            {/* STEP 1: METRICS (UPDATED: FT/IN ONLY) */}
                             {setupStep === 1 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
-                                            <Ruler className="w-6 h-6" />
-                                        </div>
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red"><Ruler className="w-6 h-6" /></div>
                                         <h2 className="text-xl font-heading text-rove-charcoal">Body Metrics</h2>
                                     </div>
                                     <p className="text-rove-stone text-sm">We use this to calculate your precise caloric & hydration needs.</p>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Height Input */}
-                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex items-center justify-between transition-all hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10 focus-within:border-rove-red/30">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-rove-red shadow-sm border border-white/50">
-                                                    <Ruler className="w-6 h-6" />
-                                                </div>
+                                        
+                                        {/* HEIGHT INPUT (FT/IN ONLY) */}
+                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex flex-col justify-center hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <Ruler className="w-5 h-5 text-rove-red" />
                                                 <label className="text-xs font-bold uppercase tracking-widest text-rove-stone block">Height</label>
                                             </div>
-                                            <div className="flex items-end gap-2">
+                                            
+                                            <div className="flex items-end gap-2 mt-2">
                                                 <input 
                                                     type="number" 
-                                                    value={height} 
-                                                    onChange={e => setHeight(e.target.value)} 
-                                                    placeholder="165"
-                                                    className="w-16 text-right text-3xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20"
+                                                    value={heightFt} 
+                                                    onChange={e => setHeightFt(e.target.value)} 
+                                                    placeholder="5" 
+                                                    className="w-12 text-4xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20" 
                                                     autoFocus
                                                 />
-                                                <span className="text-sm font-medium text-rove-stone mb-1">cm</span>
+                                                <span className="text-sm font-medium text-rove-stone mb-2 mr-2">ft</span>
+                                                
+                                                <input 
+                                                    type="number" 
+                                                    value={heightIn} 
+                                                    onChange={e => setHeightIn(e.target.value)} 
+                                                    placeholder="4" 
+                                                    className="w-14 text-4xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20" 
+                                                />
+                                                <span className="text-sm font-medium text-rove-stone mb-2">in</span>
                                             </div>
                                         </div>
 
-                                        {/* Weight Input */}
-                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex items-center justify-between transition-all hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10 focus-within:border-rove-red/30">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-rove-red shadow-sm border border-white/50">
-                                                    <Weight className="w-6 h-6" />
-                                                </div>
+                                        {/* WEIGHT INPUT (ALWAYS KG) */}
+                                        <div className="bg-white/50 p-6 rounded-3xl border border-white/60 shadow-sm flex flex-col justify-center hover:bg-white/70 group focus-within:ring-2 focus-within:ring-rove-red/10">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <Weight className="w-5 h-5 text-rove-red" />
                                                 <label className="text-xs font-bold uppercase tracking-widest text-rove-stone block">Weight</label>
                                             </div>
-                                            <div className="flex items-end gap-2">
+                                            
+                                            <div className="flex items-end gap-2 mt-2">
                                                 <input 
                                                     type="number" 
                                                     value={weight} 
                                                     onChange={e => setWeight(e.target.value)} 
-                                                    placeholder="60"
-                                                    className="w-16 text-right text-3xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20"
+                                                    placeholder="60" 
+                                                    className="w-24 text-4xl font-heading font-semibold bg-transparent outline-none text-rove-charcoal placeholder:text-rove-stone/20" 
                                                 />
-                                                <span className="text-sm font-medium text-rove-stone mb-1">kg</span>
+                                                <span className="text-sm font-medium text-rove-stone mb-2">kg</span>
                                             </div>
                                         </div>
                                     </div>
@@ -497,44 +602,22 @@ export default function DetailedPlanPage() {
                             {setupStep === 2 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
-                                            <Activity className="w-6 h-6" />
-                                        </div>
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red"><Activity className="w-6 h-6" /></div>
                                         <h2 className="text-xl font-heading text-rove-charcoal">Activity Level</h2>
                                     </div>
                                     <p className="text-rove-stone text-sm">How active are you on a typical week?</p>
-
                                     <div className="space-y-4">
-                                        {ACTIVITY_LEVELS.map((opt) => {
-                                            const isSelected = activity === opt.id;
-                                            return (
-                                                <button
-                                                    key={opt.id}
-                                                    onClick={() => setActivity(opt.id)}
-                                                    className={`w-full p-5 rounded-[1.5rem] border text-left transition-all duration-300 flex items-center justify-between group ${
-                                                        isSelected
-                                                            ? "bg-white border-rove-red/40 ring-4 ring-rove-red/5 shadow-xl scale-[1.01]"
-                                                            : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md"
-                                                    }`}
-                                                >
-                                                    <div>
-                                                        <h3 className={`font-heading font-bold text-lg mb-1 transition-colors ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
-                                                            {opt.label}
-                                                        </h3>
-                                                        <p className={`text-xs transition-colors ${isSelected ? "text-rove-stone" : "text-rove-stone/70"}`}>
-                                                            {opt.desc}
-                                                        </p>
-                                                    </div>
-                                                    
-                                                    {/* Selection Circle */}
-                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                                        isSelected ? "border-rove-red bg-rove-red text-white" : "border-rove-stone/20"
-                                                    }`}>
-                                                        {isSelected && <Check size={14} strokeWidth={4} />}
-                                                    </div>
-                                                </button>
-                                            )
-                                        })}
+                                        {ACTIVITY_LEVELS.map((opt) => (
+                                            <button key={opt.id} onClick={() => setActivity(opt.id)} className={`w-full p-5 rounded-[1.5rem] border text-left transition-all duration-300 flex items-center justify-between group ${activity === opt.id ? "bg-white border-rove-charcoal ring-4 ring-rove-charcoal/5 shadow-xl scale-[1.01]" : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60"}`}>
+                                                <div>
+                                                    <h3 className={`font-heading font-bold text-lg mb-1 transition-colors ${activity === opt.id ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>{opt.label}</h3>
+                                                    <p className={`text-xs transition-colors ${activity === opt.id ? "text-rove-stone" : "text-rove-stone/70"}`}>{opt.desc}</p>
+                                                </div>
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${activity === opt.id ? "border-rove-charcoal bg-rove-charcoal text-white" : "border-rove-stone/20"}`}>
+                                                    {activity === opt.id && <Check size={14} strokeWidth={4} />}
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -543,49 +626,18 @@ export default function DetailedPlanPage() {
                             {setupStep === 3 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
-                                            <Utensils className="w-6 h-6" />
-                                        </div>
+                                        <div className="p-2 bg-rove-red/10 rounded-full text-rove-red"><Utensils className="w-6 h-6" /></div>
                                         <h2 className="text-xl font-heading text-rove-charcoal">Diet Preference</h2>
                                     </div>
                                     <p className="text-rove-stone text-sm">This helps us customize your meal plan.</p>
-
                                     <div className="grid grid-cols-2 gap-4">
-                                        {DIET_OPTIONS.map((opt) => {
-                                            const isSelected = diet === opt.id;
-                                            return (
-                                                <button
-                                                    key={opt.id}
-                                                    onClick={() => setDiet(opt.id)}
-                                                    className={`
-                                                        relative p-6 rounded-[2rem] border transition-all duration-300 flex flex-col items-center justify-center h-40 group cursor-pointer text-center gap-3
-                                                        ${isSelected 
-                                                            ? "bg-white border-rove-red/40 ring-4 ring-rove-red/5 shadow-xl scale-[1.02]" 
-                                                            : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md hover:scale-[1.01]"
-                                                        }
-                                                    `}
-                                                >
-                                                    {/* Icon Container */}
-                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-300 ${
-                                                        isSelected 
-                                                            ? "bg-rove-red text-white shadow-lg shadow-rove-red/20" 
-                                                            : "bg-white text-rove-stone border border-white/80 shadow-sm"
-                                                    }`}>
-                                                        {opt.icon}
-                                                    </div>
-
-                                                    <span className={`font-heading font-bold text-base transition-colors ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
-                                                        {opt.label}
-                                                    </span>
-
-                                                    {isSelected && (
-                                                        <div className="absolute top-4 right-4 text-rove-red">
-                                                            <CheckCircle2 size={18} fill="currentColor" className="text-white" />
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            )
-                                        })}
+                                        {DIET_OPTIONS.map((opt) => (
+                                            <button key={opt.id} onClick={() => setDiet(opt.id)} className={`relative p-6 rounded-[2rem] border transition-all duration-300 flex flex-col items-center justify-center h-40 group cursor-pointer text-center gap-3 ${diet === opt.id ? "bg-white border-rove-charcoal ring-4 ring-rove-charcoal/5 shadow-xl scale-[1.02]" : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md hover:scale-[1.01]"}`}>
+                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-300 ${diet === opt.id ? "bg-rove-charcoal text-white shadow-lg" : "bg-white text-rove-stone border border-white/80 shadow-sm"}`}>{opt.icon}</div>
+                                                <span className={`font-heading font-bold text-base transition-colors ${diet === opt.id ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>{opt.label}</span>
+                                                {diet === opt.id && <div className="absolute top-4 right-4 text-rove-charcoal"><CheckCircle2 size={18} fill="currentColor" className="text-white" /></div>}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -595,46 +647,25 @@ export default function DetailedPlanPage() {
                     {/* Footer / Navigation */}
                     <div className="mt-auto pt-10 flex justify-between items-center">
                         {setupStep > 1 && (
-                            <button 
-                                onClick={() => setSetupStep(s => s - 1)}
-                                className="text-rove-stone font-medium hover:text-rove-charcoal transition-colors flex items-center gap-1 pl-1"
-                            >
-                                <ChevronLeft size={18} /> Back
-                            </button>
+                            <button onClick={() => setSetupStep(s => s - 1)} className="text-rove-stone font-medium hover:text-rove-charcoal transition-colors flex items-center gap-1 pl-1"><ChevronLeft size={18} /> Back</button>
                         )}
-                        
                         <div className="ml-auto">
                             {setupStep < 3 ? (
-                                <Button 
-                                    onClick={handleSetupNext} 
-                                    className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                                >
-                                    Next Step <ArrowRight size={18} className="ml-2" />
-                                </Button>
+                                <Button onClick={handleSetupNext} className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">Next Step <ArrowRight size={18} className="ml-2" /></Button>
                             ) : (
-                                <Button 
-                                    onClick={handleSetupSubmit} 
-                                    disabled={isPending} 
-                                    className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                                >
-                                    {isPending ? "Generating Plan..." : "Generate Plan"}
-                                    {!isPending && <Sparkles size={18} className="ml-2" />}
+                                <Button onClick={handleSetupSubmit} disabled={isPending} className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                                    {isPending ? "Generating Plan..." : "Generate Plan"} {!isPending && <Sparkles size={18} className="ml-2" />}
                                 </Button>
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
         );
     }
 
-    // --- 6. RENDER: MAIN DASHBOARD (PRESERVED) ---
-    if (!data) return (
-        <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
-            <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
-        </div>
-    );
+    // --- Main Dashboard Render ---
+    if (!data) return <div className="min-h-screen flex items-center justify-center bg-rove-cream/20"><div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" /></div>;
 
     const phaseName = data.phase || "Menstrual";
     const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
@@ -644,115 +675,46 @@ export default function DetailedPlanPage() {
 
     return (
         <div className="min-h-screen bg-[#FBFAF8]">
-            {/* ... Rest of your Main Dashboard Code (Unchanged) ... */}
-            {/* 1. HERO IMAGE (Insight Style) */}
             <div className="relative w-full h-[30vh] md:h-[40vh] bg-slate-900 z-0 transition-all duration-700">
-                <Image
-                    src={headerImage}
-                    alt={phaseName}
-                    fill
-                    sizes="100vw"
-                    className="object-cover object-center opacity-90 transition-opacity duration-700"
-                    priority
-                />
+                <Image src={headerImage} alt={phaseName} fill sizes="100vw" className="object-cover object-center opacity-90 transition-opacity duration-700" priority />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
-
                 <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-12 pb-14 md:pb-24 z-20 container mx-auto">
                     <div className="flex justify-between items-center text-white pt-2">
-                        <Link href="/cycle-sync" className="p-2 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-colors border border-white/10">
-                            <ChevronLeft className="w-5 h-5" />
-                        </Link>
-
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] opacity-90 drop-shadow-md">Daily Intelligence</span>
-                            <span className="text-[9px] uppercase tracking-widest opacity-60">{todayStr}</span>
-                        </div>
+                        <Link href="/cycle-sync" className="p-2 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-colors border border-white/10"><ChevronLeft className="w-5 h-5" /></Link>
+                        <div className="flex flex-col items-center"><span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] opacity-90 drop-shadow-md">Daily Intelligence</span><span className="text-[9px] uppercase tracking-widest opacity-60">{todayStr}</span></div>
                         <div className="w-10" />
                     </div>
-
                     <div className="space-y-2 animate-in slide-in-from-bottom-6 duration-700 fade-in">
-                        <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg">
-                            Day {data.day || "?"}
-                        </span>
-                        <h1 className="font-heading text-3xl md:text-5xl text-white drop-shadow-xl leading-tight">
-                            {phaseName} Blueprint
-                        </h1>
+                        <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg">Day {data.day || "?"}</span>
+                        <h1 className="font-heading text-3xl md:text-5xl text-white drop-shadow-xl leading-tight">{phaseName} Blueprint</h1>
                     </div>
                 </div>
             </div>
 
-            {/* 2. MAIN CONTENT SHEET (Overlapping) */}
             <div className="relative z-30 -mt-16 md:-mt-24 bg-[#FBFAF8] rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden shadow-2xl min-h-screen">
-                {/* Ambient Blobs inside the sheet for continuity */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className={cn("absolute -top-[10%] -left-[10%] w-[50vh] h-[50vh] rounded-full blur-[100px] opacity-40 mix-blend-multiply", theme.blob)} />
-                </div>
-
+                <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className={cn("absolute -top-[10%] -left-[10%] w-[50vh] h-[50vh] rounded-full blur-[100px] opacity-40 mix-blend-multiply", theme.blob)} /></div>
                 <div className="relative z-10 container mx-auto px-4 py-5 md:p-10 md:pt-12 max-w-5xl">
-
-                    {/* Tabs - Floating Glass Pill */}
                     <div className="flex p-1.5 bg-white/60 backdrop-blur-xl rounded-full border border-white/40 shadow-lg shadow-rove-charcoal/5 mx-auto max-w-md sticky top-4 z-50 mb-6">
-                        {[
-                            { id: 'guide', label: 'Phase Guide', icon: Sparkles },
-                            { id: 'diet', label: 'Diet', icon: Utensils },
-                            { id: 'exercise', label: 'Exercise', icon: Dumbbell }
-                        ].map(tab => {
+                        {[{ id: 'guide', label: 'Phase Guide', icon: Sparkles }, { id: 'diet', label: 'Diet', icon: Utensils }, { id: 'exercise', label: 'Exercise', icon: Dumbbell }].map(tab => {
                             const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
-                                    className={cn(
-                                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                                        isActive ? "bg-white text-rove-charcoal shadow-md" : "text-rove-charcoal/60 hover:bg-white/20"
-                                    )}
-                                >
-                                    <tab.icon className="w-4 h-4" />
-                                    <span className="hidden md:inline">{tab.label}</span>
-                                </button>
-                            );
+                            return <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300", isActive ? "bg-white text-rove-charcoal shadow-md" : "text-rove-charcoal/60 hover:bg-white/20")}><tab.icon className="w-4 h-4" /><span className="hidden md:inline">{tab.label}</span></button>;
                         })}
                     </div>
 
                     <AnimatePresence mode="wait">
-
-                        {/* PHASE GUIDE TAB (Science + Rituals) */}
                         {activeTab === 'guide' && (
-                            <motion.div
-                                key="guide"
-                                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-6"
-                            >
-                                {/* Hero Focus Card */}
+                            <motion.div key="guide" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-6">
                                 <div className={cn("p-6 rounded-[2rem] relative overflow-hidden shadow-lg text-center transition-colors duration-500", BP.color)}>
                                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px]" />
-                                    <Sparkles className="w-8 h-8 text-white/70 mx-auto mb-3 relative z-10" />
-                                    <p className="text-white/60 uppercase tracking-widest text-[10px] font-bold mb-1 relative z-10">Current Focus</p>
-                                    <h3 className="text-2xl md:text-3xl font-heading mb-2 text-white relative z-10">
-                                        {BP.rituals.focus}
-                                    </h3>
+                                    <Sparkles className="w-8 h-8 text-white/70 mx-auto mb-3 relative z-10" /><p className="text-white/60 uppercase tracking-widest text-[10px] font-bold mb-1 relative z-10">Current Focus</p><h3 className="text-2xl md:text-3xl font-heading mb-2 text-white relative z-10">{BP.rituals.focus}</h3>
                                 </div>
-
-                                {/* Biology / Science Section */}
-                                <section>
-                                    <SectionHeader title="The Science" icon={Beaker} />
+                                <section><SectionHeader title="The Science" icon={Beaker} />
                                     <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
-                                        <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4>
-                                        <p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p>
-                                        <p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {BP.hormones.symptoms.map((sym: string) => (
-                                                <div key={sym} className="px-3 py-2 rounded-xl bg-white/50 border border-white/60 text-xs font-bold text-rove-charcoal/70 text-center shadow-sm">
-                                                    {sym}
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4><p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p><p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
+                                        <div className="grid grid-cols-2 gap-3">{BP.hormones.symptoms.map((sym: string) => <div key={sym} className="px-3 py-2 rounded-xl bg-white/50 border border-white/60 text-xs font-bold text-rove-charcoal/70 text-center shadow-sm">{sym}</div>)}</div>
                                     </div>
                                 </section>
-
-                                <section>
-                                    <SectionHeader title="Mind & Rituals" icon={Brain} />
+                                <section><SectionHeader title="Mind & Rituals" icon={Brain} />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {BP.rituals.practices.map((practice: any, i: number) => (
                                             <div key={i} className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm flex items-center gap-4 hover:bg-white/60 transition-all">
@@ -767,124 +729,12 @@ export default function DetailedPlanPage() {
                                         ))}
                                     </div>
                                 </section>
-
-                                <div className="mt-4">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {BP.rituals.symptom_relief.map((item: any, i: number) => (
-                                            <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm">
-                                                <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">
-                                                    For {item.symptom}
-                                                </div>
-                                                <div className="text-base font-heading text-emerald-900 flex items-center gap-2">
-                                                    <Leaf className="w-4 h-4 text-emerald-600" />
-                                                    {item.remedy}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                <div className="mt-4"><h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3><div className="grid grid-cols-2 gap-4">{BP.rituals.symptom_relief.map((item: any, i: number) => <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm"><div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">For {item.symptom}</div><div className="text-base font-heading text-emerald-900 flex items-center gap-2"><Leaf className="w-4 h-4 text-emerald-600" />{item.remedy}</div></div>)}</div></div>
                             </motion.div>
                         )}
-
-                        {/* DIET TAB (Refreshed UX) */}
-                        {activeTab === 'diet' && (
-                            <motion.div
-                                key="diet"
-                                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-10 md:space-y-14 pb-24"
-                            >
-                                {/* 1. Phase Header & "Why" Insight */}
-                                {BP.nutrition_guide && (
-                                    <DietHeader phase={phaseName} data={BP.nutrition_guide.header} theme={theme} />
-                                )}
-
-                                {/* 2. The Symptom Decoder (Top Carousel) */}
-                                {BP.nutrition_guide?.symptom_decoder && (
-                                    <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />
-                                )}
-
-                                {/* 3. The Macro Fuel Gauge (Donut Chart) */}
-                                {BP.nutrition_guide?.macro_fuel && (
-                                    <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />
-                                )}
-
-                                {/* 4. Focus vs Avoid Cheat Sheet (T-Chart) */}
-                                {BP.nutrition_guide?.cheat_sheet && (
-                                    <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />
-                                )}
-
-                                {/* 5. The AI Chef (Plate Builder) */}
-                                {BP.nutrition_guide?.ai_chef && (
-                                    <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />
-                                )}
-
-
-                                <section>
-                                    <SectionHeader title="Supplement Specs" icon={Pill} />
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {BP.supplements.map((s: any) => (
-                                            <div key={s.name} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm text-center flex flex-col justify-center">
-                                                <div className="font-heading text-rove-charcoal text-sm md:text-base mb-1">{s.name}</div>
-                                                <div className="text-[10px] bg-white/60 px-2 py-0.5 rounded-full inline-block mx-auto mb-2 font-bold text-rove-stone">{s.dose}</div>
-                                                <div className="text-[10px] text-rove-stone/80 leading-tight">{s.why}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            </motion.div>
-                        )}
-
-                        {/* EXERCISE TAB */}
-                        {activeTab === 'exercise' && (
-                            <motion.div
-                                key="exercise"
-                                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                                className="space-y-8"
-                            >
-                                <section>
-                                    <SectionHeader title="Movement Plan" icon={Activity} />
-                                    <div className="p-6 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border-l-4 border-l-rove-charcoal/80 border-t border-r border-b border-white/60 shadow-sm">
-                                        <p className="text-rove-charcoal italic text-lg font-heading leading-relaxed">"{BP.exercise.summary}"</p>
-                                    </div>
-
-                                    <div className="space-y-4 mb-8 mt-8">
-                                        <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            {BP.exercise.best.map((ex: any, i: number) => (
-                                                <div key={i} className="p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 flex gap-4 items-start shadow-sm hover:shadow-md transition-all">
-                                                    <div className="text-3xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
-                                                    <div>
-                                                        <h4 className="font-bold text-lg text-rove-charcoal mb-1">{ex.title}</h4>
-                                                        <Badge variant="outline" className="text-[10px] bg-white border-gray-200 mb-2">{ex.time}</Badge>
-                                                        <p className="text-sm text-rove-stone leading-relaxed">{ex.desc}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-5 rounded-[1.5rem] bg-gray-50/80 border border-gray-200 backdrop-blur-sm">
-                                        <h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
-                                            <Ban className="w-4 h-4" /> Avoid High Intensity
-                                        </h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {BP.exercise.avoid.map((item: string) => (
-                                                <span key={item} className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 shadow-sm line-through decoration-gray-400">
-                                                    {item}
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-4 max-w-md">
-                                            Listen to your body. If you feel tired, rest.
-                                        </p>
-                                    </div>
-                                </section>
-                            </motion.div>
-                        )}
-
+                        {activeTab === 'diet' && (<motion.div key="diet" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-10 md:space-y-14 pb-24">{BP.nutrition_guide && <DietHeader phase={phaseName} data={BP.nutrition_guide.header} theme={theme} />}{BP.nutrition_guide?.symptom_decoder && <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />}{BP.nutrition_guide?.macro_fuel && <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />}{BP.nutrition_guide?.cheat_sheet && <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />}{BP.nutrition_guide?.ai_chef && <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />}<section><SectionHeader title="Supplement Specs" icon={Pill} /><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{BP.supplements.map((s: any) => <div key={s.name} className="p-4 rounded-[1.5rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm text-center flex flex-col justify-center"><div className="font-heading text-rove-charcoal text-sm md:text-base mb-1">{s.name}</div><div className="text-[10px] bg-white/60 px-2 py-0.5 rounded-full inline-block mx-auto mb-2 font-bold text-rove-stone">{s.dose}</div><div className="text-[10px] text-rove-stone/80 leading-tight">{s.why}</div></div>)}</div></section></motion.div>)}
+                        {activeTab === 'exercise' && (<motion.div key="exercise" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-8"><section><SectionHeader title="Movement Plan" icon={Activity} /><div className="p-6 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border-l-4 border-l-rove-charcoal/80 border-t border-r border-b border-white/60 shadow-sm"><p className="text-rove-charcoal italic text-lg font-heading leading-relaxed">"{BP.exercise.summary}"</p></div><div className="space-y-4 mb-8 mt-8"><h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3><div className="grid md:grid-cols-2 gap-4">{BP.exercise.best.map((ex: any, i: number) => <div key={i} className="p-5 rounded-[1.5rem] bg-white/60 backdrop-blur-sm border border-white/80 flex gap-4 items-start shadow-sm hover:shadow-md transition-all"><div className="text-3xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div><div><h4 className="font-bold text-lg text-rove-charcoal mb-1">{ex.title}</h4><Badge variant="outline" className="text-[10px] bg-white border-gray-200 mb-2">{ex.time}</Badge><p className="text-sm text-rove-stone leading-relaxed">{ex.desc}</p></div></div>)}</div></div><div className="p-5 rounded-[1.5rem] bg-gray-50/80 border border-gray-200 backdrop-blur-sm"><h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-4 flex items-center gap-2"><Ban className="w-4 h-4" /> Avoid High Intensity</h4><div className="flex flex-wrap gap-2">{BP.exercise.avoid.map((item: string) => <span key={item} className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-600 shadow-sm line-through decoration-gray-400">{item}</span>)}</div><p className="text-xs text-gray-400 mt-4 max-w-md">Listen to your body. If you feel tired, rest.</p></div></section></motion.div>)}
                     </AnimatePresence>
-
                 </div>
             </div >
         </div>
