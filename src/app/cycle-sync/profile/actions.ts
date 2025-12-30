@@ -19,6 +19,13 @@ export async function getUserProfile() {
         .eq("user_id", user.id)
         .single();
 
+    // Fetch Profile Core Data (Name)
+    const { data: profileCore, error: pcError } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
     // 2. Fetch Lifestyle/Biometric Data
     const { data: lifestyle, error: lsError } = await supabase
         .from("user_lifestyle")
@@ -37,6 +44,7 @@ export async function getUserProfile() {
     return {
         ...safeOnboarding,
         ...safeLifestyle, // Merge lifestyle (height, weight, diet)
+        full_name: profileCore?.full_name || "",
         goals,
         conditions: safeOnboarding.conditions || [],
         diet_preference: safeLifestyle.diet_preference || "non_veg",

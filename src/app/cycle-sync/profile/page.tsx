@@ -6,7 +6,7 @@ import { fetchUserCycleSettings, updateCycleLength, updateLastPeriodDate } from 
 import { Button } from "@/components/ui/Button";
 import {
     Calendar, LogOut, Bell, ChevronRight, Scale, Activity, Crown, Moon,
-    Minus, Plus, HeartPulse, Sparkles, AlertCircle, Utensils, Zap, Trophy, Armchair, Pizza, Leaf, Beef, Egg, Flame, Fish, Wheat
+    Minus, Plus, HeartPulse, Sparkles, AlertCircle, Utensils, Zap, Trophy, Armchair, Pizza, Leaf, Beef, Egg, Flame, Fish, Wheat, Edit2, Check
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -38,6 +38,7 @@ export default function ProfilePage() {
         cycle_length_days: 28,
         period_length_days: 5
     });
+    const [isEditingCycle, setIsEditingCycle] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -132,106 +133,102 @@ export default function ProfilePage() {
 
                 {/* 2. Cycle Settings (The "Luxurious" Config) */}
                 <section>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Calendar className="w-4 h-4 text-rove-charcoal" />
-                        <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Cycle Architecture</h3>
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-rove-charcoal" />
+                            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Cycle Architecture</h3>
+                        </div>
+                        <button
+                            onClick={() => setIsEditingCycle(!isEditingCycle)}
+                            className="text-xs font-medium text-rove-charcoal hover:text-stone-600 underline"
+                        >
+                            {isEditingCycle ? "Cancel" : "Edit"}
+                        </button>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-1 shadow-[0_8px_30px_rgba(0,0,0,0.04)] ring-1 ring-stone-100">
-                        {/* Period Length */}
-                        <div className="p-6 border-b border-stone-50">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-stone-900">Period Duration</span>
-                                <span className="text-xs text-stone-400 font-medium tracking-wide">DAYS OF FLOW</span>
-                            </div>
-                            <div className="flex items-center justify-between bg-stone-50/50 rounded-2xl p-2">
-                                <button
-                                    onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.max(1, p.period_length_days - 1) }))}
-                                    className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-stone-600 hover:text-rove-charcoal transition-all active:scale-95 border border-stone-100"
-                                >
-                                    <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="text-3xl font-heading text-rove-charcoal w-12 text-center">
-                                    {cycleData.period_length_days}
-                                </span>
-                                <button
-                                    onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.min(10, p.period_length_days + 1) }))}
-                                    className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-stone-600 hover:text-rove-charcoal transition-all active:scale-95 border border-stone-100"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Cycle Length */}
-                        <div className="p-6 border-b border-stone-50">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-stone-900">Cycle Length</span>
-                                <span className="text-xs text-stone-400 font-medium tracking-wide">DAYS TOTAL</span>
-                            </div>
-                            <div className="flex items-center justify-between bg-stone-50/50 rounded-2xl p-2">
-                                <button
-                                    onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.max(21, p.cycle_length_days - 1) }))}
-                                    className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-stone-600 hover:text-rove-charcoal transition-all active:scale-95 border border-stone-100"
-                                >
-                                    <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="text-3xl font-heading text-rove-charcoal w-16 text-center">
-                                    {cycleData.cycle_length_days}
-                                </span>
-                                <button
-                                    onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.min(45, p.cycle_length_days + 1) }))}
-                                    className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-stone-600 hover:text-rove-charcoal transition-all active:scale-95 border border-stone-100"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Last Period Start */}
-                        <div className="p-6 border-b border-stone-50">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-stone-900">Last Period Start</span>
-                                <span className="text-xs text-stone-400 font-medium tracking-wide">REFERENCE DATE</span>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    className="w-full bg-stone-50 border border-stone-100 rounded-xl px-4 py-4 text-rove-charcoal font-medium outline-none focus:ring-2 focus:ring-rove-cream/50 transition-all cursor-pointer"
-                                    value={cycleData.last_period_start}
-                                    onChange={(e) => setCycleData(p => ({ ...p, last_period_start: e.target.value }))}
-                                />
-                                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
-                            </div>
-                        </div>
-
-                        {/* Regularity Toggle */}
-                        <div className="p-6 flex items-center justify-between">
+                    {!isEditingCycle ? (
+                        <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-stone-900">Cycle Regularity</p>
-                                <p className="text-xs text-stone-400">Helps with predictions</p>
+                                <p className="text-3xl font-heading text-rove-charcoal">{cycleData.period_length_days} / {cycleData.cycle_length_days}</p>
+                                <p className="text-xs text-stone-400 font-medium tracking-wide mt-1">PERIOD / CYCLE DAYS</p>
                             </div>
-                            <button
-                                onClick={() => setFormData(p => ({ ...p, is_irregular: !p.is_irregular }))}
-                                className={cn(
-                                    "px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all",
-                                    formData.is_irregular
-                                        ? "bg-amber-100 text-amber-700"
-                                        : "bg-stone-100 text-stone-500"
-                                )}
-                            >
-                                {formData.is_irregular ? "Irregular" : "Regular"}
-                            </button>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-stone-900">{formData.is_irregular ? "Irregular" : "Regular"}</p>
+                                <p className="text-xs text-stone-400 mt-1">Last: {new Date(cycleData.last_period_start || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm ring-1 ring-stone-100">
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                {/* Period Length */}
+                                <div className="p-4 rounded-xl bg-stone-50 border border-stone-100 flex flex-col items-center justify-center gap-2">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Period</span>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.max(1, p.period_length_days - 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
+                                            <Minus className="w-3 h-3" />
+                                        </button>
+                                        <span className="text-xl font-heading text-rove-charcoal w-6 text-center">{cycleData.period_length_days}</span>
+                                        <button onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.min(10, p.period_length_days + 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
+                                            <Plus className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
 
-                    <Button
-                        onClick={handleSaveCycle}
-                        disabled={isPending}
-                        className="mt-4 w-full bg-rove-charcoal text-white py-6 rounded-2xl hover:bg-black/90 transition-all font-medium text-lg font-heading shadow-xl shadow-rove-charcoal/10"
-                    >
-                        Sync Settings
-                    </Button>
+                                {/* Cycle Length */}
+                                <div className="p-4 rounded-xl bg-stone-50 border border-stone-100 flex flex-col items-center justify-center gap-2">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Cycle</span>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.max(21, p.cycle_length_days - 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
+                                            <Minus className="w-3 h-3" />
+                                        </button>
+                                        <span className="text-xl font-heading text-rove-charcoal w-8 text-center">{cycleData.cycle_length_days}</span>
+                                        <button onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.min(45, p.cycle_length_days + 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
+                                            <Plus className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                {/* Last Period Input */}
+                                <div className="flex-1 relative">
+                                    <span className="absolute left-3 top-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest">Last Period</span>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 pt-6 pb-2 text-sm font-medium text-rove-charcoal outline-none focus:ring-1 focus:ring-rove-charcoal/10 cursor-pointer"
+                                        value={cycleData.last_period_start}
+                                        onChange={(e) => setCycleData(p => ({ ...p, last_period_start: e.target.value }))}
+                                    />
+                                </div>
+
+                                {/* Regularity Toggle */}
+                                <button
+                                    onClick={() => setFormData(p => ({ ...p, is_irregular: !p.is_irregular }))}
+                                    className={cn(
+                                        "flex-1 h-[60px] rounded-xl border flex flex-col items-center justify-center gap-1 transition-all",
+                                        formData.is_irregular
+                                            ? "bg-amber-50 border-amber-100 text-amber-700"
+                                            : "bg-white border-stone-100 text-stone-400 hover:border-stone-200"
+                                    )}
+                                >
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Regularity</span>
+                                    <span className="text-sm font-bold">{formData.is_irregular ? "Irregular" : "Regular"}</span>
+                                </button>
+                            </div>
+
+                            <Button
+                                onClick={() => {
+                                    handleSaveCycle();
+                                    setIsEditingCycle(false);
+                                }}
+                                disabled={isPending}
+                                className="mt-4 w-full bg-rove-charcoal text-white py-4 rounded-xl hover:bg-black/90 transition-all font-medium text-sm font-heading shadow-xl shadow-rove-charcoal/10 flex items-center justify-center gap-2"
+                            >
+                                <Check className="w-4 h-4" />
+                                Save Updates
+                            </Button>
+                        </div>
+                    )}
                 </section>
 
                 {/* 3. Health & Biometrics */}
@@ -358,86 +355,34 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5">
-                        <div className="bg-white p-6 rounded-[2rem] border border-stone-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden group hover:shadow-lg transition-all">
-                            <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Height</label>
-                            <div className="flex items-baseline gap-1 mt-2">
+                    {/* Height & Weight (Compact Row) */}
+                    <div className="bg-white rounded-2xl p-4 border border-stone-100 shadow-sm flex divide-x divide-stone-100 mb-5">
+                        <div className="flex-1 pr-4 flex items-center justify-between">
+                            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider">Height</label>
+                            <div className="flex items-baseline gap-1">
                                 <input
                                     type="number"
                                     value={formData.height}
                                     onChange={(e) => setFormData(p => ({ ...p, height: Number(e.target.value) }))}
-                                    className="text-4xl font-heading text-rove-charcoal w-24 bg-transparent outline-none p-0"
+                                    className="text-xl font-heading text-rove-charcoal w-16 bg-transparent outline-none p-0 text-right"
                                 />
-                                <span className="text-sm text-stone-400 font-medium">cm</span>
+                                <span className="text-xs text-stone-400 font-medium">cm</span>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-[2rem] border border-stone-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden group hover:shadow-lg transition-all">
-                            <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Weight</label>
-                            <div className="flex items-baseline gap-1 mt-2">
+                        <div className="flex-1 pl-4 flex items-center justify-between">
+                            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider">Weight</label>
+                            <div className="flex items-baseline gap-1">
                                 <input
                                     type="number"
                                     value={formData.weight}
                                     onChange={(e) => setFormData(p => ({ ...p, weight: Number(e.target.value) }))}
-                                    className="text-4xl font-heading text-rove-charcoal w-24 bg-transparent outline-none p-0"
+                                    className="text-xl font-heading text-rove-charcoal w-16 bg-transparent outline-none p-0 text-right"
                                 />
-                                <span className="text-sm text-stone-400 font-medium">kg</span>
+                                <span className="text-xs text-stone-400 font-medium">kg</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Diet Preference */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mt-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Utensils className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-bold text-stone-900">Diet Preference</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { id: 'non_veg', label: 'Non-Veg', icon: Fish },
-                                { id: 'vegetarian', label: 'Vegetarian', icon: Leaf },
-                                { id: 'vegan', label: 'Vegan', icon: Leaf },
-                                { id: 'jain', label: 'Jain', icon: Wheat },
-                            ].map((diet) => (
-                                <button
-                                    key={diet.id}
-                                    onClick={() => setFormData(p => ({ ...p, diet_preference: diet.id }))}
-                                    className={cn(
-                                        "p-4 rounded-xl flex flex-col items-center gap-2 border transition-all",
-                                        formData.diet_preference === diet.id
-                                            ? "bg-green-50 border-green-200 text-green-800 ring-1 ring-green-200"
-                                            : "bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100"
-                                    )}
-                                >
-                                    <diet.icon className="w-5 h-5 opacity-80" />
-                                    <span className="text-xs font-bold uppercase tracking-wide">{diet.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Activity Level */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mt-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Activity className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm font-bold text-stone-900">Activity Level</span>
-                        </div>
-                        <div className="flex bg-stone-50 p-1 rounded-xl">
-                            {['sedentary', 'moderate', 'active'].map((level) => (
-                                <button
-                                    key={level}
-                                    onClick={() => setFormData(p => ({ ...p, activity_level: level }))}
-                                    className={cn(
-                                        "flex-1 py-3 px-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
-                                        formData.activity_level === level
-                                            ? "bg-white text-stone-900 shadow-sm"
-                                            : "text-stone-400 hover:text-stone-600"
-                                    )}
-                                >
-                                    {level}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
                     <Button
                         onClick={handleSaveProfile}
                         disabled={isPending}
@@ -485,7 +430,7 @@ export default function ProfilePage() {
                 <div className="pt-8 flex justify-center">
                     <p className="text-[10px] text-stone-300 font-medium uppercase tracking-widest">Rove Health v1.0.3</p>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
