@@ -8,6 +8,9 @@ export type PlanSettings = {
   weight: number;
   activityLevel: string;
   diet: string;
+  fitnessGoal?: string;
+  targetWeight?: number;
+  weeklyRate?: number;
 };
 
 export async function savePlanSettings(data: PlanSettings) {
@@ -16,7 +19,8 @@ export async function savePlanSettings(data: PlanSettings) {
 
   if (!user) throw new Error("User not authenticated");
 
-  const { error } = await supabase
+  // Save to user_lifestyle
+  const { error: lifestyleError } = await supabase
     .from("user_lifestyle")
     .upsert({
       user_id: user.id,
@@ -24,12 +28,32 @@ export async function savePlanSettings(data: PlanSettings) {
       weight_kg: data.weight,
       activity_level: data.activityLevel,
       diet_preference: data.diet,
+      fitness_goal: data.fitnessGoal,
       updated_at: new Date().toISOString(),
     });
 
-  if (error) {
-    console.error("Error saving plan settings:", error);
-    return { success: false, error: error.message };
+  if (lifestyleError) {
+    console.error("Error saving lifestyle settings:", lifestyleError);
+    return { success: false, error: lifestyleError.message };
+  }
+
+  // Save weight goal if applicable
+  if (data.fitnessGoal === "weight_loss" && data.targetWeight) {
+    const { error: weightError } = await supabase
+      .from("user_weight_goals")
+      .upsert({
+        user_id: user.id,
+        current_weight_kg: data.weight,
+        target_weight_kg: data.targetWeight,
+        weekly_rate_kg: data.weeklyRate || 0.4,
+        start_date: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString(),
+      });
+
+    if (weightError) {
+      console.error("Error saving weight goals:", weightError);
+      // Don't fail completely, lifestyle was saved
+    }
   }
 
   revalidatePath("/cycle-sync/plan");
@@ -41,11 +65,13 @@ export async function fetchPlanSettings() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
-    .from("user_lifestyle")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  const [lifestyleResult, weightGoalResult] = await Promise.all([
+    supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
+    supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle()
+  ]);
 
-  return data;
+  return {
+    ...lifestyleResult.data,
+    weightGoal: weightGoalResult.data
+  };
 }

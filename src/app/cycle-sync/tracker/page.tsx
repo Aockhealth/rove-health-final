@@ -207,6 +207,26 @@ export default function TrackerPageRedesigned() {
                 setMpiqConsistency(null);
                 setMpiqAppearance(null);
                 setMpiqSensation(null);
+
+                // LOGIC: Default to Period Mode if within "Period Window" (Start + Avg Length + 1 buffer)
+                // This creates the "sticky" behavior requested.
+                if (cycleSettings.last_period_start) {
+                    const start = parseLocalString(cycleSettings.last_period_start);
+                    if (start) {
+                        const current = new Date(selectedDate);
+                        current.setHours(0, 0, 0, 0);
+
+                        const diffTime = current.getTime() - start.getTime();
+                        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // 0-indexed count from start
+
+                        // If user is within the (Average Length + 1 day buffer), default to Period Mode
+                        // Example: Length 5. Days 0,1,2,3,4 are period. Day 5 is buffer (+1). Day 6 is off.
+                        const activePeriodWindow = cycleSettings.period_length_days + 1;
+                        if (diffDays >= 0 && diffDays < activePeriodWindow) {
+                            setTrackMode('period');
+                        }
+                    }
+                }
             }
         };
         fetchLog();
@@ -714,29 +734,27 @@ export default function TrackerPageRedesigned() {
                         animate={{ opacity: 1 }}
                         className="space-y-4"
                     >
-                        {/* Toggle Track Mode */}
-                        <div className="flex items-center justify-between bg-white/60 p-4 rounded-2xl border border-white/50 mb-2">
-                            <div className="flex items-center gap-3">
-                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors", trackMode === "period" ? "bg-rose-100 text-rose-600" : "bg-gray-100 text-gray-500")}>
-                                    <Droplets className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-gray-900">Period Flow</h3>
-                                    <p className="text-xs text-gray-500">Log menstruation for today</p>
-                                </div>
-                            </div>
+                        {/* Single Action Button (Start/End Period) */}
+                        <div className="flex justify-end mb-4">
                             <button
                                 onClick={() => setTrackMode(trackMode === "period" ? "discharge" : "period")}
                                 className={cn(
-                                    "relative w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none",
-                                    trackMode === "period" ? "bg-rose-500" : "bg-gray-200"
+                                    "px-5 py-2.5 rounded-full flex items-center gap-2 transition-all shadow-sm border",
+                                    trackMode === "period"
+                                        ? "bg-white border-rose-200 text-rose-600 hover:bg-rose-50"
+                                        : "bg-rose-500 border-rose-600 text-white hover:bg-rose-600 shadow-rose-200"
                                 )}
                             >
-                                <motion.div
-                                    className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm"
-                                    animate={{ x: trackMode === "period" ? 24 : 0 }}
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                />
+                                <div className={cn("p-1 rounded-full", trackMode === "period" ? "bg-rose-100" : "bg-white/20")}>
+                                    {trackMode === "period" ? (
+                                        <Waves className="w-3.5 h-3.5" />
+                                    ) : (
+                                        <Droplets className="w-3.5 h-3.5" />
+                                    )}
+                                </div>
+                                <span className="text-sm font-semibold">
+                                    {trackMode === "period" ? "Period Ended?" : "Start Period"}
+                                </span>
                             </button>
                         </div>
 

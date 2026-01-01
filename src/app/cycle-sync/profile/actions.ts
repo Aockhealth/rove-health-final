@@ -12,26 +12,16 @@ export async function getUserProfile() {
         redirect("/login");
     }
 
-    // 1. Fetch Identity/Onboarding Data
-    const { data: onboarding, error: obError } = await supabase
-        .from("user_onboarding")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    // Run all 3 queries in parallel for maximum speed
+    const [onboardingResult, profileCoreResult, lifestyleResult] = await Promise.all([
+        supabase.from("user_onboarding").select("*").eq("user_id", user.id).single(),
+        supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+        supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single()
+    ]);
 
-    // Fetch Profile Core Data (Name)
-    const { data: profileCore, error: pcError } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .single();
-
-    // 2. Fetch Lifestyle/Biometric Data
-    const { data: lifestyle, error: lsError } = await supabase
-        .from("user_lifestyle")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    const onboarding = onboardingResult.data;
+    const profileCore = profileCoreResult.data;
+    const lifestyle = lifestyleResult.data;
 
     // safe fallback if records don't exist yet
     const safeOnboarding = onboarding || {};

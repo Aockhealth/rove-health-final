@@ -42,8 +42,14 @@ export default function ProfilePage() {
 
     useEffect(() => {
         const loadData = async () => {
-            // 1. Fetch Profile
-            const profile = await getUserProfile();
+            // Run all data fetches in parallel for faster loading
+            const [profile, cycle, authUser] = await Promise.all([
+                getUserProfile(),
+                fetchUserCycleSettings(),
+                supabase.auth.getUser()
+            ]);
+
+            // 1. Set Profile Data
             if (profile) {
                 setFormData({
                     full_name: profile.full_name || "",
@@ -58,8 +64,7 @@ export default function ProfilePage() {
                 });
             }
 
-            // 2. Fetch Cycle Settings
-            const cycle = await fetchUserCycleSettings();
+            // 2. Set Cycle Settings
             if (cycle) {
                 setCycleData({
                     last_period_start: cycle.last_period_start || "",
@@ -68,9 +73,8 @@ export default function ProfilePage() {
                 });
             }
 
-            // 3. Get Auth User
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
+            // 3. Set Auth User
+            setUser(authUser.data?.user);
 
             setLoading(false);
         };

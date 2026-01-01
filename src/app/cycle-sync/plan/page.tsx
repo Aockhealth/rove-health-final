@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useTransition } from "react";
-import { fetchCycleIntelligence } from "@/app/actions/cycle-sync";
+import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
 import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
@@ -14,7 +14,7 @@ import {
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2
+    Flower2, Target, Scale
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 
@@ -25,6 +25,7 @@ import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
 import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
 
 // --- Data: Phase Blueprints (PRESERVED) ---
 const BLUEPRINTS: any = {
@@ -346,12 +347,52 @@ function RitualCheckbox({ item, theme, index, total }: { item: any, theme: any, 
 
 
 
-// Phase Theme Logic
+// Phase Theme Logic - Expanded for Full UI Theming
 const phaseThemes: Record<string, any> = {
-    "Menstrual": { color: "text-rose-500", blob: "bg-rose-200/20", orbRing: "from-rose-300 via-rose-100 to-rose-400", glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", badge: "bg-rose-50 text-rose-600 border-rose-100", accent: "bg-rose-500" },
-    "Follicular": { color: "text-teal-500", blob: "bg-teal-200/20", orbRing: "from-teal-300 via-teal-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-600 border-teal-100", accent: "bg-teal-500" },
-    "Ovulatory": { color: "text-amber-500", blob: "bg-amber-200/20", orbRing: "from-amber-300 via-amber-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.2)]", badge: "bg-amber-50 text-amber-600 border-amber-100", accent: "bg-amber-500" },
-    "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/20", orbRing: "from-indigo-300 via-indigo-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", accent: "bg-indigo-500" }
+    "Menstrual": {
+        color: "text-rose-600",
+        bannerBg: "bg-gradient-to-r from-rose-500 to-pink-600",
+        cardBg: "bg-white/60",
+        border: "border-rose-100",
+        softBg: "bg-rose-50/30",
+        pageGradient: "from-rose-50/50 via-white to-white",
+        iconContainer: "bg-rose-100 text-rose-600",
+        orbRing: "from-rose-300 via-rose-100 to-rose-400",
+        accent: "bg-rose-500"
+    },
+    "Follicular": {
+        color: "text-teal-600",
+        bannerBg: "bg-gradient-to-r from-teal-400 to-emerald-500",
+        cardBg: "bg-teal-50/30",
+        border: "border-teal-100",
+        softBg: "bg-teal-50/30",
+        pageGradient: "from-teal-50/50 via-white to-white",
+        iconContainer: "bg-teal-100 text-teal-600",
+        orbRing: "from-teal-300 via-teal-100 to-teal-400",
+        accent: "bg-teal-500"
+    },
+    "Ovulatory": {
+        color: "text-amber-600",
+        bannerBg: "bg-gradient-to-r from-amber-400 to-orange-500",
+        cardBg: "bg-amber-50/30",
+        border: "border-amber-100",
+        softBg: "bg-amber-50/30",
+        pageGradient: "from-amber-50/50 via-white to-white",
+        iconContainer: "bg-amber-100 text-amber-600",
+        orbRing: "from-amber-300 via-amber-100 to-amber-400",
+        accent: "bg-amber-500"
+    },
+    "Luteal": {
+        color: "text-indigo-600",
+        bannerBg: "bg-gradient-to-r from-indigo-500 to-purple-600",
+        cardBg: "bg-indigo-50/30",
+        border: "border-indigo-100",
+        softBg: "bg-indigo-50/30",
+        pageGradient: "from-indigo-50/50 via-white to-white",
+        iconContainer: "bg-indigo-100 text-indigo-600",
+        orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
+        accent: "bg-indigo-500"
+    }
 };
 
 const PHASE_IMAGES: Record<string, string> = {
@@ -371,6 +412,9 @@ export default function DetailedPlanPage() {
     const [weight, setWeight] = useState("");
     const [activity, setActivity] = useState("");
     const [diet, setDiet] = useState("");
+    const [fitnessGoal, setFitnessGoal] = useState("");
+    const [targetWeight, setTargetWeight] = useState("");
+    const [weeklyRate, setWeeklyRate] = useState("0.4");
 
     const [data, setData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
@@ -381,7 +425,7 @@ export default function DetailedPlanPage() {
                 const planSettings = await fetchPlanSettings();
                 if (planSettings) {
                     setHasPlanSetup(true);
-                    const res = await fetchCycleIntelligence();
+                    const res = await fetchCycleIntelligenceAI();
                     if (res) setData(res);
                 } else {
                     setHasPlanSetup(false);
@@ -401,6 +445,17 @@ export default function DetailedPlanPage() {
         } else if (setupStep === 2) {
             if (!activity) return alert("Please select an activity level.");
             setSetupStep(3);
+        } else if (setupStep === 3) {
+            if (!fitnessGoal) return alert("Please select a fitness goal.");
+            // Skip weight target step if not weight_loss
+            if (fitnessGoal === "weight_loss") {
+                setSetupStep(4);
+            } else {
+                setSetupStep(5);
+            }
+        } else if (setupStep === 4) {
+            if (!targetWeight) return alert("Please enter your target weight.");
+            setSetupStep(5);
         }
     };
 
@@ -411,11 +466,14 @@ export default function DetailedPlanPage() {
                 height: parseFloat(height),
                 weight: parseFloat(weight),
                 activityLevel: activity,
-                diet: diet
+                diet: diet,
+                fitnessGoal: fitnessGoal,
+                targetWeight: fitnessGoal === "weight_loss" && targetWeight ? parseFloat(targetWeight) : undefined,
+                weeklyRate: fitnessGoal === "weight_loss" ? parseFloat(weeklyRate) : undefined
             });
             if (res.success) {
                 setHasPlanSetup(true);
-                const cycleData = await fetchCycleIntelligence();
+                const cycleData = await fetchCycleIntelligenceAI();
                 if (cycleData) setData(cycleData);
             } else {
                 alert("Failed to save settings. Please try again.");
@@ -447,7 +505,7 @@ export default function DetailedPlanPage() {
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-rove-stone/60 block mb-1">
-                                Step {setupStep} of 3
+                                Step {setupStep} of {fitnessGoal === "weight_loss" || !fitnessGoal ? 5 : 4}
                             </span>
                             <h1 className="font-heading text-2xl md:text-3xl text-rove-charcoal">
                                 Personalize Plan
@@ -455,9 +513,11 @@ export default function DetailedPlanPage() {
                         </div>
                     </div>
 
-                    {/* Progress Bar (Charcoal for Elegance) */}
+                    {/* Progress Bar */}
                     <div className="flex gap-2 mb-10">
-                        {[1, 2, 3].map((s) => {
+                        {[1, 2, 3, 4, 5].map((s) => {
+                            // Hide step 4 if not weight_loss goal
+                            if (s === 4 && fitnessGoal && fitnessGoal !== "weight_loss") return null;
                             const isActive = s <= setupStep;
                             return (
                                 <div
@@ -578,8 +638,122 @@ export default function DetailedPlanPage() {
                                 </div>
                             )}
 
-                            {/* STEP 3: DIET */}
+                            {/* STEP 3: FITNESS GOAL */}
                             {setupStep === 3 && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+                                            <Target className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-heading text-rove-charcoal">Fitness Goal</h2>
+                                    </div>
+                                    <p className="text-rove-stone text-sm">What's your primary health objective right now?</p>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { id: "weight_loss", label: "Weight Loss", desc: "Lose fat, get lean", icon: "🔥" },
+                                            { id: "maintenance", label: "Maintenance", desc: "Stay balanced", icon: "⚖️" },
+                                            { id: "muscle_gain", label: "Muscle Gain", desc: "Build strength", icon: "💪" },
+                                            { id: "energy", label: "Energy", desc: "Boost vitality", icon: "⚡" },
+                                            { id: "hormone_balance", label: "Hormone Balance", desc: "Sync naturally", icon: "🌙" },
+                                            { id: "endurance", label: "Endurance", desc: "Improve stamina", icon: "🏃" }
+                                        ].map((opt) => {
+                                            const isSelected = fitnessGoal === opt.id;
+                                            return (
+                                                <button
+                                                    key={opt.id}
+                                                    onClick={() => setFitnessGoal(opt.id)}
+                                                    className={`
+                                                        relative p-5 rounded-[1.5rem] border transition-all duration-300 flex flex-col items-center justify-center h-32 group cursor-pointer text-center gap-2
+                                                        ${isSelected
+                                                            ? "bg-white border-emerald-400 ring-4 ring-emerald-100 shadow-xl scale-[1.02]"
+                                                            : "bg-white/40 border-white/60 shadow-sm hover:bg-white/60 hover:shadow-md hover:scale-[1.01]"
+                                                        }
+                                                    `}
+                                                >
+                                                    <span className="text-3xl">{opt.icon}</span>
+                                                    <h3 className={`font-heading font-bold text-sm ${isSelected ? "text-emerald-700" : "text-rove-charcoal/80"}`}>
+                                                        {opt.label}
+                                                    </h3>
+                                                    <p className="text-[10px] text-rove-stone/70">{opt.desc}</p>
+                                                    {isSelected && (
+                                                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                                            <CheckCircle2 size={14} fill="currentColor" className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STEP 4: WEIGHT TARGET (Only if weight_loss) */}
+                            {setupStep === 4 && fitnessGoal === "weight_loss" && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-orange-500/10 rounded-full text-orange-600">
+                                            <Scale className="w-6 h-6" />
+                                        </div>
+                                        <h2 className="text-xl font-heading text-rove-charcoal">Weight Target</h2>
+                                    </div>
+                                    <p className="text-rove-stone text-sm">Set a healthy and achievable weight loss goal.</p>
+
+                                    <div className="space-y-6">
+                                        <div className="bg-white/60 rounded-2xl p-5 border border-white/80 shadow-sm">
+                                            <label className="block text-sm font-medium text-rove-charcoal mb-2">
+                                                Current Weight: <span className="font-bold text-rove-red">{weight} kg</span>
+                                            </label>
+                                            <label className="block text-sm font-medium text-rove-charcoal mb-2">Target Weight (kg)</label>
+                                            <input
+                                                type="number"
+                                                value={targetWeight}
+                                                onChange={(e) => setTargetWeight(e.target.value)}
+                                                placeholder={`e.g., ${parseFloat(weight) ? Math.round(parseFloat(weight) - 5) : 55}`}
+                                                className="w-full text-lg p-4 border border-white/60 rounded-xl bg-white/80 text-rove-charcoal focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+                                            />
+                                        </div>
+
+                                        <div className="bg-white/60 rounded-2xl p-5 border border-white/80 shadow-sm">
+                                            <label className="block text-sm font-medium text-rove-charcoal mb-3">Weekly Loss Rate</label>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {[
+                                                    { value: "0.25", label: "Gentle", desc: "0.25 kg/week" },
+                                                    { value: "0.4", label: "Moderate", desc: "0.4 kg/week" },
+                                                    { value: "0.5", label: "Active", desc: "0.5 kg/week" }
+                                                ].map((opt) => (
+                                                    <button
+                                                        key={opt.value}
+                                                        onClick={() => setWeeklyRate(opt.value)}
+                                                        className={`p-3 rounded-xl border text-center transition-all ${weeklyRate === opt.value
+                                                            ? "bg-orange-50 border-orange-400 ring-2 ring-orange-100"
+                                                            : "bg-white/50 border-white/60 hover:bg-white/80"
+                                                            }`}
+                                                    >
+                                                        <div className="font-bold text-rove-charcoal">{opt.label}</div>
+                                                        <div className="text-[10px] text-rove-stone">{opt.desc}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Estimated Timeline */}
+                                        {targetWeight && parseFloat(weight) > parseFloat(targetWeight) && (
+                                            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-100">
+                                                <div className="flex items-center gap-2 text-orange-700">
+                                                    <Flame className="w-4 h-4" />
+                                                    <span className="text-sm font-medium">
+                                                        Estimated: {Math.ceil((parseFloat(weight) - parseFloat(targetWeight)) / parseFloat(weeklyRate))} weeks to reach goal
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STEP 5: DIET */}
+                            {setupStep === 5 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-rove-red/10 rounded-full text-rove-red">
@@ -611,13 +785,14 @@ export default function DetailedPlanPage() {
                                                         }`}>
                                                         {opt.icon}
                                                     </div>
-
-                                                    <span className={`font-heading font-bold text-base transition-colors ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
+                                                    {/* Label */}
+                                                    <h3 className={`font-heading font-bold text-base transition-colors duration-300 ${isSelected ? "text-rove-charcoal" : "text-rove-charcoal/80"}`}>
                                                         {opt.label}
-                                                    </span>
+                                                    </h3>
 
+                                                    {/* Selection Checkmark */}
                                                     {isSelected && (
-                                                        <div className="absolute top-4 right-4 text-rove-red">
+                                                        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-rove-red flex items-center justify-center shadow-md">
                                                             <CheckCircle2 size={18} fill="currentColor" className="text-white" />
                                                         </div>
                                                     )}
@@ -642,7 +817,7 @@ export default function DetailedPlanPage() {
                         )}
 
                         <div className="ml-auto">
-                            {setupStep < 3 ? (
+                            {setupStep < 5 ? (
                                 <Button
                                     onClick={handleSetupNext}
                                     className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
@@ -681,10 +856,10 @@ export default function DetailedPlanPage() {
     const todayStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     return (
-        <div className="min-h-screen bg-[#FBFAF8]">
+        <div className={cn("min-h-screen bg-gradient-to-b transition-colors duration-500", theme.pageGradient)}>
 
             {/* 1. TOP NAVIGATION (High Density) */}
-            <div className="sticky top-0 z-50 bg-[#FBFAF8]/90 backdrop-blur-xl border-b border-black/5 shadow-sm">
+            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
                 <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
                     <Link href="/cycle-sync" className="p-2 -ml-2 text-rove-stone hover:text-rove-charcoal transition-colors">
                         <ChevronLeft className="w-5 h-5" />
@@ -695,8 +870,8 @@ export default function DetailedPlanPage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone/60">Day {data.day} of Cycle</span>
                     </div>
 
-                    <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-500">{data.day}</span>
+                    <div className={cn("w-9 h-9 rounded-full border flex items-center justify-center shadow-sm", theme.cardBg, theme.border)}>
+                        <span className={cn("text-xs font-bold", theme.color)}>{data.day}</span>
                     </div>
                 </div>
             </div>
@@ -718,7 +893,7 @@ export default function DetailedPlanPage() {
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={cn(
                                     "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                                    isActive ? "bg-white text-rove-charcoal shadow-sm" : "text-rove-charcoal/60 hover:bg-white/30"
+                                    isActive ? cn("bg-white shadow-sm", theme.color) : "text-rove-charcoal/60 hover:bg-white/30"
                                 )}
                             >
                                 <tab.icon className="w-3.5 h-3.5" />
@@ -737,8 +912,8 @@ export default function DetailedPlanPage() {
                             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                             className="space-y-6"
                         >
-                            {/* Slim Focus Banner */}
-                            <div className="p-5 rounded-2xl relative overflow-hidden shadow-sm flex items-center justify-between gap-4 bg-rove-red text-white">
+                            {/* Slim Focus Banner - Phase Colored */}
+                            <div className={cn("p-5 rounded-2xl relative overflow-hidden shadow-md flex items-center justify-between gap-4 text-white transition-all duration-500", theme.bannerBg)}>
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none" />
 
                                 <div className="relative z-10 text-white text-left">
@@ -752,10 +927,177 @@ export default function DetailedPlanPage() {
                                 </div>
                             </div>
 
+                            {/* Your Goals - Compact on Mobile, Luxurious on Desktop */}
+                            {data?.weightGoal && (
+                                <section className="mt-4 md:mt-8">
+                                    {/* Mobile Version - Compact Card - Matches App Theme */}
+                                    <div className={cn("md:hidden relative overflow-hidden rounded-2xl backdrop-blur-xl p-4 shadow-sm border", theme.cardBg, theme.border)}>
+                                        {/* Header Row */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", theme.iconContainer)}>
+                                                    <Target className="w-3 h-3" />
+                                                </div>
+                                                <span className="text-rove-charcoal text-sm font-heading font-bold">Your Goal</span>
+                                            </div>
+                                            <span className={cn("px-2 py-0.5 rounded-full text-white text-[10px] font-bold uppercase", theme.accent)}>
+                                                {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
+                                            </span>
+                                        </div>
+
+                                        {/* Weight Row - Inline */}
+                                        <div className={cn("flex items-center justify-between rounded-xl p-3 mb-3", theme.softBg)}>
+                                            <div className="text-center flex-1">
+                                                <p className="text-lg font-heading font-bold text-rove-charcoal/70">{data.weightGoal.startWeight}<span className="text-xs text-rove-stone">kg</span></p>
+                                                <p className="text-[8px] uppercase text-rove-stone">Start</p>
+                                            </div>
+                                            <div className="text-rove-stone/40 text-lg">→</div>
+                                            <div className={cn("text-center flex-1 px-2 py-1 rounded-lg", theme.iconContainer)}>
+                                                <p className={cn("text-lg font-heading font-bold", theme.color)}>{data.weightGoal.currentWeight}<span className="text-xs opacity-60">kg</span></p>
+                                                <p className="text-[8px] uppercase opacity-70">Now</p>
+                                            </div>
+                                            <div className="text-rove-stone/40 text-lg">→</div>
+                                            <div className="text-center flex-1">
+                                                <p className="text-lg font-heading font-bold text-rove-charcoal">{data.weightGoal.targetWeight}<span className="text-xs text-rove-stone">kg</span></p>
+                                                <p className="text-[8px] uppercase text-rove-stone">Goal</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="h-1.5 bg-rove-stone/10 rounded-full overflow-hidden">
+                                            <div
+                                                className={cn("h-full rounded-full", theme.accent)}
+                                                style={{
+                                                    width: `${Math.min(100, Math.max(5,
+                                                        ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
+                                                            (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
+                                                    ))}%`
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-center text-rove-stone text-[10px] mt-1.5">
+                                            {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                ? `${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)}kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to go`
+                                                : `${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to lose`
+                                            }
+                                        </p>
+                                    </div>
+
+                                    {/* Desktop Version - Full Card - Matches App Theme */}
+                                    <div className={cn("hidden md:block relative overflow-hidden rounded-[2rem] backdrop-blur-xl p-6 shadow-sm border", theme.cardBg, theme.border)}>
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", theme.iconContainer)}>
+                                                    <Target className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className={cn("text-[10px] font-bold uppercase tracking-[0.15em]", theme.color)}>Your Personalized Journey</p>
+                                                    <h2 className="text-rove-charcoal text-xl font-heading font-bold">Your Goals</h2>
+                                                </div>
+                                            </div>
+                                            <span className={cn("px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-wide", theme.accent)}>
+                                                {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
+                                            </span>
+                                        </div>
+
+                                        {/* Weight Journey */}
+                                        <div className="grid grid-cols-3 gap-4 mb-6">
+                                            <div className={cn("text-center p-4 rounded-2xl", theme.softBg)}>
+                                                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-rove-stone/20 flex items-center justify-center">
+                                                    <span className="text-lg">🏁</span>
+                                                </div>
+                                                <p className="text-2xl font-heading font-bold text-rove-charcoal/70">
+                                                    {data.weightGoal.startWeight}<span className="text-sm text-rove-stone ml-0.5">kg</span>
+                                                </p>
+                                                <p className="text-[10px] uppercase tracking-wider text-rove-stone mt-1">Started at</p>
+                                            </div>
+                                            <div className={cn("text-center p-4 rounded-2xl border-2", theme.iconContainer, theme.border)}>
+                                                <div className={cn("w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center", theme.accent)}>
+                                                    <span className="text-lg">💪</span>
+                                                </div>
+                                                <p className={cn("text-2xl font-heading font-bold", theme.color)}>
+                                                    {data.weightGoal.currentWeight}<span className="text-sm opacity-60 ml-0.5">kg</span>
+                                                </p>
+                                                <p className="text-[10px] uppercase tracking-wider opacity-70 mt-1">You Now</p>
+                                            </div>
+                                            <div className={cn("text-center p-4 rounded-2xl", theme.softBg)}>
+                                                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-rove-stone/20 flex items-center justify-center">
+                                                    <span className="text-lg">🎯</span>
+                                                </div>
+                                                <p className="text-2xl font-heading font-bold text-rove-charcoal">
+                                                    {data.weightGoal.targetWeight}<span className="text-sm text-rove-stone ml-0.5">kg</span>
+                                                </p>
+                                                <p className="text-[10px] uppercase tracking-wider text-rove-stone mt-1">Dream Goal</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center justify-between text-[10px] text-rove-stone mb-2">
+                                                <span>Progress</span>
+                                                <span className={cn("font-bold", theme.color)}>
+                                                    {Math.round(Math.max(0, Math.min(100,
+                                                        ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
+                                                            (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
+                                                    )))}% Complete
+                                                </span>
+                                            </div>
+                                            <div className="h-2 bg-rove-stone/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className={cn("h-full rounded-full transition-all duration-1000", theme.accent)}
+                                                    style={{
+                                                        width: `${Math.min(100, Math.max(5,
+                                                            ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
+                                                                (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
+                                                        ))}%`
+                                                    }}
+                                                />
+                                            </div>
+                                            <p className="text-center text-rove-stone text-xs mt-2">
+                                                {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                    ? `🔥 ${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)} kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)} kg to go`
+                                                    : `🎯 ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)} kg to lose`
+                                                }
+                                            </p>
+                                        </div>
+
+                                        {/* Feature Cards */}
+                                        <div className="border-t border-rove-stone/10 pt-5">
+                                            <p className="text-rove-stone text-[10px] uppercase tracking-[0.12em] font-bold mb-3">✦ Your Plan Includes</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className={cn("p-4 rounded-xl border", theme.softBg, theme.border)}>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                                                            <Utensils className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-rove-charcoal font-heading font-bold text-sm">Cycle-Synced Diet</h4>
+                                                            <p className="text-rove-stone text-[10px]">AI macros for your {phaseName.toLowerCase()} phase</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className={cn("p-4 rounded-xl border", theme.softBg, theme.border)}>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                                                            <Dumbbell className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-rove-charcoal font-heading font-bold text-sm">Smart Workouts</h4>
+                                                            <p className="text-rove-stone text-[10px]">Hormone-aligned intensity</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
                             {/* Biology / Science Section */}
                             <section>
                                 <SectionHeader title="The Science" icon={Beaker} />
-                                <div className="p-6 rounded-[2rem] bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
+                                <div className={cn("p-6 rounded-[2rem] backdrop-blur-xl border shadow-sm mb-4 transition-all duration-500", theme.cardBg, theme.border)}>
                                     <h4 className="font-heading text-xl text-rove-charcoal mb-2">{BP.hormones.title}</h4>
                                     <p className="text-sm font-bold text-rove-charcoal/80 mb-4">{BP.hormones.summary}</p>
                                     <p className="text-sm text-rove-stone leading-relaxed mb-6">"{BP.hormones.desc}"</p>
@@ -772,7 +1114,7 @@ export default function DetailedPlanPage() {
 
                             <section>
                                 <SectionHeader title="Daily Rituals" icon={CheckCircle2} />
-                                <div className="bg-white/40 backdrop-blur-xl rounded-[1.5rem] border border-white/60 shadow-sm overflow-hidden p-1">
+                                <div className={cn("backdrop-blur-xl rounded-[1.5rem] border shadow-sm overflow-hidden p-1 transition-all duration-500", theme.softBg, theme.border)}>
                                     {BP.rituals.practices.map((practice: any, i: number) => (
                                         <RitualCheckbox
                                             key={i}
@@ -786,15 +1128,16 @@ export default function DetailedPlanPage() {
                             </section>
 
                             <div className="mt-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-4">Symptom Soothers</h3>
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-3">Symptom Soothers</h3>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     {BP.rituals.symptom_relief.map((item: any, i: number) => (
-                                        <div key={i} className="p-5 rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/60 backdrop-blur-xl shadow-sm">
-                                            <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/60 mb-2">
+                                        <div key={i} className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm transition-all duration-500", theme.cardBg, theme.border)}>
+                                            <div className="text-[9px] font-bold uppercase tracking-widest text-rove-stone/60 mb-2">
                                                 For {item.symptom}
                                             </div>
-                                            <div className="text-base font-heading text-emerald-900 flex items-center gap-2">
-                                                <Leaf className="w-4 h-4 text-emerald-600" />
+                                            <div className={cn("text-base font-heading flex items-center gap-2", theme.color)}>
+                                                <Leaf className="w-4 h-4" />
                                                 {item.remedy}
                                             </div>
                                         </div>

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
+import { getCyclePhase, getDietPlan, type CyclePhaseResponse, type DietPlanResponse } from "./ai-actions";
 
 // --- HELPERS ---
 
@@ -98,7 +99,7 @@ export async function fetchDashboardData() {
     // --- MOCK DATA FALLBACK ---
     if (!user) {
         console.log("⚠️ Using Mock Data for Intelligence");
-        const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 }; // Result: Day 12 (Follicular)
+        const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 };
 
         const { phase, day } = calculatePhase(
             new Date(),
@@ -109,7 +110,6 @@ export async function fetchDashboardData() {
 
         const content = PHASE_CONTENT["Follicular"];
 
-        // Mock Nutrition
         const nutrition = {
             macros: { protein: { g: 100, pct: 30 }, fats: { g: 60, pct: 25 }, carbs: { g: 200, pct: 45 } },
             calories: 1900
@@ -160,11 +160,8 @@ export async function fetchDashboardData() {
         .eq("user_id", user.id)
         .single();
 
-    // Check if this is the first call, if so, return null or handle properly?
-    // Actually, calculatePhase relies on these being present.
     if (!cycleSettings) return null;
 
-    // Use default values if legacy data is missing
     const settings = {
         last_period_start: cycleSettings.last_period_start,
         cycle_length_days: cycleSettings.cycle_length_days || 28,
@@ -183,22 +180,45 @@ export async function fetchDashboardData() {
         .eq("user_id", user.id)
         .single();
 
-    if (!cycleSettings) return null;
+    // ✅ Use Edge Function for phase calculation
+    let phaseData: CyclePhaseResponse | null = null;
+    try {
+        phaseData = await getCyclePhase();
+    } catch (error) {
+        console.log("Edge function failed, falling back to local calculation");
+    }
 
-    // ✅ FIXED: Added new Date() as the first argument
-    const { phase, day } = calculatePhase(
+    // Fallback to local if edge function fails
+    const phase = phaseData?.phase || calculatePhase(
         new Date(),
         settings.last_period_start,
         settings.cycle_length_days,
         settings.period_length_days
-    );
+    ).phase;
+
+    const day = phaseData?.dayInCycle || calculatePhase(
+        new Date(),
+        settings.last_period_start,
+        settings.cycle_length_days,
+        settings.period_length_days
+    ).day;
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems(content.river, 1)[0] || "Rest • Restore • Reload";
 
     return {
         user: { ...user, name: profile?.full_name || "Rove Member" },
-        phase: { name: phase, day, river: riverStr, superpower: "Resilience" },
+        phase: {
+            name: phase,
+            day,
+            river: riverStr,
+            superpower: "Resilience",
+            // Add edge function data if available
+            hormoneState: phaseData?.hormoneState,
+            nextPeriodDate: phaseData?.nextPeriodDate,
+            daysUntilNextPeriod: phaseData?.daysUntilNextPeriod,
+            aiPowered: !!phaseData
+        },
         fuel: getRandomItems(content.fuel, 2),
         move: getRandomItems(content.move, 2),
         rituals: getRandomItems(content.rituals, 2),
@@ -435,6 +455,177 @@ export async function fetchCycleIntelligence() {
         biometrics,
         blueprint: blueprint
     };
+}
+
+// ==========================================
+// NEW: AI-POWERED CYCLE INTELLIGENCE
+// Uses Edge Functions for phase, diet, and workout
+// ==========================================
+
+// (imports are now at top of file)
+
+export async function fetchCycleIntelligenceAI() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    // 1. Fetch cycle settings
+    const { data: cycleSettings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+    if (!cycleSettings) return null;
+
+    // 2. Try to get phase from Edge Function
+    let phaseData: CyclePhaseResponse | null = null;
+    try {
+        phaseData = await getCyclePhase();
+    } catch (error) {
+        console.log("Edge function failed, falling back to local calculation");
+    }
+
+    // Fallback to local calculation if edge function fails
+    const phase = phaseData?.phase || calculatePhase(
+        new Date(),
+        cycleSettings.last_period_start,
+        cycleSettings.cycle_length_days,
+        cycleSettings.period_length_days
+    ).phase;
+
+    const day = phaseData?.dayInCycle || calculatePhase(
+        new Date(),
+        cycleSettings.last_period_start,
+        cycleSettings.cycle_length_days,
+        cycleSettings.period_length_days
+    ).day;
+
+    // 3. Fetch lifestyle and weight goal data
+    const [lifestyleResult, weightGoalResult] = await Promise.all([
+        supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
+        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle()
+    ]);
+
+    const lifestyle = lifestyleResult.data;
+    const weightGoal = weightGoalResult.data;
+
+    // 4. Get AI-powered diet plan from Edge Function
+    let dietPlan: DietPlanResponse | null = null;
+    try {
+        dietPlan = await getDietPlan({ phase, symptoms: [] });
+    } catch (error) {
+        console.log("Diet edge function failed, using fallback");
+    }
+
+    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+
+    // Build nutrition data - prefer AI, fallback to local
+    const nutrition = dietPlan ? {
+        macros: {
+            protein: { g: dietPlan.macros.protein.grams, pct: dietPlan.macros.protein.percentage },
+            fats: { g: dietPlan.macros.fats.grams, pct: dietPlan.macros.fats.percentage },
+            carbs: { g: dietPlan.macros.carbs.grams, pct: dietPlan.macros.carbs.percentage }
+        },
+        calories: dietPlan.calories
+    } : (() => {
+        const { data: onboarding } = { data: null } as any;
+        const weight = 60;
+        const height = 165;
+        const age = 30;
+        const tdee = calculateCycleSyncedCalories(weight, height, age, phase);
+        const macros = getPhaseMacros(phase, tdee);
+        return { macros, calories: tdee };
+    })();
+
+    const biometrics = {
+        reason: dietPlan?.phaseNutritionFocus || getDefaultBiometricsReason(phase),
+        hydrationGoal: dietPlan?.hydrationGoalLiters || 2,
+        recommendedFoods: dietPlan?.recommendedFoods || [],
+        foodsToAvoid: dietPlan?.foodsToAvoid || [],
+        adjustments: dietPlan?.adjustments || [],
+        aiPowered: !!dietPlan
+    };
+
+    // Blueprint structure for UI
+    const blueprint = {
+        color: phase === "Menstrual" ? "bg-rove-red" :
+            phase === "Follicular" ? "bg-rove-peach" :
+                phase === "Ovulatory" ? "bg-rove-charcoal" : "bg-amber-500",
+        hormones: {
+            title: phaseData?.hormoneState ? `Hormones ${phaseData.hormoneState}` : "Hormonal State",
+            summary: content.plan?.hormones?.summary || "",
+            desc: content.snapshot?.[0]?.hormones?.desc || "",
+            symptoms: content.plan?.hormones?.symptoms || []
+        },
+        rituals: {
+            focus: content.river?.[0] || "Rest & Restore",
+            practices: content.rituals || [],
+            symptom_relief: []
+        },
+        diet: {
+            core_needs: dietPlan?.recommendedFoods || content.fuel?.map((f: any) => ({ ...f, id: f.title })) || [],
+            ideal_meals: content.plan?.diet?.ideal_meals || [],
+            cramp_relief: content.plan?.diet?.cramp_relief || [],
+            avoid: dietPlan?.foodsToAvoid || content.plan?.diet?.avoid || []
+        },
+        exercise: {
+            summary: content.plan?.exercise?.summary || "",
+            best: content.move?.map((m: any) => ({ ...m, time: "20-30 mins" })) || [],
+            avoid: content.plan?.exercise?.avoid || []
+        },
+        supplements: content.plan?.supplements || [],
+        daily_flow: content.plan?.daily_flow || [],
+        nutrition_guide: {
+            ...content.nutrition_guide,
+            macro_fuel: {
+                title: dietPlan ? "AI-Optimized" : "Phase-Balanced",
+                protein: nutrition.macros.protein.pct,
+                fats: nutrition.macros.fats.pct,
+                carbs: nutrition.macros.carbs.pct,
+                calories: nutrition.calories
+            }
+        }
+    };
+
+    return {
+        phase,
+        day,
+        nutrition,
+        biometrics,
+        blueprint,
+        phaseDetails: phaseData ? {
+            hormoneState: phaseData.hormoneState,
+            nextPeriodDate: phaseData.nextPeriodDate,
+            daysUntilNextPeriod: phaseData.daysUntilNextPeriod,
+            fertileWindow: phaseData.fertileWindow
+        } : null,
+        aiPowered: !!dietPlan,
+        weightGoal: weightGoal ? {
+            currentWeight: lifestyle?.weight_kg || weightGoal.current_weight_kg,
+            targetWeight: weightGoal.target_weight_kg,
+            startWeight: weightGoal.current_weight_kg,
+            weeklyRate: weightGoal.weekly_rate_kg,
+            startDate: weightGoal.start_date,
+            fitnessGoal: lifestyle?.fitness_goal
+        } : null
+    };
+}
+
+function getDefaultBiometricsReason(phase: string): string {
+    switch (phase) {
+        case "Menstrual":
+            return "Focus on iron and warming foods to replenish lost blood and soothe cramps.";
+        case "Follicular":
+            return "High carb & protein to support rising estrogen and muscle repair.";
+        case "Ovulatory":
+            return "Peak carbohydrates to sustain high-intensity performance.";
+        case "Luteal":
+            return "Complex carbs and magnesium to combat PMS cravings and stabilize mood.";
+        default:
+            return "Balanced nutrition for general health.";
+    }
 }
 
 export async function fetchInsightsData() {
