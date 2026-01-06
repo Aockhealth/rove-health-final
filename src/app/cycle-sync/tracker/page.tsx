@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, Check, Droplets, Calendar, Edit2, X, Info, Waves, Shield, Dumbbell, Clock, Plus, Minus, Droplet, Heart, Moon, ZapOff, Smile, Activity, PenLine, Coffee } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate, updateCycleLength } from "@/app/actions/cycle-sync";
+import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate, updateCycleLength, fetchMonthLogs } from "@/app/actions/cycle-sync";
 import confetti from "canvas-confetti";
+import { toast, Toaster } from "sonner";
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
 
@@ -58,6 +59,7 @@ export default function TrackerPageRedesigned() {
     const [trackMode, setTrackMode] = useState<"period" | "discharge">("discharge");
     const [isEditingCycle, setIsEditingCycle] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const [monthLogs, setMonthLogs] = useState<Record<string, any>>({});
 
     // MPIQ Specific State - Removed mpiqLastPeriod (using cycleSettings directly)
     const [mpiqConsistency, setMpiqConsistency] = useState<Consistency | null>(null);
@@ -93,6 +95,21 @@ export default function TrackerPageRedesigned() {
         };
         loadSettings();
     }, []);
+
+    // Fetch month logs for calendar persistence
+    useEffect(() => {
+        const loadMonthLogs = async () => {
+            const year = currentMonth.getFullYear();
+            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+            const logs = await fetchMonthLogs(`${year}-${month}`);
+            const logMap: Record<string, any> = {};
+            logs.forEach((l: any) => {
+                logMap[l.date] = l;
+            });
+            setMonthLogs(logMap);
+        };
+        loadMonthLogs();
+    }, [currentMonth]);
 
     // Fetch existing log when date changes
     useEffect(() => {
@@ -250,9 +267,69 @@ export default function TrackerPageRedesigned() {
         return days;
     };
 
+    const getRelevantPeriodStart = (targetDate: Date) => {
+        const dateStr = formatDate(targetDate);
+        const targetMonth = targetDate.getMonth();
+        const targetYear = targetDate.getFullYear();
+        const currentMonthDate = new Date(currentMonth);
+        const isCurrentOrFutureMonth = targetYear > currentMonthDate.getFullYear() ||
+            (targetYear === currentMonthDate.getFullYear() && targetMonth >= currentMonthDate.getMonth());
+
+        // 1. Check if the target day itself is logged as period
+        if (monthLogs[dateStr]?.is_period) {
+            // Find the start of this specific streak in the current month
+            let current = new Date(targetDate);
+            let firstDay = dateStr;
+
+            while (true) {
+                current.setDate(current.getDate() - 1);
+                const prevStr = formatDate(current);
+                if (monthLogs[prevStr]?.is_period) {
+                    firstDay = prevStr;
+                } else {
+                    break;
+                }
+                // Safety break for current month
+                if (current.getMonth() !== targetDate.getMonth()) break;
+            }
+            return firstDay;
+        }
+
+        // 2. If not logged as period, look for the most recent log BEFORE targetDate in THIS MONTH ONLY
+        const logDates = Object.keys(monthLogs).sort().reverse();
+        for (const d of logDates) {
+            if (d < dateStr && monthLogs[d].is_period) {
+                // Found a period day before target. Find its start.
+                let current = new Date(d);
+                let firstDay = d;
+                while (true) {
+                    current.setDate(current.getDate() - 1);
+                    const prevStr = formatDate(current);
+                    if (monthLogs[prevStr]?.is_period) {
+                        firstDay = prevStr;
+                    } else {
+                        break;
+                    }
+                    if (current.getMonth() !== new Date(d).getMonth()) break;
+                }
+                return firstDay;
+            }
+        }
+
+        // 3. ONLY use global settings for current or future months
+        if (isCurrentOrFutureMonth && cycleSettings.last_period_start) {
+            return cycleSettings.last_period_start;
+        }
+
+        // 4. For past months with no logged data, return null (no prediction)
+        return null;
+    };
+
     const getCycleDay = (date: Date) => {
-        if (!cycleSettings.last_period_start) return 1;
-        const start = new Date(cycleSettings.last_period_start);
+        const startStr = getRelevantPeriodStart(date);
+        if (!startStr) return 1;
+
+        const start = new Date(startStr);
         start.setHours(0, 0, 0, 0);
         const checkDate = new Date(date);
         checkDate.setHours(0, 0, 0, 0);
@@ -264,6 +341,26 @@ export default function TrackerPageRedesigned() {
     };
 
     const getPhaseForDate = (date: Date): Phase => {
+        const dateStr = formatDate(date);
+        const targetMonth = date.getMonth();
+        const targetYear = date.getFullYear();
+        const currentMonthDate = new Date(currentMonth);
+        const isPastMonth = targetYear < currentMonthDate.getFullYear() ||
+            (targetYear === currentMonthDate.getFullYear() && targetMonth < currentMonthDate.getMonth());
+
+        // For past months: ONLY use logged data, no predictions
+        if (isPastMonth) {
+            // Check if this specific date is logged as a period
+            if (monthLogs[dateStr]?.is_period) {
+                return "Menstrual";
+            }
+
+            // For past months, if not logged as period, return Follicular as neutral
+            // (We don't want to predict phases for months that have passed)
+            return "Follicular";
+        }
+
+        // For current/future months: Use cycle calculations
         const dayInCycle = getCycleDay(date);
         const { cycle_length_days, period_length_days } = cycleSettings;
         const ovulationDay = (cycle_length_days || 28) - 14;
@@ -377,7 +474,10 @@ export default function TrackerPageRedesigned() {
 
             const result = await logDailySymptoms(payload);
             if (!result.success) {
-                alert("Failed to save: " + result.error);
+                toast.error("Failed to save entry", {
+                    description: result.error,
+                    duration: 5000
+                });
                 return;
             }
 
@@ -428,11 +528,296 @@ export default function TrackerPageRedesigned() {
                 }
             }
 
-            alert("Entry Saved & Cycle Updated!");
+            toast.success("Entry Saved!", {
+                description: "Your daily log has been updated.",
+                duration: 3000
+            });
             window.location.reload();
         });
     };
 
+
+    const handlePeriodToggle = async () => {
+        const dateStr = formatDate(selectedDate);
+
+        // Simple logic: Check if there's a recent period start in the global settings
+        const globalStart = cycleSettings.last_period_start;
+        const hasGlobalStart = !!globalStart;
+
+        let isWithinActivePeriod = false;
+        let daysSinceGlobalStart = -1;
+
+        if (hasGlobalStart) {
+            const start = new Date(globalStart);
+            start.setHours(0, 0, 0, 0);
+            const current = new Date(selectedDate);
+            current.setHours(0, 0, 0, 0);
+
+            daysSinceGlobalStart = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+            // EDGE CASE FIX #N: Support periods longer than 10 days
+            const extendedPeriodDays = Object.keys(monthLogs)
+                .filter(d => monthLogs[d]?.is_period === true)
+                .sort();
+
+            if (extendedPeriodDays.length > 0) {
+                const lastPeriodDay = extendedPeriodDays[extendedPeriodDays.length - 1];
+                const lastDay = new Date(lastPeriodDay);
+                lastDay.setHours(0, 0, 0, 0);
+                const daysSinceLastPeriodDay = Math.floor((current.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
+
+                isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceLastPeriodDay < 10;
+            } else {
+                isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceGlobalStart < 10;
+            }
+        }
+
+        const isAlreadyLogged = monthLogs[dateStr]?.is_period === true;
+        const showEndButton = isWithinActivePeriod || isAlreadyLogged;
+
+        startTransition(async () => {
+            try {
+                if (!showEndButton) {
+                    // EDGE CASE FIX #A: Check if selecting date BEFORE current period
+                    if (hasGlobalStart && dateStr < globalStart) {
+                        const existingPeriodDays = Object.keys(monthLogs)
+                            .filter(d => monthLogs[d]?.is_period === true)
+                            .sort();
+
+                        if (existingPeriodDays.length > 0) {
+                            toast.error("Cannot start period before existing period", {
+                                description: `You have an existing period from ${globalStart}. Please end or adjust that period first.`,
+                                duration: 5000
+                            });
+                            return;
+                        }
+                    }
+
+                    // EDGE CASE FIX #B: Warn about future dates
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const selected = new Date(selectedDate);
+                    selected.setHours(0, 0, 0, 0);
+
+                    if (selected > today) {
+                        toast.warning("Logging future period", {
+                            description: "You're logging a period for a future date. Make sure this is intentional.",
+                            duration: 4000
+                        });
+                    }
+
+                    // EDGE CASE FIX #E: Check if there's an open period that needs to be ended
+                    if (hasGlobalStart && daysSinceGlobalStart > 10) {
+                        const lastPeriodDays = Object.keys(monthLogs)
+                            .filter(d => monthLogs[d]?.is_period === true)
+                            .sort();
+
+                        if (lastPeriodDays.length === 1 && lastPeriodDays[0] === globalStart) {
+                            toast.info("Previous period still open", {
+                                description: `Your period from ${globalStart} was never ended. Starting a new period will close it automatically.`,
+                                duration: 5000
+                            });
+                        }
+                    }
+
+                    // Check if user is trying to ADJUST the start date
+                    const isAdjustingStart = hasGlobalStart && dateStr > globalStart;
+
+                    if (isAdjustingStart) {
+                        const futurePeriodDays = Object.keys(monthLogs)
+                            .filter(d => d > dateStr && monthLogs[d]?.is_period === true)
+                            .sort();
+
+                        if (futurePeriodDays.length > 0) {
+                            const newEndDate = futurePeriodDays[futurePeriodDays.length - 1];
+
+                            if (dateStr === newEndDate) {
+                                toast.warning("Adjusting to 1-day period", {
+                                    description: "This will create a 1-day period. Previous days will be removed.",
+                                    duration: 4000
+                                });
+                            } else {
+                                toast.info("Adjusting period start date", {
+                                    description: `Moving start from ${globalStart} to ${dateStr}`,
+                                    duration: 3000
+                                });
+                            }
+
+                            const result = await updateLastPeriodDate(dateStr);
+
+                            if (result.success) {
+                                const start = new Date(dateStr);
+                                start.setHours(0, 0, 0, 0);
+                                const end = new Date(newEndDate);
+                                end.setHours(0, 0, 0, 0);
+
+                                const newLength = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                                await updateCycleLength(newLength);
+
+                                setCycleSettings(prev => ({
+                                    ...prev,
+                                    last_period_start: dateStr,
+                                    period_length_days: newLength
+                                }));
+
+                                // EDGE CASE FIX #G: Wrap in try-catch for network failures
+                                try {
+                                    const logsToUpdate = [];
+                                    for (let i = 0; i < newLength; i++) {
+                                        const d = new Date(start);
+                                        d.setDate(start.getDate() + i);
+                                        const dStr = formatDate(d);
+
+                                        logsToUpdate.push(logDailySymptoms({
+                                            date: dStr,
+                                            symptoms: dStr === dateStr ? selectedSymptoms : [],
+                                            isPeriod: true,
+                                            flowIntensity: flowIntensity || "Normal",
+                                            moods: dStr === dateStr ? selectedMoods : [],
+                                            notes: dStr === dateStr ? note : "",
+                                            waterIntake: dStr === dateStr ? waterIntake : 0
+                                        }));
+                                    }
+
+                                    await Promise.all(logsToUpdate);
+
+                                    toast.success("Period adjusted successfully", {
+                                        description: `Period is now ${dateStr} to ${newEndDate}`,
+                                        duration: 3000
+                                    });
+                                } catch (error) {
+                                    toast.error("Failed to update all period days", {
+                                        description: "Some days may not have been logged. Please check your period dates.",
+                                        duration: 5000
+                                    });
+                                }
+
+                                const year = currentMonth.getFullYear();
+                                const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+                                const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                                const logMap: Record<string, any> = {};
+                                newLogs.forEach((l: any) => {
+                                    logMap[l.date] = l;
+                                });
+                                setMonthLogs(logMap);
+                            }
+                            return;
+                        }
+                    }
+
+                    // Normal START PERIOD flow
+                    const result = await updateLastPeriodDate(dateStr);
+
+                    if (result.success) {
+                        setCycleSettings(prev => ({
+                            ...prev,
+                            last_period_start: dateStr,
+                            period_length_days: 1
+                        }));
+
+                        await logDailySymptoms({
+                            date: dateStr,
+                            symptoms: selectedSymptoms,
+                            isPeriod: true,
+                            flowIntensity: flowIntensity || "Normal",
+                            moods: selectedMoods,
+                            notes: note,
+                            waterIntake
+                        });
+
+                        const year = currentMonth.getFullYear();
+                        const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+                        const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                        const logMap: Record<string, any> = {};
+                        newLogs.forEach((l: any) => {
+                            logMap[l.date] = l;
+                        });
+                        setMonthLogs(logMap);
+
+                        confetti({
+                            particleCount: 50,
+                            spread: 60,
+                            origin: { y: 0.8 },
+                            colors: ['#FDA4AF', '#F43F5E', '#FFFFFF']
+                        });
+
+                        toast.success("Period started!", {
+                            description: `Started on ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+                            duration: 3000
+                        });
+                    }
+                } else {
+                    // END PERIOD: Mark the range from global start to selected date
+                    if (!globalStart) return;
+
+                    const start = new Date(globalStart);
+                    start.setHours(0, 0, 0, 0);
+                    const current = new Date(selectedDate);
+                    current.setHours(0, 0, 0, 0);
+
+                    const diffTime = current.getTime() - start.getTime();
+                    const length = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                    if (length > 0) {
+                        const result = await updateCycleLength(length);
+                        if (result.success) {
+                            setCycleSettings(prev => ({
+                                ...prev,
+                                period_length_days: length
+                            }));
+
+                            // EDGE CASE FIX #G: Wrap in try-catch for network failures
+                            try {
+                                const logsToUpdate = [];
+                                for (let i = 0; i < length; i++) {
+                                    const d = new Date(start);
+                                    d.setDate(start.getDate() + i);
+                                    const dStr = formatDate(d);
+
+                                    logsToUpdate.push(logDailySymptoms({
+                                        date: dStr,
+                                        symptoms: dStr === dateStr ? selectedSymptoms : [],
+                                        isPeriod: true,
+                                        flowIntensity: flowIntensity || "Normal",
+                                        moods: dStr === dateStr ? selectedMoods : [],
+                                        notes: dStr === dateStr ? note : "",
+                                        waterIntake: dStr === dateStr ? waterIntake : 0
+                                    }));
+                                }
+
+                                await Promise.all(logsToUpdate);
+
+                                toast.success("Period ended!", {
+                                    description: `${length} day period from ${globalStart} to ${dateStr}`,
+                                    duration: 3000
+                                });
+                            } catch (error) {
+                                toast.error("Failed to update all period days", {
+                                    description: "Some days may not have been logged. Please check your period dates.",
+                                    duration: 5000
+                                });
+                            }
+
+                            const year = currentMonth.getFullYear();
+                            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+                            const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                            const logMap: Record<string, any> = {};
+                            newLogs.forEach((l: any) => {
+                                logMap[l.date] = l;
+                            });
+                            setMonthLogs(logMap);
+                        }
+                    }
+                }
+            } catch (error) {
+                toast.error("An error occurred", {
+                    description: "Please try again or refresh the page.",
+                    duration: 5000
+                });
+            }
+        });
+    };
 
     const handleUpdatePeriod = (showAlert = true) => {
         startTransition(async () => {
@@ -482,11 +867,12 @@ export default function TrackerPageRedesigned() {
 
     const currentPhase = getPhaseForDate(selectedDate);
     // Use cycleSettings for progress bar check (strictly bound to db)
-    const mpiqLastPeriodDB = cycleSettings.last_period_start;
+    const mpiqLastPeriodDB = getRelevantPeriodStart(selectedDate);
     const waveProgress = [!!mpiqLastPeriodDB, !!mpiqConsistency, !!mpiqAppearance, !!mpiqSensation].filter(Boolean).length * 25;
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">
+            <Toaster position="top-center" richColors />
             {/* Header */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -604,7 +990,13 @@ export default function TrackerPageRedesigned() {
                             const isSelected = date.toDateString() === selectedDate.toDateString();
                             const isToday = date.toDateString() === new Date().toDateString();
                             const isFuture = isFutureDate(date);
-                            const phase = getPhaseForDate(date);
+                            const dateStr = formatDate(date);
+                            const log = monthLogs[dateStr];
+
+                            // Check if this date was explicitly logged as a period
+                            const isLoggedPeriod = log?.is_period === true;
+                            const phase = isLoggedPeriod ? "Menstrual" : getPhaseForDate(date);
+
                             const isDisabled = isEditingCycle ? false : isFuture;
 
                             // Calculate Fertile Window
@@ -682,248 +1074,386 @@ export default function TrackerPageRedesigned() {
                         className="space-y-4"
                     >
                         {/* Toggle Track Mode */}
-                        <div className="flex bg-gray-100/50 p-1 rounded-full mb-2">
-                            <button
-                                onClick={() => setTrackMode("period")}
-                                className={cn(
-                                    "flex-1 py-2 text-sm font-medium rounded-full transition-all",
-                                    trackMode === "period"
-                                        ? "bg-white text-rose-600 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
-                                )}
-                            >
-                                Start Period
-                            </button>
-                            <button
-                                onClick={() => setTrackMode("discharge")}
-                                className={cn(
-                                    "flex-1 py-2 text-sm font-medium rounded-full transition-all",
-                                    trackMode === "discharge"
-                                        ? "bg-white text-rose-600 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
-                                )}
-                            >
-                                End Period
-                            </button>
+                        {/* Period State Button */}
+                        <div className="relative mb-6">
+                            {(() => {
+                                const dateStr = formatDate(selectedDate);
+                                const globalStart = cycleSettings.last_period_start;
+                                const hasGlobalStart = !!globalStart;
+
+                                let isWithinActivePeriod = false;
+
+                                if (hasGlobalStart) {
+                                    const start = new Date(globalStart);
+                                    start.setHours(0, 0, 0, 0);
+                                    const current = new Date(selectedDate);
+                                    current.setHours(0, 0, 0, 0);
+
+                                    const daysSinceGlobalStart = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                                    isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceGlobalStart < 10;
+                                }
+
+                                const isAlreadyLogged = monthLogs[dateStr]?.is_period === true;
+                                const showEndButton = isWithinActivePeriod || isAlreadyLogged;
+
+                                // Function to remove a day from period
+                                const handleRemoveFromPeriod = async () => {
+                                    startTransition(async () => {
+                                        try {
+                                            await logDailySymptoms({
+                                                date: dateStr,
+                                                symptoms: selectedSymptoms,
+                                                isPeriod: false,  // Mark as NOT period
+                                                flowIntensity: undefined,
+                                                moods: selectedMoods,
+                                                notes: note,
+                                                waterIntake
+                                            });
+
+                                            // Refresh month logs
+                                            const year = currentMonth.getFullYear();
+                                            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+                                            const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                                            const logMap: Record<string, any> = {};
+                                            newLogs.forEach((l: any) => {
+                                                logMap[l.date] = l;
+                                            });
+                                            setMonthLogs(logMap);
+
+                                            toast.success("Removed from period", {
+                                                description: `${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} is no longer marked as a period day`,
+                                                duration: 3000
+                                            });
+                                        } catch (error) {
+                                            toast.error("Failed to remove period day", {
+                                                description: "Please try again",
+                                                duration: 3000
+                                            });
+                                        }
+                                    });
+                                };
+
+                                return (
+                                    <div className="space-y-2">
+                                        {/* Remove from Period Button - Compact */}
+                                        {isAlreadyLogged && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                onClick={handleRemoveFromPeriod}
+                                                disabled={isPending}
+                                                className="w-full group bg-white hover:bg-gray-50 rounded-xl border border-gray-200 hover:border-rose-200 shadow-sm transition-all disabled:opacity-70 py-2 px-3"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-7 h-7 bg-gray-100 group-hover:bg-rose-50 rounded-lg flex items-center justify-center transition-colors">
+                                                            <X className="w-3.5 h-3.5 text-gray-500 group-hover:text-rose-500 transition-colors" />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-gray-700 group-hover:text-gray-900 font-medium text-xs">Remove from Period</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-gray-400 group-hover:text-rose-500 text-[10px] font-semibold transition-colors">
+                                                        REMOVE
+                                                    </div>
+                                                </div>
+                                            </motion.button>
+                                        )}
+
+                                        {/* Start/End Period Button - Compact */}
+                                        <AnimatePresence mode="wait">
+                                            {showEndButton ? (
+                                                <motion.button
+                                                    key="end-period"
+                                                    initial={{ opacity: 0, scale: 0.98 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 1.02 }}
+                                                    whileHover={{ scale: 1.005 }}
+                                                    whileTap={{ scale: 0.995 }}
+                                                    onClick={handlePeriodToggle}
+                                                    disabled={isPending}
+                                                    className="w-full relative overflow-hidden group bg-gradient-to-r from-rose-100/40 to-pink-100/40 hover:from-rose-200/50 hover:to-pink-200/50 rounded-xl border border-rose-200/40 shadow-sm transition-all disabled:opacity-70 py-2 px-3"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="w-8 h-8 bg-white/60 rounded-lg flex items-center justify-center shadow-sm">
+                                                                {isPending ? (
+                                                                    <div className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                                                                ) : (
+                                                                    <Droplets className="w-4 h-4 text-rose-500" />
+                                                                )}
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <h3 className="text-gray-800 font-semibold text-[13px] leading-tight">
+                                                                    {isAlreadyLogged ? "Period Ongoing" : "Continuing Period?"}
+                                                                </h3>
+                                                                <p className="text-rose-500/70 text-[10px] font-medium">End: {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-rose-400/80 px-3 py-1 rounded-lg text-white text-[10px] font-bold shadow-sm">
+                                                            {isPending ? "..." : "END"}
+                                                        </div>
+                                                    </div>
+                                                </motion.button>
+                                            ) : (
+                                                <motion.button
+                                                    key="start-period"
+                                                    initial={{ opacity: 0, scale: 0.98 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 1.02 }}
+                                                    whileHover={{ scale: 1.005 }}
+                                                    whileTap={{ scale: 0.995 }}
+                                                    onClick={handlePeriodToggle}
+                                                    disabled={isPending}
+                                                    className="w-full group bg-white hover:bg-rose-50/50 rounded-xl border border-rose-100 hover:border-rose-200 shadow-sm transition-all disabled:opacity-70 py-2 px-3"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="w-8 h-8 bg-rose-50 group-hover:bg-rose-100 border border-rose-100 rounded-lg flex items-center justify-center transition-colors">
+                                                                {isPending ? (
+                                                                    <div className="w-4 h-4 border-2 border-rose-400 border-t-transparent rounded-full animate-spin" />
+                                                                ) : (
+                                                                    <Droplet className="w-4 h-4 text-rose-400" />
+                                                                )}
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <h3 className="text-gray-800 font-semibold text-[13px] leading-tight">Period Started?</h3>
+                                                                <p className="text-rose-400 text-[10px] font-medium">Mark {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} as start</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-rose-400 hover:bg-rose-500 px-3 py-1 rounded-lg text-white text-[10px] font-bold shadow-sm transition-colors">
+                                                            {isPending ? "..." : "START"}
+                                                        </div>
+                                                    </div>
+                                                </motion.button>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Flow Card (Period Mode) */}
-                        {trackMode === "period" && (
-                            <div className="bg-gradient-to-br from-white to-rose-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Droplets className="w-5 h-5 text-rose-500" />
-                                    <h3 className="text-base font-semibold text-gray-900">Flow</h3>
+                        {
+                            trackMode === "period" && (
+                                <div className="bg-gradient-to-br from-white to-rose-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Droplets className="w-5 h-5 text-rose-500" />
+                                        <h3 className="text-base font-semibold text-gray-900">Flow</h3>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {flowOptions.map((f) => {
+                                            const isActive = flowIntensity === f;
+                                            return (
+                                                <button
+                                                    key={f}
+                                                    onClick={() => setFlowIntensity(isActive ? null : f)}
+                                                    className={cn(
+                                                        "px-4 py-2.5 rounded-full text-sm font-medium transition-all border",
+                                                        isActive
+                                                            ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white border-transparent shadow-md shadow-rose-200"
+                                                            : "bg-white border-rose-100/50 text-gray-600 hover:border-rose-200 hover:bg-rose-50/30"
+                                                    )}
+                                                >
+                                                    {f}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {flowOptions.map((f) => {
-                                        const isActive = flowIntensity === f;
-                                        return (
-                                            <button
-                                                key={f}
-                                                onClick={() => setFlowIntensity(isActive ? null : f)}
-                                                className={cn(
-                                                    "px-4 py-2.5 rounded-full text-sm font-medium transition-all border",
-                                                    isActive
-                                                        ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white border-transparent shadow-md shadow-rose-200"
-                                                        : "bg-white border-rose-100/50 text-gray-600 hover:border-rose-200 hover:bg-rose-50/30"
-                                                )}
-                                            >
-                                                {f}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                            )
+                        }
 
                         {/* Advanced Cervical Discharge Card (MPIQ) */}
-                        {trackMode === "discharge" && (
-                            <div className={cn(
-                                "relative overflow-hidden bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-blue-100/20 border border-blue-100 transition-all duration-300",
-                                isDischargeExpanded ? "p-0" : "p-0"
-                            )}>
-                                {!isDischargeExpanded ? (
-                                    <button
-                                        onClick={() => setIsDischargeExpanded(true)}
-                                        className="w-full p-5 flex items-center justify-between group hover:bg-white/40 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Waves className="w-5 h-5 text-blue-600" />
-                                            </div>
-                                            <div className="text-left">
-                                                <h3 className="text-base font-semibold text-gray-900">Discharge</h3>
-                                                <p className="text-xs text-gray-500">Please fill out 3 questions for accurate phase prediction</p>
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                            <ChevronRight className="w-4 h-4 text-blue-400 group-hover:text-blue-600 transition-colors" />
-                                        </div>
-                                    </button>
-                                ) : (
-                                    <>
-                                        {/* Wave Progress Bar */}
-                                        <div className="absolute top-0 left-0 right-0 h-3 bg-gray-100/50 z-0">
-                                            <motion.div
-                                                className="h-full bg-gradient-to-r from-teal-300 via-blue-400 to-indigo-400"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${waveProgress}%` }}
-                                                transition={{ duration: 0.5, ease: "easeInOut" }}
-                                            />
-                                            {/* SVG Wave Overlay for effect */}
-                                            <svg className="absolute top-0 w-full h-full text-white/30" preserveAspectRatio="none" viewBox="0 0 100 10">
-                                                <path d="M0 10 Q 25 0 50 10 T 100 10 V 10 H 0 Z" fill="currentColor" />
-                                            </svg>
-                                        </div>
-
-                                        <div className="p-6 pt-8 relative z-10">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                        <Waves className="w-5 h-5 text-blue-600" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-gray-900">Cervical Discharge</h3>
-                                                        <p className="text-xs text-gray-500">Answer 4 questions to track fertility</p>
-                                                    </div>
+                        {
+                            trackMode === "discharge" && (
+                                <div className={cn(
+                                    "relative overflow-hidden bg-gradient-to-br from-white to-blue-50/50 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-blue-100/20 border border-blue-100 transition-all duration-300",
+                                    isDischargeExpanded ? "p-0" : "p-0"
+                                )}>
+                                    {!isDischargeExpanded ? (
+                                        <button
+                                            onClick={() => setIsDischargeExpanded(true)}
+                                            className="w-full p-5 flex items-center justify-between group hover:bg-white/40 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                    <Waves className="w-5 h-5 text-blue-600" />
                                                 </div>
-                                                <button
-                                                    onClick={() => setIsDischargeExpanded(false)}
-                                                    className="p-2 hover:bg-blue-50/50 rounded-full transition-colors text-blue-400 hover:text-blue-600"
-                                                >
-                                                    <div className="sr-only">Collapse</div>
-                                                    <ChevronRight className="w-5 h-5 -rotate-90" />
-                                                </button>
+                                                <div className="text-left">
+                                                    <h3 className="text-base font-semibold text-gray-900">Discharge</h3>
+                                                    <p className="text-xs text-gray-500">Please fill out 3 questions for accurate phase prediction</p>
+                                                </div>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                                <ChevronRight className="w-4 h-4 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <>
+                                            {/* Wave Progress Bar */}
+                                            <div className="absolute top-0 left-0 right-0 h-3 bg-gray-100/50 z-0">
+                                                <motion.div
+                                                    className="h-full bg-gradient-to-r from-teal-300 via-blue-400 to-indigo-400"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${waveProgress}%` }}
+                                                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                                                />
+                                                {/* SVG Wave Overlay for effect */}
+                                                <svg className="absolute top-0 w-full h-full text-white/30" preserveAspectRatio="none" viewBox="0 0 100 10">
+                                                    <path d="M0 10 Q 25 0 50 10 T 100 10 V 10 H 0 Z" fill="currentColor" />
+                                                </svg>
                                             </div>
 
-                                            <div className="space-y-6">
-                                                {/* Q1: Last Period Date */}
-                                                <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <p className="text-sm font-medium text-gray-700">1. First day of last period?</p>
+                                            <div className="p-6 pt-8 relative z-10">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                            <Waves className="w-5 h-5 text-blue-600" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-lg font-semibold text-gray-900">Cervical Discharge</h3>
+                                                            <p className="text-xs text-gray-500">Answer 4 questions to track fertility</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="date"
-                                                            value={cycleSettings.last_period_start} // READ ONLY FROM DB
-                                                            disabled
-                                                            className="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-500 cursor-not-allowed focus:outline-none"
-                                                        />
-                                                        <div className="absolute inset-y-0 right-2 flex items-center">
-                                                            <span className="text-[10px] text-rose-500 font-medium bg-rose-50 px-2 py-0.5 rounded-full">
-                                                                From Calendar
-                                                            </span>
+                                                    <button
+                                                        onClick={() => setIsDischargeExpanded(false)}
+                                                        className="p-2 hover:bg-blue-50/50 rounded-full transition-colors text-blue-400 hover:text-blue-600"
+                                                    >
+                                                        <div className="sr-only">Collapse</div>
+                                                        <ChevronRight className="w-5 h-5 -rotate-90" />
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    {/* Q1: Last Period Date */}
+                                                    <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <p className="text-sm font-medium text-gray-700">1. First day of last period?</p>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="date"
+                                                                value={getRelevantPeriodStart(selectedDate) || ""} // Dynamic based on context
+                                                                disabled
+                                                                className="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-500 cursor-not-allowed focus:outline-none"
+                                                            />
+                                                            <div className="absolute inset-y-0 right-2 flex items-center">
+                                                                <span className="text-[10px] text-rose-500 font-medium bg-rose-50 px-2 py-0.5 rounded-full">
+                                                                    From Calendar
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Q2: Consistency */}
+                                                    <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                                                        <p className="text-sm font-medium text-gray-700 mb-3">2. Consistency of discharge?</p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {consistencyOptions.map((opt) => (
+                                                                <button
+                                                                    key={opt.label}
+                                                                    onClick={() => setMpiqConsistency(opt.label)}
+                                                                    className={cn(
+                                                                        "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                                        mpiqConsistency === opt.label
+                                                                            ? "bg-blue-50 border-blue-200 shadow-sm"
+                                                                            : "bg-white border-gray-100 hover:bg-gray-50"
+                                                                    )}
+                                                                >
+                                                                    {/* Image/Video Media */}
+                                                                    <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
+                                                                        {opt.type === 'video' ? (
+                                                                            <video
+                                                                                src={opt.src}
+                                                                                autoPlay
+                                                                                loop
+                                                                                muted
+                                                                                playsInline
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <img
+                                                                                src={opt.src}
+                                                                                alt={opt.label}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
+                                                                    <span className="text-[10px] text-gray-400 leading-tight mt-1">{opt.desc}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Q3: Appearance */}
+                                                    <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                                                        <p className="text-sm font-medium text-gray-700 mb-3">3. Appearance of discharge?</p>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            {appearanceOptions.map((opt) => (
+                                                                <button
+                                                                    key={opt.label}
+                                                                    onClick={() => setMpiqAppearance(opt.label)}
+                                                                    className={cn(
+                                                                        "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                                        mpiqAppearance === opt.label
+                                                                            ? "bg-blue-50 border-blue-200 shadow-sm"
+                                                                            : "bg-white border-gray-100 hover:bg-gray-50"
+                                                                    )}
+                                                                >
+                                                                    <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
+                                                                        {opt.type === 'video' ? (
+                                                                            <video
+                                                                                src={opt.src}
+                                                                                autoPlay
+                                                                                loop
+                                                                                muted
+                                                                                playsInline
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <img
+                                                                                src={opt.src}
+                                                                                alt={opt.label}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Q4: Sensation */}
+                                                    <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                                                        <p className="text-sm font-medium text-gray-700 mb-3">4. Vaginal sensation?</p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {sensationOptions.map((opt) => (
+                                                                <button
+                                                                    key={opt.label}
+                                                                    onClick={() => setMpiqSensation(opt.label)}
+                                                                    className={cn(
+                                                                        "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                                        mpiqSensation === opt.label
+                                                                            ? "bg-blue-50 border-blue-200 shadow-sm"
+                                                                            : "bg-white border-gray-100 hover:bg-gray-50"
+                                                                    )}
+                                                                >
+                                                                    <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
+                                                                    <span className="text-[10px] text-gray-400 leading-tight mt-1">{opt.desc}</span>
+                                                                </button>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                {/* Q2: Consistency */}
-                                                <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
-                                                    <p className="text-sm font-medium text-gray-700 mb-3">2. Consistency of discharge?</p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {consistencyOptions.map((opt) => (
-                                                            <button
-                                                                key={opt.label}
-                                                                onClick={() => setMpiqConsistency(opt.label)}
-                                                                className={cn(
-                                                                    "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                                    mpiqConsistency === opt.label
-                                                                        ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                                        : "bg-white border-gray-100 hover:bg-gray-50"
-                                                                )}
-                                                            >
-                                                                {/* Image/Video Media */}
-                                                                <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
-                                                                    {opt.type === 'video' ? (
-                                                                        <video
-                                                                            src={opt.src}
-                                                                            autoPlay
-                                                                            loop
-                                                                            muted
-                                                                            playsInline
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <img
-                                                                            src={opt.src}
-                                                                            alt={opt.label}
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    )}
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
-                                                                <span className="text-[10px] text-gray-400 leading-tight mt-1">{opt.desc}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Q3: Appearance */}
-                                                <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
-                                                    <p className="text-sm font-medium text-gray-700 mb-3">3. Appearance of discharge?</p>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {appearanceOptions.map((opt) => (
-                                                            <button
-                                                                key={opt.label}
-                                                                onClick={() => setMpiqAppearance(opt.label)}
-                                                                className={cn(
-                                                                    "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                                    mpiqAppearance === opt.label
-                                                                        ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                                        : "bg-white border-gray-100 hover:bg-gray-50"
-                                                                )}
-                                                            >
-                                                                <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
-                                                                    {opt.type === 'video' ? (
-                                                                        <video
-                                                                            src={opt.src}
-                                                                            autoPlay
-                                                                            loop
-                                                                            muted
-                                                                            playsInline
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <img
-                                                                            src={opt.src}
-                                                                            alt={opt.label}
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                    )}
-                                                                </div>
-                                                                <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Q4: Sensation */}
-                                                <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
-                                                    <p className="text-sm font-medium text-gray-700 mb-3">4. Vaginal sensation?</p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {sensationOptions.map((opt) => (
-                                                            <button
-                                                                key={opt.label}
-                                                                onClick={() => setMpiqSensation(opt.label)}
-                                                                className={cn(
-                                                                    "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                                    mpiqSensation === opt.label
-                                                                        ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                                        : "bg-white border-gray-100 hover:bg-gray-50"
-                                                                )}
-                                                            >
-                                                                <span className="text-xs font-semibold text-gray-800">{opt.label}</span>
-                                                                <span className="text-[10px] text-gray-400 leading-tight mt-1">{opt.desc}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
                                             </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                                        </>
+                                    )}
+                                </div>
+                            )
+                        }
 
                         {/* Symptoms Card */}
                         <div className="bg-gradient-to-br from-white to-rose-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100">

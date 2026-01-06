@@ -443,3 +443,22 @@ export async function updateCycleLength(periodLength?: number, cycleLength?: num
     if (error) return { success: false, error: error.message };
     return { success: true };
 }
+
+export async function fetchMonthLogs(monthStr: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+        .from("daily_logs")
+        .select("date, is_period, flow_intensity")
+        .eq("user_id", user.id)
+        .ilike("date", `${monthStr}%`);
+
+    if (error) {
+        console.error("Error fetching month logs:", error);
+        return [];
+    }
+
+    return data || [];
+}
