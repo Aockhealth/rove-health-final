@@ -390,7 +390,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     }
 }
 
-export async function updateLastPeriodDate(newDate: string) {
+export async function updateLastPeriodDate(newDate: string | null) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

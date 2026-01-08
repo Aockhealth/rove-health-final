@@ -493,7 +493,7 @@ export default function TrackerPageRedesigned() {
     };
 
     //changed getphase
-    const getPhaseForDate = (date: Date): Phase => {
+    /* const getPhaseForDate = (date: Date): Phase => {
 
         console.log("Phase debug", {
             date: formatDate(date),
@@ -525,7 +525,32 @@ export default function TrackerPageRedesigned() {
 
         return "Follicular";
     };
+ */
+    const getPhaseForDate = (date: Date): Phase => {
+        const dateStr = formatDate(date);
+        const log = monthLogs[dateStr];
 
+        // 🔹 1️⃣ Check explicit log first
+        if (log) {
+            if (log.is_period) return "Menstrual";
+            else return "Follicular"; // or compute based on cycle if you prefer
+        }
+
+        // 🔹 2️⃣ Fallback to predicted period based on last known start
+        const startStr = getRelevantPeriodStart(date);
+        if (!startStr) return "Follicular";
+
+        const currentDay = getCurrentDay(date);
+        const cycleLength = cycleSettings.cycle_length_days || 28;
+        const periodLength = cycleSettings.period_length_days || 5;
+        const ovulationDay = cycleLength - 14;
+
+        if (currentDay <= periodLength) return "Menstrual";
+        if (currentDay >= ovulationDay - 2 && currentDay <= ovulationDay + 2) return "Ovulatory";
+        if (currentDay > ovulationDay + 2) return "Luteal";
+
+        return "Follicular";
+    };
 
 
     const calendarDays = getCalendarDays();
@@ -744,43 +769,74 @@ export default function TrackerPageRedesigned() {
                         waterIntake
                     });
 
-                    // Refresh month logs (including adjacent months for padding days)
-                    // Also fetch the month of the selected date to ensure it's included
-                    const selectedYear = selectedDate.getFullYear();
-                    const selectedMonth = selectedDate.getMonth();
-                    const year = currentMonth.getFullYear();
-                    const month = currentMonth.getMonth();
-
-                    // Collect all months to fetch (current, adjacent, and selected date's month)
-                    const monthsToFetch = [
-                        new Date(year, month - 1, 1),  // previous month
-                        new Date(year, month, 1),      // current month
-                        new Date(year, month + 1, 1),  // next month
-                        new Date(selectedYear, selectedMonth, 1) // selected date's month
+                    /*       // Refresh month logs (including adjacent months for padding days)
+                          // Also fetch the month of the selected date to ensure it's included
+                          const selectedYear = selectedDate.getFullYear();
+                          const selectedMonth = selectedDate.getMonth();
+                          const year = currentMonth.getFullYear();
+                          const month = currentMonth.getMonth();
+      
+                          // Collect all months to fetch (current, adjacent, and selected date's month)
+                          const monthsToFetch = [
+                              new Date(year, month - 1, 1),  // previous month
+                              new Date(year, month, 1),      // current month
+                              new Date(year, month + 1, 1),  // next month
+                              new Date(selectedYear, selectedMonth, 1) // selected date's month
+                          ];
+      
+                          // Remove duplicates based on year-month
+                          const uniqueMonths = new Map<string, Date>();
+                          monthsToFetch.forEach(d => {
+                              const key = `${d.getFullYear()}-${d.getMonth()}`;
+                              if (!uniqueMonths.has(key)) {
+                                  uniqueMonths.set(key, d);
+                              }
+                          });
+      
+                          const allLogs: any[] = [];
+                          for (const monthDate of uniqueMonths.values()) {
+                              const monthYear = monthDate.getFullYear();
+                              const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                              const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                              allLogs.push(...logs);
+                          }
+      
+                          const logMap: Record<string, any> = {};
+                          allLogs.forEach((l: any) => {
+                              logMap[l.date] = l;
+                          });
+                          setMonthLogs(logMap); */
+                    // 🔥 REFRESH MONTH LOGS FOR ALL AFFECTED PERIOD DATES
+                    const affectedDates = [
+                        ...Object.keys(monthLogs).filter(d => monthLogs[d]?.is_period || d === dateStr)
                     ];
 
-                    // Remove duplicates based on year-month
-                    const uniqueMonths = new Map<string, Date>();
-                    monthsToFetch.forEach(d => {
-                        const key = `${d.getFullYear()}-${d.getMonth()}`;
-                        if (!uniqueMonths.has(key)) {
-                            uniqueMonths.set(key, d);
-                        }
+                    // Collect all months that need fetching
+                    const monthsToFetch = new Set<string>();
+                    affectedDates.forEach(d => {
+                        const dt = new Date(d);
+                        monthsToFetch.add(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
                     });
 
+                    // Fetch all affected months
                     const allLogs: any[] = [];
-                    for (const monthDate of uniqueMonths.values()) {
-                        const monthYear = monthDate.getFullYear();
-                        const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
-                        const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                    for (const ym of monthsToFetch) {
+                        const logs = await fetchMonthLogs(ym);
                         allLogs.push(...logs);
                     }
 
+                    // Rebuild monthLogs
                     const logMap: Record<string, any> = {};
                     allLogs.forEach((l: any) => {
                         logMap[l.date] = l;
                     });
-                    setMonthLogs(logMap);
+                    /*  setMonthLogs(logMap); */
+                    setMonthLogs(prev => ({
+                        ...prev,
+                        ...logMap
+                    }));
+
+
 
                     confetti({
                         particleCount: 50,
@@ -841,6 +897,45 @@ export default function TrackerPageRedesigned() {
                     }
 
                     // Mark all dates from start to end as period
+                    // 🔥 CLEAR any old period days after new end
+                    /*   const oldPeriodDays = Object.keys(monthLogs)
+                          .filter(d => monthLogs[d]?.is_period && d > dateStr);
+  
+                      for (const d of oldPeriodDays) {
+                          await logDailySymptoms({
+                              date: d,
+                              isPeriod: false,
+                              symptoms: monthLogs[d]?.symptoms || [],
+                              moods: monthLogs[d]?.moods || [],
+                              notes: monthLogs[d]?.notes || "",
+                              waterIntake: monthLogs[d]?.water_intake || 0
+                          });
+                      } */
+                    // 🔥 CLEAR OLD PERIOD DAYS OUTSIDE NEW RANGE
+                    const startDate = new Date(globalStart);
+                    startDate.setHours(0, 0, 0, 0);
+                    const endDate = new Date(selectedDate);
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const oldPeriodDays = Object.keys(monthLogs)
+                        .filter(d => {
+                            const dt = new Date(d);
+                            dt.setHours(0, 0, 0, 0);
+                            return monthLogs[d]?.is_period && (dt < startDate || dt > endDate);
+                        });
+
+                    for (const d of oldPeriodDays) {
+                        await logDailySymptoms({
+                            date: d,
+                            isPeriod: false,
+                            symptoms: monthLogs[d]?.symptoms || [],
+                            moods: monthLogs[d]?.moods || [],
+                            notes: monthLogs[d]?.notes || "",
+                            waterIntake: monthLogs[d]?.water_intake || 0
+                        });
+                    }
+
+
                     try {
                         const logsToUpdate = [];
                         for (let i = 0; i < length; i++) {
@@ -861,30 +956,39 @@ export default function TrackerPageRedesigned() {
                         }
 
                         await Promise.all(logsToUpdate);
+                        await updateLastPeriodDate(null);
+                        setCycleSettings(prev => ({ ...prev, last_period_start: "" }));
 
-                        // Refresh month logs (including adjacent months for padding days)
-                        const year = currentMonth.getFullYear();
-                        const month = currentMonth.getMonth();
-
-                        const monthsToFetch = [
-                            new Date(year, month - 1, 1),
-                            new Date(year, month, 1),
-                            new Date(year, month + 1, 1)
+                        // 🔥 REFRESH MONTH LOGS FOR ALL AFFECTED PERIOD DATES
+                        const affectedDates = [
+                            ...Object.keys(monthLogs)
+                                .filter(d => monthLogs[d]?.is_period || (d >= formatDate(start) && d <= formatDate(end)))
                         ];
 
+                        const monthsToFetch = new Set<string>();
+                        affectedDates.forEach(d => {
+                            const dt = new Date(d);
+                            monthsToFetch.add(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
+                        });
+
                         const allLogs: any[] = [];
-                        for (const monthDate of monthsToFetch) {
-                            const monthYear = monthDate.getFullYear();
-                            const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
-                            const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                        for (const ym of monthsToFetch) {
+                            const logs = await fetchMonthLogs(ym);
                             allLogs.push(...logs);
                         }
 
+                        // Rebuild monthLogs to ensure calendar re-renders
                         const logMap: Record<string, any> = {};
                         allLogs.forEach((l: any) => {
                             logMap[l.date] = l;
                         });
-                        setMonthLogs(logMap);
+                        /*     setMonthLogs(logMap); */
+                        setMonthLogs(prev => ({
+                            ...prev,
+                            ...logMap
+                        }));
+
+
 
                         toast.success("Period ended!", {
                             description: `${length} day period from ${globalStart} to ${dateStr}`,
@@ -959,7 +1063,8 @@ export default function TrackerPageRedesigned() {
 
     // Compute showEndButton for UI (used in both render and handler)
     // Simplified: showEndButton is strictly derived from whether the selected date is already a period day
-    const showEndButton = monthLogs[formatDate(selectedDate)]?.is_period === true;
+    // const showEndButton = monthLogs[formatDate(selectedDate)]?.is_period === true;
+    const showEndButton = !!cycleSettings.last_period_start;
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">
