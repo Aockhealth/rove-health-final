@@ -96,14 +96,31 @@ export default function TrackerPageRedesigned() {
         loadSettings();
     }, []);
 
-    // Fetch month logs for calendar persistence
+
+    // Fetch month logs for calendar persistence (including adjacent months for padding days)
+    // this code is calling actions/cycle-sync.ts - to return all coluns when you fetchMonthLogs
     useEffect(() => {
         const loadMonthLogs = async () => {
             const year = currentMonth.getFullYear();
-            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-            const logs = await fetchMonthLogs(`${year}-${month}`);
+            const month = currentMonth.getMonth();
+
+            // Fetch logs for current month and adjacent months (for padding days)
+            const monthsToFetch = [
+                new Date(year, month - 1, 1), // Previous month
+                new Date(year, month, 1),     // Current month
+                new Date(year, month + 1, 1)  // Next month
+            ];
+
+            const allLogs: any[] = [];
+            for (const monthDate of monthsToFetch) {
+                const monthYear = monthDate.getFullYear();
+                const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                allLogs.push(...logs);
+            }
+
             const logMap: Record<string, any> = {};
-            logs.forEach((l: any) => {
+            allLogs.forEach((l: any) => {
                 logMap[l.date] = l;
             });
             setMonthLogs(logMap);
@@ -247,6 +264,15 @@ export default function TrackerPageRedesigned() {
         return date > today;
     };
 
+    // Helper to check if date is in the past (midnight safe)
+    const isPastDate = (date: Date): boolean => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        return checkDate < today;
+    };
+
     const getCalendarDays = () => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
@@ -267,65 +293,183 @@ export default function TrackerPageRedesigned() {
         return days;
     };
 
+    /*    const getRelevantPeriodStart = (targetDate: Date) => {
+           const dateStr = formatDate(targetDate);
+   
+           // STRICT: For past dates, ONLY use logged data, never predictions
+           if (isPastDate(targetDate)) {
+               // 1. Check if the target day itself is logged as period
+               if (monthLogs[dateStr]?.is_period) {
+                   // Find the start of this specific streak
+                   let current = new Date(targetDate);
+                   let firstDay = dateStr;
+   
+                   while (true) {
+                       current.setDate(current.getDate() - 1);
+                       const prevStr = formatDate(current);
+                       if (monthLogs[prevStr]?.is_period) {
+                           firstDay = prevStr;
+                       } else {
+                           break;
+                       }
+                   }
+                   return firstDay;
+               }
+   
+               // 2. Look for the most recent logged period BEFORE targetDate
+               const logDates = Object.keys(monthLogs).sort().reverse();
+               for (const d of logDates) {
+                   if (d < dateStr && monthLogs[d]?.is_period) {
+                       // Found a period day before target. Find its start.
+                       let current = new Date(d);
+                       let firstDay = d;
+                       while (true) {
+                           current.setDate(current.getDate() - 1);
+                           const prevStr = formatDate(current);
+                           if (monthLogs[prevStr]?.is_period) {
+                               firstDay = prevStr;
+                           } else {
+                               break;
+                           }
+                       }
+                       return firstDay;
+                   }
+               }
+   
+               // 3. For past dates with no logged data, return null (no prediction)
+               return null;
+           }
+   
+           // For current/future dates: Check logged data first, then use global settings for prediction
+           // 1. Check if the target day itself is logged as period
+           if (monthLogs[dateStr]?.is_period) {
+               let current = new Date(targetDate);
+               let firstDay = dateStr;
+   
+               while (true) {
+                   current.setDate(current.getDate() - 1);
+                   const prevStr = formatDate(current);
+                   if (monthLogs[prevStr]?.is_period) {
+                       firstDay = prevStr;
+                   } else {
+                       break;
+                   }
+               }
+               return firstDay;
+           }
+   
+           // 2. Look for most recent logged period
+           const logDates = Object.keys(monthLogs).sort().reverse();
+           for (const d of logDates) {
+               if (d < dateStr && monthLogs[d]?.is_period) {
+                   let current = new Date(d);
+                   let firstDay = d;
+                   while (true) {
+                       current.setDate(current.getDate() - 1);
+                       const prevStr = formatDate(current);
+                       if (monthLogs[prevStr]?.is_period) {
+                           firstDay = prevStr;
+                       } else {
+                           break;
+                       }
+                   }
+                   return firstDay;
+               }
+           }
+   
+           // 3. Use global settings for future prediction only
+           if (cycleSettings.last_period_start) {
+               return cycleSettings.last_period_start;
+           }
+   
+           return null;
+       }; */
     const getRelevantPeriodStart = (targetDate: Date) => {
         const dateStr = formatDate(targetDate);
-        const targetMonth = targetDate.getMonth();
-        const targetYear = targetDate.getFullYear();
-        const currentMonthDate = new Date(currentMonth);
-        const isCurrentOrFutureMonth = targetYear > currentMonthDate.getFullYear() ||
-            (targetYear === currentMonthDate.getFullYear() && targetMonth >= currentMonthDate.getMonth());
 
-        // 1. Check if the target day itself is logged as period
+        const safeGlobalStart = (() => {
+            if (!cycleSettings.last_period_start) return null;
+
+            const last = new Date(cycleSettings.last_period_start);
+            last.setHours(0, 0, 0, 0);
+
+            const check = new Date(targetDate);
+            check.setHours(0, 0, 0, 0);
+
+            return last <= check ? cycleSettings.last_period_start : null;
+        })();
+
+        // ===== PAST DATES =====
+        if (isPastDate(targetDate)) {
+
+            if (monthLogs[dateStr]?.is_period) {
+                let current = new Date(targetDate);
+                let firstDay = dateStr;
+
+                while (true) {
+                    current.setDate(current.getDate() - 1);
+                    const prevStr = formatDate(current);
+                    if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
+                    else break;
+                }
+                return firstDay;
+            }
+
+            const logDates = Object.keys(monthLogs).sort().reverse();
+            for (const d of logDates) {
+                if (d < dateStr && monthLogs[d]?.is_period) {
+                    let current = new Date(d);
+                    let firstDay = d;
+
+                    while (true) {
+                        current.setDate(current.getDate() - 1);
+                        const prevStr = formatDate(current);
+                        if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
+                        else break;
+                    }
+                    return firstDay;
+                }
+            }
+
+            return null;
+        }
+
+        // ===== TODAY / FUTURE =====
         if (monthLogs[dateStr]?.is_period) {
-            // Find the start of this specific streak in the current month
             let current = new Date(targetDate);
             let firstDay = dateStr;
 
             while (true) {
                 current.setDate(current.getDate() - 1);
                 const prevStr = formatDate(current);
-                if (monthLogs[prevStr]?.is_period) {
-                    firstDay = prevStr;
-                } else {
-                    break;
-                }
-                // Safety break for current month
-                if (current.getMonth() !== targetDate.getMonth()) break;
+                if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
+                else break;
             }
             return firstDay;
         }
 
-        // 2. If not logged as period, look for the most recent log BEFORE targetDate in THIS MONTH ONLY
         const logDates = Object.keys(monthLogs).sort().reverse();
         for (const d of logDates) {
-            if (d < dateStr && monthLogs[d].is_period) {
-                // Found a period day before target. Find its start.
+            if (d < dateStr && monthLogs[d]?.is_period) {
                 let current = new Date(d);
                 let firstDay = d;
+
                 while (true) {
                     current.setDate(current.getDate() - 1);
                     const prevStr = formatDate(current);
-                    if (monthLogs[prevStr]?.is_period) {
-                        firstDay = prevStr;
-                    } else {
-                        break;
-                    }
-                    if (current.getMonth() !== new Date(d).getMonth()) break;
+                    if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
+                    else break;
                 }
                 return firstDay;
             }
         }
 
-        // 3. ONLY use global settings for current or future months
-        if (isCurrentOrFutureMonth && cycleSettings.last_period_start) {
-            return cycleSettings.last_period_start;
-        }
-
-        // 4. For past months with no logged data, return null (no prediction)
-        return null;
+        return safeGlobalStart;
     };
 
-    const getCycleDay = (date: Date) => {
+
+    // Calculate current day of cycle: date - startDate
+    const getCurrentDay = (date: Date): number => {
         const startStr = getRelevantPeriodStart(date);
         if (!startStr) return 1;
 
@@ -335,41 +479,54 @@ export default function TrackerPageRedesigned() {
         checkDate.setHours(0, 0, 0, 0);
         const diffTime = checkDate.getTime() - start.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        let dayInCycle = (diffDays % cycleSettings.cycle_length_days) + 1;
-        if (dayInCycle <= 0) dayInCycle += cycleSettings.cycle_length_days;
+
+        // For past dates: return actual days since start (no modulo)
+        if (isPastDate(date)) {
+            return diffDays + 1;
+        }
+
+        // For future dates: use modulo for cycle prediction
+        const cycleLength = cycleSettings.cycle_length_days || 28;
+        let dayInCycle = (diffDays % cycleLength) + 1;
+        if (dayInCycle <= 0) dayInCycle += cycleLength;
         return dayInCycle;
     };
 
+    //changed getphase
     const getPhaseForDate = (date: Date): Phase => {
+
+        console.log("Phase debug", {
+            date: formatDate(date),
+            relevantStart: getRelevantPeriodStart(date),
+            lastStart: cycleSettings.last_period_start,
+            hasLog: monthLogs[formatDate(date)]
+        });
+
         const dateStr = formatDate(date);
-        const targetMonth = date.getMonth();
-        const targetYear = date.getFullYear();
-        const currentMonthDate = new Date(currentMonth);
-        const isPastMonth = targetYear < currentMonthDate.getFullYear() ||
-            (targetYear === currentMonthDate.getFullYear() && targetMonth < currentMonthDate.getMonth());
 
-        // For past months: ONLY use logged data, no predictions
-        if (isPastMonth) {
-            // Check if this specific date is logged as a period
-            if (monthLogs[dateStr]?.is_period) {
-                return "Menstrual";
-            }
+        if (monthLogs[dateStr]?.is_period) return "Menstrual";
 
-            // For past months, if not logged as period, return Follicular as neutral
-            // (We don't want to predict phases for months that have passed)
-            return "Follicular";
-        }
+        const startStr = getRelevantPeriodStart(date);
+        if (!startStr) return "Follicular";
 
-        // For current/future months: Use cycle calculations
-        const dayInCycle = getCycleDay(date);
-        const { cycle_length_days, period_length_days } = cycleSettings;
-        const ovulationDay = (cycle_length_days || 28) - 14;
+        const currentDay = getCurrentDay(date);
 
-        if (dayInCycle <= (period_length_days || 5)) return "Menstrual";
-        if (dayInCycle < ovulationDay - 1) return "Follicular";
-        if (dayInCycle <= ovulationDay + 1) return "Ovulatory";
-        return "Luteal";
+        const cycleLength = cycleSettings.cycle_length_days || 28;
+        const periodLength = cycleSettings.period_length_days || 5;
+
+        const ovulationDay = cycleLength - 14;
+
+        if (currentDay <= periodLength) return "Menstrual";
+
+        if (currentDay >= ovulationDay - 2 && currentDay <= ovulationDay + 2)
+            return "Ovulatory";
+
+        if (currentDay > ovulationDay + 2) return "Luteal";
+
+        return "Follicular";
     };
+
+
 
     const calendarDays = getCalendarDays();
 
@@ -438,9 +595,6 @@ export default function TrackerPageRedesigned() {
             let finalCervicalDischarge = !isPeriodMode ? (cervicalDischarge || null) : null;
             let finalNotes = note;
 
-            // Strict check: DO NOT allow manual input interference, use DB value for MPIQ score
-            const mpiqLastPeriodDB = cycleSettings.last_period_start;
-
             // 1. MPIQ LOGIC: Save as ["Consistency", "Appearance", "Sensation"]
             // We check if ANY option is selected to save meaningful data
             if (!isPeriodMode && (mpiqConsistency || mpiqAppearance || mpiqSensation)) {
@@ -481,333 +635,266 @@ export default function TrackerPageRedesigned() {
                 return;
             }
 
-            // START or CONTINUE PERIOD
-            if (isPeriodMode) {
-                if (!cycleSettings.last_period_start) {
-                    await updateLastPeriodDate(formatDate(selectedDate));
-                } else {
-                    const lastStart = new Date(cycleSettings.last_period_start);
-                    lastStart.setHours(0, 0, 0, 0);
-
-                    const current = new Date(selectedDate);
-                    current.setHours(0, 0, 0, 0);
-
-                    const diffDays = Math.floor(
-                        (current.getTime() - lastStart.getTime()) / (1000 * 60 * 60 * 24)
-                    );
-
-                    // New Cycle Logic (Check if at least 14 days since last period to detect new cycle vs long period)
-                    if (diffDays >= 14 || diffDays < 0) {
-                        await updateLastPeriodDate(formatDate(selectedDate));
-                        // Only update cycle length if it's a reasonable positive duration
-                        if (diffDays > 0) {
-                            await updateCycleLength(1, diffDays); // Reset period len to 1, update cycle len
-                        } else {
-                            await updateCycleLength(1); // Just reset period length
-                        }
-                    } else {
-                        // Extending current period logic
-                        const newLength = diffDays + 1;
-                        if (newLength > cycleSettings.period_length_days) {
-                            await updateCycleLength(newLength);
-                        }
-                    }
-                }
-            } else if (!isPeriodMode && cycleSettings.last_period_start) {
-                const start = new Date(cycleSettings.last_period_start);
-                start.setHours(0, 0, 0, 0);
-
-                const end = new Date(selectedDate);
-                end.setHours(0, 0, 0, 0);
-
-                const diffTime = end.getTime() - start.getTime();
-                const length = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive of selected date
-
-                if (length > 0 && length <= 10) {
-                    await updateCycleLength(length);
-                }
+            // Update period start date ONLY if logging a period start and no start date exists yet
+            // DO NOT update cycle length or period length - those should be derived, not mutated
+            if (isPeriodMode && !cycleSettings.last_period_start) {
+                await updateLastPeriodDate(formatDate(selectedDate));
+                setCycleSettings(prev => ({
+                    ...prev,
+                    last_period_start: formatDate(selectedDate)
+                }));
             }
 
             toast.success("Entry Saved!", {
                 description: "Your daily log has been updated.",
                 duration: 3000
             });
-            window.location.reload();
+
+            // Refresh month logs to reflect changes (including adjacent months for padding days)
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            const monthsToFetch = [
+                new Date(year, month - 1, 1),
+                new Date(year, month, 1),
+                new Date(year, month + 1, 1)
+            ];
+
+            const allLogs: any[] = [];
+            for (const monthDate of monthsToFetch) {
+                const monthYear = monthDate.getFullYear();
+                const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                allLogs.push(...logs);
+            }
+
+            const logMap: Record<string, any> = {};
+            allLogs.forEach((l: any) => {
+                logMap[l.date] = l;
+            });
+            setMonthLogs(logMap);
         });
     };
 
 
     const handlePeriodToggle = async () => {
         const dateStr = formatDate(selectedDate);
-
-        // Simple logic: Check if there's a recent period start in the global settings
         const globalStart = cycleSettings.last_period_start;
         const hasGlobalStart = !!globalStart;
-
-        let isWithinActivePeriod = false;
-        let daysSinceGlobalStart = -1;
-
-        if (hasGlobalStart) {
-            const start = new Date(globalStart);
-            start.setHours(0, 0, 0, 0);
-            const current = new Date(selectedDate);
-            current.setHours(0, 0, 0, 0);
-
-            daysSinceGlobalStart = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-            // EDGE CASE FIX #N: Support periods longer than 10 days
-            const extendedPeriodDays = Object.keys(monthLogs)
-                .filter(d => monthLogs[d]?.is_period === true)
-                .sort();
-
-            if (extendedPeriodDays.length > 0) {
-                const lastPeriodDay = extendedPeriodDays[extendedPeriodDays.length - 1];
-                const lastDay = new Date(lastPeriodDay);
-                lastDay.setHours(0, 0, 0, 0);
-                const daysSinceLastPeriodDay = Math.floor((current.getTime() - lastDay.getTime()) / (1000 * 60 * 60 * 24));
-
-                isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceLastPeriodDay < 10;
-            } else {
-                isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceGlobalStart < 10;
-            }
-        }
-
-        const isAlreadyLogged = monthLogs[dateStr]?.is_period === true;
-        const showEndButton = isWithinActivePeriod || isAlreadyLogged;
 
         startTransition(async () => {
             try {
                 if (!showEndButton) {
-                    // EDGE CASE FIX #A: Check if selecting date BEFORE current period
-                    if (hasGlobalStart && dateStr < globalStart) {
-                        const existingPeriodDays = Object.keys(monthLogs)
-                            .filter(d => monthLogs[d]?.is_period === true)
-                            .sort();
+                    // START PERIOD: Only set is_period = true for selected date, no ranges
 
-                        if (existingPeriodDays.length > 0) {
-                            toast.error("Cannot start period before existing period", {
-                                description: `You have an existing period from ${globalStart}. Please end or adjust that period first.`,
-                                duration: 5000
-                            });
-                            return;
-                        }
-                    }
-
-                    // EDGE CASE FIX #B: Warn about future dates
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const selected = new Date(selectedDate);
-                    selected.setHours(0, 0, 0, 0);
-
-                    if (selected > today) {
+                    // Warn about future dates
+                    if (isFutureDate(selectedDate)) {
                         toast.warning("Logging future period", {
                             description: "You're logging a period for a future date. Make sure this is intentional.",
                             duration: 4000
                         });
                     }
 
-                    // EDGE CASE FIX #E: Check if there's an open period that needs to be ended
-                    if (hasGlobalStart && daysSinceGlobalStart > 10) {
-                        const lastPeriodDays = Object.keys(monthLogs)
-                            .filter(d => monthLogs[d]?.is_period === true)
-                            .sort();
+                    // Check if there's an existing period start that might conflict
+                    if (hasGlobalStart && !isPastDate(selectedDate)) {
+                        const start = new Date(globalStart);
+                        start.setHours(0, 0, 0, 0);
+                        const current = new Date(selectedDate);
+                        current.setHours(0, 0, 0, 0);
+                        const daysSinceStart = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-                        if (lastPeriodDays.length === 1 && lastPeriodDays[0] === globalStart) {
-                            toast.info("Previous period still open", {
-                                description: `Your period from ${globalStart} was never ended. Starting a new period will close it automatically.`,
-                                duration: 5000
+                        // Warn if starting new period very close to existing one
+                        if (daysSinceStart >= 0 && daysSinceStart < 14) {
+                            toast.warning("Unusually short cycle", {
+                                description: `Less than 14 days since last period start. Make sure this is intentional.`,
+                                duration: 4000
                             });
                         }
                     }
 
-                    // Check if user is trying to ADJUST the start date
-                    const isAdjustingStart = hasGlobalStart && dateStr > globalStart;
-
-                    if (isAdjustingStart) {
-                        const futurePeriodDays = Object.keys(monthLogs)
-                            .filter(d => d > dateStr && monthLogs[d]?.is_period === true)
-                            .sort();
-
-                        if (futurePeriodDays.length > 0) {
-                            const newEndDate = futurePeriodDays[futurePeriodDays.length - 1];
-
-                            if (dateStr === newEndDate) {
-                                toast.warning("Adjusting to 1-day period", {
-                                    description: "This will create a 1-day period. Previous days will be removed.",
-                                    duration: 4000
-                                });
-                            } else {
-                                toast.info("Adjusting period start date", {
-                                    description: `Moving start from ${globalStart} to ${dateStr}`,
-                                    duration: 3000
+                    // Update period start date if this is a new period start
+                    if (!hasGlobalStart || !isPastDate(selectedDate)) {
+                        const result = await updateLastPeriodDate(dateStr);
+                        if (result.success) {
+                            // Update local state immediately
+                            setCycleSettings(prev => ({
+                                ...prev,
+                                last_period_start: dateStr
+                            }));
+                            // Also reload from DB to ensure consistency
+                            const freshSettings = await fetchUserCycleSettings();
+                            if (freshSettings) {
+                                setCycleSettings({
+                                    last_period_start: freshSettings.last_period_start,
+                                    cycle_length_days: freshSettings.cycle_length_days || 28,
+                                    period_length_days: freshSettings.period_length_days || 5
                                 });
                             }
-
-                            const result = await updateLastPeriodDate(dateStr);
-
-                            if (result.success) {
-                                const start = new Date(dateStr);
-                                start.setHours(0, 0, 0, 0);
-                                const end = new Date(newEndDate);
-                                end.setHours(0, 0, 0, 0);
-
-                                const newLength = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-                                await updateCycleLength(newLength);
-
-                                setCycleSettings(prev => ({
-                                    ...prev,
-                                    last_period_start: dateStr,
-                                    period_length_days: newLength
-                                }));
-
-                                // EDGE CASE FIX #G: Wrap in try-catch for network failures
-                                try {
-                                    const logsToUpdate = [];
-                                    for (let i = 0; i < newLength; i++) {
-                                        const d = new Date(start);
-                                        d.setDate(start.getDate() + i);
-                                        const dStr = formatDate(d);
-
-                                        logsToUpdate.push(logDailySymptoms({
-                                            date: dStr,
-                                            symptoms: dStr === dateStr ? selectedSymptoms : [],
-                                            isPeriod: true,
-                                            flowIntensity: flowIntensity || "Normal",
-                                            moods: dStr === dateStr ? selectedMoods : [],
-                                            notes: dStr === dateStr ? note : "",
-                                            waterIntake: dStr === dateStr ? waterIntake : 0
-                                        }));
-                                    }
-
-                                    await Promise.all(logsToUpdate);
-
-                                    toast.success("Period adjusted successfully", {
-                                        description: `Period is now ${dateStr} to ${newEndDate}`,
-                                        duration: 3000
-                                    });
-                                } catch (error) {
-                                    toast.error("Failed to update all period days", {
-                                        description: "Some days may not have been logged. Please check your period dates.",
-                                        duration: 5000
-                                    });
-                                }
-
-                                const year = currentMonth.getFullYear();
-                                const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-                                const newLogs = await fetchMonthLogs(`${year}-${month}`);
-                                const logMap: Record<string, any> = {};
-                                newLogs.forEach((l: any) => {
-                                    logMap[l.date] = l;
-                                });
-                                setMonthLogs(logMap);
-                            }
-                            return;
                         }
                     }
 
-                    // Normal START PERIOD flow
-                    const result = await updateLastPeriodDate(dateStr);
+                    // Log ONLY the selected date as period
+                    await logDailySymptoms({
+                        date: dateStr,
+                        symptoms: selectedSymptoms,
+                        isPeriod: true,
+                        flowIntensity: flowIntensity || "Normal",
+                        moods: selectedMoods,
+                        notes: note,
+                        waterIntake
+                    });
 
-                    if (result.success) {
-                        setCycleSettings(prev => ({
-                            ...prev,
-                            last_period_start: dateStr,
-                            period_length_days: 1
-                        }));
+                    // Refresh month logs (including adjacent months for padding days)
+                    // Also fetch the month of the selected date to ensure it's included
+                    const selectedYear = selectedDate.getFullYear();
+                    const selectedMonth = selectedDate.getMonth();
+                    const year = currentMonth.getFullYear();
+                    const month = currentMonth.getMonth();
 
-                        await logDailySymptoms({
-                            date: dateStr,
-                            symptoms: selectedSymptoms,
-                            isPeriod: true,
-                            flowIntensity: flowIntensity || "Normal",
-                            moods: selectedMoods,
-                            notes: note,
-                            waterIntake
+                    // Collect all months to fetch (current, adjacent, and selected date's month)
+                    const monthsToFetch = [
+                        new Date(year, month - 1, 1),  // previous month
+                        new Date(year, month, 1),      // current month
+                        new Date(year, month + 1, 1),  // next month
+                        new Date(selectedYear, selectedMonth, 1) // selected date's month
+                    ];
+
+                    // Remove duplicates based on year-month
+                    const uniqueMonths = new Map<string, Date>();
+                    monthsToFetch.forEach(d => {
+                        const key = `${d.getFullYear()}-${d.getMonth()}`;
+                        if (!uniqueMonths.has(key)) {
+                            uniqueMonths.set(key, d);
+                        }
+                    });
+
+                    const allLogs: any[] = [];
+                    for (const monthDate of uniqueMonths.values()) {
+                        const monthYear = monthDate.getFullYear();
+                        const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                        const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                        allLogs.push(...logs);
+                    }
+
+                    const logMap: Record<string, any> = {};
+                    allLogs.forEach((l: any) => {
+                        logMap[l.date] = l;
+                    });
+                    setMonthLogs(logMap);
+
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { y: 0.8 },
+                        colors: ['#FDA4AF', '#F43F5E', '#FFFFFF']
+                    });
+
+                    toast.success("Period started!", {
+                        description: `Started on ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+                        duration: 3000
+                    });
+                } else {
+                    // END PERIOD: Mark all dates from start to selected date as period
+                    if (!globalStart) {
+                        toast.error("No period start found", {
+                            description: "Please start a period first.",
+                            duration: 3000
                         });
+                        return;
+                    }
 
+                    const start = new Date(globalStart);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(selectedDate);
+                    end.setHours(0, 0, 0, 0);
+                    const diffTime = end.getTime() - start.getTime();
+                    const length = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                    // Warn about long periods if applicable
+                    if (length > 10) {
+                        toast.warning("Long period (>10 days)", {
+                            description: `This period is ${length} days. Make sure this is correct.`,
+                            duration: 5000
+                        });
+                    }
+
+                    // Warn about unusually short cycles
+                    if (hasGlobalStart && !isPastDate(selectedDate)) {
+                        // Check if there was a previous period end
+                        const prevPeriodDays = Object.keys(monthLogs)
+                            .filter(d => monthLogs[d]?.is_period === true && d < globalStart)
+                            .sort()
+                            .reverse();
+
+                        if (prevPeriodDays.length > 0) {
+                            const lastPrevPeriod = new Date(prevPeriodDays[0]);
+                            lastPrevPeriod.setHours(0, 0, 0, 0);
+                            const cycleLength = Math.floor((start.getTime() - lastPrevPeriod.getTime()) / (1000 * 60 * 60 * 24));
+
+                            if (cycleLength < 21) {
+                                toast.warning("Unusually short cycle", {
+                                    description: `Less than 21 days since last period. Make sure this is correct.`,
+                                    duration: 5000
+                                });
+                            }
+                        }
+                    }
+
+                    // Mark all dates from start to end as period
+                    try {
+                        const logsToUpdate = [];
+                        for (let i = 0; i < length; i++) {
+                            const d = new Date(start);
+                            d.setDate(start.getDate() + i);
+                            const dStr = formatDate(d);
+
+                            // Use selected date's data for the end date, empty for other dates
+                            logsToUpdate.push(logDailySymptoms({
+                                date: dStr,
+                                symptoms: dStr === dateStr ? selectedSymptoms : (monthLogs[dStr]?.symptoms || []),
+                                isPeriod: true,
+                                flowIntensity: dStr === dateStr ? (flowIntensity || "Normal") : (monthLogs[dStr]?.flow_intensity || "Normal"),
+                                moods: dStr === dateStr ? selectedMoods : (monthLogs[dStr]?.moods || []),
+                                notes: dStr === dateStr ? note : (monthLogs[dStr]?.notes || ""),
+                                waterIntake: dStr === dateStr ? waterIntake : (monthLogs[dStr]?.water_intake || 0)
+                            }));
+                        }
+
+                        await Promise.all(logsToUpdate);
+
+                        // Refresh month logs (including adjacent months for padding days)
                         const year = currentMonth.getFullYear();
-                        const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-                        const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                        const month = currentMonth.getMonth();
+
+                        const monthsToFetch = [
+                            new Date(year, month - 1, 1),
+                            new Date(year, month, 1),
+                            new Date(year, month + 1, 1)
+                        ];
+
+                        const allLogs: any[] = [];
+                        for (const monthDate of monthsToFetch) {
+                            const monthYear = monthDate.getFullYear();
+                            const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                            const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                            allLogs.push(...logs);
+                        }
+
                         const logMap: Record<string, any> = {};
-                        newLogs.forEach((l: any) => {
+                        allLogs.forEach((l: any) => {
                             logMap[l.date] = l;
                         });
                         setMonthLogs(logMap);
 
-                        confetti({
-                            particleCount: 50,
-                            spread: 60,
-                            origin: { y: 0.8 },
-                            colors: ['#FDA4AF', '#F43F5E', '#FFFFFF']
-                        });
-
-                        toast.success("Period started!", {
-                            description: `Started on ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+                        toast.success("Period ended!", {
+                            description: `${length} day period from ${globalStart} to ${dateStr}`,
                             duration: 3000
                         });
-                    }
-                } else {
-                    // END PERIOD: Mark the range from global start to selected date
-                    if (!globalStart) return;
-
-                    const start = new Date(globalStart);
-                    start.setHours(0, 0, 0, 0);
-                    const current = new Date(selectedDate);
-                    current.setHours(0, 0, 0, 0);
-
-                    const diffTime = current.getTime() - start.getTime();
-                    const length = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-                    if (length > 0) {
-                        const result = await updateCycleLength(length);
-                        if (result.success) {
-                            setCycleSettings(prev => ({
-                                ...prev,
-                                period_length_days: length
-                            }));
-
-                            // EDGE CASE FIX #G: Wrap in try-catch for network failures
-                            try {
-                                const logsToUpdate = [];
-                                for (let i = 0; i < length; i++) {
-                                    const d = new Date(start);
-                                    d.setDate(start.getDate() + i);
-                                    const dStr = formatDate(d);
-
-                                    logsToUpdate.push(logDailySymptoms({
-                                        date: dStr,
-                                        symptoms: dStr === dateStr ? selectedSymptoms : [],
-                                        isPeriod: true,
-                                        flowIntensity: flowIntensity || "Normal",
-                                        moods: dStr === dateStr ? selectedMoods : [],
-                                        notes: dStr === dateStr ? note : "",
-                                        waterIntake: dStr === dateStr ? waterIntake : 0
-                                    }));
-                                }
-
-                                await Promise.all(logsToUpdate);
-
-                                toast.success("Period ended!", {
-                                    description: `${length} day period from ${globalStart} to ${dateStr}`,
-                                    duration: 3000
-                                });
-                            } catch (error) {
-                                toast.error("Failed to update all period days", {
-                                    description: "Some days may not have been logged. Please check your period dates.",
-                                    duration: 5000
-                                });
-                            }
-
-                            const year = currentMonth.getFullYear();
-                            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-                            const newLogs = await fetchMonthLogs(`${year}-${month}`);
-                            const logMap: Record<string, any> = {};
-                            newLogs.forEach((l: any) => {
-                                logMap[l.date] = l;
-                            });
-                            setMonthLogs(logMap);
-                        }
+                    } catch (error) {
+                        toast.error("Failed to update period days", {
+                            description: "Please try again or refresh the page.",
+                            duration: 5000
+                        });
                     }
                 }
             } catch (error) {
@@ -869,6 +956,10 @@ export default function TrackerPageRedesigned() {
     // Use cycleSettings for progress bar check (strictly bound to db)
     const mpiqLastPeriodDB = getRelevantPeriodStart(selectedDate);
     const waveProgress = [!!mpiqLastPeriodDB, !!mpiqConsistency, !!mpiqAppearance, !!mpiqSensation].filter(Boolean).length * 25;
+
+    // Compute showEndButton for UI (used in both render and handler)
+    // Simplified: showEndButton is strictly derived from whether the selected date is already a period day
+    const showEndButton = monthLogs[formatDate(selectedDate)]?.is_period === true;
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">
@@ -993,14 +1084,13 @@ export default function TrackerPageRedesigned() {
                             const dateStr = formatDate(date);
                             const log = monthLogs[dateStr];
 
-                            // Check if this date was explicitly logged as a period
-                            const isLoggedPeriod = log?.is_period === true;
-                            const phase = isLoggedPeriod ? "Menstrual" : getPhaseForDate(date);
+                            // Phase calculation (getPhaseForDate already checks logged data first)
+                            const phase = getPhaseForDate(date);
 
                             const isDisabled = isEditingCycle ? false : isFuture;
 
                             // Calculate Fertile Window
-                            const dayInCycle = getCycleDay(date);
+                            const dayInCycle = getCurrentDay(date);
                             const ovulationDay = (cycleSettings.cycle_length_days || 28) - 14;
                             const isFertile = dayInCycle >= (ovulationDay - 5) && dayInCycle <= (ovulationDay + 2);
 
@@ -1078,23 +1168,7 @@ export default function TrackerPageRedesigned() {
                         <div className="relative mb-6">
                             {(() => {
                                 const dateStr = formatDate(selectedDate);
-                                const globalStart = cycleSettings.last_period_start;
-                                const hasGlobalStart = !!globalStart;
-
-                                let isWithinActivePeriod = false;
-
-                                if (hasGlobalStart) {
-                                    const start = new Date(globalStart);
-                                    start.setHours(0, 0, 0, 0);
-                                    const current = new Date(selectedDate);
-                                    current.setHours(0, 0, 0, 0);
-
-                                    const daysSinceGlobalStart = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                                    isWithinActivePeriod = daysSinceGlobalStart >= 0 && daysSinceGlobalStart < 10;
-                                }
-
                                 const isAlreadyLogged = monthLogs[dateStr]?.is_period === true;
-                                const showEndButton = isWithinActivePeriod || isAlreadyLogged;
 
                                 // Function to remove a day from period
                                 const handleRemoveFromPeriod = async () => {
@@ -1110,12 +1184,26 @@ export default function TrackerPageRedesigned() {
                                                 waterIntake
                                             });
 
-                                            // Refresh month logs
+                                            // Refresh month logs (including adjacent months for padding days)
                                             const year = currentMonth.getFullYear();
-                                            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-                                            const newLogs = await fetchMonthLogs(`${year}-${month}`);
+                                            const month = currentMonth.getMonth();
+
+                                            const monthsToFetch = [
+                                                new Date(year, month - 1, 1),
+                                                new Date(year, month, 1),
+                                                new Date(year, month + 1, 1)
+                                            ];
+
+                                            const allLogs: any[] = [];
+                                            for (const monthDate of monthsToFetch) {
+                                                const monthYear = monthDate.getFullYear();
+                                                const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
+                                                const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
+                                                allLogs.push(...logs);
+                                            }
+
                                             const logMap: Record<string, any> = {};
-                                            newLogs.forEach((l: any) => {
+                                            allLogs.forEach((l: any) => {
                                                 logMap[l.date] = l;
                                             });
                                             setMonthLogs(logMap);

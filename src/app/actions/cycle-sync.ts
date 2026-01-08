@@ -449,11 +449,31 @@ export async function fetchMonthLogs(monthStr: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
+    // Parse YYYY-MM
+    const [yearStr, monthNumStr] = monthStr.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthNumStr);
+
+    // Calculate start and end range
+    // Start: YYYY-MM-01
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+
+    // End: Start of next month
+    // Handle December wrap around
+    let nextYear = year;
+    let nextMonth = month + 1;
+    if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear = year + 1;
+    }
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
     const { data, error } = await supabase
         .from("daily_logs")
-        .select("date, is_period, flow_intensity")
+        .select("*")
         .eq("user_id", user.id)
-        .ilike("date", `${monthStr}%`);
+        .gte("date", startDate)
+        .lt("date", endDate);
 
     if (error) {
         console.error("Error fetching month logs:", error);
