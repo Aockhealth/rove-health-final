@@ -741,12 +741,10 @@ export default function TrackerPageRedesigned() {
                     if (!hasGlobalStart || !isPastDate(selectedDate)) {
                         const result = await updateLastPeriodDate(dateStr);
                         if (result.success) {
-                            // Update local state immediately
                             setCycleSettings(prev => ({
                                 ...prev,
                                 last_period_start: dateStr
                             }));
-                            // Also reload from DB to ensure consistency
                             const freshSettings = await fetchUserCycleSettings();
                             if (freshSettings) {
                                 setCycleSettings({
@@ -769,74 +767,25 @@ export default function TrackerPageRedesigned() {
                         waterIntake
                     });
 
-                    /*       // Refresh month logs (including adjacent months for padding days)
-                          // Also fetch the month of the selected date to ensure it's included
-                          const selectedYear = selectedDate.getFullYear();
-                          const selectedMonth = selectedDate.getMonth();
-                          const year = currentMonth.getFullYear();
-                          const month = currentMonth.getMonth();
-      
-                          // Collect all months to fetch (current, adjacent, and selected date's month)
-                          const monthsToFetch = [
-                              new Date(year, month - 1, 1),  // previous month
-                              new Date(year, month, 1),      // current month
-                              new Date(year, month + 1, 1),  // next month
-                              new Date(selectedYear, selectedMonth, 1) // selected date's month
-                          ];
-      
-                          // Remove duplicates based on year-month
-                          const uniqueMonths = new Map<string, Date>();
-                          monthsToFetch.forEach(d => {
-                              const key = `${d.getFullYear()}-${d.getMonth()}`;
-                              if (!uniqueMonths.has(key)) {
-                                  uniqueMonths.set(key, d);
-                              }
-                          });
-      
-                          const allLogs: any[] = [];
-                          for (const monthDate of uniqueMonths.values()) {
-                              const monthYear = monthDate.getFullYear();
-                              const monthNum = String(monthDate.getMonth() + 1).padStart(2, '0');
-                              const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
-                              allLogs.push(...logs);
-                          }
-      
-                          const logMap: Record<string, any> = {};
-                          allLogs.forEach((l: any) => {
-                              logMap[l.date] = l;
-                          });
-                          setMonthLogs(logMap); */
-                    // 🔥 REFRESH MONTH LOGS FOR ALL AFFECTED PERIOD DATES
-                    const affectedDates = [
-                        ...Object.keys(monthLogs).filter(d => monthLogs[d]?.is_period || d === dateStr)
-                    ];
+                    // 🔥 REFRESH: Only fetch months affected by the new period start
+                    const affectedMonths = new Set<string>();
+                    const dt = new Date(dateStr);
+                    affectedMonths.add(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
 
-                    // Collect all months that need fetching
-                    const monthsToFetch = new Set<string>();
-                    affectedDates.forEach(d => {
-                        const dt = new Date(d);
-                        monthsToFetch.add(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
-                    });
-
-                    // Fetch all affected months
                     const allLogs: any[] = [];
-                    for (const ym of monthsToFetch) {
+                    for (const ym of affectedMonths) {
                         const logs = await fetchMonthLogs(ym);
                         allLogs.push(...logs);
                     }
 
-                    // Rebuild monthLogs
                     const logMap: Record<string, any> = {};
                     allLogs.forEach((l: any) => {
                         logMap[l.date] = l;
                     });
-                    /*  setMonthLogs(logMap); */
                     setMonthLogs(prev => ({
                         ...prev,
                         ...logMap
                     }));
-
-
 
                     confetti({
                         particleCount: 50,
@@ -874,67 +823,16 @@ export default function TrackerPageRedesigned() {
                         });
                     }
 
-                    // Warn about unusually short cycles
-                    if (hasGlobalStart && !isPastDate(selectedDate)) {
-                        // Check if there was a previous period end
-                        const prevPeriodDays = Object.keys(monthLogs)
-                            .filter(d => monthLogs[d]?.is_period === true && d < globalStart)
-                            .sort()
-                            .reverse();
-
-                        if (prevPeriodDays.length > 0) {
-                            const lastPrevPeriod = new Date(prevPeriodDays[0]);
-                            lastPrevPeriod.setHours(0, 0, 0, 0);
-                            const cycleLength = Math.floor((start.getTime() - lastPrevPeriod.getTime()) / (1000 * 60 * 60 * 24));
-
-                            if (cycleLength < 21) {
-                                toast.warning("Unusually short cycle", {
-                                    description: `Less than 21 days since last period. Make sure this is correct.`,
-                                    duration: 5000
-                                });
-                            }
-                        }
-                    }
-
-                    // Mark all dates from start to end as period
-                    // 🔥 CLEAR any old period days after new end
-                    /*   const oldPeriodDays = Object.keys(monthLogs)
-                          .filter(d => monthLogs[d]?.is_period && d > dateStr);
-  
-                      for (const d of oldPeriodDays) {
-                          await logDailySymptoms({
-                              date: d,
-                              isPeriod: false,
-                              symptoms: monthLogs[d]?.symptoms || [],
-                              moods: monthLogs[d]?.moods || [],
-                              notes: monthLogs[d]?.notes || "",
-                              waterIntake: monthLogs[d]?.water_intake || 0
-                          });
-                      } */
-                    // 🔥 CLEAR OLD PERIOD DAYS OUTSIDE NEW RANGE
+                    // 🔥 FIX: ONLY clear days between globalStart and selectedDate that need updating
+                    // Do NOT touch other period ranges
                     const startDate = new Date(globalStart);
                     startDate.setHours(0, 0, 0, 0);
                     const endDate = new Date(selectedDate);
                     endDate.setHours(0, 0, 0, 0);
 
-                    const oldPeriodDays = Object.keys(monthLogs)
-                        .filter(d => {
-                            const dt = new Date(d);
-                            dt.setHours(0, 0, 0, 0);
-                            return monthLogs[d]?.is_period && (dt < startDate || dt > endDate);
-                        });
-
-                    for (const d of oldPeriodDays) {
-                        await logDailySymptoms({
-                            date: d,
-                            isPeriod: false,
-                            symptoms: monthLogs[d]?.symptoms || [],
-                            moods: monthLogs[d]?.moods || [],
-                            notes: monthLogs[d]?.notes || "",
-                            waterIntake: monthLogs[d]?.water_intake || 0
-                        });
-                    }
-
+                    // Find days that are marked as period but fall WITHIN the current range
+                    // and need to be set (we'll overwrite them all anyway in the next step)
+                    // DO NOT clear days outside this range
 
                     try {
                         const logsToUpdate = [];
@@ -943,7 +841,7 @@ export default function TrackerPageRedesigned() {
                             d.setDate(start.getDate() + i);
                             const dStr = formatDate(d);
 
-                            // Use selected date's data for the end date, empty for other dates
+                            // Use selected date's data for the end date, preserve existing data for other dates
                             logsToUpdate.push(logDailySymptoms({
                                 date: dStr,
                                 symptoms: dStr === dateStr ? selectedSymptoms : (monthLogs[dStr]?.symptoms || []),
@@ -959,36 +857,28 @@ export default function TrackerPageRedesigned() {
                         await updateLastPeriodDate(null);
                         setCycleSettings(prev => ({ ...prev, last_period_start: "" }));
 
-                        // 🔥 REFRESH MONTH LOGS FOR ALL AFFECTED PERIOD DATES
-                        const affectedDates = [
-                            ...Object.keys(monthLogs)
-                                .filter(d => monthLogs[d]?.is_period || (d >= formatDate(start) && d <= formatDate(end)))
-                        ];
-
-                        const monthsToFetch = new Set<string>();
-                        affectedDates.forEach(d => {
-                            const dt = new Date(d);
-                            monthsToFetch.add(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`);
-                        });
+                        // 🔥 REFRESH: Only fetch months affected by this period range
+                        const affectedMonths = new Set<string>();
+                        for (let i = 0; i < length; i++) {
+                            const d = new Date(start);
+                            d.setDate(start.getDate() + i);
+                            affectedMonths.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+                        }
 
                         const allLogs: any[] = [];
-                        for (const ym of monthsToFetch) {
+                        for (const ym of affectedMonths) {
                             const logs = await fetchMonthLogs(ym);
                             allLogs.push(...logs);
                         }
 
-                        // Rebuild monthLogs to ensure calendar re-renders
                         const logMap: Record<string, any> = {};
                         allLogs.forEach((l: any) => {
                             logMap[l.date] = l;
                         });
-                        /*     setMonthLogs(logMap); */
                         setMonthLogs(prev => ({
                             ...prev,
                             ...logMap
                         }));
-
-
 
                         toast.success("Period ended!", {
                             description: `${length} day period from ${globalStart} to ${dateStr}`,
