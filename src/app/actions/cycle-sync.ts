@@ -755,7 +755,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     }
 }
 
-export async function updateLastPeriodDate(newDate: string) {
+export async function updateLastPeriodDate(newDate: string | null) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -865,4 +865,43 @@ export async function updateCycleLength(periodLength?: number, cycleLength?: num
 
     if (error) return { success: false, error: error.message };
     return { success: true };
+}
+
+export async function fetchMonthLogs(monthStr: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    // Parse YYYY-MM
+    const [yearStr, monthNumStr] = monthStr.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthNumStr);
+
+    // Calculate start and end range
+    // Start: YYYY-MM-01
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+
+    // End: Start of next month
+    // Handle December wrap around
+    let nextYear = year;
+    let nextMonth = month + 1;
+    if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear = year + 1;
+    }
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+
+    const { data, error } = await supabase
+        .from("daily_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", startDate)
+        .lt("date", endDate);
+
+    if (error) {
+        console.error("Error fetching month logs:", error);
+        return [];
+    }
+
+    return data || [];
 }
