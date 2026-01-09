@@ -5,13 +5,7 @@ import { motion } from "framer-motion";
 import { Droplets } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Standardized mapping to match page.tsx
-const PHASE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    "Follicular": { bg: "rgba(236, 253, 245, 0.5)", text: "#065f46", border: "rgba(16, 185, 129, 0.1)" }, 
-    "Luteal": { bg: "rgba(255, 251, 235, 0.5)", text: "#92400e", border: "rgba(245, 158, 11, 0.1)" },     
-    "Menstrual": { bg: "rgba(255, 241, 242, 0.5)", text: "#9f1239", border: "rgba(225, 29, 72, 0.1)" },    
-    "Ovulatory": { bg: "rgba(245, 243, 255, 0.5)", text: "#5b21b6", border: "rgba(139, 92, 246, 0.1)" },   
-};
+
 
 const FLOW_POINTS = [
     { day: 1, val: 10, label: "Heavy" },
@@ -21,9 +15,9 @@ const FLOW_POINTS = [
     { day: 5, val: 95, label: "Spotting" },
 ];
 
-export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
+export function FlowPatternCard({ phase = "Luteal", theme }: { phase?: string, theme: any }) {
     const [hoveredDay, setHoveredDay] = useState<number | null>(null);
-    const theme = PHASE_COLORS[phase] || PHASE_COLORS["Luteal"];
+    // theme passed from parent
 
     const wavePath = `
         M 0,100 L 0,${FLOW_POINTS[0].val} 
@@ -42,9 +36,8 @@ export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
     `;
 
     return (
-        <div 
-            className="relative overflow-hidden rounded-[2rem] border shadow-[0_20px_60px_-20px_rgba(0,0,0,0.12)] p-8 h-full flex flex-col group transition-all duration-700"
-            style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+        <div
+            className={cn("relative overflow-hidden rounded-[2rem] border shadow-sm p-8 h-full flex flex-col group transition-all duration-700", theme.cardBg, theme.border, theme.color)}
         >
             <div
                 className="absolute inset-0 pointer-events-none mix-blend-multiply"
@@ -53,19 +46,19 @@ export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
                     backgroundRepeat: "no-repeat",
                     backgroundSize: "140%",
                     backgroundPosition: "bottom right",
-                    opacity: 0.8, 
+                    opacity: 0.8,
                 }}
             />
-            
+
             <div className="relative z-10 flex justify-between items-start mb-6">
                 <div>
                     <h3 className="font-heading text-lg text-rove-charcoal flex items-center gap-2">
-                        {/* ✅ Icon color matches theme text */}
-                        <Droplets className="w-4 h-4" style={{ color: theme.text }} />
+                        {/* ✅ Icon color matches theme text via currentColor */}
+                        <Droplets className="w-4 h-4 text-current" />
                         Flow Velocity
                     </h3>
                     <p className="text-xs text-rove-stone mt-1">
-                        Heaviest on <span className="font-bold" style={{ color: theme.text }}>Days 1-2</span>, tapering by Day 4.
+                        Heaviest on <span className="font-bold text-current">Days 1-2</span>, tapering by Day 4.
                     </p>
                 </div>
             </div>
@@ -74,9 +67,9 @@ export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
                 <svg className="w-full h-full absolute inset-0 overflow-visible" viewBox="0 0 320 100" preserveAspectRatio="none">
                     <defs>
                         <linearGradient id={`flowGradient-${phase}`} x1="0" y1="0" x2="0" y2="1">
-                            {/* ✅ Gradient stop color now uses theme.text */}
-                            <stop offset="0%" stopColor={theme.text} stopOpacity="0.3" /> 
-                            <stop offset="100%" stopColor={theme.text} stopOpacity="0" />
+                            {/* ✅ Gradient stop color now uses currentColor */}
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
                         </linearGradient>
                     </defs>
 
@@ -92,7 +85,7 @@ export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
                     <motion.path
                         d={linePath}
                         fill="none"
-                        stroke={theme.text} // ✅ Surface line color matches theme
+                        stroke="currentColor" // ✅ Surface line color matches theme
                         strokeWidth="3"
                         strokeLinecap="round"
                         initial={{ pathLength: 0 }}
@@ -112,7 +105,7 @@ export function FlowPatternCard({ phase = "Luteal" }: { phase?: string }) {
                                     cy={pt.val}
                                     r={isHovered ? 6 : 4}
                                     fill="#fff"
-                                    stroke={theme.text} // ✅ Data point border color matches theme
+                                    stroke="currentColor" // ✅ Data point border color matches theme
                                     strokeWidth={isHovered ? 3 : 2}
                                     initial={{ scale: 0 }}
                                     whileInView={{ scale: 1 }}

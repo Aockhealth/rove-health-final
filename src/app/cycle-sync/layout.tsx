@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, BarChart2, List, Settings } from "lucide-react";
+import { Home, Calendar, BarChart2, List, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatWidget } from "@/components/cycle-sync/ChatWidget";
 
@@ -18,7 +18,8 @@ export default function CycleSyncLayout({
         { href: "/cycle-sync/tracker", icon: Calendar, label: "Tracker" },
         { href: "/cycle-sync/insights", icon: BarChart2, label: "Insights" },
         { href: "/cycle-sync/plan", icon: List, label: "Plan" },
-        { href: "/cycle-sync/profile", icon: Settings, label: "Profile" },
+        { href: "/cycle-sync/learn", icon: BookOpen, label: "Learn" },
+        // Profile moved to header avatar
     ];
 
     return (

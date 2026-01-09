@@ -9,6 +9,7 @@ interface MacroFuelGaugeProps {
         protein: number;
         fats: number;
         carbs: number;
+        calories?: number;
     };
     theme: any;
 }
@@ -40,10 +41,13 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
             <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                 {/* Visual Gauge */}
                 <div className="relative w-40 h-40 rounded-full" style={{ background: gradient }}>
-                    <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center shadow-inner">
+                    <div className="absolute inset-2 bg-white rounded-full flex flex-col items-center justify-center shadow-inner pt-1">
                         <div className="text-center">
-                            <span className="text-sm text-rove-stone font-medium">Ideally</span>
-                            <div className="font-heading text-2xl text-rove-charcoal">Balanced</div>
+                            <span className="text-[10px] text-rove-stone font-medium uppercase tracking-wider">Target</span>
+                            <div className="font-heading text-xl text-rove-charcoal leading-none">
+                                {data.calories ? data.calories : "2000"}
+                            </div>
+                            <span className="text-[10px] text-rove-stone/60">kcal</span>
                         </div>
                     </div>
                 </div>

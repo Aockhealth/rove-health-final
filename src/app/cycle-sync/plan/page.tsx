@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useTransition } from "react";
-import { fetchCycleIntelligence } from "@/app/actions/cycle-sync";
+import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
 import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
@@ -14,15 +14,18 @@ import {
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2
+    Flower2, Target, Scale
 } from "lucide-react";
+import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 
-// --- Import Your Custom Components ---
+// --- Custom Components ---
 import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
-import { DietHeader } from "@/components/cycle-sync/diet/DietHeader";
+import { RiverTrack } from "@/components/cycle-sync/RiverTrack";
+import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
 import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
 
 // --- Data: Phase Blueprints (Fully Restored) ---
 const BLUEPRINTS: any = {
@@ -392,12 +395,93 @@ function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     );
 }
 
-// Phase Theme Logic
+function RitualCheckbox({ item, theme, index, total }: { item: any, theme: any, index: number, total: number }) {
+    const [checked, setChecked] = useState(false);
+    return (
+        <div
+            onClick={() => setChecked(!checked)}
+            className={cn(
+                "group flex items-center gap-4 p-4 cursor-pointer transition-all duration-300 hover:bg-white/40",
+                index !== total - 1 && "border-b border-white/40"
+            )}
+        >
+            <div className={cn(
+                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                checked
+                    ? cn("border-transparent scale-110", theme.accent, "text-white shadow-sm")
+                    : "border-rove-stone/30 bg-white/50 group-hover:border-rove-stone/50"
+            )}>
+                {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
+            </div>
+
+            <div className="flex-1 opacity-90 transition-opacity duration-300" style={{ opacity: checked ? 0.5 : 1 }}>
+                <h4 className={cn(
+                    "font-bold text-rove-charcoal text-sm transition-all duration-300",
+                    checked && "line-through text-rove-stone"
+                )}>
+                    {item.title}
+                </h4>
+                <p className="text-xs text-rove-stone/80">{item.desc}</p>
+            </div>
+
+            <div className={cn(
+                "p-2 rounded-full bg-white/40 text-rove-stone/40 opacity-0 group-hover:opacity-100 transition-all duration-300",
+                checked && "opacity-0"
+            )}>
+                <Sparkles className="w-3 h-3" />
+            </div>
+        </div>
+    );
+}
+
+
+
+// Phase Theme Logic - Expanded for Full UI Theming
 const phaseThemes: Record<string, any> = {
-    "Menstrual": { color: "text-rose-500", blob: "bg-rose-200/20", orbRing: "from-rose-300 via-rose-100 to-rose-400", glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", badge: "bg-rose-50 text-rose-600 border-rose-100", accent: "bg-rose-500" },
-    "Follicular": { color: "text-teal-500", blob: "bg-teal-200/20", orbRing: "from-teal-300 via-teal-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-600 border-teal-100", accent: "bg-teal-500" },
-    "Ovulatory": { color: "text-amber-500", blob: "bg-amber-200/20", orbRing: "from-amber-300 via-amber-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.2)]", badge: "bg-amber-50 text-amber-600 border-amber-100", accent: "bg-amber-500" },
-    "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/20", orbRing: "from-indigo-300 via-indigo-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", accent: "bg-indigo-500" }
+    "Menstrual": {
+        color: "text-rose-600",
+        bannerBg: "bg-gradient-to-r from-rose-500 to-pink-600",
+        cardBg: "bg-white/60",
+        border: "border-rose-100",
+        softBg: "bg-rose-50/30",
+        pageGradient: "from-rose-50/50 via-white to-white",
+        iconContainer: "bg-rose-100 text-rose-600",
+        orbRing: "from-rose-300 via-rose-100 to-rose-400",
+        accent: "bg-rose-500"
+    },
+    "Follicular": {
+        color: "text-teal-600",
+        bannerBg: "bg-gradient-to-r from-teal-400 to-emerald-500",
+        cardBg: "bg-teal-50/30",
+        border: "border-teal-100",
+        softBg: "bg-teal-50/30",
+        pageGradient: "from-teal-50/50 via-white to-white",
+        iconContainer: "bg-teal-100 text-teal-600",
+        orbRing: "from-teal-300 via-teal-100 to-teal-400",
+        accent: "bg-teal-500"
+    },
+    "Ovulatory": {
+        color: "text-amber-600",
+        bannerBg: "bg-gradient-to-r from-amber-400 to-orange-500",
+        cardBg: "bg-amber-50/30",
+        border: "border-amber-100",
+        softBg: "bg-amber-50/30",
+        pageGradient: "from-amber-50/50 via-white to-white",
+        iconContainer: "bg-amber-100 text-amber-600",
+        orbRing: "from-amber-300 via-amber-100 to-amber-400",
+        accent: "bg-amber-500"
+    },
+    "Luteal": {
+        color: "text-indigo-600",
+        bannerBg: "bg-gradient-to-r from-indigo-500 to-purple-600",
+        cardBg: "bg-indigo-50/30",
+        border: "border-indigo-100",
+        softBg: "bg-indigo-50/30",
+        pageGradient: "from-indigo-50/50 via-white to-white",
+        iconContainer: "bg-indigo-100 text-indigo-600",
+        orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
+        accent: "bg-indigo-500"
+    }
 };
 
 const PHASE_IMAGES: Record<string, string> = {
@@ -423,6 +507,9 @@ export default function DetailedPlanPage() {
 
     const [activity, setActivity] = useState("");
     const [diet, setDiet] = useState("");
+    const [fitnessGoal, setFitnessGoal] = useState("");
+    const [targetWeight, setTargetWeight] = useState("");
+    const [weeklyRate, setWeeklyRate] = useState("0.4");
 
     const [data, setData] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
@@ -433,7 +520,7 @@ export default function DetailedPlanPage() {
                 const planSettings = await fetchPlanSettings();
                 if (planSettings) {
                     setHasPlanSetup(true);
-                    const res = await fetchCycleIntelligence();
+                    const res = await fetchCycleIntelligenceAI();
                     if (res) setData(res);
                 } else {
                     setHasPlanSetup(false);
@@ -446,7 +533,6 @@ export default function DetailedPlanPage() {
         };
         load();
     }, []);
-
     const handleSetupNext = () => {
         if (setupStep === 1) {
             // Validate Height (Ft/In)
@@ -455,6 +541,17 @@ export default function DetailedPlanPage() {
         } else if (setupStep === 2) {
             if (!activity) return alert("Please select an activity level.");
             setSetupStep(3);
+        } else if (setupStep === 3) {
+            if (!fitnessGoal) return alert("Please select a fitness goal.");
+            // Skip weight target step if not weight_loss
+            if (fitnessGoal === "weight_loss") {
+                setSetupStep(4);
+            } else {
+                setSetupStep(5);
+            }
+        } else if (setupStep === 4) {
+            if (!targetWeight) return alert("Please enter your target weight.");
+            setSetupStep(5);
         }
     };
 
@@ -471,11 +568,14 @@ export default function DetailedPlanPage() {
                 height: parseFloat(totalCm.toFixed(2)), // Save as CM float
                 weight: parseFloat(weight), // Already KG
                 activityLevel: activity,
-                diet: diet
+                diet: diet,
+                fitnessGoal: fitnessGoal,
+                targetWeight: fitnessGoal === "weight_loss" && targetWeight ? parseFloat(targetWeight) : undefined,
+                weeklyRate: fitnessGoal === "weight_loss" ? parseFloat(weeklyRate) : undefined
             });
             if (res.success) {
                 setHasPlanSetup(true);
-                const cycleData = await fetchCycleIntelligence();
+                const cycleData = await fetchCycleIntelligenceAI();
                 if (cycleData) setData(cycleData);
             } else {
                 alert("Failed to save settings. Please try again.");
@@ -499,12 +599,12 @@ export default function DetailedPlanPage() {
                 <div className="glass-orb glass-orb-3" />
 
                 <div className="glass-panel relative z-10 w-full max-w-2xl p-8 md:p-12 flex flex-col border-rove-peach/30 shadow-2xl">
-                    
+
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-rove-stone/60 block mb-1">
-                                Step {setupStep} of 3
+                                Step {setupStep} of {fitnessGoal === "weight_loss" || !fitnessGoal ? 5 : 4}
                             </span>
                             <h1 className="font-heading text-2xl md:text-3xl text-rove-charcoal">
                                 Personalize Plan
@@ -513,15 +613,17 @@ export default function DetailedPlanPage() {
                     </div>
 
                     {/* Progress Bar */}
+                    {/* Progress Bar */}
                     <div className="flex gap-2 mb-10">
-                        {[1, 2, 3].map((s) => {
+                        {[1, 2, 3, 4, 5].map((s) => {
+                            // Hide step 4 if not weight_loss goal
+                            if (s === 4 && fitnessGoal && fitnessGoal !== "weight_loss") return null;
                             const isActive = s <= setupStep;
                             return (
                                 <div
                                     key={s}
-                                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                                        isActive ? "bg-rove-charcoal shadow-md" : "bg-black/5"
-                                    }`}
+                                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${isActive ? "bg-rove-charcoal shadow-md" : "bg-black/5"
+                                        }`}
                                 />
                             );
                         })}
@@ -622,7 +724,7 @@ export default function DetailedPlanPage() {
                                 </div>
                             )}
 
-                            {/* STEP 3: DIET */}
+                            {/* STEP 3: FITNESS GOAL */}
                             {setupStep === 3 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">

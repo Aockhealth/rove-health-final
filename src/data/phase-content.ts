@@ -9,7 +9,31 @@ export type PhaseContent = {
             goal: string;
             color: string;
         };
-        nutrition_modules: {
+        symptom_decoder?: {
+            title: string;
+            subtitle: string;
+            cards: {
+                title: string;
+                condition: string;
+                biology: string;
+                fix: string;
+            }[];
+        };
+        macro_fuel?: {
+            title: string;
+            protein: number;
+            fats: number;
+            carbs: number;
+        };
+        cheat_sheet?: {
+            focus: { title: string; items: string[] };
+            avoid: { title: string; items: string[] };
+        };
+        ai_chef?: {
+            prompt: string;
+            options: { label: string; meal_name: string; ingredients: string; why: string }[];
+        };
+        nutrition_modules?: {
             title: string;
             goal: string;
             science: string;
@@ -24,18 +48,18 @@ export type PhaseContent = {
             foods: string[];
             deficiency: string;
         }[];
-        superpowers: {
+        superpowers?: {
             title: string;
             desc: string;
             metabolic_tip: string;
         };
-        plate_ratios: {
+        plate_ratios?: {
             protein: number;
             fat: number;
             carb: number;
             veg: number;
         };
-        quick_guide: {
+        quick_guide?: {
             focus: string[];
             limit: string[];
         };
@@ -86,6 +110,15 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 narrative: "Your lining is shedding, which requires energy and nutrients.",
                 goal: "Replenish iron and warm your body to ease flow.",
                 color: "bg-red-500" // Optional accent
+            },
+            symptom_decoder: {
+                title: "Menstrual Phase",
+                subtitle: "Rest, Restore, Reload",
+                cards: [
+                    { title: "Period Cramps", condition: "Pain", biology: "Prostaglandins causing contractions.", fix: "Magnesium relaxes muscles." },
+                    { title: "Low Energy", condition: "Fatigue", biology: "Iron levels dropping.", fix: "Iron-rich foods & Vitamin C." },
+                    { title: "Sugar Cravings", condition: "Cravings", biology: "Serotonin dip.", fix: "Dark chocolate (Magnesium)." }
+                ]
             },
             nutrition_modules: [
                 {
