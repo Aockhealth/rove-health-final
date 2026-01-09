@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind } from "lucide-react";
+import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -12,43 +12,7 @@ import { useRouter } from "next/navigation";
 
 // --- 1. Helper Components ---
 
-function RiverTrack({ items, direction = "left", speed = 20, label }: { items: any[], direction?: "left" | "right", speed?: number, label: string }) {
-    const riverItems = [...items, ...items, ...items, ...items];
-    if (!items || items.length === 0) return null;
-
-    return (
-        <div className="w-full overflow-hidden">
-            <div className="px-4 md:px-8 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70">{label}</span>
-            </div>
-            <motion.div
-                className="flex gap-3 w-max will-change-transform"
-                initial={{ x: direction === "left" ? 0 : "-50%" }}
-                animate={{ x: direction === "left" ? "-50%" : 0 }}
-                transition={{ duration: speed, ease: "linear", repeat: Infinity }}
-                style={{ backfaceVisibility: "hidden", WebkitFontSmoothing: "antialiased" }}
-            >
-                {riverItems.map((item, i) => (
-                    <div key={i} className="w-auto min-w-[180px] flex-shrink-0 p-2.5 rounded-[1.25rem] bg-white/40 backdrop-blur-md border border-white/40 shadow-sm flex items-center gap-3 hover:bg-white/60 transition-colors cursor-pointer group transform-gpu">
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform", item.bg || "bg-white", item.color)}>
-                            <item.icon className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <h4 className="font-heading text-sm text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
-                            <p className="text-rove-stone text-[9px] whitespace-nowrap">{item.desc}</p>
-                        </div>
-                    </div>
-                ))}
-            </motion.div>
-        </div>
-    );
-}
-
-const iconMap: Record<string, any> = {
-    "Moon": Moon, "Sparkles": Sparkles, "Brain": Brain, "Utensils": Utensils,
-    "Activity": Activity, "Leaf": Droplets, "Dumbbell": Dumbbell, "Zap": Zap,
-    "Sun": Sun, "TrendingUp": TrendingUp, "Heart": Heart, "Wind": Wind
-};
+import { RiverTrack, iconMap } from "@/components/cycle-sync/RiverTrack";
 
 function DailyFlowRiver({ data }: { data: any }) {
     const mapItems = (items: any[], colorClass: string, bgClass: string) =>
@@ -87,6 +51,34 @@ const phaseThemes: Record<string, any> = {
     "Follicular": { color: "text-teal-600", blob: "bg-teal-200/15", orbRing: "from-teal-300 via-emerald-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-700 border-teal-100" },
     "Ovulatory": { color: "text-amber-500/90", blob: "bg-amber-100/30", orbRing: "from-amber-300 via-yellow-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]", badge: "bg-amber-50 text-amber-700 border-amber-100" },
     "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/15", orbRing: "from-indigo-300 via-blue-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100" }
+};
+
+// --- 2. Phase Data ---
+const PHASE_SNAPSHOTS: any = {
+    "Menstrual": {
+        hormones: { title: "Low Levels", desc: "A reset for your body.", detail: "Estrogen and progesterone drop to their lowest levels, signalling your uterus to shed its lining. You may feel a desire to withdraw and rest." },
+        mind: { title: "Reflective", desc: "Turn inward & rest.", detail: "The communication between your left and right brain hemispheres is strongest now. It’s the perfect time for intuition and evaluating your path." },
+        body: { title: "Releasing", desc: "Prioritize comfort.", detail: "Inflammation may be slightly higher. Focus on gentle movements like walking or yin yoga, and keep warm." },
+        glow: { title: "Dry", desc: "Hydration is key.", detail: "Skin barrier might be weaker. Use rich moisturizers and avoid harsh actives to prevent irritation." }
+    },
+    "Follicular": {
+        hormones: { title: "Estrogen Rising", desc: "Energy is building.", detail: "FSH stimulates follicles, and estrogen begins to climb. You'll feel a lift in mood, energy, and brain fog clearing." },
+        mind: { title: "Creative", desc: "Brainstorm new ideas.", detail: "You are primed for learning and complex problem solving. Tackle challenging projects or start something new." },
+        body: { title: "Light", desc: "Ready for movement.", detail: "Your stamina is increasing. It's a great time for cardio, hiking, or trying a new fitness class." },
+        glow: { title: "Balanced", desc: "Collagen boosting.", detail: "Estrogen supports collagen production. Your skin is likely plump and resilient—enjoy the natural glow!" }
+    },
+    "Ovulatory": {
+        hormones: { title: "Peak Estrogen", desc: "You are magnetic.", detail: "Estrogen peaks, triggering LH surge. You are at your biological peak for confidence, verbal skills, and libido." },
+        mind: { title: "Social", desc: "Connect/Speak up.", detail: "Your verbal center is lit up. Schedule important meetings, dates, or social gatherings now." },
+        body: { title: "Peak Power", desc: "Hit your PRs.", detail: "Testosterone adds a strength boost. Go for personal bests in lifting or high-intensity intervals." },
+        glow: { title: "Radiant", desc: "Natural glow.", detail: "Pores may be slightly more visible due to oil, but skin is generally vibrant. Double cleanse if you're sweating more." }
+    },
+    "Luteal": {
+        hormones: { title: "Progesterone", desc: "Calming influence.", detail: "Progesterone rises to maintain lining. It has a sedative effect but can also cause bloating or mood sensitivity." },
+        mind: { title: "Detailed", desc: "Focus mode on.", detail: "Brain chemistry shifts to detail-oriented tasks. Great for wrapping up projects, organizing, and administrative work." },
+        body: { title: "Heavy", desc: "Slow down.", detail: "Metabolism speeds up, but endurance drops. Switch to strength training with longer rests or pilates." },
+        glow: { title: "Oily", desc: "Congestion prone.", detail: "Progesterone stimulates sebum production. Use salicylic acid or clay masks to keep pores clear." }
+    }
 };
 
 // --- 3. Animated Components ---
@@ -134,10 +126,89 @@ function GlowHalo({ color = "#f59e0b" }: { color?: string }) {
     );
 }
 
-// --- 4. Main Component ---
+// --- 4. Seasonal Background Component ---
+// --- 4. Seasonal Background Component ---
+// --- 4. Seasonal Background Component (Premium Atmosphere) ---
+function SeasonalBackground({ phase }: { phase: string }) {
+    // Shared transition for smooth mood shifts
+    const fluidTransition = { duration: 8, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as any };
+
+    if (phase === "Menstrual") {
+        return (
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60">
+                {/* Winter: Icy Rose/Blue Sheen */}
+                <motion.div
+                    className="absolute w-[120%] h-[120%] bg-gradient-to-tr from-rose-100/40 via-indigo-50/30 to-rose-100/40 rounded-full blur-3xl"
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 10, 0] }}
+                    transition={fluidTransition}
+                />
+                <motion.div
+                    className="absolute w-[80%] h-[80%] bg-blue-100/30 rounded-full blur-2xl"
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ ...fluidTransition, duration: 5 }}
+                />
+            </div>
+        );
+    }
+    if (phase === "Follicular") {
+        return (
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70">
+                {/* Spring: Fresh Teal/Pink Bloom */}
+                <motion.div
+                    className="absolute w-[130%] h-[130%] bg-gradient-to-br from-teal-100/50 via-emerald-50/30 to-rose-100/50 rounded-full blur-3xl"
+                    animate={{ rotate: [0, -20, 0], scale: [1, 1.05, 1] }}
+                    transition={fluidTransition}
+                />
+                <motion.div
+                    className="absolute w-full h-full bg-teal-50/40 blur-2xl rounded-full"
+                    animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ ...fluidTransition, duration: 6 }}
+                />
+            </div>
+        );
+    }
+    if (phase === "Ovulatory") {
+        return (
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80">
+                {/* Summer: Radiant Golden Aura */}
+                <motion.div
+                    className="absolute w-[140%] h-[140%] bg-gradient-to-t from-amber-100/60 via-orange-50/40 to-yellow-100/60 rounded-full blur-3xl"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                />
+                <motion.div
+                    className="absolute w-[90%] h-[90%] bg-amber-200/20 rounded-full blur-2xl"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+            </div>
+        );
+    }
+    if (phase === "Luteal") {
+        return (
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70">
+                {/* Autumn: Warm Indigo/Rust Dusk */}
+                <motion.div
+                    className="absolute w-[120%] h-[120%] bg-gradient-to-bl from-indigo-100/50 via-purple-50/30 to-amber-100/40 rounded-full blur-3xl"
+                    animate={{ scale: [1.05, 1, 1.05], rotate: [0, 15, 0] }}
+                    transition={fluidTransition}
+                />
+                <motion.div
+                    className="absolute w-[100%] h-[100%] bg-gradient-to-tr from-indigo-200/20 to-transparent blur-2xl rounded-full"
+                    animate={{ x: [-10, 10, -10], y: [-10, 10, -10] }}
+                    transition={{ ...fluidTransition, duration: 10 }}
+                />
+            </div>
+        );
+    }
+    return null;
+}
+
+// --- 5. Main Component ---
 
 export default function CycleSyncDashboard() {
     const [data, setData] = useState<any>(null);
+    const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -179,20 +250,20 @@ export default function CycleSyncDashboard() {
             </div>
 
             <div className="relative z-10 p-4 md:p-8 space-y-2 md:space-y-8 pb-32">
-                {/* Header */}
-                <header className="flex justify-between items-start">
-                    <div>
-                        <h1 className="font-heading text-2xl md:text-4xl text-rove-charcoal mb-1">Good Morning, {user?.name || "Rove Member"}</h1>
-                        <p className="text-rove-stone font-light text-base md:text-lg">
-                            It's Day {currentPhase.day} of your cycle.
-                        </p>
+                {/* NANO HEADER (Personalized) */}
+                <div className="flex items-center justify-between mb-8 px-2">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/50 mb-0.5">ROVE</span>
+                        <span className="font-heading text-2xl text-rove-charcoal">Hey, {user?.name?.split(" ")[0] || "Love"}</span>
+                        <span className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
                     </div>
-                    <Button size="icon" variant="ghost" className="rounded-full hover:bg-white/50 transition-colors">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/80 backdrop-blur-md text-rove-charcoal border border-white/50 flex items-center justify-center font-heading text-base md:text-lg shadow-sm">
-                            {(user?.name || "R")[0]}
+
+                    <Link href="/profile">
+                        <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95">
+                            <span className="font-heading text-lg text-rove-charcoal">{user?.name?.[0] || "R"}</span>
                         </div>
-                    </Button>
-                </header>
+                    </Link>
+                </div>
 
                 {/* MODE: Menstruation (Default) */}
                 {trackerMode === "menstruation" && (
@@ -211,6 +282,11 @@ export default function CycleSyncDashboard() {
                             className="relative flex flex-col items-center justify-center py-1 md:py-6"
                         >
                             <div className="relative w-56 h-56 md:w-[300px] md:h-[300px] flex items-center justify-center">
+                                {/* SEASONAL BACKGROUND (Atmospheric) */}
+                                <div className="absolute inset-[-60px] z-0 rounded-full overflow-hidden">
+                                    <SeasonalBackground phase={currentPhase.name} />
+                                </div>
+
                                 {/* Outer Glow */}
                                 <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
 
@@ -295,9 +371,15 @@ export default function CycleSyncDashboard() {
                                 </Link>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3 relative z-30">
                                 {/* Hormones */}
-                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                <motion.div
+                                    layoutId="hormones"
+                                    onClick={() => setSelectedSnapshot("hormones")}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Hormones</span>
                                     </div>
@@ -305,13 +387,19 @@ export default function CycleSyncDashboard() {
                                         <HormoneWave />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.hormones?.title || "Balanced"}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.hormones?.desc || "Levels are stable."}</p>
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Mind */}
-                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                <motion.div
+                                    layoutId="mind"
+                                    onClick={() => setSelectedSnapshot("mind")}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Mind</span>
                                     </div>
@@ -319,13 +407,19 @@ export default function CycleSyncDashboard() {
                                         <MindSynapse color="#374151" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.mind?.title || "Focused"}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.mind?.desc || "Mental clarity is good."}</p>
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Body */}
-                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                <motion.div
+                                    layoutId="body"
+                                    onClick={() => setSelectedSnapshot("body")}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Body</span>
                                     </div>
@@ -333,13 +427,19 @@ export default function CycleSyncDashboard() {
                                         <BodyDNA color="#22c55e" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.body?.title || "Active"}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.body?.desc || "Energy for movement."}</p>
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Glow */}
-                                <div className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group">
+                                <motion.div
+                                    layoutId="glow"
+                                    onClick={() => setSelectedSnapshot("glow")}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Glow</span>
                                     </div>
@@ -347,10 +447,10 @@ export default function CycleSyncDashboard() {
                                         <GlowHalo color="#f59e0b" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{data.snapshot?.skin?.title || "Radiant"}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{data.snapshot?.skin?.desc || "Skin is looking healthy."}</p>
+                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
+                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
                                     </div>
-                                </div>
+                                </motion.div>
                             </div>
                         </section>
 
@@ -421,6 +521,99 @@ export default function CycleSyncDashboard() {
                     </motion.div>
                 )}
             </div>
+
+            {/* EXPANDED MODAL OVERLAY (SCIENTIFIC / CLEAN) */}
+            <AnimatePresence>
+                {selectedSnapshot && (
+                    <motion.div
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedSnapshot(null)}
+                    >
+                        <motion.div
+                            className="bg-white/95 backdrop-blur-xl rounded-[1rem] w-full max-w-sm shadow-2xl relative border border-white/50 overflow-hidden ring-1 ring-black/5"
+                            initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                            transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
+                            onClick={(e) => e.stopPropagation()}
+                            layoutId={selectedSnapshot}
+                        >
+                            {/* Decorative Top Bar */}
+                            <div className="h-1.5 w-full bg-gradient-to-r from-rove-stone/20 via-rove-charcoal/20 to-rove-stone/20" />
+
+                            {/* Header Section */}
+                            <div className="px-6 pt-6 pb-2 flex justify-between items-start">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-rove-charcoal animate-pulse" />
+                                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-rove-stone/80">
+                                            {selectedSnapshot} // METRICS
+                                        </span>
+                                    </div>
+                                    <h3 className="text-3xl font-heading text-rove-charcoal tracking-tight">
+                                        {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].title}
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedSnapshot(null)}
+                                    className="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-full transition-colors group"
+                                >
+                                    <div className="relative w-6 h-6 flex items-center justify-center">
+                                        <span className="absolute w-4 h-[1.5px] bg-gray-400 rotate-45 group-hover:bg-gray-600 transition-colors" />
+                                        <span className="absolute w-4 h-[1.5px] bg-gray-400 -rotate-45 group-hover:bg-gray-600 transition-colors" />
+                                    </div>
+                                </button>
+                            </div>
+
+                            {/* Divider with ID */}
+                            <div className="w-full h-px bg-gray-100 my-2 flex items-center justify-end px-6">
+                                <span className="text-[8px] font-mono text-gray-300">ID: {currentPhase.name.substring(0, 3).toUpperCase()}-001</span>
+                            </div>
+
+                            {/* Content Body */}
+                            <div className="px-6 py-4 relative">
+                                {/* Ambient Background Graphic */}
+                                <div className="absolute top-0 right-0 w-40 h-40 opacity-[0.08] pointer-events-none translate-x-10 -translate-y-10">
+                                    {selectedSnapshot === "hormones" && <HormoneWave />}
+                                    {selectedSnapshot === "mind" && <MindSynapse color="#000" />}
+                                    {selectedSnapshot === "body" && <BodyDNA color="#000" />}
+                                    {selectedSnapshot === "glow" && <GlowHalo color="#000" />}
+                                </div>
+
+                                <div className="space-y-6 relative z-10">
+                                    {/* Observation */}
+                                    <div>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Scientific Observation</span>
+                                        <p className="text-rove-charcoal/90 text-[15px] leading-relaxed font-sans border-l-2 border-rove-charcoal/10 pl-3">
+                                            {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].detail}
+                                        </p>
+                                    </div>
+
+                                    {/* Action/Protocol */}
+                                    <div className="bg-rove-cream/40 rounded-lg p-4 border border-rove-stone/10">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Sparkles className="w-3.5 h-3.5 text-rove-charcoal" />
+                                            <span className="text-[9px] font-bold text-rove-charcoal uppercase tracking-widest">Recommended Protocol</span>
+                                        </div>
+                                        <p className="text-rove-stone text-xs leading-relaxed font-medium">
+                                            Align your routine by prioritizing specific nutrient timing and activity adjustments tailored to this phase.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Status */}
+                            <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-mono text-gray-400">
+                                <span>STATUS: ACTIVE</span>
+                                <span>UPDATED: TODAY</span>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

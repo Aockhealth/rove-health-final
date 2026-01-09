@@ -13,45 +13,47 @@ export function DietCheatSheet({ data, theme }: DietCheatSheetProps) {
     if (!data) return null;
 
     return (
-        <section className="mb-10">
-            <h3 className="font-heading text-lg text-rove-charcoal mb-4 px-2">Cheat Sheet</h3>
+        <section className="mb-6">
+            <h3 className="font-heading text-lg text-rove-charcoal mb-4 px-2">One-Glance Strategy</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Focus Column */}
-                <div className="bg-white/40 border border-emerald-100/50 p-6 rounded-[2.5rem] backdrop-blur-md">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 border border-emerald-100">
-                            <Check className="w-4 h-4" />
+            <div className="bg-white/40 border border-white/60 p-5 rounded-[2rem] backdrop-blur-md shadow-sm space-y-6">
+
+                {/* Focus Row */}
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                            <Check className="w-3 h-3" />
                         </div>
-                        <h4 className="font-bold text-sm uppercase text-emerald-900 tracking-widest">{data.focus.title}</h4>
+                        <h4 className="font-bold text-xs uppercase text-emerald-900 tracking-widest leading-none mt-0.5">{data.focus.title}</h4>
                     </div>
-                    <ul className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
                         {data.focus.items.map((item, i) => (
-                            <li key={i} className="text-sm text-rove-charcoal/90 flex items-start gap-3 p-3 bg-white/60 rounded-xl border border-white/50">
-                                <span className="text-emerald-500 font-bold mt-0.5">•</span>
-                                <span className="font-medium">{item}</span>
-                            </li>
+                            <span key={i} className="px-3 py-1.5 rounded-lg bg-emerald-50/50 border border-emerald-100 text-emerald-900 text-xs font-bold shadow-sm backdrop-blur-sm">
+                                {item}
+                            </span>
                         ))}
-                    </ul>
+                    </div>
                 </div>
 
-                {/* Avoid Column */}
-                <div className="bg-white/40 border border-rose-100/50 p-6 rounded-[2.5rem] backdrop-blur-md">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600 border border-rose-100">
-                            <X className="w-4 h-4" />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-black/5 to-transparent" />
+
+                {/* Avoid Row */}
+                <div>
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                            <X className="w-3 h-3" />
                         </div>
-                        <h4 className="font-bold text-sm uppercase text-rose-900 tracking-widest">{data.avoid.title}</h4>
+                        <h4 className="font-bold text-xs uppercase text-rose-900 tracking-widest leading-none mt-0.5">{data.avoid.title}</h4>
                     </div>
-                    <ul className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
                         {data.avoid.items.map((item, i) => (
-                            <li key={i} className="text-sm text-rove-charcoal/90 flex items-start gap-2 p-3 bg-white/60 rounded-xl border border-white/50">
-                                <span className="text-rose-500 font-bold mt-0.5">•</span>
-                                <span className="font-medium">{item}</span>
-                            </li>
+                            <span key={i} className="px-3 py-1.5 rounded-lg bg-rose-50/50 border border-rose-100 text-rose-900 text-xs font-medium shadow-sm opacity-80 decoration-rose-300/50 line-through decoration-2">
+                                {item}
+                            </span>
                         ))}
-                    </ul>
+                    </div>
                 </div>
+
             </div>
         </section>
     );
