@@ -27,7 +27,7 @@ export async function submitOnboarding(data: OnboardingData) {
   
   if (authError || !user) {
     console.error("Auth error:", authError);
-    throw new Error("User not authenticated");
+    redirect("/login");
   }
 
   try {

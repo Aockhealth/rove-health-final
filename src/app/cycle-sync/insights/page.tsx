@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Sparkles, Brain, Activity, Calendar, Zap, AlertCircle } from "lucide-react";
+import { ChevronLeft, Sparkles, Activity, Calendar, Zap } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { fetchInsightsData, generatePhaseAIInsight } from "@/app/actions/cycle-sync";
-
+// ✅ FIX 1: Import 'fetchCycleIntelligenceAI' and 'AIContext'
+import { fetchInsightsData, generatePhaseAIInsight, fetchCycleIntelligenceAI, type AIContext } from "@/app/actions/cycle-sync";
 // --- COMPONENTS ---
 import { AiAnalysisCard } from "@/components/cycle-sync/insights/AiAnalysisCard";
 import { CycleOverviewCard } from "@/components/cycle-sync/insights/CycleOverviewCard";
@@ -61,22 +61,54 @@ const phaseThemes: Record<string, any> = {
 export default function InsightsPage() {
     const [activeTab, setActiveTab] = useState<"cycle" | "symptoms" | "medical">("cycle");
     const [stats, setStats] = useState<any>(null);
+    const [predictions, setPredictions] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [aiInsight, setAiInsight] = useState<string | null>(null);
 
-    useEffect(() => {
+useEffect(() => {
         async function load() {
             setLoading(true);
-            const data = await fetchInsightsData();
-            setStats(data);
+            try {
+                // 1. Fetch data in parallel
+                const [data, aiData] = await Promise.all([
+                    fetchInsightsData(),
+                    fetchCycleIntelligenceAI()
+                ]);
 
-            // Trigger AI Insight Generation based on actual symptom logs
-            if (data?.phase?.name) {
-                const symptomNames = data.symptoms?.map((s: any) => s.name) || [];
-                const insight = await generatePhaseAIInsight(data.phase.name, symptomNames);
-                setAiInsight(insight);
+                // 2. Handle Basic Insights Data
+                if (data) {
+                    setStats(data);
+                    
+                    // Trigger AI Insight Generation based on actual symptom logs
+                    if (data.phase?.name) {
+                        const symptomNames = data.symptoms?.map((s: any) => s.name) || [];
+                        
+                        // Construct AI Context safely
+                        const aiContext: AIContext = {
+                            symptoms: symptomNames,
+                            moods: data.aggregatedData?.moods || [],
+                            sleep: data.aggregatedData?.sleep || [],
+                            disruptors: data.aggregatedData?.disruptors || [],
+                            exercise: data.aggregatedData?.exercise || [],
+                            recentNote: data.aggregatedData?.recentNote || ""
+                        };
+
+                        const insight = await generatePhaseAIInsight(data.phase.name, aiContext);
+                        setAiInsight(insight);
+                    }
+                }
+                
+                // 3. Handle AI Cycle Intelligence Data (Predictions)
+                // Fixes "aiData" errors by ensuring it exists before accessing properties
+                if (aiData) {
+                    setPredictions(aiData.phaseDetails);
+                }
+
+            } catch (error) {
+                console.error("Failed to load insights:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
         load();
     }, []);
@@ -93,6 +125,7 @@ export default function InsightsPage() {
     const avgCycle = stats?.averages?.cycle || 28;
     const isRegular = !stats?.averages?.isIrregular;
     const theme = phaseThemes[currentPhase] || phaseThemes["Menstrual"];
+    const safePhaseCounts = stats?.phaseCounts || { "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0 };
 
     // Prediction Logic
     const lastStart = stats?.averages?.lastPeriodStart ? new Date(stats.averages.lastPeriodStart) : new Date();

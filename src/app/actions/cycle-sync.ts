@@ -3,6 +3,36 @@
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
 import { getCyclePhase, getDietPlan, type CyclePhaseResponse, type DietPlanResponse } from "./ai-actions";
+import { z } from "zod";
+
+export interface AIContext {
+    symptoms: string[];
+    moods: string[];
+    sleep: string[];
+    disruptors: string[];
+    exercise: string[];
+    recentNote?: string;
+}
+
+// --- VALIDATION SCHEMAS ---
+
+const DailyLogSchema = z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    symptoms: z.array(z.string()).default([]),
+    isPeriod: z.boolean(),
+    flowIntensity: z.string().optional().nullable(),
+    moods: z.array(z.string()).optional().default([]),
+    notes: z.string().max(2000, "Notes cannot exceed 2000 characters").optional().default(""), // Prevent massive text spam
+    cervicalDischarge: z.string().optional().nullable(),
+    exerciseTypes: z.array(z.string()).optional().default([]),
+    exerciseMinutes: z.number().min(0).max(1440, "Exercise cannot exceed 24 hours").optional().nullable(),
+    waterIntake: z.number().min(0).max(50, "Water intake value is too high").optional().nullable(), // Max 50 glasses (~12L) is a safe upper bound
+    selfLoveTags: z.array(z.string()).optional().default([]),
+    selfLoveOther: z.string().max(200, "Text too long").optional().default(""),
+    sleepQuality: z.array(z.string()).optional().default([]),
+    sleepMinutes: z.number().min(0).max(1440, "Sleep cannot exceed 24 hours").optional().nullable(),
+    disruptors: z.array(z.string()).optional().default([]),
+});
 
 // --- HELPERS ---
 
@@ -47,8 +77,24 @@ function calculatePhase(
 /**
  * Generates a scientific and empathetic insight using Groq LLM (llama-3.3-70b-versatile).
  */
-export async function generatePhaseAIInsight(phase: string, symptoms: string[]) {
-    const apiKey = "REDACTED_API_KEY";
+export async function generatePhaseAIInsight(phase: string, context: AIContext) {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+        console.error("❌ Missing GROQ_API_KEY. AI features disabled.");
+        return null;
+    }
+
+    // Construct a rich prompt based on all available data
+    const userContextString = `
+    Current Cycle Phase: ${phase}
+    Physical Symptoms Logged: ${context.symptoms.join(", ") || "None"}
+    Emotional State Logged: ${context.moods.join(", ") || "None"}
+    Sleep Quality: ${context.sleep.join(", ") || "None"}
+    Lifestyle Disruptors (Diet/Travel/Meds): ${context.disruptors.join(", ") || "None"}
+    Recent Exercise: ${context.exercise.join(", ") || "None"}
+    Latest Journal Entry: "${context.recentNote || "N/A"}"
+    `;
 
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -63,33 +109,37 @@ export async function generatePhaseAIInsight(phase: string, symptoms: string[]) 
                 messages: [
                     {
                         role: "system",
-                        content: `You are a menstrual health expert. Analyze the user's current phase and symptoms to provide a personalized health report in JSON format.
-                        
-                        The JSON must contain:
-                        1. "insight": A 2-sentence empathetic scientific explanation.
-                        2. "moods": Array of 2 strings representing emotional state.
-                        3. "focus": Array of 3 strings representing helpful activities.
-                        
-                        JSON structure: {"insight": "", "moods": [], "focus": []}`
+                        content: `You are an elite Functional Health & Cycle Syncing Expert. Your goal is to synthesize the user's multi-dimensional daily logs into a highly specific, scientifically grounded health report.
+
+                        ### ANALYSIS INSTRUCTIONS:
+                        1. **Identify Correlations:** Look for connections between Lifestyle Disruptors (e.g., Alcohol, Sugar) and reported Symptoms/Sleep. 
+                        2. **Hormonal Context:** Explain *why* they feel this way based on the specific hormone fluctuations of the ${phase} phase (e.g., dropping Progesterone causing anxiety, rising Estrogen boosting energy).
+                        3. **Tone:** Empathetic, validating, yet clinical and concise. Avoid generic fluff.
+
+                        ### OUTPUT FORMAT (JSON ONLY):
+                        {
+                            "insight": "A 2-sentence synthesis. Sentence 1: Connect the biological root cause (hormones) to their primary symptom. Sentence 2: Connect a lifestyle factor (sleep/disruptor) to their current state.",
+                            "moods": ["String", "String"], // Two sophisticated adjectives describing their likely emotional baseline (e.g., 'Overstimulated', 'Introspective', 'Resilient').
+                            "focus": ["String", "String", "String"] // Three highly specific, actionable micro-habits. Do not say 'Yoga'. Say 'Yin Yoga for hips'. Do not say 'Eat healthy'. Say 'Cruciferous veg for estrogen detox'."
+                        }`
                     },
                     {
                         role: "user",
-                        content: `Phase: ${phase}. Symptoms logged: ${symptoms.join(", ") || "No specific symptoms logged yet"}.`
+                        content: userContextString
                     }
                 ],
-                temperature: 0.45
+                temperature: 0.4 // Lower temperature for more consistent/grounded advice
             })
         });
 
+        if (!response.ok) return null;
         const data = await response.json();
-        const content = JSON.parse(data.choices?.[0]?.message?.content);
-        return content;
+        return JSON.parse(data.choices?.[0]?.message?.content);
     } catch (error) {
         console.error("Groq AI Error:", error);
         return null;
     }
 }
-
 // --- DATABASE ACTIONS ---
 
 export async function fetchDashboardData() {
@@ -180,7 +230,7 @@ export async function fetchDashboardData() {
         .eq("user_id", user.id)
         .single();
 
-    // ✅ Use Edge Function for phase calculation
+    // Use Edge Function for phase calculation
     let phaseData: CyclePhaseResponse | null = null;
     try {
         phaseData = await getCyclePhase();
@@ -457,13 +507,6 @@ export async function fetchCycleIntelligence() {
     };
 }
 
-// ==========================================
-// NEW: AI-POWERED CYCLE INTELLIGENCE
-// Uses Edge Functions for phase, diet, and workout
-// ==========================================
-
-// (imports are now at top of file)
-
 export async function fetchCycleIntelligenceAI() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -631,60 +674,47 @@ function getDefaultBiometricsReason(phase: string): string {
 export async function fetchInsightsData() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    // --- MOCK DATA FALLBACK ---
-    if (!user) {
-        console.log("⚠️ Using Mock Data for Insights");
-        const mockCycleSettings = { last_period_start: "2025-12-01", cycle_length_days: 28, period_length_days: 5, is_irregular: false };
-        const mockStatus = calculatePhase(new Date(), mockCycleSettings.last_period_start);
+    if (!user) return null;
 
-        return {
-            phase: { name: "Follicular", day: 11 },
-            averages: { cycle: 28, period: 5, lastPeriodStart: "2025-12-01", isIrregular: false },
-            phaseCounts: { "Menstrual": 2, "Follicular": 5, "Ovulatory": 2, "Luteal": 3 },
-            symptoms: [{ name: "High Energy", count: 3 }, { name: "Optimism", count: 2 }]
-        };
-    }
-
-    const { data: cycleSettings } = await supabase
-        .from("user_cycle_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
+    const { data: cycleSettings } = await supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single();
     if (!cycleSettings) return null;
 
+    // ✅ UPDATE: Select ALL relevant columns
     const { data: logs } = await supabase
         .from("daily_logs")
-        .select("date, symptoms")
-        .eq("user_id", user.id);
+        .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+        .eq("user_id", user.id)
+        .order('date', { ascending: false }); // Get newest first for "Recent Note"
 
-    const phaseCounts: Record<string, number> = {
-        "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0
-    };
-
-    const allLoggedSymptoms = new Set<string>();
+    const phaseCounts: Record<string, number> = { "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0 };
+    
+    // Aggregation Sets
+    const allSymptoms = new Set<string>();
+    const allMoods = new Set<string>();
+    const allSleep = new Set<string>();
+    const allDisruptors = new Set<string>();
+    const allExercise = new Set<string>();
+    let mostRecentNote = "";
 
     if (logs) {
+        // Grab the most recent non-empty note
+        const noteLog = logs.find(l => l.notes && l.notes.length > 0);
+        if (noteLog) mostRecentNote = noteLog.notes;
+
         logs.forEach((log) => {
-            // ✅ FIXED: Passed log.date as the targetDate
-            const { phase } = calculatePhase(
-                new Date(log.date),
-                cycleSettings.last_period_start,
-                cycleSettings.cycle_length_days,
-                cycleSettings.period_length_days
-            );
+            const { phase } = calculatePhase(new Date(log.date), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
-            log.symptoms?.forEach((s: string) => allLoggedSymptoms.add(s));
+            
+            // Collect all tags found in logs
+            log.symptoms?.forEach((s: string) => allSymptoms.add(s));
+            log.moods?.forEach((m: string) => allMoods.add(m));
+            log.sleep_quality?.forEach((s: string) => allSleep.add(s));
+            log.disruptors?.forEach((d: string) => allDisruptors.add(d));
+            log.exercise_types?.forEach((e: string) => allExercise.add(e));
         });
     }
 
-    // ✅ FIXED: Added new Date() as the first argument
-    const currentStatus = calculatePhase(
-        new Date(),
-        cycleSettings.last_period_start,
-        cycleSettings.cycle_length_days,
-        cycleSettings.period_length_days
-    );
+    const currentStatus = calculatePhase(new Date(), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
 
     return {
         phase: { name: currentStatus.phase, day: currentStatus.day },
@@ -695,10 +725,15 @@ export async function fetchInsightsData() {
             isIrregular: cycleSettings.is_irregular
         },
         phaseCounts,
-        symptoms: Array.from(allLoggedSymptoms).map(name => ({
-            name,
-            count: logs?.filter(l => l.symptoms?.includes(name)).length || 0
-        }))
+        // Return full context objects for the UI or AI to use
+        symptoms: Array.from(allSymptoms).map(name => ({ name, count: 1 })), // Simplified count for now
+        aggregatedData: {
+            moods: Array.from(allMoods),
+            sleep: Array.from(allSleep),
+            disruptors: Array.from(allDisruptors),
+            exercise: Array.from(allExercise),
+            recentNote: mostRecentNote
+        }
     };
 }
 
@@ -719,8 +754,18 @@ export interface LogDailySymptomsPayload {
     sleepMinutes?: number | null;
     disruptors?: string[];
 }
-
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
+    // ✅ VALIDATION: Strict Zod check
+    const validation = DailyLogSchema.safeParse(payload);
+    
+    // Check success FIRST
+    if (!validation.success) {
+        // Now TypeScript knows validation.error exists
+        return { success: false, error: validation.error.issues[0].message };
+    }
+
+    const safeData = validation.data; // Use the validated data
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "User not authenticated" };
@@ -728,21 +773,21 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
             user_id: user.id,
-            date: payload.date,
-            symptoms: payload.symptoms,
-            is_period: payload.isPeriod,
-            flow_intensity: payload.flowIntensity || null,
-            moods: payload.moods || [],
-            notes: payload.notes || "",
-            cervical_discharge: payload.cervicalDischarge || null,
-            exercise_types: payload.exerciseTypes || [],
-            exercise_minutes: payload.exerciseMinutes || null,
-            water_intake: payload.waterIntake || 0,
-            self_love_tags: payload.selfLoveTags || [],
-            self_love_other: payload.selfLoveOther || "",
-            sleep_quality: payload.sleepQuality || [],
-            sleep_minutes: payload.sleepMinutes || null,
-            disruptors: payload.disruptors || [],
+            date: safeData.date,
+            symptoms: safeData.symptoms,
+            is_period: safeData.isPeriod,
+            flow_intensity: safeData.flowIntensity || null,
+            moods: safeData.moods || [],
+            notes: safeData.notes || "",
+            cervical_discharge: safeData.cervicalDischarge || null,
+            exercise_types: safeData.exerciseTypes || [],
+            exercise_minutes: safeData.exerciseMinutes || null,
+            water_intake: safeData.waterIntake || 0,
+            self_love_tags: safeData.selfLoveTags || [],
+            self_love_other: safeData.selfLoveOther || "",
+            sleep_quality: safeData.sleepQuality || [],
+            sleep_minutes: safeData.sleepMinutes || null,
+            disruptors: safeData.disruptors || [],
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
@@ -755,25 +800,26 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     }
 }
 
+
 export async function updateLastPeriodDate(newDate: string) {
+    // ✅ VALIDATION
+    const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format");
+    const result = dateSchema.safeParse(newDate);
+    
+    if (!result.success) {
+        return { success: false, error: result.error.issues[0].message };
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) return { success: false, error: "Authentication required" };
 
     const { error } = await supabase
         .from("user_cycle_settings")
-        .update({
-            last_period_start: newDate, // Expecting YYYY-MM-DD string
-            updated_at: new Date().toISOString()
-        })
+        .update({ last_period_start: newDate, updated_at: new Date().toISOString() })
         .eq("user_id", user.id);
 
-    if (error) {
-        console.error("Error updating period date:", error);
-        return { success: false, error: error.message };
-    }
-
+    if (error) return { success: false, error: error.message };
     return { success: true };
 }
 
@@ -849,6 +895,14 @@ export async function getDailyLog(date: string) {
 }
 
 export async function updateCycleLength(periodLength?: number, cycleLength?: number, isIrregular?: boolean) {
+    // ✅ VALIDATION: Cycle length logic
+    if (periodLength && (periodLength < 1 || periodLength > 15)) {
+        return { success: false, error: "Period length must be between 1 and 15 days" };
+    }
+    if (cycleLength && (cycleLength < 15 || cycleLength > 100)) {
+        return { success: false, error: "Cycle length must be between 15 and 100 days" };
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Authentication required" };
