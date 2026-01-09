@@ -3,6 +3,42 @@
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
 import { getCyclePhase, getDietPlan, type CyclePhaseResponse, type DietPlanResponse } from "./ai-actions";
+import { z } from "zod";
+import {
+    generateMoodInsight,
+    generateSymptomTips,
+    type MoodInsight,
+    type SymptomTips
+} from "./ai-actions";
+
+export interface AIContext {
+    symptoms: string[];
+    moods: string[];
+    sleep: string[];
+    disruptors: string[];
+    exercise: string[];
+    recentNote?: string;
+}
+
+// --- VALIDATION SCHEMAS ---
+
+const DailyLogSchema = z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    symptoms: z.array(z.string()).default([]),
+    isPeriod: z.boolean(),
+    flowIntensity: z.string().optional().nullable(),
+    moods: z.array(z.string()).optional().default([]),
+    notes: z.string().max(2000, "Notes cannot exceed 2000 characters").optional().default(""),
+    cervicalDischarge: z.string().optional().nullable(),
+    exerciseTypes: z.array(z.string()).optional().default([]),
+    exerciseMinutes: z.number().min(0).max(1440, "Exercise cannot exceed 24 hours").optional().nullable(),
+    waterIntake: z.number().min(0).max(50, "Water intake value is too high").optional().nullable(),
+    selfLoveTags: z.array(z.string()).optional().default([]),
+    selfLoveOther: z.string().max(200, "Text too long").optional().default(""),
+    sleepQuality: z.array(z.string()).optional().default([]),
+    sleepMinutes: z.number().min(0).max(1440, "Sleep cannot exceed 24 hours").optional().nullable(),
+    disruptors: z.array(z.string()).optional().default([]),
+});
 
 // --- HELPERS ---
 
@@ -11,10 +47,6 @@ function getRandomItems<T>(items: T[], count: number): T[] {
     return shuffled.slice(0, count);
 }
 
-/**
- * Dynamic Cycle Tracking Logic
- * Calculates the current phase based on the target date and last period start.
- */
 function calculatePhase(
     targetDate: Date,
     lastPeriodStart: string,
@@ -42,48 +74,112 @@ function calculatePhase(
 }
 
 
-// --- AI ACTIONS ---
+// --- AI ACTIONS (Updated) ---
 
 /**
- * Generates a scientific and empathetic insight using Groq LLM (llama-3.3-70b-versatile).
+ * Generates insight. 
+ * ✅ UPDATED: Now checks for data presence. If empty, gives educational content + CTA.
  */
-export async function generatePhaseAIInsight(phase: string, symptoms: string[]) {
-    const apiKey = "REDACTED_API_KEY";
+export async function generatePhaseAIInsight(
+    phase: string,
+    context: AIContext
+) {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+        console.error("❌ Missing GROQ_API_KEY. AI features disabled.");
+        return null;
+    }
+
+    const safeJoin = (arr?: string[]) =>
+        Array.isArray(arr) && arr.length > 0 ? arr.join(", ") : "None";
+
+    // ✅ CHECK: Do we have symptoms logged for this phase?
+    const hasData = context.symptoms.length > 0;
+
+    let systemPrompt = "";
+    let userContextString = "";
+
+    if (hasData) {
+        // --- PERSONALIZED MODE (User has logs) ---
+        systemPrompt = `You are a compassionate women's health guide.
+Your goal is to help the user understand how their cycle phase explains their specific symptoms today.
+
+### HOW TO WRITE
+• Explain *why* they feel this way based on ${phase} hormones.
+• Use warm, reassuring language.
+• Avoid medical jargon.
+
+### OUTPUT FORMAT (JSON)
+{
+  "insight": "Two sentences explaining their specific symptoms based on the cycle phase.",
+  "moods": ["Emotion 1", "Emotion 2"],
+  "focus": ["Specific Action 1", "Specific Action 2", "Specific Action 3"]
+}`;
+
+        userContextString = `
+Cycle phase: ${phase}
+Body symptoms: ${safeJoin(context.symptoms)}
+Moods: ${safeJoin(context.moods)}
+Sleep: ${safeJoin(context.sleep)}
+    `.trim();
+
+    } else {
+        // --- EDUCATIONAL MODE (No logs yet) ---
+        systemPrompt = `You are a women's health educator.
+The user is in the ${phase} phase but has NOT logged any symptoms yet.
+
+Your goal:
+1. Describe what the ${phase} phase typically feels like (energy, hormones).
+2. Explicitly ask them to log their symptoms to get a personalized analysis.
+
+### OUTPUT FORMAT (JSON)
+{
+  "insight": "General description of the ${phase} phase. Ends with a sentence asking them to log data.",
+  "moods": ["Typical Phase Mood 1", "Typical Phase Mood 2"],
+  "focus": ["General Wellness Tip 1", "General Wellness Tip 2", "Log Your Symptoms"]
+}`;
+
+        userContextString = `Current Phase: ${phase}. No symptoms logged by user.`;
+    }
 
     try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                response_format: { type: "json_object" },
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are a menstrual health expert. Analyze the user's current phase and symptoms to provide a personalized health report in JSON format.
-                        
-                        The JSON must contain:
-                        1. "insight": A 2-sentence empathetic scientific explanation.
-                        2. "moods": Array of 2 strings representing emotional state.
-                        3. "focus": Array of 3 strings representing helpful activities.
-                        
-                        JSON structure: {"insight": "", "moods": [], "focus": []}`
-                    },
-                    {
-                        role: "user",
-                        content: `Phase: ${phase}. Symptoms logged: ${symptoms.join(", ") || "No specific symptoms logged yet"}.`
-                    }
-                ],
-                temperature: 0.45
-            })
-        });
+        const response = await fetch(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    response_format: { type: "json_object" },
+                    temperature: 0.45,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userContextString },
+                    ],
+                }),
+            }
+        );
+
+        if (!response.ok) {
+            console.error("Groq API failed:", await response.text());
+            return null;
+        }
 
         const data = await response.json();
-        const content = JSON.parse(data.choices?.[0]?.message?.content);
-        return content;
+        const content = data?.choices?.[0]?.message?.content;
+
+        if (!content) return null;
+
+        try {
+            return JSON.parse(content);
+        } catch {
+            console.error("❌ Invalid JSON from AI:", content);
+            return null;
+        }
     } catch (error) {
         console.error("Groq AI Error:", error);
         return null;
@@ -275,67 +371,31 @@ function calculateCycleSyncedCalories(
     age: number,
     phase: string
 ): number {
-    // 1. Calculate BMR (Mifflin-St Jeor for Females)
-    // BMR = (10 * weight) + (6.25 * height) - (5 * age) - 161
     const bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161;
-
-    // 2. Define Variables based on Cycle Phase
-    let activity_multiplier = 1.2; // Default Sedentary
+    let activity_multiplier = 1.2;
     let luteal_buffer = 0;
 
     switch (phase) {
-        case "Menstrual":
-            // Rest & Restoration. Yoga/walking only.
-            activity_multiplier = 1.2;
-            luteal_buffer = 0;
-            break;
-        case "Follicular":
-            // Muscle Building. Lifting heavy. Moderate metabolism.
-            activity_multiplier = 1.55;
-            luteal_buffer = 0;
-            break;
-        case "Ovulatory":
-            // Peak Performance. HIIT/PRs. Very Active.
-            activity_multiplier = 1.725;
-            luteal_buffer = 0;
-            break;
-        case "Luteal":
-            // Maintenance & Craving Management. Light activity + Thermogenesis.
-            activity_multiplier = 1.375;
-            // Progesterone raises REE by ~2.5-10% (100-300 kcal).
-            luteal_buffer = 200;
-            break;
+        case "Menstrual": activity_multiplier = 1.2; luteal_buffer = 0; break;
+        case "Follicular": activity_multiplier = 1.55; luteal_buffer = 0; break;
+        case "Ovulatory": activity_multiplier = 1.725; luteal_buffer = 0; break;
+        case "Luteal": activity_multiplier = 1.375; luteal_buffer = 200; break;
     }
 
-    // 3. Final TDEE
     const tdee = (bmr * activity_multiplier) + luteal_buffer;
     return Math.round(tdee);
 }
 
 function getPhaseMacros(phase: string, calories: number) {
-    let split = { protein: 0.3, fats: 0.3, carbs: 0.4 }; // Default
+    let split = { protein: 0.3, fats: 0.3, carbs: 0.4 };
 
     switch (phase) {
-        case "Menstrual":
-            // 30% P / 40% F / 30% C (Satiety, lower carbs due to inactivity)
-            split = { protein: 0.30, fats: 0.40, carbs: 0.30 };
-            break;
-        case "Follicular":
-            // 30% P / 20% F / 50% C (Fuel for muscle hypertrophy)
-            split = { protein: 0.30, fats: 0.20, carbs: 0.50 };
-            break;
-        case "Ovulatory":
-            // 25% P / 20% F / 55% C (Peak carb for high intensity)
-            split = { protein: 0.25, fats: 0.20, carbs: 0.55 };
-            break;
-        case "Luteal":
-            // 30% P / 30% F / 40% C (Balanced to stabilize blood sugar)
-            split = { protein: 0.30, fats: 0.30, carbs: 0.40 };
-            break;
+        case "Menstrual": split = { protein: 0.30, fats: 0.40, carbs: 0.30 }; break;
+        case "Follicular": split = { protein: 0.30, fats: 0.20, carbs: 0.50 }; break;
+        case "Ovulatory": split = { protein: 0.25, fats: 0.20, carbs: 0.55 }; break;
+        case "Luteal": split = { protein: 0.30, fats: 0.30, carbs: 0.40 }; break;
     }
 
-    // Convert percentages to grams
-    // Protein = 4 kcal/g, Fat = 9 kcal/g, Carb = 4 kcal/g
     return {
         protein: { g: Math.round((calories * split.protein) / 4), pct: Math.round(split.protein * 100) },
         fats: { g: Math.round((calories * split.fats) / 9), pct: Math.round(split.fats * 100) },
@@ -346,13 +406,8 @@ function getPhaseMacros(phase: string, calories: number) {
 export async function fetchCycleIntelligence() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-    // --- MOCK DATA FALLBACK (If no user) ---
-    if (!user) {
-        return null;
-    }
-
-    // 1. Fetch User Data (Cycle + Biometrics)
     const { data: cycleSettings } = await supabase
         .from("user_cycle_settings")
         .select("*")
@@ -367,7 +422,6 @@ export async function fetchCycleIntelligence() {
 
     if (!cycleSettings) return null;
 
-    // 2. Calculate Phase
     const { phase, day } = calculatePhase(
         new Date(),
         cycleSettings.last_period_start,
@@ -376,38 +430,15 @@ export async function fetchCycleIntelligence() {
     );
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
-
-    // 3. Calculate Personalized Nutrition
-    // Defaults if data missing: Weight 60kg, Height 165cm, Age 30
     const weight = onboarding?.weight_kg || 60;
     const height = onboarding?.height_cm || 165;
     const age = calculateAge(onboarding?.date_of_birth || "");
-
-    // Calculate TDEE
     const tdee = calculateCycleSyncedCalories(weight, height, age, phase);
-    // Calculate Macros
     const macros = getPhaseMacros(phase, tdee);
 
-    const nutrition = {
-        macros: macros,
-        calories: tdee
-    };
+    const nutrition = { macros: macros, calories: tdee };
+    let biometrics = { reason: getDefaultBiometricsReason(phase) };
 
-    let biometrics = {
-        reason: "Balanced nutrition for general health."
-    };
-
-    if (phase === "Menstrual") {
-        biometrics.reason = "Focus on iron and warming foods to replenish lost blood and soothe cramps.";
-    } else if (phase === "Follicular") {
-        biometrics.reason = "High carb & protein to support rising estrogen and muscle repair.";
-    } else if (phase === "Ovulatory") {
-        biometrics.reason = "Peak carbohydrates to sustain high-intensity performance.";
-    } else if (phase === "Luteal") {
-        biometrics.reason = "Complex carbs and magnesium to combat PMS cravings and stabilize mood.";
-    }
-
-    // Map PHASE_CONTENT to the structure expected by the page (BLUEPRINTS format)
     const blueprint = {
         color: phase === "Menstrual" ? "bg-rove-red" :
             phase === "Follicular" ? "bg-rove-peach" :
@@ -448,13 +479,7 @@ export async function fetchCycleIntelligence() {
         }
     };
 
-    return {
-        phase,
-        day,
-        nutrition,
-        biometrics,
-        blueprint: blueprint
-    };
+    return { phase, day, nutrition, biometrics, blueprint };
 }
 
 // ==========================================
@@ -466,7 +491,7 @@ export async function fetchCycleIntelligence() {
 
 export async function fetchCycleIntelligenceAI() {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } = {} } = await supabase.auth.getUser();
 
     if (!user) return null;
 
@@ -628,22 +653,16 @@ function getDefaultBiometricsReason(phase: string): string {
     }
 }
 
+
+
+
+// ==========================================================
+// FETCH INSIGHTS DATA (Main Function)
+// ==========================================================
 export async function fetchInsightsData() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    // --- MOCK DATA FALLBACK ---
-    if (!user) {
-        console.log("⚠️ Using Mock Data for Insights");
-        const mockCycleSettings = { last_period_start: "2025-12-01", cycle_length_days: 28, period_length_days: 5, is_irregular: false };
-        const mockStatus = calculatePhase(new Date(), mockCycleSettings.last_period_start);
-
-        return {
-            phase: { name: "Follicular", day: 11 },
-            averages: { cycle: 28, period: 5, lastPeriodStart: "2025-12-01", isIrregular: false },
-            phaseCounts: { "Menstrual": 2, "Follicular": 5, "Ovulatory": 2, "Luteal": 3 },
-            symptoms: [{ name: "High Energy", count: 3 }, { name: "Optimism", count: 2 }]
-        };
-    }
+    if (!user) return null;
 
     const { data: cycleSettings } = await supabase
         .from("user_cycle_settings")
@@ -653,32 +672,97 @@ export async function fetchInsightsData() {
 
     if (!cycleSettings) return null;
 
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+
     const { data: logs } = await supabase
         .from("daily_logs")
-        .select("date, symptoms")
-        .eq("user_id", user.id);
+        .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+        .eq("user_id", user.id)
+        .gte("date", startOfMonth)
+        .lte("date", endOfMonth)
+        .order("date", { ascending: false });
 
+    const symptomsByPhase: Record<string, Record<string, number>> = {
+        Menstrual: {}, Follicular: {}, Ovulatory: {}, Luteal: {},
+    };
+    const moodsByPhase: Record<string, Record<string, number>> = {
+        Menstrual: {}, Follicular: {}, Ovulatory: {}, Luteal: {},
+    };
     const phaseCounts: Record<string, number> = {
-        "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0
+        Menstrual: 0, Follicular: 0, Ovulatory: 0, Luteal: 0,
     };
 
-    const allLoggedSymptoms = new Set<string>();
+    const allMoods = new Set<string>();
+    const allSleep = new Set<string>();
+    const allDisruptors = new Set<string>();
+    const allExercise = new Set<string>();
+    let mostRecentNote = "";
 
     if (logs) {
+        const noteLog = logs.find(l => l.notes && l.notes.length > 0);
+        if (noteLog) mostRecentNote = noteLog.notes;
+
         logs.forEach((log) => {
-            // ✅ FIXED: Passed log.date as the targetDate
             const { phase } = calculatePhase(
                 new Date(log.date),
                 cycleSettings.last_period_start,
                 cycleSettings.cycle_length_days,
                 cycleSettings.period_length_days
             );
-            if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
-            log.symptoms?.forEach((s: string) => allLoggedSymptoms.add(s));
+
+            phaseCounts[phase] += 1;
+
+            if (Array.isArray(log.symptoms)) {
+                log.symptoms.forEach((symptom: string) => {
+                    if (!symptomsByPhase[phase][symptom]) symptomsByPhase[phase][symptom] = 0;
+                    symptomsByPhase[phase][symptom] += 1;
+                });
+            }
+
+            if (Array.isArray(log.moods)) {
+                const uniqueMoods = new Set<string>(log.moods);
+                uniqueMoods.forEach((mood: string) => {
+                    if (!moodsByPhase[phase][mood]) moodsByPhase[phase][mood] = 0;
+                    moodsByPhase[phase][mood] += 1;
+                });
+            }
+
+            log.moods?.forEach((m: string) => allMoods.add(m));
+            log.sleep_quality?.forEach((s: string) => allSleep.add(s));
+            log.disruptors?.forEach((d: string) => allDisruptors.add(d));
+            log.exercise_types?.forEach((e: string) => allExercise.add(e));
         });
     }
 
-    // ✅ FIXED: Added new Date() as the first argument
+    const emotionalBaselines: Record<string, MoodInsight> = {
+        Menstrual: { title: "No Data", insight: "Log your moods to see insights." },
+        Follicular: { title: "No Data", insight: "Log your moods to see insights." },
+        Ovulatory: { title: "No Data", insight: "Log your moods to see insights." },
+        Luteal: { title: "No Data", insight: "Log your moods to see insights." },
+    };
+
+    const tipsByPhase: Record<string, string[]> = {
+        Menstrual: [], Follicular: [], Ovulatory: [], Luteal: []
+    };
+
+    await Promise.all([
+        ...Object.entries(moodsByPhase).map(async ([phase, counts]) => {
+            if (Object.keys(counts).length > 0) {
+                const aiResult = await generateMoodInsight(phase, counts);
+                if (aiResult) emotionalBaselines[phase] = aiResult;
+            }
+        }),
+        ...Object.entries(symptomsByPhase).map(async ([phase, symptomCounts]) => {
+            const symptomList = Object.keys(symptomCounts);
+            const result = await generateSymptomTips(phase, symptomList);
+            if (result?.tips) {
+                tipsByPhase[phase] = result.tips;
+            }
+        })
+    ]);
+
     const currentStatus = calculatePhase(
         new Date(),
         cycleSettings.last_period_start,
@@ -695,10 +779,18 @@ export async function fetchInsightsData() {
             isIrregular: cycleSettings.is_irregular
         },
         phaseCounts,
-        symptoms: Array.from(allLoggedSymptoms).map(name => ({
-            name,
-            count: logs?.filter(l => l.symptoms?.includes(name)).length || 0
-        }))
+        symptomsByPhase,
+        tipsByPhase,
+        moodsByPhase,
+        emotionalBaselines,
+        aggregatedData: {
+            moods: Array.from(allMoods),
+            sleep: Array.from(allSleep),
+            disruptors: Array.from(allDisruptors),
+            exercise: Array.from(allExercise),
+            recentNote: mostRecentNote
+        },
+        totalLogs: logs?.length || 0
     };
 }
 
@@ -721,6 +813,11 @@ export interface LogDailySymptomsPayload {
 }
 
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
+    const validation = DailyLogSchema.safeParse(payload);
+    if (!validation.success) {
+        return { success: false, error: validation.error.issues[0].message };
+    }
+    const safeData = validation.data;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "User not authenticated" };
@@ -728,24 +825,24 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     try {
         const { data, error } = await supabase.from("daily_logs").upsert({
             user_id: user.id,
-            date: payload.date,
-            symptoms: payload.symptoms,
-            is_period: payload.isPeriod,
-            flow_intensity: payload.flowIntensity || null,
-            moods: payload.moods || [],
-            notes: payload.notes || "",
-            cervical_discharge: payload.cervicalDischarge || null,
-            exercise_types: payload.exerciseTypes || [],
-            exercise_minutes: payload.exerciseMinutes || null,
-            water_intake: payload.waterIntake || 0,
-            self_love_tags: payload.selfLoveTags || [],
-            self_love_other: payload.selfLoveOther || "",
-            sleep_quality: payload.sleepQuality || [],
-            sleep_minutes: payload.sleepMinutes || null,
-            disruptors: payload.disruptors || [],
+            date: safeData.date,
+            symptoms: safeData.symptoms,
+            is_period: safeData.isPeriod,
+            flow_intensity: safeData.flowIntensity || null,
+            moods: safeData.moods || [],
+            notes: safeData.notes || "",
+            cervical_discharge: safeData.cervicalDischarge || null,
+            exercise_types: safeData.exerciseTypes || [],
+            exercise_minutes: safeData.exerciseMinutes || null,
+            water_intake: safeData.waterIntake || 0,
+            self_love_tags: safeData.selfLoveTags || [],
+            self_love_other: safeData.selfLoveOther || "",
+            sleep_quality: safeData.sleepQuality || [],
+            sleep_minutes: safeData.sleepMinutes || null,
+            disruptors: safeData.disruptors || [],
             updated_at: new Date().toISOString()
         }, {
-            onConflict: 'user_id, date'
+            onConflict: 'user_id,date'
         });
 
         if (error) return { success: false, error: error.message };
@@ -756,88 +853,26 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
 }
 
 export async function updateLastPeriodDate(newDate: string | null) {
+    const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format").nullable();
+    const result = dateSchema.safeParse(newDate);
+    if (!result.success) return { success: false, error: result.error.issues[0].message };
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) return { success: false, error: "Authentication required" };
 
     const { error } = await supabase
         .from("user_cycle_settings")
-        .update({
-            last_period_start: newDate, // Expecting YYYY-MM-DD string
-            updated_at: new Date().toISOString()
-        })
+        .update({ last_period_start: newDate, updated_at: new Date().toISOString() })
         .eq("user_id", user.id);
 
-    if (error) {
-        console.error("Error updating period date:", error);
-        return { success: false, error: error.message };
-    }
-
+    if (error) return { success: false, error: error.message };
     return { success: true };
 }
 
 export async function getDailyLog(date: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    // --- MOCK DATA FALLBACK ---
-    if (!user) {
-        console.log("⚠️ Using Mock Data for Intelligence");
-        const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 }; // Result: Day 12 (Follicular)
-
-        const { phase, day } = calculatePhase(
-            new Date(),
-            mockCycleSettings.last_period_start,
-            mockCycleSettings.cycle_length_days,
-            mockCycleSettings.period_length_days
-        );
-
-        const content = PHASE_CONTENT["Follicular"];
-
-        // Mock Nutrition
-        const nutrition = {
-            macros: { protein: { g: 100, pct: 30 }, fats: { g: 60, pct: 25 }, carbs: { g: 200, pct: 45 } },
-            calories: 1900
-        };
-        const biometrics = { reason: "Higher protein and fresh veggies to support rising estrogen and energy levels." };
-
-        const blueprint = {
-            color: "bg-rove-peach",
-            hormones: {
-                title: "Hormones Rising",
-                summary: "Estrogen is rising, boosting energy.",
-                desc: "Your 'inner spring'. Creativity and energy are increasing as follicles mature.",
-                symptoms: ["Increasing Energy", "Better Mood", "Curiosity", "Lightness"]
-            },
-            rituals: {
-                focus: "Inner Spring",
-                practices: content.rituals || [],
-                symptom_relief: []
-            },
-            diet: {
-                core_needs: content.fuel?.map((f: any) => ({ ...f, id: f.title })) || [],
-                ideal_meals: content.plan?.diet?.ideal_meals || [],
-                cramp_relief: content.plan?.diet?.cramp_relief || [],
-                avoid: content.plan?.diet?.avoid || []
-            },
-            exercise: {
-                summary: content.plan?.exercise?.summary || "",
-                best: content.move?.map((m: any) => ({ ...m, time: "20-30 mins" })) || [],
-                avoid: content.plan?.exercise?.avoid || []
-            },
-            supplements: content.plan?.supplements || [],
-            daily_flow: content.plan?.daily_flow || [],
-            nutrition_guide: content.nutrition_guide
-        };
-
-        return {
-            phase: "Follicular",
-            day: 11,
-            nutrition,
-            biometrics,
-            blueprint
-        };
-    }
+    if (!user) return null;
 
     const { data } = await supabase
         .from("daily_logs")
@@ -849,6 +884,13 @@ export async function getDailyLog(date: string) {
 }
 
 export async function updateCycleLength(periodLength?: number, cycleLength?: number, isIrregular?: boolean) {
+    if (periodLength && (periodLength < 1 || periodLength > 15)) {
+        return { success: false, error: "Period length must be between 1 and 15 days" };
+    }
+    if (cycleLength && (cycleLength < 15 || cycleLength > 100)) {
+        return { success: false, error: "Cycle length must be between 15 and 100 days" };
+    }
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Authentication required" };

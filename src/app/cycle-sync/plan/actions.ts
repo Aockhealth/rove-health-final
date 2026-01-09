@@ -4,10 +4,10 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export type PlanSettings = {
-  height: number;
+  height?: number;
   weight: number;
-  activityLevel: string;
-  diet: string;
+  activityLevel?: string;
+  diet?: string;
   fitnessGoal?: string;
   targetWeight?: number;
   weeklyRate?: number;

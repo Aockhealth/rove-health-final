@@ -1,19 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
 
-interface Segment {
-  value: number;
-  color: string; // gradient id
-  label: string;
+export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
+
+interface Props {
+  size?: number;
+  thickness?: number;
+  selectedPhase: string;
+  onPhaseSelect: (phase: string) => void;
 }
 
+// Helper to calculate coordinates
 function polar(cx: number, cy: number, r: number, angle: number) {
-  const a = (angle - 90) * Math.PI / 180;
+  const a = (angle - 90) * (Math.PI / 180);
   return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
 }
 
+// Helper to create SVG path
 function donutPath(
   cx: number,
   cy: number,
@@ -37,123 +41,83 @@ function donutPath(
   `;
 }
 
-interface Props {
-  data: Segment[];
-  size?: number;
-  thickness?: number;
-  gap?: number;
-  onHoverChange?: (index: number | null) => void;
-}
-
 export function SegmentedDoughnut({
-  data,
-  size = 160,
-  thickness = 34,
-  gap = 4,
-  onHoverChange,
+  size = 180,
+  thickness = 36,
+  selectedPhase,
+  onPhaseSelect,
 }: Props) {
-  const [active, setActive] = useState<number | null>(null);
-
-  const total = data.reduce((s, d) => s + d.value, 0);
   const cx = size / 2;
   const cy = size / 2;
-  const outerRadius = size / 2 - 10;
+  const outerRadius = size / 2 - 8;
   const innerRadius = outerRadius - thickness;
+
+  const gap = 4;
+  const segmentSweep = (360 - gap * 4) / 4;
 
   let angle = 0;
 
-  const handleHover = (i: number | null) => {
-    setActive(i);
-    onHoverChange?.(i);
-  };
-
   return (
     <div className="relative flex items-center justify-center">
-      <svg width={size} height={size} className="overflow-visible">
-        {/* ===== DEFINITIONS ===== */}
+      <svg width={size} height={size}>
         <defs>
-          {/* Period */}
-          <linearGradient id="grad-period" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ff6b6b" />
-            <stop offset="100%" stopColor="#ffb3c1" />
+          <linearGradient id="grad-menstrual" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fda4af" />
+            <stop offset="50%" stopColor="#ffe4e6" />
+            <stop offset="100%" stopColor="#fb7185" />
           </linearGradient>
-
-          {/* Follicular */}
           <linearGradient id="grad-follicular" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f9a8d4" />
-            <stop offset="100%" stopColor="#fbcfe8" />
+            <stop offset="0%" stopColor="#5eead4" />
+            <stop offset="50%" stopColor="#d1fae5" />
+            <stop offset="100%" stopColor="#2dd4bf" />
           </linearGradient>
-
-          {/* Ovulatory */}
           <linearGradient id="grad-ovulatory" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#818cf8" />
-            <stop offset="100%" stopColor="#c7d2fe" />
+            <stop offset="0%" stopColor="#fcd34d" />
+            <stop offset="50%" stopColor="#fef9c3" />
+            <stop offset="100%" stopColor="#fbbf24" />
           </linearGradient>
-
-          {/* Luteal */}
           <linearGradient id="grad-luteal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#fde68a" />
+            <stop offset="0%" stopColor="#a5b4fc" />
+            <stop offset="50%" stopColor="#dbeafe" />
+            <stop offset="100%" stopColor="#818cf8" />
           </linearGradient>
-
-          {/* Grain texture */}
-          <filter id="grain">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.9"
-              numOctaves="3"
-            />
-            <feColorMatrix type="saturate" values="0" />
-            <feComponentTransfer>
-              <feFuncA type="table" tableValues="0 0.08" />
-            </feComponentTransfer>
-          </filter>
         </defs>
 
-        {/* White inner ring for separation */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={innerRadius + thickness / 2}
-          fill="none"
-          stroke="white"
-          strokeWidth={2}
-          opacity={0.7}
-        />
-
-        {/* ===== SEGMENTS ===== */}
-        {data.map((d, i) => {
-          const sweep = (d.value / total) * (360 - gap * data.length);
+        {["Menstrual", "Follicular", "Ovulatory", "Luteal"].map((phase) => {
           const start = angle;
-          const end = angle + sweep;
-          angle += sweep + gap;
+          const end = angle + segmentSweep;
+          angle += segmentSweep + gap;
 
           const mid = (start + end) / 2;
-          const isActive = active === i;
+          const isActive = selectedPhase === phase;
           const pop = isActive ? 8 : 0;
           const offset = polar(0, 0, pop, mid);
+          const gradientId = `grad-${phase.toLowerCase()}`;
 
           return (
             <motion.path
-              key={i}
+              key={phase}
               d={donutPath(cx, cy, outerRadius, innerRadius, start, end)}
-              fill={`url(#${d.color})`}
-              filter="url(#grain)"
+              fill={`url(#${gradientId})`}
+              // ✅ FIX 1: Explicitly set initial values to prevent "undefined" errors
+              initial={{
+                x: 0,
+                y: 0,
+                scale: 1,
+                opacity: 1
+              }}
               animate={{
                 x: offset.x,
                 y: offset.y,
-                opacity: active !== null && !isActive ? 0.4 : 1,
-                scale: isActive ? 1.05 : 1,
+                scale: isActive ? 1.06 : 1,
+                opacity: selectedPhase && !isActive ? 0.3 : 1, // Dim others
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
-              onMouseEnter={() => handleHover(i)}
-              onMouseLeave={() => handleHover(null)}
-              onTap={() => handleHover(i)}
-              className="cursor-pointer"
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              onClick={() => onPhaseSelect(phase)}
+              className="cursor-pointer hover:opacity-100 transition-opacity"
               style={{
-                transformOrigin: "center",
                 filter: isActive
-                  ? "drop-shadow(0 8px 20px rgba(0,0,0,0.15))"
+                  ? "drop-shadow(0 10px 20px rgba(0,0,0,0.18))"
                   : "drop-shadow(0 4px 10px rgba(0,0,0,0.08))",
               }}
             />
@@ -162,13 +126,13 @@ export function SegmentedDoughnut({
       </svg>
 
       {/* CENTER TEXT */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="font-heading text-4xl text-rove-charcoal">
-          {total}
-        </span>
-        <span className="text-[10px] uppercase tracking-widest text-rove-stone font-bold">
-          Logs
-        </span>
+      <div className="absolute text-center pointer-events-none">
+        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">
+          Phase
+        </p>
+        <p className="text-sm font-heading text-rove-charcoal font-bold">
+          {selectedPhase}
+        </p>
       </div>
     </div>
   );

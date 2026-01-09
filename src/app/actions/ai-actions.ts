@@ -16,6 +16,10 @@ export interface CyclePhaseResponse {
     cycleLength: number;
 }
 
+export type MoodInsight = {
+    title: string;
+    insight: string;
+};
 export interface MacroBreakdown {
     grams: number;
     percentage: number;
@@ -255,6 +259,304 @@ export async function getSymptomInsights(
 }
 
 // ============================================
+// ============================================
+// MOOD INSIGHT GENERATOR (Direct Groq Call)
+// ============================================
+
+/**
+ * Generates or retrieves a cached AI insight for emotional baselines.
+ * Cache Key Format: "mood_insight_{userId}_{phase}_{month}_{year}"
+ */
+export async function generateMoodInsight(
+    phase: string,
+    moodCounts: Record<string, number>
+): Promise<MoodInsight | null> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // 1. Create a Unique Cache Key for THIS month
+    const date = new Date();
+    const cacheKey = `mood_insight_${user.id}_${phase}_${date.getMonth()}_${date.getFullYear()}`;
+
+    // 2. Check Cache First (Fast Path)
+    // Ensure your 'ai_cache_keys' table exists and has a 'user_id' column
+    const { data: cached } = await supabase
+        .from("ai_cache_keys")
+        .select("response")
+        .eq("cache_key", cacheKey)
+        .single();
+
+    if (cached?.response) {
+        return cached.response as MoodInsight;
+    }
+
+    // 3. Prepare AI Prompt (If no cache)
+    const sortedMoods = Object.entries(moodCounts)
+        .sort(([, a], [, b]) => b - a)
+        .map(([mood, count]) => `${mood} (${count}x)`)
+        .join(", ");
+
+    if (!sortedMoods) return null; // No data, no insight
+
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        console.error("Missing GROQ_API_KEY");
+        return null;
+    }
+
+    try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are an empathetic women's health analyst.
+            Analyze the user's mood log for the ${phase} phase.
+
+            INPUT: List of moods and frequency.
+            OUTPUT: JSON with:
+            - "title": 2-3 words, summarizing the vibe (e.g., "Inward & Reflective", "High Energy").
+            - "insight": 1-2 short, validating sentences. No advice. No medical claims. Just reflection.
+
+            Tone: Calm, observational, validating.
+            `
+                    },
+                    {
+                        role: "user",
+                        content: `Moods: ${sortedMoods}`
+                    }
+                ]
+            }),
+        });
+
+        if (!response.ok) {
+            console.error("Groq API error:", await response.text());
+            return null;
+        }
+
+        const data = await response.json();
+        const result = JSON.parse(data.choices[0].message.content);
+
+        // 4. Save to Cache
+        await supabase.from("ai_cache_keys").insert({
+            user_id: user.id,
+            cache_key: cacheKey,
+            cache_type: "mood_insight",
+            response: result,
+            expires_at: new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString()
+        });
+
+        return result;
+
+    } catch (error) {
+        console.error("AI Generation Error:", error);
+        // Fallback safe return
+        return {
+            title: "Mood Pattern",
+            insight: "Not enough data to generate a personalized insight right now."
+        };
+    }
+}
+
+
+export type SymptomTips = {
+    tips: string[];
+};
+export async function generateSymptomTips(
+    phase: string,
+    symptoms: string[]
+): Promise<SymptomTips | null> {
+    // ✅ STRICT FIX: Stop AI if no symptoms are logged.
+    // This ensures we don't generate generic "wellness tips" that look like analysis.
+    if (!symptoms || symptoms.length === 0) {
+        return null;
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // 1. Create unique cache key
+    const date = new Date();
+    const symptomsHash = symptoms.sort().join("_");
+    const cacheKey = `tips_${user.id}_${phase}_${symptomsHash}_${date.getMonth()}`;
+
+    // 2. Check Cache
+    const { data: cached } = await supabase
+        .from("ai_cache_keys")
+        .select("response")
+        .eq("cache_key", cacheKey)
+        .single();
+
+    if (cached?.response) {
+        return cached.response as SymptomTips;
+    }
+
+    // 3. AI Generation
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return null;
+
+    try {
+        // Prompt is now strictly for relief since we blocked empty symptoms above
+        const prompt = `User is in ${phase} phase and reported: ${symptoms.join(", ")}. Give 3 short, specific actionable tips (max 10 words each) to relieve these.`;
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                response_format: { type: "json_object" },
+                temperature: 0.4,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are a holistic women's health coach.
+            Output JSON: { "tips": ["Tip 1", "Tip 2", "Tip 3"] }`
+                    },
+                    { role: "user", content: prompt }
+                ]
+            }),
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json();
+        const result = JSON.parse(data.choices[0].message.content);
+
+        // 4. Save to Cache
+        await supabase.from("ai_cache_keys").insert({
+            user_id: user.id,
+            cache_key: cacheKey,
+            cache_type: "symptom_tips",
+            response: result,
+            expires_at: new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString()
+        });
+
+        return result;
+
+    } catch (error) {
+        console.error("Tip Generation Error:", error);
+        return null;
+    }
+}
+
+
+
+
+
+export type PhaseReliefTips = {
+    tips: string[];
+};
+
+export async function generatePhaseReliefTips(
+    phase: string,
+    symptoms: string[]
+): Promise<PhaseReliefTips | null> {
+    // ❌ HARD STOP — no symptoms = no AI
+    if (!symptoms || symptoms.length === 0) {
+        return null;
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // 🔐 Cache key: ONE per month per phase
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}_${now.getMonth() + 1}`;
+    const cacheKey = `phase_relief_${user.id}_${phase}_${monthKey}`;
+
+    // 1️⃣ Check cache
+    const { data: cached } = await supabase
+        .from("ai_cache_keys")
+        .select("response")
+        .eq("cache_key", cacheKey)
+        .single();
+
+    if (cached?.response) {
+        return cached.response as PhaseReliefTips;
+    }
+
+    // 2️⃣ AI Generation
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return null;
+
+    try {
+        const prompt = `
+User is currently in the ${phase} phase.
+This month they reported symptoms: ${symptoms.join(", ")}.
+
+Give 3 gentle, phase-appropriate suggestions that may help them feel better.
+Tips should be:
+- supportive (not medical)
+- short (max 12 words)
+- holistic (energy, food, rest, movement)
+`;
+
+        const response = await fetch(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile",
+                    temperature: 0.35,
+                    response_format: { type: "json_object" },
+                    messages: [
+                        {
+                            role: "system",
+                            content: `You are a compassionate women's health guide.
+Return JSON ONLY:
+{ "tips": ["Tip 1", "Tip 2", "Tip 3"] }`
+                        },
+                        { role: "user", content: prompt }
+                    ]
+                }),
+            }
+        );
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const result = JSON.parse(data.choices[0].message.content);
+
+        // 3️⃣ Save to cache (expires next month)
+        await supabase.from("ai_cache_keys").insert({
+            user_id: user.id,
+            cache_key: cacheKey,
+            cache_type: "phase_relief_tips",
+            response: result,
+            expires_at: new Date(
+                now.getFullYear(),
+                now.getMonth() + 1,
+                1
+            ).toISOString(),
+        });
+
+        return result;
+
+    } catch (error) {
+        console.error("Phase Relief Tip Error:", error);
+        return null;
+    }
+}
+
+// ============================================
+
 // COMBINED: GET FULL PERSONALIZED PLAN
 // ============================================
 
