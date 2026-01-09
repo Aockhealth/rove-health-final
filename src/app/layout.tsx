@@ -17,6 +17,20 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Rove Health | Precision Women's Health",
   description: "Doctor-formulated supplements for women's health.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Rove Health",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

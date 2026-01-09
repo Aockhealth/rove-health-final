@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { login } from "../actions";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import Image from "next/image"; 
-import { Loader2 } from "lucide-react"; 
+import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
 type FieldErrors = {
-    email?: string;
-    password?: string;
-    server?: string;
+  email?: string;
+  password?: string;
+  server?: string;
 };
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -31,32 +33,37 @@ export default function LoginPage() {
     // --- Validation Logic ---
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email?.trim()) {
-        errors.email = "Email is required.";
-        hasError = true;
+      errors.email = "Email is required.";
+      hasError = true;
     } else if (!emailRegex.test(email)) {
-        errors.email = "Please enter a valid email address.";
-        hasError = true;
+      errors.email = "Please enter a valid email address.";
+      hasError = true;
     }
 
     if (!password?.trim()) {
-        errors.password = "Password is required.";
-        hasError = true;
+      errors.password = "Password is required.";
+      hasError = true;
     } else if (password.length < 6) { // ✅ Added check (Supabase default minimum)
-        errors.password = "Password must be at least 6 characters.";
-        hasError = true;
+      errors.password = "Password must be at least 6 characters.";
+      hasError = true;
     }
 
     if (hasError) {
-        setFieldErrors(errors);
-        return;
+      setFieldErrors(errors);
+      return;
     }
-    
+
     startTransition(async () => {
       try {
-        await login(formData);
+        const result = await login(formData);
+        if (result?.error) {
+          setFieldErrors({ server: result.error });
+        } else if (result?.success) {
+          router.push("/cycle-sync");
+          router.refresh();
+        }
       } catch (err) {
-        // Generic error for security, or extract message if needed
-        setFieldErrors({ server: "Invalid email or password." });
+        setFieldErrors({ server: "An unexpected error occurred." });
       }
     });
   }
@@ -75,17 +82,17 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
-            <Image 
-              src="/assets/rove_logo.png" 
+            <Image
+              src="/assets/rove_logo.png"
               alt="Rove Logo"
-              width={120} 
+              width={120}
               height={120}
               className="object-contain"
               priority
               unoptimized
             />
           </div>
-          
+
           <h1 className="text-3xl font-heading text-rove-charcoal mb-2">
             Welcome Back
           </h1>
@@ -100,36 +107,36 @@ export default function LoginPage() {
             {/* Email */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-widest text-rove-stone pl-1">Email</label>
-              <input 
-                name="email" 
-                type="email" 
+              <input
+                name="email"
+                type="email"
                 placeholder="hello@rove.com"
                 className={`w-full px-5 py-4 rounded-2xl bg-white/60 text-rove-charcoal border outline-none transition-all
                     ${fieldErrors.email
-                      ? "border-red-300 focus:border-red-400 shadow-sm"
-                      : "border-white/60 focus:border-rove-peach"
-                    }`}
+                    ? "border-red-300 focus:border-red-400 shadow-sm"
+                    : "border-white/60 focus:border-rove-peach"
+                  }`}
               />
               {fieldErrors.email && (
                 <p className="text-xs text-red-500 pl-2 font-medium">{fieldErrors.email}</p>
               )}
             </div>
-            
+
             {/* Password */}
             <div className="space-y-2">
               <div className="flex justify-between items-center pl-1 pr-1">
                 <label className="text-xs font-bold uppercase tracking-widest text-rove-stone">Password</label>
                 <Link href="/forgot-password" className="text-xs text-rove-red hover:underline">Forgot?</Link>
               </div>
-              <input 
-                name="password" 
-                type="password" 
+              <input
+                name="password"
+                type="password"
                 placeholder="••••••••"
                 className={`w-full px-5 py-4 rounded-2xl bg-white/60 text-rove-charcoal border outline-none transition-all
                     ${fieldErrors.password
-                      ? "border-red-300 focus:border-red-400 shadow-sm"
-                      : "border-white/60 focus:border-rove-peach"
-                    }`}
+                    ? "border-red-300 focus:border-red-400 shadow-sm"
+                    : "border-white/60 focus:border-rove-peach"
+                  }`}
               />
               {fieldErrors.password && (
                 <p className="text-xs text-red-500 pl-2 font-medium">{fieldErrors.password}</p>
@@ -144,15 +151,15 @@ export default function LoginPage() {
             </div>
           )}
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isPending}
             className="w-full py-6 rounded-2xl bg-rove-charcoal text-white text-base font-heading shadow-lg hover:scale-[1.02] hover:bg-black transition-all"
           >
             {isPending ? (
-                <span className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" /> Logging in...
-                </span>
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Logging in...
+              </span>
             ) : "Log In"}
           </Button>
         </form>
