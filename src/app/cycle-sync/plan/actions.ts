@@ -70,8 +70,15 @@ export async function fetchPlanSettings() {
     supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle()
   ]);
 
+  const lifestyle = lifestyleResult.data;
+
+  // 🔥 VALIDATION: If core metrics are missing, return null to force onboarding
+  if (!lifestyle || !lifestyle.weight_kg || !lifestyle.height_cm) {
+    return null;
+  }
+
   return {
-    ...lifestyleResult.data,
+    ...lifestyle,
     weightGoal: weightGoalResult.data
   };
 }

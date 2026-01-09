@@ -17,19 +17,21 @@ interface MacroFuelGaugeProps {
 export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
     if (!data) return null;
 
-    // Calculate CSS Conic Gradient segments
-    const p = data.protein;
-    const f = data.fats;
-    const c = data.carbs;
+    // Calculate total weight to derive percentages for the visual gauge
+    // Note: This is an approximation based on weight, not calories, for the circular chart visualization.
+    // Ideally we'd map back to calories, but weight ratio is fine for visual distinction.
+    const totalGrams = data.protein + data.fats + data.carbs || 1;
+
+    // Calculate visual percentages
+    const pPct = Math.round((data.protein / totalGrams) * 100);
+    const fPct = Math.round((data.fats / totalGrams) * 100);
+    // const cPct gets the rest
 
     // Gradient string: Protein (Red), Fats (Green), Carbs (Blue/Yellow)
-    // Protein: 0% -> p%
-    // Fats: p% -> (p+f)%
-    // Carbs: (p+f)% -> 100%
     const gradient = `conic-gradient(
-        #ef4444 0% ${p}%, 
-        #10b981 ${p}% ${p + f}%, 
-        #eab308 ${p + f}% 100%
+        #ef4444 0% ${pPct}%, 
+        #10b981 ${pPct}% ${pPct + fPct}%, 
+        #eab308 ${pPct + fPct}% 100%
     )`;
 
     return (
@@ -57,21 +59,21 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
                     <div className="flex items-center justify-between md:justify-start gap-4">
                         <div className="flex items-center gap-2 w-24">
                             <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                            <span className="font-bold text-sm">{data.protein}%</span>
+                            <span className="font-bold text-sm">{data.protein}g</span>
                         </div>
                         <span className="text-xs text-rove-stone">Protein (Blood Replenishment)</span>
                     </div>
                     <div className="flex items-center justify-between md:justify-start gap-4">
                         <div className="flex items-center gap-2 w-24">
                             <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                            <span className="font-bold text-sm">{data.fats}%</span>
+                            <span className="font-bold text-sm">{data.fats}g</span>
                         </div>
                         <span className="text-xs text-rove-stone">Healthy Fats (Block Cramps)</span>
                     </div>
                     <div className="flex items-center justify-between md:justify-start gap-4">
                         <div className="flex items-center gap-2 w-24">
                             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <span className="font-bold text-sm">{data.carbs}%</span>
+                            <span className="font-bold text-sm">{data.carbs}g</span>
                         </div>
                         <span className="text-xs text-rove-stone">Complex Carbs (Stable Mood)</span>
                     </div>

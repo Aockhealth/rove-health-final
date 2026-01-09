@@ -537,9 +537,9 @@ export async function fetchCycleIntelligence() {
             ...content.nutrition_guide,
             macro_fuel: {
                 title: "Ideally Balanced",
-                protein: nutrition.macros.protein.pct,
-                fats: nutrition.macros.fats.pct,
-                carbs: nutrition.macros.carbs.pct,
+                protein: nutrition.macros.protein.g,
+                fats: nutrition.macros.fats.g,
+                carbs: nutrition.macros.carbs.g,
                 calories: nutrition.calories
             }
         }
@@ -677,9 +677,9 @@ export async function fetchCycleIntelligenceAI() {
             ...content.nutrition_guide,
             macro_fuel: {
                 title: dietPlan ? "AI-Optimized" : "Phase-Balanced",
-                protein: nutrition.macros.protein.pct,
-                fats: nutrition.macros.fats.pct,
-                carbs: nutrition.macros.carbs.pct,
+                protein: nutrition.macros.protein.g,
+                fats: nutrition.macros.fats.g,
+                carbs: nutrition.macros.carbs.g,
                 calories: nutrition.calories
             }
         }
@@ -987,7 +987,7 @@ export async function fetchMonthLogs(monthStr: string) {
 
     // Calculate start and end range
     // Start: YYYY-MM-01
-    const startDate = `${year} -${String(month).padStart(2, '0')}-01`;
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
     // End: Start of next month
     // Handle December wrap around
@@ -997,7 +997,7 @@ export async function fetchMonthLogs(monthStr: string) {
         nextMonth = 1;
         nextYear = year + 1;
     }
-    const endDate = `${nextYear} -${String(nextMonth).padStart(2, '0')}-01`;
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
     const { data, error } = await supabase
         .from("daily_logs")

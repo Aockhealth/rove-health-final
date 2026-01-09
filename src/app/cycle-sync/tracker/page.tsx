@@ -91,6 +91,17 @@ export default function TrackerPageRedesigned() {
                     cycle_length_days: settings.cycle_length_days || 28,
                     period_length_days: settings.period_length_days || 5
                 });
+
+                // ⚠️ AUTO-PROMPT: If no period start date, force modal open
+                if (!settings.last_period_start) {
+                    setIsEditingCycle(true);
+                    toast.info("Welcome back! Please set your last period date to sync your cycle.", {
+                        duration: 6000
+                    });
+                }
+            } else {
+                // If settings completely missing, also prompt (though likely user is new)
+                setIsEditingCycle(true);
             }
         };
         loadSettings();
@@ -431,6 +442,24 @@ export default function TrackerPageRedesigned() {
                 }
             }
 
+            // If no log found, use BACKCASTING from global start
+            if (cycleSettings.last_period_start) {
+                const globalStart = new Date(cycleSettings.last_period_start);
+                globalStart.setHours(0, 0, 0, 0);
+                const cycleLen = cycleSettings.cycle_length_days || 28;
+
+                // If target is BEFORE global start, project backwards
+                if (targetDate < globalStart) {
+                    const diffTime = globalStart.getTime() - targetDate.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const cyclesBack = Math.ceil(diffDays / cycleLen);
+
+                    const simulatedStart = new Date(globalStart);
+                    simulatedStart.setDate(globalStart.getDate() - (cyclesBack * cycleLen));
+                    return formatDate(simulatedStart);
+                }
+            }
+
             return null;
         }
 
@@ -530,24 +559,34 @@ export default function TrackerPageRedesigned() {
         const dateStr = formatDate(date);
         const log = monthLogs[dateStr];
 
-        // 🔹 1️⃣ Check explicit log first
-        if (log) {
-            if (log.is_period) return "Menstrual";
-            else return "Follicular"; // or compute based on cycle if you prefer
-        }
+        // 🔹 1️⃣ Explicit Period Log always wins
+        if (log?.is_period) return "Menstrual";
 
-        // 🔹 2️⃣ Fallback to predicted period based on last known start
+        // 🔹 2️⃣ Calculate Phase based on Cycle Day (even if logged!)
         const startStr = getRelevantPeriodStart(date);
+
+        // If we can't find ANY start date (global or logged), default to Follicular
         if (!startStr) return "Follicular";
 
-        const currentDay = getCurrentDay(date);
+        // Use modulo logic for ALL dates to ensure consistent 4-phase cycles (Past & Future)
+        const start = new Date(startStr);
+        start.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+
+        const diffTime = checkDate.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
         const cycleLength = cycleSettings.cycle_length_days || 28;
+        let dayInCycle = (diffDays % cycleLength) + 1;
+        if (dayInCycle <= 0) dayInCycle += cycleLength;
+
         const periodLength = cycleSettings.period_length_days || 5;
         const ovulationDay = cycleLength - 14;
 
-        if (currentDay <= periodLength) return "Menstrual";
-        if (currentDay >= ovulationDay - 2 && currentDay <= ovulationDay + 2) return "Ovulatory";
-        if (currentDay > ovulationDay + 2) return "Luteal";
+        if (dayInCycle <= periodLength) return "Menstrual";
+        if (dayInCycle >= ovulationDay - 1 && dayInCycle <= ovulationDay + 1) return "Ovulatory"; // 3-day fertile window
+        if (dayInCycle > ovulationDay + 1) return "Luteal";
 
         return "Follicular";
     };
@@ -854,7 +893,7 @@ export default function TrackerPageRedesigned() {
                         }
 
                         await Promise.all(logsToUpdate);
-                        await updateLastPeriodDate(null);
+                        await updateLastPeriodDate("");
                         setCycleSettings(prev => ({ ...prev, last_period_start: "" }));
 
                         // 🔥 REFRESH: Only fetch months affected by this period range
