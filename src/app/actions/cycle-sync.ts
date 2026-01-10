@@ -69,12 +69,26 @@ function calculatePhase(
     let dayInCycle = (diffDays % cycleLength) + 1;
     if (dayInCycle <= 0) dayInCycle += cycleLength;
 
+    // Calculate Next Period Date
+    const completedCycles = Math.floor(diffDays / cycleLength);
+    // If diffDays is negative (target before start), completeCycles is negative, math still works.
+    // Next period = Start + (Completed + 1) * CycleLength
+    const nextCycleIndex = diffDays >= 0 ? completedCycles + 1 : 0;
+
+    // Better logic:
+    // If today is day 1, next period is in (cycleLength - 1) days.
+    // Next Period = TargetDate + (CycleLength - DayInCycle + 1)
+    const daysUntilNext = cycleLength - dayInCycle + 1;
+    const nextPeriod = new Date(d);
+    nextPeriod.setDate(d.getDate() + daysUntilNext);
+    const nextPeriodDate = nextPeriod.toISOString().split('T')[0];
+
     const estimatedOvulationDay = cycleLength - 14;
 
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
-    return { phase: "Luteal", day: dayInCycle };
+    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle, nextPeriodDate };
+    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle, nextPeriodDate };
+    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle, nextPeriodDate };
+    return { phase: "Luteal", day: dayInCycle, nextPeriodDate };
 }
 
 
@@ -743,6 +757,12 @@ export async function fetchInsightsData() {
         .order('date', { ascending: false }); // Get newest first for "Recent Note"
 
     const phaseCounts: Record<string, number> = { "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0 };
+    const symptomsByPhase: Record<string, Record<string, number>> = {
+        "Menstrual": {},
+        "Follicular": {},
+        "Ovulatory": {},
+        "Luteal": {}
+    };
 
     // Aggregation Sets
     const allSymptoms = new Set<string>();
@@ -762,7 +782,13 @@ export async function fetchInsightsData() {
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 
             // Collect all tags found in logs
-            log.symptoms?.forEach((s: string) => allSymptoms.add(s));
+            log.symptoms?.forEach((s: string) => {
+                allSymptoms.add(s);
+                // Aggregate symptoms by phase
+                if (symptomsByPhase[phase]) {
+                    symptomsByPhase[phase][s] = (symptomsByPhase[phase][s] || 0) + 1;
+                }
+            });
             log.moods?.forEach((m: string) => allMoods.add(m));
             log.sleep_quality?.forEach((s: string) => allSleep.add(s));
             log.disruptors?.forEach((d: string) => allDisruptors.add(d));
@@ -773,7 +799,7 @@ export async function fetchInsightsData() {
     const currentStatus = calculatePhase(new Date(), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
 
     return {
-        phase: { name: currentStatus.phase, day: currentStatus.day },
+        phase: { name: currentStatus.phase, day: currentStatus.day, nextPeriodDate: currentStatus.nextPeriodDate },
         averages: {
             cycle: cycleSettings.cycle_length_days,
             period: cycleSettings.period_length_days,
@@ -781,6 +807,7 @@ export async function fetchInsightsData() {
             isIrregular: cycleSettings.is_irregular
         },
         phaseCounts,
+        symptomsByPhase,
         // Return full context objects for the UI or AI to use
         symptoms: Array.from(allSymptoms).map(name => ({ name, count: 1 })), // Simplified count for now
         aggregatedData: {

@@ -187,7 +187,7 @@ export default function InsightsPage() {
                   cycleLength={avgCycle}
                   periodLength={stats?.averages?.period || 5}
                   isRegular={isRegular}
-                  nextPeriodDate={stats?.averages?.lastPeriodStart}
+                  nextPeriodDate={stats?.phase?.nextPeriodDate || stats?.averages?.lastPeriodStart}
                   phase={currentPhase}
                   theme={theme}
                 />

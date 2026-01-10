@@ -1161,7 +1161,7 @@ export default function TrackerPageRedesigned() {
 
                                         // Interaction
                                         !isSelected && !isDisabled && "hover:brightness-95",
-                                        isDisabled && "opacity-30 cursor-not-allowed grayscale"
+                                        isDisabled && "cursor-not-allowed"
                                     )}
                                 >
                                     <span className={cn(
