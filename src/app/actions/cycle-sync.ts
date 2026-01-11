@@ -216,7 +216,7 @@ async function fetchContentLibrary(phase: string, category: 'fuel' | 'move' | 'r
     const { data, error } = await supabase
         .from('content_library')
         .select('*')
-        .eq('phase', phase)
+        .ilike('phase', phase.trim()) // Fix: Case insensitive match
         .eq('category', category)
         .limit(limit);
 
