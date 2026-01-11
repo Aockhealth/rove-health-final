@@ -210,7 +210,9 @@ Your goal:
 async function fetchContentLibrary(phase: string, category: 'fuel' | 'move' | 'ritual', limit: number = 4) {
     const supabase = await createClient();
 
-    // Basic query by Phase and Category
+    // DBG: Log what we are looking for
+    // console.log(`[CycleSync] Fetching ${category} for phase ${phase}`);
+
     const { data, error } = await supabase
         .from('content_library')
         .select('*')
@@ -219,16 +221,24 @@ async function fetchContentLibrary(phase: string, category: 'fuel' | 'move' | 'r
         .limit(limit);
 
     if (error) {
-        console.error(`Error fetching ${category} content:`, error);
+        console.error(`[CycleSync] Error fetching ${category}:`, error.message);
+        return [];
+    }
+
+    if (!data || data.length === 0) {
+        // console.log(`[CycleSync] No data found for ${category} in ${phase}`);
         return [];
     }
 
     // Map to UI format
-    return (data || []).map((item: any) => ({
+    return data.map((item: any) => ({
         title: item.title,
         desc: item.description,
         icon: item.icon,
-        // Optional extras that might be used by UI
+        // Map Tags if available
+        tags: item.tags ? { condition: item.tags } : undefined,
+        // Use description as scientific benefit if specific field is missing, or static string
+        scientific_benefit: item.description,
         content_url: item.content_url,
         detail: item.detail_markdown
     }));
@@ -237,6 +247,10 @@ async function fetchContentLibrary(phase: string, category: 'fuel' | 'move' | 'r
 export async function fetchDashboardData() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    // DBG: Check auth state
+    if (!user) console.log("[CycleSync] No user session found. Serving mock data.");
+    else console.log(`[CycleSync] User authenticated: ${user.id}`);
 
     // --- MOCK DATA FALLBACK ---
     if (!user) {
@@ -355,6 +369,9 @@ export async function fetchDashboardData() {
         fetchContentLibrary(phase, 'move'),
         fetchContentLibrary(phase, 'ritual')
     ]);
+
+    // DBG: Log if data is missing despite DB saying it has rows
+    if (fuelData.length === 0) console.log(`[CycleSync] No fuel content found for phase: ${phase}`);
 
     // Fallback to static content if DB is empty
     const fuel = fuelData.length > 0 ? fuelData : getRandomItems(content.fuel, 2);
