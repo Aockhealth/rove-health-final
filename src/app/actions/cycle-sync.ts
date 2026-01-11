@@ -204,6 +204,36 @@ Your goal:
 }
 // --- DATABASE ACTIONS ---
 
+/**
+ * Fetches dynamic content from the content_library table.
+ */
+async function fetchContentLibrary(phase: string, category: 'fuel' | 'move' | 'ritual', limit: number = 4) {
+    const supabase = await createClient();
+
+    // Basic query by Phase and Category
+    const { data, error } = await supabase
+        .from('content_library')
+        .select('*')
+        .eq('phase', phase)
+        .eq('category', category)
+        .limit(limit);
+
+    if (error) {
+        console.error(`Error fetching ${category} content:`, error);
+        return [];
+    }
+
+    // Map to UI format
+    return (data || []).map((item: any) => ({
+        title: item.title,
+        desc: item.description,
+        icon: item.icon,
+        // Optional extras that might be used by UI
+        content_url: item.content_url,
+        detail: item.detail_markdown
+    }));
+}
+
 export async function fetchDashboardData() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -318,6 +348,19 @@ export async function fetchDashboardData() {
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems(content.river, 1)[0] || "Rest • Restore • Reload";
 
+    // 🚀 NEW: Fetch Dynamic Content from Supabase (Content Library)
+    // Runs in parallel for speed
+    const [fuelData, moveData, ritualData] = await Promise.all([
+        fetchContentLibrary(phase, 'fuel'),
+        fetchContentLibrary(phase, 'move'),
+        fetchContentLibrary(phase, 'ritual')
+    ]);
+
+    // Fallback to static content if DB is empty
+    const fuel = fuelData.length > 0 ? fuelData : getRandomItems(content.fuel, 2);
+    const move = moveData.length > 0 ? moveData : getRandomItems(content.move, 2);
+    const rituals = ritualData.length > 0 ? ritualData : getRandomItems(content.rituals, 2);
+
     return {
         user: { ...user, name: profile?.full_name || "Rove Member" },
         phase: {
@@ -336,9 +379,9 @@ export async function fetchDashboardData() {
             daysUntilNextPeriod: phaseData?.daysUntilNextPeriod,
             aiPowered: !!phaseData
         },
-        fuel: getRandomItems(content.fuel, 2),
-        move: getRandomItems(content.move, 2),
-        rituals: getRandomItems(content.rituals, 2),
+        fuel,
+        move,
+        rituals,
         snapshot: getRandomItems(content.snapshot, 1)[0],
         tracker_mode: onboarding?.tracker_mode || "menstruation"
     };
