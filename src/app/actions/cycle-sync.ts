@@ -324,7 +324,12 @@ export async function fetchDashboardData() {
             name: phase,
             day,
             river: riverStr,
-            superpower: "Resilience",
+            superpower: {
+                "Menstrual": "Intuition",
+                "Follicular": "Creativity",
+                "Ovulatory": "Magnetism",
+                "Luteal": "Focus"
+            }[phase] || "Resilience",
             // Add edge function data if available
             hormoneState: phaseData?.hormoneState,
             nextPeriodDate: phaseData?.nextPeriodDate,
