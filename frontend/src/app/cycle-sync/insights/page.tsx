@@ -6,12 +6,13 @@ import { ChevronLeft, Activity, Calendar, Zap } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-import {
-  fetchInsightsData,
-  generatePhaseAIInsight,
-  type AIContext
-} from "@/app/actions/cycle-sync";
-
+// ✅ UPDATED IMPORTS: Pointing to new backend structure
+// Note: Ensure your tsconfig.json has a path alias for "backend/*" or use these relative paths
+import { fetchInsightsData } from "../../../../../backend/src/actions/cycle-sync/insights/insights-cycle-sync";
+import { 
+  generatePhaseAIInsight, 
+  type AIContext 
+} from "../../../../../backend/src/actions/ai-actions/insights/insights-actions";
 // --- COMPONENTS ---
 import { AiAnalysisCard } from "@/components/cycle-sync/insights/AiAnalysisCard";
 import { EmotionalBaselineCard } from "@/components/cycle-sync/insights/EmotionalBaselineCard";
