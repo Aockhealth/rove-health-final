@@ -6,7 +6,7 @@ import { ChevronLeft, Play, ArrowRight, Bookmark } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn, getStorageUrl } from "@/lib/utils"; 
-import { fetchLearnArticles, type LearnArticle } from "@/app/actions/learn-actions";
+import { fetchLearnArticles, type LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
