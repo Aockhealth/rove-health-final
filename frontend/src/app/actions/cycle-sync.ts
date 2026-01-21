@@ -90,7 +90,6 @@ export async function generatePhaseAIInsight(
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
-        console.error("❌ Missing GROQ_API_KEY. AI features disabled.");
         return null;
     }
 
@@ -168,7 +167,6 @@ Your goal:
         );
 
         if (!response.ok) {
-            console.error("Groq API failed:", await response.text());
             return null;
         }
 
@@ -196,7 +194,6 @@ export async function fetchDashboardData() {
 
     // --- MOCK DATA FALLBACK ---
     if (!user) {
-        console.log("⚠️ Using Mock Data for Intelligence");
         const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 };
 
         const { phase, day } = calculatePhase(
@@ -283,7 +280,7 @@ export async function fetchDashboardData() {
     try {
         phaseData = await getCyclePhase();
     } catch (error) {
-        console.log("Edge function failed, falling back to local calculation");
+        // Fallback to local calculation if edge function fails
     }
 
     // Fallback to local if edge function fails
@@ -346,7 +343,6 @@ export async function fetchUserCycleSettings() {
         .single();
 
     if (error) {
-        console.error("Error fetching cycle settings:", error);
         return null;
     }
 
@@ -580,7 +576,7 @@ export async function fetchCycleIntelligenceAI() {
     try {
         phaseData = await getCyclePhase();
     } catch (error) {
-        console.log("Edge function failed, falling back to local calculation");
+        // Fallback
     }
 
     // Fallback to local calculation if edge function fails
@@ -612,7 +608,7 @@ export async function fetchCycleIntelligenceAI() {
     try {
         dietPlan = await getDietPlan({ phase, symptoms: [] });
     } catch (error) {
-        console.log("Diet edge function failed, using fallback");
+        // fallback
     }
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
@@ -898,7 +894,7 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'
-        });
+        }).select().single();
 
         if (error) return { success: false, error: error.message };
         return { success: true, data };
@@ -933,7 +929,6 @@ export async function getDailyLog(date: string) {
     const { data: { user } } = await supabase.auth.getUser();
     // --- MOCK DATA FALLBACK ---
     if (!user) {
-        console.log("⚠️ Using Mock Data for Intelligence");
         const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 }; // Result: Day 12 (Follicular)
 
         const { phase, day } = calculatePhase(
@@ -1058,9 +1053,92 @@ export async function fetchMonthLogs(monthStr: string) {
         .lt("date", endDate);
 
     if (error) {
-        console.error("Error fetching month logs:", error);
         return [];
     }
 
     return data || [];
+}
+
+
+// Add this new function at the end of your file
+export async function fetchMonthsLogsBulk(months: string[]) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase.rpc('fetch_logs_bulk', {
+        user_id_param: user.id,
+        month_keys: months
+    });
+
+    if (error) {
+        return [];
+    }
+
+    return data || [];
+}
+
+// Add this function for cached phase calculation
+export async function getCycleIntelligenceCached(targetDate?: Date) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase.rpc('get_cycle_intelligence', {
+        user_id_param: user.id,
+        target_date: targetDate ? formatDate(targetDate) : undefined
+    });
+
+    if (error) {
+        return null;
+    }
+
+    return data;
+}
+
+// Add this for optimized insights
+// Add this for optimized insights
+export async function fetchInsightsDataOptimized() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase.rpc('get_insights_aggregated', {
+        user_id_param: user.id
+    });
+
+    if (error) {
+        return null;
+    }
+
+    // Calculate current phase using your existing function
+    const currentStatus = calculatePhase(
+        new Date(),
+        data.cycleSettings.last_period_start,
+        data.cycleSettings.cycle_length_days,
+        data.cycleSettings.period_length_days
+    );
+
+    return {
+        phase: {
+            name: currentStatus.phase,
+            day: currentStatus.day
+        },
+        averages: data.cycleSettings,
+        phaseCounts: data.phaseCounts,
+        symptomsByPhase: data.symptomsByPhase,
+        moodsByPhase: data.moodsByPhase,
+        tipsByPhase: {}, // Keep your existing PHASE_CONTENT logic
+        emotionalBaselines: {}, // Keep your existing logic
+        symptoms: [],
+        aggregatedData: data.aggregatedData
+    };
+}
+
+// Helper function for formatting date
+function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }

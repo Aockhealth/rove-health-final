@@ -14,7 +14,7 @@ export function ChatWidget() {
         <>
             {/* Floating Action Button */}
             <motion.div
-                className="fixed bottom-32 right-6 md:bottom-10 md:right-10 z-[60]"
+                className="fixed bottom-40 right-6 md:bottom-10 md:right-10 z-[60]"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 1, type: "spring" }}
