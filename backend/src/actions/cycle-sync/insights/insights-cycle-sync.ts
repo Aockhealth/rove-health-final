@@ -1,35 +1,11 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { PHASE_CONTENT } from "@/data/phase-content"; 
+import { PHASE_CONTENT } from "@/data/phase-content";
+import { calculatePhase } from "../../../lib/cycle/calculatePhase";
+// adjust path to match your project
 
-// ✅ FIX: Removed "async" keyword here
-// It only performs math, so it should be synchronous.
-export function calculatePhase(
-    targetDate: Date,
-    lastPeriodStart: string,
-    cycleLength: number = 28,
-    periodLength: number = 5
-) {
-    const start = new Date(lastPeriodStart);
-    const d = new Date(targetDate);
-    const s = new Date(start);
-    d.setHours(0, 0, 0, 0);
-    s.setHours(0, 0, 0, 0);
 
-    const diffTime = d.getTime() - s.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let dayInCycle = (diffDays % cycleLength) + 1;
-    if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-    const estimatedOvulationDay = cycleLength - 14;
-
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
-    return { phase: "Luteal", day: dayInCycle };
-}
 
 // ==========================================================
 // FETCH INSIGHTS DATA (Main Function)
@@ -74,7 +50,7 @@ export async function fetchInsightsData() {
         logs.forEach((log) => {
             // ✅ This now works because calculatePhase returns the object directly, not a Promise
             const { phase } = calculatePhase(new Date(log.date), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
-            
+
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 
             // Group symptoms by phase

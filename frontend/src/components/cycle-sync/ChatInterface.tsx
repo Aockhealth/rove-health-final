@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Send, User, Bot, Phone, PhoneOff, Mic } from "lucide-react";
+import { Send, User, Bot, Phone, PhoneOff, Mic, ThumbsUp, ThumbsDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,43 @@ interface Message {
     id: string;
     role: "user" | "assistant";
     content: string;
+    feedback?: 1 | -1 | null; // 👍 = 1, 👎 = -1
+}
+
+
+/**
+ * Strict privacy layer: removes identifiers recursively from any object or array.
+ * Target keys (exact matches only): "user_id", "email", "full_name"
+ */
+function sanitizeCycleData(data: any): any {
+    const sensitiveKeys = ["user_id", "email", "full_name"];
+
+    if (Array.isArray(data)) {
+        return data.map((item) => sanitizeCycleData(item));
+    }
+
+    if (data !== null && typeof data === "object") {
+        const sanitized: any = {};
+        for (const key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                if (sensitiveKeys.includes(key)) continue;
+                sanitized[key] = sanitizeCycleData(data[key]);
+            }
+        }
+        return sanitized;
+    }
+
+    return data;
+}
+
+/**
+ * Hard-strips all emojis from a string using a comprehensive regex.
+ */
+function stripEmojis(text: string): string {
+    return text.replace(
+        /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
+        ""
+    ).trim();
 }
 
 export function ChatInterface({ onClose }: { onClose?: () => void }) {
@@ -16,9 +53,12 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
     const [isTyping, setIsTyping] = useState(false);
     const [isAgentActive, setIsAgentActive] = useState(false);
     const [agentStatus, setAgentStatus] = useState<string>("idle");
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const conversationRef = useRef<any>(null);
+
     const cycleDataRef = useRef<any>(null);
+    const safeCycleDataRef = useRef<any>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,135 +68,104 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    // Fetch user's current cycle data from Supabase
+    const sessionIdRef = useRef<string>(
+        typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`
+    );
+
+
     const fetchCycleData = async () => {
         try {
-            // Import Supabase client - adjust the import path based on your project structure
-            const { createClient } = await import('@/utils/supabase/client');
+            const { createClient } = await import("@/utils/supabase/client");
             const supabase = createClient();
 
-            // Get authenticated user
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            const {
+                data: { user },
+                error: authError,
+            } = await supabase.auth.getUser();
 
             if (authError || !user) {
                 console.error("Auth error:", authError);
                 throw new Error("User not authenticated");
             }
 
-            console.log("Authenticated user:", user.id);
-
-            // Fetch user profile (note: profiles table uses 'id' column, not 'user_id')
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('full_name, email')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            if (profileError) {
-                console.error("Profile error:", profileError);
-            }
-
-            console.log("Profile data:", profileData);
-
-            // Fetch user onboarding data
             const { data: userData, error: userError } = await supabase
-                .from('user_onboarding')
-                .select('*')
-                .eq('user_id', user.id)
+                .from("user_onboarding")
+                .select("*")
+                .eq("user_id", user.id)
                 .maybeSingle();
 
-            if (userError) {
-                console.error("User onboarding error:", userError);
-            }
+            if (userError) console.error("User onboarding error:", userError);
 
-            console.log("User onboarding data:", userData);
-
-            // Fetch user cycle settings
             const { data: cycleSettings, error: cycleError } = await supabase
-                .from('user_cycle_settings')
-                .select('*')
-                .eq('user_id', user.id)
+                .from("user_cycle_settings")
+                .select("*")
+                .eq("user_id", user.id)
                 .maybeSingle();
 
-            if (cycleError) {
-                console.error("Cycle settings error:", cycleError);
-            }
+            if (cycleError) console.error("Cycle settings error:", cycleError);
 
-            console.log("Cycle settings:", cycleSettings);
-
-            // Fetch today's daily plan (use maybeSingle since there might not be a plan for today)
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split("T")[0];
             const { data: dailyPlan, error: planError } = await supabase
-                .from('daily_plans')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('date', today)
+                .from("daily_plans")
+                .select("*")
+                .eq("user_id", user.id)
+                .eq("date", today)
                 .maybeSingle();
 
-            if (planError) {
-                console.error("Daily plan error:", planError);
-            }
+            if (planError) console.error("Daily plan error:", planError);
 
-            console.log("Daily plan:", dailyPlan);
-
-            // Fetch recent daily logs
             const { data: dailyLogs, error: logsError } = await supabase
-                .from('daily_logs')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
+                .from("daily_logs")
+                .select("*")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
                 .limit(7);
 
-            if (logsError) {
-                console.error("Daily logs error:", logsError);
-            }
+            if (logsError) console.error("Daily logs error:", logsError);
 
-            console.log("Daily logs:", dailyLogs);
+            const lastPeriodStart = new Date(
+                cycleSettings?.last_period_start || userData?.date_of_birth || new Date()
+            );
+            const todayDate = new Date();
+            const daysSinceLastPeriod = Math.floor(
+                (todayDate.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24)
+            );
 
-            // Calculate current cycle day
-            const lastPeriodStart = new Date(cycleSettings?.last_period_start || userData?.date_of_birth || new Date());
-            const today_date = new Date();
-            const daysSinceLastPeriod = Math.floor((today_date.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
             const cycleLength = cycleSettings?.cycle_length_days || 28;
             const periodLength = cycleSettings?.period_length_days || 5;
             const currentDay = (daysSinceLastPeriod % cycleLength) + 1;
 
-            // Determine phase
             let phase = "Unknown";
-            if (currentDay >= 1 && currentDay <= periodLength) {
-                phase = "Menstrual";
-            } else if (currentDay > periodLength && currentDay <= Math.floor(cycleLength * 0.45)) {
+            if (currentDay >= 1 && currentDay <= periodLength) phase = "Menstrual";
+            else if (currentDay > periodLength && currentDay <= Math.floor(cycleLength * 0.45))
                 phase = "Follicular";
-            } else if (currentDay > Math.floor(cycleLength * 0.45) && currentDay <= Math.floor(cycleLength * 0.55)) {
+            else if (
+                currentDay > Math.floor(cycleLength * 0.45) &&
+                currentDay <= Math.floor(cycleLength * 0.55)
+            )
                 phase = "Ovulatory";
-            } else {
-                phase = "Luteal";
-            }
+            else phase = "Luteal";
 
-            // Compile comprehensive cycle data
             const cycleData = {
-                user_id: user.id,
-                email: profileData?.email || user.email,
-                full_name: profileData?.full_name || user.email?.split('@')[0] || "User",
-
-                // Cycle information
-                phase: phase,
+                phase,
                 cycle_day: currentDay,
                 cycle_length: cycleLength,
                 period_length: periodLength,
                 last_period_start: cycleSettings?.last_period_start,
                 is_irregular: cycleSettings?.is_irregular || false,
 
-                // Today's plan
-                todays_plan: dailyPlan ? {
-                    plan_content: dailyPlan.plan_content,
-                    symptoms: dailyPlan.symptoms,
-                    flow_intensity: dailyPlan.flow_intensity,
-                    created_at: dailyPlan.created_at,
-                    updated_at: dailyPlan.updated_at
-                } : null,
+                todays_plan: dailyPlan
+                    ? {
+                        plan_content: dailyPlan.plan_content,
+                        symptoms: dailyPlan.symptoms,
+                        flow_intensity: dailyPlan.flow_intensity,
+                        created_at: dailyPlan.created_at,
+                        updated_at: dailyPlan.updated_at,
+                    }
+                    : null,
 
-                // User profile
+                // NOTE: You said you don't want username/email. DOB is not username/email,
+                // but it's sensitive. Keep only if you truly need it for advice.
                 date_of_birth: userData?.date_of_birth,
                 height: userData?.height,
                 weight: userData?.weight,
@@ -166,36 +175,40 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                 primary_goal: userData?.primary_goal || "General wellness",
                 tracker_mode: userData?.tracker_mode,
 
-                // Recent logs (last 7 days)
                 recent_logs: dailyLogs || [],
-
-                created_at: userData?.created_at
+                created_at: userData?.created_at,
             };
 
-            console.log("Final cycle data:", cycleData);
-            return cycleData;
+            // Store both local + safe versions
+            cycleDataRef.current = cycleData;
+            safeCycleDataRef.current = sanitizeCycleData(cycleData);
 
+            return cycleData;
         } catch (error) {
             console.error("Error fetching cycle data:", error);
-            return {
+
+            const fallback = {
                 phase: "Unknown",
                 cycle_day: 1,
-                error: "Could not fetch cycle data. Please make sure you're logged in and have completed onboarding."
+                error: "Could not fetch cycle data. Please make sure you're logged in and have completed onboarding.",
             };
+
+            cycleDataRef.current = fallback;
+            safeCycleDataRef.current = sanitizeCycleData(fallback);
+
+            return fallback;
         }
     };
 
-    // Start 11labs conversation
     const startAgent = async () => {
         try {
             setAgentStatus("initializing");
 
-            // Fetch current cycle data
             const cycleData = await fetchCycleData();
             cycleDataRef.current = cycleData;
+            safeCycleDataRef.current = sanitizeCycleData(cycleData);
 
-            // Import 11labs SDK
-            const { Conversation } = await import('@11labs/client');
+            const { Conversation } = await import("@11labs/client");
 
             const conversation = await Conversation.startSession({
                 agentId: "agent_6601kce0j95kfrxvmgk745zjsjqt",
@@ -204,86 +217,93 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                 onConnect: () => {
                     setAgentStatus("connected");
                     setIsAgentActive(true);
-
-                    const newMessage: Message = {
-                        id: Date.now().toString(),
-                        role: "assistant",
-                        content: "🎙️ Voice agent connected! I can now hear you. Tell me what you'd like to know about your cycle.",
-                    };
-                    setMessages((prev) => [...prev, newMessage]);
+                    const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: newId,
+                            role: "assistant",
+                            content:
+                                "Voice agent connected! I can now hear you. Tell me what you'd like to know about your cycle.",
+                        },
+                    ]);
                 },
 
                 onDisconnect: () => {
                     setAgentStatus("disconnected");
                     setIsAgentActive(false);
-
-                    const newMessage: Message = {
-                        id: Date.now().toString(),
-                        role: "assistant",
-                        content: "Voice conversation ended. Feel free to continue chatting with text or start another voice session!",
-                    };
-                    setMessages((prev) => [...prev, newMessage]);
+                    const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: newId,
+                            role: "assistant",
+                            content:
+                                "Voice conversation ended. Feel free to continue chatting with text or start another voice session!",
+                        },
+                    ]);
                 },
 
                 onError: (error) => {
                     console.error("Agent error:", error);
                     setAgentStatus("error");
                     setIsAgentActive(false);
-
-                    const newMessage: Message = {
-                        id: Date.now().toString(),
-                        role: "assistant",
-                        content: "Sorry, there was an error with the voice connection. Please try again.",
-                    };
-                    setMessages((prev) => [...prev, newMessage]);
+                    const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: newId,
+                            role: "assistant",
+                            content: "Sorry, there was an error with the voice connection. Please try again.",
+                        },
+                    ]);
                 },
 
                 onMessage: (message) => {
-                    // Display agent's responses in the chat
-                    if (message.source === 'ai' && message.message) {
-                        const newMessage: Message = {
-                            id: Date.now().toString(),
-                            role: "assistant",
-                            content: message.message,
-                        };
-                        setMessages((prev) => [...prev, newMessage]);
+                    if (message.source === "ai" && message.message) {
+                        const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+                        setMessages((prev) => [
+                            ...prev,
+                            {
+                                id: newId,
+                                role: "assistant",
+                                content: stripEmojis(message.message)
+                            },
+                        ]);
                     }
-                    // Also capture user's spoken messages
-                    if (message.source === 'user' && message.message) {
-                        const newMessage: Message = {
-                            id: Date.now().toString(),
-                            role: "user",
-                            content: message.message,
-                        };
-                        setMessages((prev) => [...prev, newMessage]);
+                    if (message.source === "user" && message.message) {
+                        const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+                        setMessages((prev) => [
+                            ...prev,
+                            { id: newId, role: "user", content: message.message },
+                        ]);
                     }
                 },
 
-                // Handle client tool calls
                 clientTools: {
                     getCycleStatus: async () => {
-                        console.log("Agent requested cycle status");
-                        return JSON.stringify(cycleData);
-                    }
-                }
+                        // Only sanitized data leaves the app
+                        const safe = safeCycleDataRef.current ?? sanitizeCycleData(cycleDataRef.current ?? {});
+                        return JSON.stringify(safe);
+                    },
+                },
             });
 
             conversationRef.current = conversation;
-
         } catch (error) {
             console.error("Error starting agent:", error);
             setAgentStatus("error");
-
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                role: "assistant",
-                content: "Could not start voice agent. Please check your microphone permissions and try again.",
-            };
-            setMessages((prev) => [...prev, newMessage]);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: Date.now().toString(),
+                    role: "assistant",
+                    content: "Could not start voice agent. Please check your microphone permissions and try again.",
+                },
+            ]);
         }
     };
 
-    // Stop the agent
     const stopAgent = async () => {
         if (conversationRef.current) {
             await conversationRef.current.endSession();
@@ -293,12 +313,63 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         setAgentStatus("idle");
     };
 
-    // Send text message using Groq API
+    const submitFeedback = async (assistantMsg: Message, rating: 1 | -1) => {
+        try {
+            // Optimistic UI update
+            setMessages((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, feedback: rating } : m))
+            );
+
+            const { createClient } = await import("@/utils/supabase/client");
+            const supabase = createClient();
+
+            const {
+                data: { user },
+                error: authError,
+            } = await supabase.auth.getUser();
+
+            if (authError || !user) throw new Error("User not authenticated");
+
+            // Find the nearest previous user message as "user_prompt" (optional)
+            const idx = messages.findIndex((m) => m.id === assistantMsg.id);
+            let userPrompt: string | null = null;
+            for (let i = idx - 1; i >= 0; i--) {
+                if (messages[i]?.role === "user") {
+                    userPrompt = messages[i].content;
+                    break;
+                }
+            }
+
+            const { error } = await supabase
+                .from("chat_message_feedback")
+                .upsert(
+                    {
+                        user_id: user.id,
+                        session_id: sessionIdRef.current,
+                        assistant_message_id: assistantMsg.id,
+                        assistant_content: assistantMsg.content,
+                        user_prompt: userPrompt,
+                        rating,
+                    },
+                    { onConflict: "user_id,session_id,assistant_message_id" }
+                );
+
+            if (error) throw error;
+        } catch (e) {
+            console.error("Feedback error:", e);
+            // rollback UI if you want
+            setMessages((prev) =>
+                prev.map((m) => (m.id === assistantMsg.id ? { ...m, feedback: null } : m))
+            );
+        }
+    };
+
     const handleSendMessage = async () => {
         if (!inputValue.trim()) return;
 
+        const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
         const newUserMessage: Message = {
-            id: Date.now().toString(),
+            id: newId,
             role: "user",
             content: inputValue,
         };
@@ -309,72 +380,61 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         setIsTyping(true);
 
         try {
-            // Fetch cycle data if not already fetched
             if (!cycleDataRef.current) {
-                cycleDataRef.current = await fetchCycleData();
+                await fetchCycleData();
             }
 
-            // Call Groq API for text messages
-            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const safe = safeCycleDataRef.current ?? sanitizeCycleData(cycleDataRef.current ?? {});
+
+            // Security: Only send user and assistant messages to the server
+            // The server will inject the system prompt
+            const chatMessages = messages
+                .filter(m => m.role === "user" || m.role === "assistant")
+                .map(m => ({ role: m.role, content: m.content }));
+
+            // Call YOUR server route (not Groq directly)
+            const response = await fetch("/api/groq-chat", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     model: "llama-3.3-70b-versatile",
-                    messages: [
-                        {
-                            role: "system",
-                            content: `You are Rove AI, a supportive and knowledgeable menstrual cycle assistant. You help users understand their cycle phases, provide personalized nutrition and fitness advice, and answer questions about their menstrual health.
-
-Current user data:
-${JSON.stringify(cycleDataRef.current, null, 2)}
-
-Guidelines:
-- Be warm, empathetic, and encouraging
-- Provide specific, actionable advice based on the user's current cycle phase
-- Reference their cycle day, phase, and any logged symptoms when relevant
-- Keep responses concise (2-3 sentences unless more detail is needed)
-- Use emojis sparingly and appropriately
-- If asked about medical concerns, advise consulting a healthcare provider`
-                        },
-                        {
-                            role: "user",
-                            content: messageText
-                        }
-                    ],
+                    messages: chatMessages,
+                    safeData: safe,
                     temperature: 0.7,
-                    max_tokens: 500
-                })
+                    max_tokens: 500,
+                }),
             });
 
             if (!response.ok) {
-                throw new Error(`Groq API error: ${response.statusText}`);
+                const errText = await response.text();
+                throw new Error(`API error: ${response.status} ${errText}`);
             }
 
             const data = await response.json();
-            const aiResponse = data.choices[0]?.message?.content || "I'm sorry, I couldn't process that. Please try again.";
+            const aiResponseRaw =
+                data?.choices?.[0]?.message?.content || "I'm sorry, I couldn't process that. Please try again.";
 
-            const newAiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: aiResponse,
-            };
+            // Extra layer of protection: strip any emojis that the model might have still included
+            const aiResponse = stripEmojis(aiResponseRaw);
+            const newAiId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
 
-            setMessages((prev) => [...prev, newAiMessage]);
-            setIsTyping(false);
-
+            setMessages((prev) => [
+                ...prev,
+                { id: newAiId, role: "assistant", content: aiResponse },
+            ]);
         } catch (error) {
             console.error("Error sending message:", error);
+            const errorId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: errorId,
+                    role: "assistant",
+                    content: "Sorry, I couldn't process your message. Please try again or use the voice feature.",
+                },
+            ]);
+        } finally {
             setIsTyping(false);
-
-            const errorMessage: Message = {
-                id: Date.now().toString(),
-                role: "assistant",
-                content: "Sorry, I couldn't process your message. Please try again or use the voice feature.",
-            };
-            setMessages((prev) => [...prev, errorMessage]);
         }
     };
 
@@ -391,21 +451,20 @@ Guidelines:
                         />
                     </div>
 
-
                     <div>
                         <h3 className="font-semibold text-lg text-gray-800 leading-none">Rove AI</h3>
-                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Cycle Assistant</p>
+                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">
+                            Cycle Assistant
+                        </p>
                     </div>
                 </div>
+
                 <div className="flex items-center gap-2">
-                    {/* Voice Agent Button */}
                     {!isAgentActive ? (
                         <Button
                             onClick={startAgent}
                             disabled={agentStatus === "initializing"}
-                            className="rounded-full px-4 py-2 bg-purple-100 text-purple-700 
-             border border-purple-200 hover:bg-purple-200 
-             transition-colors text-sm flex items-center gap-2 shadow-sm"
+                            className="rounded-full px-4 py-2 bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 transition-colors text-sm flex items-center gap-2 shadow-sm"
                         >
                             <Phone className="w-4 h-4" />
                             {agentStatus === "initializing" ? "Connecting..." : "Call rove"}
@@ -419,6 +478,7 @@ Guidelines:
                             End Call
                         </Button>
                     )}
+
                     {onClose && (
                         <button onClick={onClose} className="md:hidden text-gray-500 hover:text-gray-800">
                             Close
@@ -427,7 +487,6 @@ Guidelines:
                 </div>
             </div>
 
-            {/* Voice Status Indicator */}
             {isAgentActive && (
                 <div className="px-4 py-2 bg-gradient-to-r from-pink-50 to-purple-50 border-b border-pink-200">
                     <div className="flex items-center gap-2 text-sm text-pink-700">
@@ -437,7 +496,7 @@ Guidelines:
                 </div>
             )}
 
-            {/* Messages Area */}
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
                 {messages.map((message) => (
                     <motion.div
@@ -452,20 +511,59 @@ Guidelines:
                         <div
                             className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm",
-                                message.role === "user" ? "bg-gray-800 text-white" : "bg-white text-pink-500 border border-gray-200"
+                                message.role === "user"
+                                    ? "bg-gray-800 text-white"
+                                    : "bg-white text-pink-500 border border-gray-200"
                             )}
                         >
                             {message.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                         </div>
-                        <div
-                            className={cn(
-                                "p-3 rounded-2xl text-sm leading-relaxed shadow-sm",
-                                message.role === "user"
-                                    ? "bg-gray-800 text-white rounded-tr-none"
-                                    : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
+
+                        <div className="flex flex-col gap-2">
+                            <div
+                                className={cn(
+                                    "p-3 rounded-2xl text-sm leading-relaxed shadow-sm",
+                                    message.role === "user"
+                                        ? "bg-gray-800 text-white rounded-tr-none"
+                                        : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
+                                )}
+                            >
+                                {message.content}
+                            </div>
+
+                            {message.role === "assistant" && (
+                                <div className="flex items-center gap-2 pl-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => submitFeedback(message, 1)}
+                                        className={cn(
+                                            "p-1.5 rounded-full border transition",
+                                            message.feedback === 1
+                                                ? "bg-green-50 border-green-200 text-green-700"
+                                                : "bg-white border-gray-200 text-gray-500 hover:text-gray-800"
+                                        )}
+                                        aria-label="Helpful"
+                                        title="Helpful"
+                                    >
+                                        <ThumbsUp className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => submitFeedback(message, -1)}
+                                        className={cn(
+                                            "p-1.5 rounded-full border transition",
+                                            message.feedback === -1
+                                                ? "bg-red-50 border-red-200 text-red-700"
+                                                : "bg-white border-gray-200 text-gray-500 hover:text-gray-800"
+                                        )}
+                                        aria-label="Not helpful"
+                                        title="Not helpful"
+                                    >
+                                        <ThumbsDown className="w-4 h-4" />
+                                    </button>
+                                </div>
                             )}
-                        >
-                            {message.content}
                         </div>
                     </motion.div>
                 ))}
@@ -486,18 +584,19 @@ Guidelines:
                         </div>
                     </motion.div>
                 )}
+
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
+            {/* Input */}
             <div className="p-4 bg-white border-t border-gray-200">
                 <div className="flex gap-2">
                     <input
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSendMessage();
                             }

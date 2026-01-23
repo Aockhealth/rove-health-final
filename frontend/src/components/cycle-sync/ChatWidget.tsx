@@ -14,7 +14,7 @@ export function ChatWidget() {
         <>
             {/* Floating Action Button */}
             <motion.div
-                className="fixed bottom-40 right-6 md:bottom-10 md:right-10 z-[60]"
+                className="fixed bottom-40 right-6 md:bottom-10 md:right-10 z-[75]"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 1, type: "spring" }}
@@ -50,7 +50,7 @@ export function ChatWidget() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90] md:hidden"
                         />
 
                         {/* Chat Container */}
@@ -60,7 +60,7 @@ export function ChatWidget() {
                             exit={{ opacity: 0, y: 20, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
                             className={cn(
-                                "fixed z-50 overflow-hidden shadow-2xl border border-rove-stone/10 bg-white",
+                                "fixed z-[100] overflow-hidden shadow-2xl border border-rove-stone/10 bg-white",
                                 // Mobile: Full screen drawer style (but leaving space for top)
                                 "inset-x-0 bottom-0 top-20 rounded-t-[2rem]",
                                 // Desktop: Popover style

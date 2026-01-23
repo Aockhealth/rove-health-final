@@ -743,7 +743,7 @@ export default function TrackerPageRedesigned() {
 
                 {/* Save button - Sticky/Fixed above bottom nav on mobile */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <div className="fixed bottom-[80px] md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl px-4 z-[70]">
+                    <div className="fixed bottom-[80px] md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl px-4 z-[60]">
                         <button
                             onClick={handleSave}
                             disabled={isPending || isFutureDate(selectedDate)}
