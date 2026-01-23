@@ -1,4 +1,4 @@
-import { fetchArticleById } from "@/app/actions/learn-actions";
+import { fetchArticleById } from "@backend/actions/cycle-sync/learn/learn-actions";
 import { getStorageUrl } from "@/lib/utils";
 import { ChevronLeft, Calendar, Clock, User } from "lucide-react";
 import Link from "next/link";
