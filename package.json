@@ -1,50 +1,12 @@
 {
-  "name": "rove-health",
-  "version": "0.1.0",
+  "name": "rove-health-monorepo",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@11labs/react": "^0.2.0",
-    "@elevenlabs/client": "^0.12.2",
-    "@google/generative-ai": "^0.24.1",
-    "@nivo/pie": "^0.99.0",
-    "@pinecone-database/pinecone": "^6.1.3",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.86.2",
-    "@tailwindcss/typography": "^0.5.19",
-    "@types/canvas-confetti": "^1.9.0",
-    "@types/pg": "^8.16.0",
-    "canvas-confetti": "^1.9.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.23.24",
-    "lucide-react": "^0.555.0",
-    "next": "16.0.5",
-    "openai": "^6.10.0",
-    "pg": "^8.16.3",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-markdown": "^10.1.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0",
-    "tsx": "^4.21.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.5",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "start:frontend": "npm run start --prefix frontend",
+    "dev": "npm run dev --prefix frontend",
+    "lint": "npm run lint --prefix frontend"
   }
 }

@@ -1,0 +1,67 @@
+{
+  "version": "5",
+  "redirects": {
+    "https://esm.sh/@supabase/node-fetch@^2.6.13?target=denonext": "https://esm.sh/@supabase/node-fetch@2.6.15?target=denonext",
+    "https://esm.sh/@supabase/node-fetch@^2.6.14?target=denonext": "https://esm.sh/@supabase/node-fetch@2.6.15?target=denonext",
+    "https://esm.sh/@supabase/storage-js@^2.10.4?target=denonext": "https://esm.sh/@supabase/storage-js@2.10.4?target=denonext",
+    "https://esm.sh/@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.54.0",
+    "https://esm.sh/tr46@~0.0.3?target=denonext": "https://esm.sh/tr46@0.0.3?target=denonext",
+    "https://esm.sh/webidl-conversions@^3.0.0?target=denonext": "https://esm.sh/webidl-conversions@3.0.1?target=denonext",
+    "https://esm.sh/whatwg-url@^5.0.0?target=denonext": "https://esm.sh/whatwg-url@5.0.0?target=denonext"
+  },
+  "remote": {
+    "https://esm.sh/@supabase/auth-js@2.71.1/denonext/auth-js.mjs": "d55f67342e652b8bdce35b0ff13ad5cc294b7e96dbd68f859b464b07c6864967",
+    "https://esm.sh/@supabase/functions-js@2.4.5/denonext/functions-js.mjs": "acfcb4db90c292c335a9dbb5664485f5e0b680533d68e6942abb9387ec7e0d0b",
+    "https://esm.sh/@supabase/node-fetch@2.6.15/denonext/node-fetch.mjs": "0bae9052231f4f6dbccc7234d05ea96923dbf967be12f402764580b6bf9f713d",
+    "https://esm.sh/@supabase/node-fetch@2.6.15?target=denonext": "4d28c4ad97328403184353f68434f2b6973971507919e9150297413664919cf3",
+    "https://esm.sh/@supabase/postgrest-js@1.19.4/denonext/postgrest-js.mjs": "2073b5552ba10c7a8302bffffae771e3aede1daf833382355dae239fb0ab2576",
+    "https://esm.sh/@supabase/realtime-js@2.15.0/denonext/realtime-js.mjs": "27e12368aa2e4bd4d1879e768d96f278362d3508927e9e58af38fd71fe5899db",
+    "https://esm.sh/@supabase/storage-js@2.10.4/denonext/storage-js.mjs": "35600c8c2ecd34f833d3695f90997c294b4f95b2c20677b2d7fd643927b68f4f",
+    "https://esm.sh/@supabase/storage-js@2.10.4?target=denonext": "ff2b275160422ea202adedd9dbcd68d1dd6a9326bc0929bf2bf22d05703b5f05",
+    "https://esm.sh/@supabase/supabase-js@2.54.0": "17b11dd716bb066eca7f3a01cc2e90c542cb9a91a7faee7db6aeec4e7c9e630c",
+    "https://esm.sh/@supabase/supabase-js@2.54.0/denonext/supabase-js.mjs": "71376769735a8246423efb25f6573a1795131b7b94df47eb1b9933b2ef82bc8c",
+    "https://esm.sh/tr46@0.0.3/denonext/tr46.mjs": "5753ec0a99414f4055f0c1f97691100f13d88e48a8443b00aebb90a512785fa2",
+    "https://esm.sh/tr46@0.0.3?target=denonext": "19cb9be0f0d418a0c3abb81f2df31f080e9540a04e43b0f699bce1149cba0cbb",
+    "https://esm.sh/webidl-conversions@3.0.1/denonext/webidl-conversions.mjs": "54b5c2d50a294853c4ccebf9d5ed8988c94f4e24e463d84ec859a866ea5fafec",
+    "https://esm.sh/webidl-conversions@3.0.1?target=denonext": "4e20318d50528084616c79d7b3f6e7f0fe7b6d09013bd01b3974d7448d767e29",
+    "https://esm.sh/whatwg-url@5.0.0/denonext/whatwg-url.mjs": "29b16d74ee72624c915745bbd25b617cfd2248c6af0f5120d131e232a9a9af79",
+    "https://esm.sh/whatwg-url@5.0.0?target=denonext": "f001a2cadf81312d214ca330033f474e74d81a003e21e8c5d70a1f46dc97b02d"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@11labs/react@0.2",
+        "npm:@elevenlabs/client@~0.12.2",
+        "npm:@google/generative-ai@~0.24.1",
+        "npm:@nivo/pie@0.99",
+        "npm:@pinecone-database/pinecone@^6.1.3",
+        "npm:@radix-ui/react-slot@^1.2.4",
+        "npm:@supabase/ssr@0.8",
+        "npm:@supabase/supabase-js@^2.86.2",
+        "npm:@tailwindcss/postcss@4",
+        "npm:@types/canvas-confetti@^1.9.0",
+        "npm:@types/node@20",
+        "npm:@types/pg@^8.16.0",
+        "npm:@types/react-dom@19",
+        "npm:@types/react@19",
+        "npm:babel-plugin-react-compiler@1.0.0",
+        "npm:canvas-confetti@^1.9.4",
+        "npm:class-variance-authority@~0.7.1",
+        "npm:clsx@^2.1.1",
+        "npm:eslint-config-next@16.0.5",
+        "npm:eslint@9",
+        "npm:framer-motion@^12.23.24",
+        "npm:lucide-react@0.555",
+        "npm:next@16.0.5",
+        "npm:openai@^6.10.0",
+        "npm:pg@^8.16.3",
+        "npm:react-dom@19.2.0",
+        "npm:react@19.2.0",
+        "npm:tailwind-merge@^3.4.0",
+        "npm:tailwindcss@4",
+        "npm:tsx@^4.21.0",
+        "npm:typescript@5"
+      ]
+    }
+  }
+}
