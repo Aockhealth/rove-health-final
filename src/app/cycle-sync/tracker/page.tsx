@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Check, Droplets, Calendar, Edit2, X, Info, W
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { logDailySymptoms, getDailyLog, fetchUserCycleSettings, updateLastPeriodDate, updateCycleLength, fetchMonthLogs } from "@/app/actions/cycle-sync";
+import { calculatePhase } from "@/utils/cycle-calculator";
 import confetti from "canvas-confetti";
 import { toast, Toaster } from "sonner";
 
@@ -42,6 +43,9 @@ export default function TrackerPageRedesigned() {
 
     // Standard Tracker State
     const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+
+
+
     const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
     const [selectedExercise, setSelectedExercise] = useState<string[]>([]);
     const [exerciseMinutes, setExerciseMinutes] = useState<string>("");
@@ -72,6 +76,11 @@ export default function TrackerPageRedesigned() {
         cycle_length_days: 28,
         period_length_days: 5
     });
+
+    useEffect(() => {
+        console.log("DEBUG_MONTH_LOGS", JSON.stringify(monthLogs, null, 2));
+        console.log("DEBUG_CYCLE_SETTINGS", JSON.stringify(cycleSettings, null, 2));
+    }, [monthLogs, cycleSettings]);
 
     // Helper to format date as YYYY-MM-DD in local time
     const formatDate = (date: Date) => {
@@ -562,33 +571,35 @@ export default function TrackerPageRedesigned() {
         // 🔹 1️⃣ Explicit Period Log always wins
         if (log?.is_period) return "Menstrual";
 
-        // 🔹 2️⃣ Calculate Phase based on Cycle Day (even if logged!)
+        // 🔹 2️⃣ Calculate Phase based on Cycle Day (using shared logic)
         const startStr = getRelevantPeriodStart(date);
 
         // If we can't find ANY start date (global or logged), default to Follicular
         if (!startStr) return "Follicular";
 
-        // Use modulo logic for ALL dates to ensure consistent 4-phase cycles (Past & Future)
-        const start = new Date(startStr);
-        start.setHours(0, 0, 0, 0);
-        const checkDate = new Date(date);
-        checkDate.setHours(0, 0, 0, 0);
+        const { phase, daysSinceLastPeriod } = calculatePhase(
+            date,
+            startStr,
+            cycleSettings.cycle_length_days || 28,
+            cycleSettings.period_length_days || 5
+        );
 
-        const diffTime = checkDate.getTime() - start.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
+        // 🔹 3️⃣ DETECT "LATE" / "NOT STARTED YET"
+        // If we are in "Menstrual" phase purely by prediction (days > cycle length)
+        // AND there is no actual log for this date
+        // AND the date is today or in the past
+        // Then standard convention: Show "Luteal" (Late) until they log period.
         const cycleLength = cycleSettings.cycle_length_days || 28;
-        let dayInCycle = (diffDays % cycleLength) + 1;
-        if (dayInCycle <= 0) dayInCycle += cycleLength;
+        if (phase === "Menstrual" && daysSinceLastPeriod >= cycleLength) {
+            // We are in the "Next Cycle" zone but user hasn't logged it.
+            // If we are past or today, show Luteal.
+            // If future, keep Menstrual (Prediction).
+            if (isPastDate(date) || dateStr === formatDate(new Date())) {
+                return "Luteal";
+            }
+        }
 
-        const periodLength = cycleSettings.period_length_days || 5;
-        const ovulationDay = cycleLength - 14;
-
-        if (dayInCycle <= periodLength) return "Menstrual";
-        if (dayInCycle >= ovulationDay - 1 && dayInCycle <= ovulationDay + 1) return "Ovulatory"; // 3-day fertile window
-        if (dayInCycle > ovulationDay + 1) return "Luteal";
-
-        return "Follicular";
+        return phase as Phase;
     };
 
 
@@ -991,9 +1002,9 @@ export default function TrackerPageRedesigned() {
     const waveProgress = [!!mpiqLastPeriodDB, !!mpiqConsistency, !!mpiqAppearance, !!mpiqSensation].filter(Boolean).length * 25;
 
     // Compute showEndButton for UI (used in both render and handler)
-    // Simplified: showEndButton is strictly derived from whether the selected date is already a period day
-    // const showEndButton = monthLogs[formatDate(selectedDate)]?.is_period === true;
-    const showEndButton = !!cycleSettings.last_period_start;
+    // Fix: Only show End Button if the current view mode is 'period' (meaning we are editing a period log)
+    // OR if the selected date is explicitly logged as a period day.
+    const showEndButton = monthLogs[formatDate(selectedDate)]?.is_period === true;
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">

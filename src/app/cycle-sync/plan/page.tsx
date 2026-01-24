@@ -1113,17 +1113,108 @@ export default function DetailedPlanPage() {
                             </section>
 
                             <section>
-                                <SectionHeader title="Daily Rituals" icon={CheckCircle2} />
-                                <div className={cn("backdrop-blur-xl rounded-[1.5rem] border shadow-sm overflow-hidden p-1 transition-all duration-500", theme.softBg, theme.border)}>
-                                    {BP.rituals.practices.map((practice: any, i: number) => (
-                                        <RitualCheckbox
-                                            key={i}
-                                            item={practice}
-                                            theme={theme}
-                                            index={i}
-                                            total={BP.rituals.practices.length}
-                                        />
-                                    ))}
+                                <SectionHeader title="Your Focus" icon={Target} />
+                                <div className="space-y-4">
+                                    {/* 1. Weight Tracker Integration (If goal is weight_loss) */}
+                                    {data?.weightGoal?.fitnessGoal === "weight_loss" && (
+                                        <div className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm", theme.cardBg, theme.border)}>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", theme.iconContainer)}>
+                                                        <Scale className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-rove-charcoal font-heading font-bold text-sm">Weight Tracker</h4>
+                                                        <p className="text-rove-stone text-[10px]">Your progress this week</p>
+                                                    </div>
+                                                </div>
+                                                <Badge className={cn("text-[10px] uppercase font-bold text-white", theme.accent)}>Active</Badge>
+                                            </div>
+
+                                            {/* Simple Stats Row */}
+                                            <div className="flex items-center justify-around mb-4 bg-white/40 p-3 rounded-xl border border-white/50">
+                                                <div className="text-center">
+                                                    <div className="text-xs text-rove-stone uppercase tracking-wider mb-1">Start</div>
+                                                    <div className="font-heading font-bold text-rove-charcoal">{data.weightGoal.startWeight}</div>
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-rove-stone/40" />
+                                                <div className="text-center">
+                                                    <div className="text-xs text-rove-stone uppercase tracking-wider mb-1">Current</div>
+                                                    <div className={cn("font-heading font-bold", theme.color)}>{data.weightGoal.currentWeight}</div>
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-rove-stone/40" />
+                                                <div className="text-center">
+                                                    <div className="text-xs text-rove-stone uppercase tracking-wider mb-1">Goal</div>
+                                                    <div className="font-heading font-bold text-rove-charcoal">{data.weightGoal.targetWeight}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white/50 p-3 rounded-xl text-center">
+                                                <p className="text-xs text-rove-stone">
+                                                    {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                        ? `🔥 You've lost ${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)}kg! Keep it up!`
+                                                        : `🌱 Beginning your journey. Consistency is key!`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 2. PCOS / Condition Insight Card */}
+                                    {data?.conditions?.includes("pcos") && (
+                                        <div className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm relative overflow-hidden", theme.cardBg, theme.border)}>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                                                        <Flower2 className="w-4 h-4" />
+                                                    </div>
+                                                    <h4 className="text-rove-charcoal font-heading font-bold text-sm">PCOS Support</h4>
+                                                </div>
+                                                <p className="text-sm text-rove-stone leading-relaxed">
+                                                    {phaseName === "Menstrual" ? "Inflammation is naturally lower but insulin sensitivity can be tricky. Prioritize warm, cooked proteins." :
+                                                        phaseName === "Follicular" ? "Estrogen is rising. Great time for spearmint tea to help balance androgens." :
+                                                            phaseName === "Ovulatory" ? "You might feel a stronger energy spike. Use it, but avoid burnout to keep cortisol low." :
+                                                                "Progesterone is key now. Use magnesium and limit sugar to prevent insulin spikes."}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 3. Muscle Gain Insight */}
+                                    {data?.weightGoal?.fitnessGoal === "muscle_gain" && (
+                                        <div className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm", theme.cardBg, theme.border)}>
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                                    <Dumbbell className="w-4 h-4" />
+                                                </div>
+                                                <h4 className="text-rove-charcoal font-heading font-bold text-sm">Muscle Strategy</h4>
+                                            </div>
+                                            <p className="text-sm text-rove-stone leading-relaxed">
+                                                {phaseName === "Follicular" || phaseName === "Ovulatory"
+                                                    ? "Anabolic Window: Estrogen helps muscle repair. Push your weights up for max hypertrophy."
+                                                    : "Maintenance Mode: Your body is using more energy for internal heat. Focus on form and protein intake."}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* 4. Irregular Cycle Insight */}
+                                    {data?.isCycleIrregular && (
+                                        <div className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm", theme.cardBg, theme.border)}>
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                                                    <Waves className="w-4 h-4" />
+                                                </div>
+                                                <h4 className="text-rove-charcoal font-heading font-bold text-sm">Irregular Cycle Tips</h4>
+                                            </div>
+                                            <p className="text-sm text-rove-stone leading-relaxed">
+                                                Since your cycle length varies, these phase predictions are estimates.
+                                                <span className="font-bold block mt-2 mb-1">Watch for body cues:</span>
+                                                <ul className="list-disc list-inside space-y-1 text-xs opacity-90">
+                                                    <li>Rising basal temperature = Ovulation passed</li>
+                                                    <li>Egg-white cervical mucus = Fertile window</li>
+                                                </ul>
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
 

@@ -51,45 +51,10 @@ function getRandomItems<T>(items: T[], count: number): T[] {
  * Dynamic Cycle Tracking Logic
  * Calculates the current phase based on the target date and last period start.
  */
-function calculatePhase(
-    targetDate: Date,
-    lastPeriodStart: string,
-    cycleLength: number = 28,
-    periodLength: number = 5
-) {
-    const start = new Date(lastPeriodStart);
-    const d = new Date(targetDate);
-    const s = new Date(start);
-    d.setHours(0, 0, 0, 0);
-    s.setHours(0, 0, 0, 0);
+import { calculatePhase } from "@/utils/cycle-calculator";
 
-    const diffTime = d.getTime() - s.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+// Removed local calculatePhase function
 
-    let dayInCycle = (diffDays % cycleLength) + 1;
-    if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-    // Calculate Next Period Date
-    const completedCycles = Math.floor(diffDays / cycleLength);
-    // If diffDays is negative (target before start), completeCycles is negative, math still works.
-    // Next period = Start + (Completed + 1) * CycleLength
-    const nextCycleIndex = diffDays >= 0 ? completedCycles + 1 : 0;
-
-    // Better logic:
-    // If today is day 1, next period is in (cycleLength - 1) days.
-    // Next Period = TargetDate + (CycleLength - DayInCycle + 1)
-    const daysUntilNext = cycleLength - dayInCycle + 1;
-    const nextPeriod = new Date(d);
-    nextPeriod.setDate(d.getDate() + daysUntilNext);
-    const nextPeriodDate = nextPeriod.toISOString().split('T')[0];
-
-    const estimatedOvulationDay = cycleLength - 14;
-
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle, nextPeriodDate };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle, nextPeriodDate };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle, nextPeriodDate };
-    return { phase: "Luteal", day: dayInCycle, nextPeriodDate };
-}
 
 
 // --- AI ACTIONS ---
@@ -488,34 +453,79 @@ function calculateCycleSyncedCalories(
     return Math.round(tdee);
 }
 
-function getPhaseMacros(phase: string, calories: number) {
-    let split = { protein: 0.3, fats: 0.3, carbs: 0.4 }; // Default
+function getPhaseMacros(phase: string, calories: number, weightKg: number = 60) {
+    // 1. Calculate Protein based on Body Weight (Female Specific / Indian Context)
+    // Range: 1.2g (Rest) to 1.6g (Peak) per kg
+    let proteinMultiplier = 1.2;
 
     switch (phase) {
         case "Menstrual":
-            // 30% P / 40% F / 30% C (Satiety, lower carbs due to inactivity)
-            split = { protein: 0.30, fats: 0.40, carbs: 0.30 };
+            // Rest & Restore. Lower protein need compared to active phases.
+            proteinMultiplier = 1.2;
             break;
         case "Follicular":
-            // 30% P / 20% F / 50% C (Fuel for muscle hypertrophy)
-            split = { protein: 0.30, fats: 0.20, carbs: 0.50 };
+            // Building phase.
+            proteinMultiplier = 1.4;
             break;
         case "Ovulatory":
-            // 25% P / 20% F / 55% C (Peak carb for high intensity)
-            split = { protein: 0.25, fats: 0.20, carbs: 0.55 };
+            // Peak intensity.
+            proteinMultiplier = 1.6;
             break;
         case "Luteal":
-            // 30% P / 30% F / 40% C (Balanced to stabilize blood sugar)
-            split = { protein: 0.30, fats: 0.30, carbs: 0.40 };
+            // Maintenance & Satiety.
+            proteinMultiplier = 1.4;
             break;
     }
 
-    // Convert percentages to grams
-    // Protein = 4 kcal/g, Fat = 9 kcal/g, Carb = 4 kcal/g
+    const proteinGrams = Math.round(weightKg * proteinMultiplier);
+    const proteinCals = proteinGrams * 4;
+
+    // Protection against edge cases where TDEE is very low (keep protein realistic)
+    // Protection against TDEE being too high (cap protein if needed, but 1.6g/kg is safe)
+
+    // 2. Calculate Remaining Calories for Fats & Carbs
+    const remainingCals = Math.max(0, calories - proteinCals);
+
+    // 3. Split Remaining Calories based on Phase
+    let split = { fats: 0.5, carbs: 0.5 }; // Default even split of remainder
+
+    switch (phase) {
+        case "Menstrual":
+            // Higher Fat for comfort/satiety. Lower Carb.
+            // Remainder Split: 60% Fat / 40% Carb
+            split = { fats: 0.60, carbs: 0.40 };
+            break;
+        case "Follicular":
+            // Higher Carb for energy.
+            // Remainder Split: 30% Fat / 70% Carb
+            split = { fats: 0.30, carbs: 0.70 };
+            break;
+        case "Ovulatory":
+            // Peak Carb.
+            // Remainder Split: 25% Fat / 75% Carb
+            split = { fats: 0.25, carbs: 0.75 };
+            break;
+        case "Luteal":
+            // Balanced but leaning carb for mood/cravings? Or fat for stability?
+            // Let's go balanced-ish: 45% Fat / 55% Carb
+            split = { fats: 0.45, carbs: 0.55 };
+            break;
+    }
+
+    const fatCals = remainingCals * split.fats;
+    const carbCals = remainingCals * split.carbs;
+
+    const fatsGrams = Math.round(fatCals / 9);
+    const carbsGrams = Math.round(carbCals / 4);
+
+    // Calculate percentages for UI
+    // Total might be slightly off due to rounding, but it's fine for display
+    const totalCals = proteinCals + fatCals + carbCals; // Should equal 'calories' approx
+
     return {
-        protein: { g: Math.round((calories * split.protein) / 4), pct: Math.round(split.protein * 100) },
-        fats: { g: Math.round((calories * split.fats) / 9), pct: Math.round(split.fats * 100) },
-        carbs: { g: Math.round((calories * split.carbs) / 4), pct: Math.round(split.carbs * 100) }
+        protein: { g: proteinGrams, pct: Math.round((proteinCals / totalCals) * 100) },
+        fats: { g: fatsGrams, pct: Math.round((fatCals / totalCals) * 100) },
+        carbs: { g: carbsGrams, pct: Math.round((carbCals / totalCals) * 100) }
     };
 }
 
@@ -544,12 +554,24 @@ export async function fetchCycleIntelligence() {
     if (!cycleSettings) return null;
 
     // 2. Calculate Phase
-    const { phase, day } = calculatePhase(
+    let { phase, day, daysSinceLastPeriod } = calculatePhase(
         new Date(),
         cycleSettings.last_period_start,
         cycleSettings.cycle_length_days,
         cycleSettings.period_length_days
     );
+
+    // 🔹 LATE PERIOD LOGIC:
+    // If we are in "Menstrual" purely by prediction (days >= cycle length)
+    // but the user hasn't actually logged a new period (which would update last_period_start),
+    // then they are technically late (Luteal extension).
+    if (phase === "Menstrual" && daysSinceLastPeriod >= (cycleSettings.cycle_length_days || 28)) {
+        phase = "Luteal";
+        // Optionally keep 'day' as is (e.g. Day 29, 30...) or clamp it? 
+        // calculatePhase returns a modulo'd day for Menstrual (e.g. 1, 2). 
+        // If we switch to Luteal, we might want to show Day 29?
+        // But for now, just switching phase content is enough to avoid "Menstrual" confusion.
+    }
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
 
@@ -562,7 +584,7 @@ export async function fetchCycleIntelligence() {
     // Calculate TDEE
     const tdee = calculateCycleSyncedCalories(weight, height, age, phase);
     // Calculate Macros
-    const macros = getPhaseMacros(phase, tdee);
+    const macros = getPhaseMacros(phase, tdee, weight);
 
     const nutrition = {
         macros: macros,
@@ -678,13 +700,15 @@ export async function fetchCycleIntelligenceAI() {
     ).day;
 
     // 3. Fetch lifestyle and weight goal data
-    const [lifestyleResult, weightGoalResult] = await Promise.all([
+    const [lifestyleResult, weightGoalResult, onboardingResult] = await Promise.all([
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
-        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle()
+        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_onboarding").select("metabolic_conditions, height_cm, weight_kg").eq("user_id", user.id).single()
     ]);
 
     const lifestyle = lifestyleResult.data;
     const weightGoal = weightGoalResult.data;
+    const onboarding = onboardingResult.data;
 
     // 4. Get AI-powered diet plan from Edge Function
     let dietPlan: DietPlanResponse | null = null;
@@ -705,12 +729,12 @@ export async function fetchCycleIntelligenceAI() {
         },
         calories: dietPlan.calories
     } : (() => {
-        const { data: onboarding } = { data: null } as any;
-        const weight = 60;
-        const height = 165;
-        const age = 30;
+        // Fallback or Local Calculation using body weight logic
+        const weight = onboarding?.weight_kg || lifestyle?.weight_kg || 60;
+        const height = onboarding?.height_cm || 165;
+        const age = 30; // Approximation if DOB not available in this context
         const tdee = calculateCycleSyncedCalories(weight, height, age, phase);
-        const macros = getPhaseMacros(phase, tdee);
+        const macros = getPhaseMacros(phase, tdee, weight);
         return { macros, calories: tdee };
     })();
 
@@ -784,7 +808,9 @@ export async function fetchCycleIntelligenceAI() {
             weeklyRate: weightGoal.weekly_rate_kg,
             startDate: weightGoal.start_date,
             fitnessGoal: lifestyle?.fitness_goal
-        } : null
+        } : null,
+        conditions: onboarding?.metabolic_conditions || [],
+        isCycleIrregular: cycleSettings.is_irregular || false
     };
 }
 
