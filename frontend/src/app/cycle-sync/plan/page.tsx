@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useTransition } from "react";
 import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
-import { calculateSmartPhase } from "@/lib/cycle/smart-calc"; // NEW
+import { calculateSmartPhase } from "@shared/cycle/smart-phase";
 import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
@@ -19,6 +19,7 @@ import {
     Flower2, Target, Scale, Plus, Trash2
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 // --- Custom Components ---
 import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
@@ -606,22 +607,34 @@ export default function DetailedPlanPage() {
     useEffect(() => {
         const load = async () => {
             try {
-                // ✅ OPTIMIZED: Fetch all in parallel
-                const [planSettings, unified, cycleData] = await Promise.all([
-                    fetchPlanSettings(),
-                    fetchUnifiedCycleData(),      // 1. Sync Logic
-                    fetchCycleIntelligenceAI()    // 2. Content Logic (Legacy)
-                ]);
+                // ⚡ ULTRA-FAST: Single action fetches ALL data in 1 trip
+                const { fetchPlanPageDataFast } = await import("@/app/actions/cycle-sync");
+                const fastData = await fetchPlanPageDataFast();
 
-                if (planSettings) {
+                if (fastData?.lifestyle) {
                     setHasPlanSetup(true);
-                    if (planSettings.weight_kg) setWeight(planSettings.weight_kg.toString());
-                    if (planSettings.height_cm) setHeight(planSettings.height_cm.toString());
-                    if (planSettings.activity_level) setActivity(planSettings.activity_level);
-                    if (planSettings.fitness_goal) setFitnessGoal(planSettings.fitness_goal); // ✅ Capture Goal
+                    if (fastData.lifestyle.weight_kg) setWeight(fastData.lifestyle.weight_kg.toString());
+                    if (fastData.lifestyle.height_cm) setHeight(fastData.lifestyle.height_cm.toString());
+                    if (fastData.lifestyle.activity_level) setActivity(fastData.lifestyle.activity_level);
+                    if (fastData.lifestyle.fitness_goal) setFitnessGoal(fastData.lifestyle.fitness_goal);
 
-                    if (unified) setUnifiedData(unified);
-                    if (cycleData) setData(cycleData);
+                    // Set unified data for smart phase calculation
+                    setUnifiedData({
+                        settings: fastData.settings,
+                        monthLogs: fastData.monthLogs,
+                        smartPhase: { phase: fastData.phase, day: fastData.day },
+                        userId: ""
+                    });
+
+                    // Set legacy data format for UI components
+                    setData({
+                        phase: fastData.phase,
+                        day: fastData.day,
+                        blueprint: fastData.blueprint,
+                        biometrics: fastData.biometrics,
+                        weightGoal: fastData.weightGoal,
+                        settings: fastData.settings
+                    });
                 } else {
                     setHasPlanSetup(false);
                 }
@@ -766,11 +779,7 @@ export default function DetailedPlanPage() {
         });
     };
 
-    if (setupLoading) return (
-        <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
-            <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
-        </div>
-    );
+    if (setupLoading) return <LoadingScreen />;
 
     // --- 5. RENDER: SETUP WIZARD (REDESIGNED) ---
     if (!hasPlanSetup) {

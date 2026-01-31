@@ -221,23 +221,46 @@ export async function fetchDashboardData() {
         };
     }
 
-    // ✅ OPTIMIZED: Parallel DB fetch
-    const [profileResult, onboardingResult] = await Promise.all([
+    // ⚡ MEGA PARALLEL: Fetch ALL dashboard data in one trip
+    const [profileResult, onboardingResult, settingsResult, logsResult, contentResult] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user.id).single(),
-        supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single()
+        supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single(),
+        supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
+        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
+        supabase.from("phase_content").select("*")
     ]);
 
     const profile = profileResult.data;
     const onboarding = onboardingResult.data;
+    const settings = settingsResult.data;
+    const logs = logsResult.data || [];
+    const allContent = contentResult.data || [];
 
-    // ✅ CANONICAL STATE: Use the single source of truth
-    const cycleState = await getCanonicalCycleState(user.id);
-    if (!cycleState) return null;
+    if (!settings) return null;
 
-    const { phase, day, nextPeriodDate, cycleLength, settings: cycleSettings } = cycleState;
+    // Build log map for smart phase
+    const monthLogs: Record<string, any> = {};
+    logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
 
-    // Fetched from DB or Fallback
-    const content = await getPhaseContentFromDB(phase);
+    // Calculate phase locally (no additional DB call)
+    const { phase, day } = calculatePhase(
+        new Date(),
+        settings.last_period_start,
+        settings.cycle_length_days || 28,
+        settings.period_length_days || 5
+    );
+
+    const cycleLength = settings.cycle_length_days || 28;
+    const nextPeriodDate = (() => {
+        const [py, pm, pd] = settings.last_period_start.split('-').map(Number);
+        const next = new Date(py, pm - 1, pd);
+        next.setDate(next.getDate() + cycleLength);
+        return formatDate(next);
+    })();
+
+    // Get content for current phase
+    const phaseRow = allContent.find((c: any) => c.phase_name === phase);
+    const content = phaseRow?.content_json || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems((content as any).river, 1)[0] || "Rest • Restore • Reload";
 
     return {
@@ -245,11 +268,18 @@ export async function fetchDashboardData() {
         phase: {
             name: phase,
             day: day,
-            length: cycleLength || 28,
+            length: cycleLength,
             nextPeriodDate: nextPeriodDate,
             hormones: "Rising Estrogen",
             symptomFocus: "Energy rising? Time to create.",
         },
+        // Unified data for client-side smart phase recalculation
+        settings: {
+            last_period_start: settings.last_period_start,
+            cycle_length_days: settings.cycle_length_days || 28,
+            period_length_days: settings.period_length_days || 5
+        },
+        monthLogs,
         // New educational data for Daily Flow
         nutrients: content.nutrients || [],
         phaseFocus: content.phaseFocus || [],
@@ -634,6 +664,166 @@ function getDefaultBiometricsReason(phase: string): string {
         default:
             return "Balanced nutrition for general health.";
     }
+}
+
+// ==========================================================
+// ⚡ FAST: UNIFIED PLAN PAGE DATA (Single Trip, Max Parallelization)
+// ==========================================================
+export async function fetchPlanPageDataFast() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // ⚡ MEGA PARALLEL: Fetch ALL data in ONE trip
+    const [
+        settingsResult,
+        logsResult,
+        lifestyleResult,
+        weightGoalResult,
+        contentResult
+    ] = await Promise.all([
+        supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
+        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
+        supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
+        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("phase_content").select("*")
+    ]);
+
+    const settings = settingsResult.data;
+    const lifestyle = lifestyleResult.data;
+    const weightGoal = weightGoalResult.data;
+    const logs = logsResult.data || [];
+    const allContent = contentResult.data || [];
+
+    if (!settings) return null;
+
+    // Build log map for smart phase
+    const monthLogs: Record<string, any> = {};
+    logs.forEach((l: any) => { monthLogs[l.date] = l; });
+
+    // Calculate phase locally (no DB call)
+    const { phase, day } = calculatePhase(
+        new Date(),
+        settings.last_period_start,
+        settings.cycle_length_days || 28,
+        settings.period_length_days || 5
+    );
+
+    // Get content for current phase
+    const phaseRow = allContent.find((c: any) => c.phase_name === phase);
+    const content = phaseRow?.content_json || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+
+    // Build unified response
+    return {
+        // Cycle data
+        phase,
+        day,
+        settings: {
+            last_period_start: settings.last_period_start,
+            cycle_length_days: settings.cycle_length_days || 28,
+            period_length_days: settings.period_length_days || 5
+        },
+        monthLogs,
+
+        // Lifestyle data
+        lifestyle: lifestyle ? {
+            weight_kg: lifestyle.weight_kg,
+            height_cm: lifestyle.height_cm,
+            activity_level: lifestyle.activity_level,
+            fitness_goal: lifestyle.fitness_goal
+        } : null,
+
+        // Weight goal data
+        weightGoal: weightGoal ? {
+            currentWeight: lifestyle?.weight_kg || weightGoal.current_weight_kg,
+            targetWeight: weightGoal.target_weight_kg,
+            startWeight: weightGoal.current_weight_kg,
+            weeklyRate: weightGoal.weekly_rate_kg,
+            startDate: weightGoal.start_date,
+            fitnessGoal: lifestyle?.fitness_goal
+        } : null,
+
+        // Phase content (blueprint)
+        blueprint: {
+            color: phase === "Menstrual" ? "bg-rove-red" :
+                phase === "Follicular" ? "bg-rove-peach" :
+                    phase === "Ovulatory" ? "bg-rove-charcoal" : "bg-amber-500",
+            hormones: {
+                title: "Hormonal State",
+                summary: content.plan?.hormones?.summary || "",
+                desc: content.snapshot?.[0]?.hormones?.desc || "",
+                symptoms: content.plan?.hormones?.symptoms || []
+            },
+            rituals: {
+                focus: content.river?.[0] || "Rest & Restore",
+                practices: content.rituals || [],
+                symptom_relief: content.plan?.rituals?.symptom_relief || []
+            },
+            diet: {
+                core_needs: content.fuel || [],
+                ideal_meals: content.plan?.diet?.ideal_meals || [],
+                cramp_relief: content.plan?.diet?.cramp_relief || [],
+                avoid: content.plan?.diet?.avoid || []
+            },
+            exercise: {
+                summary: content.plan?.exercise?.summary || "",
+                best: content.move || [],
+                avoid: content.plan?.exercise?.avoid || []
+            },
+            supplements: content.plan?.supplements || [],
+            daily_flow: content.plan?.daily_flow || [],
+            nutrition_guide: content.nutrition_guide || {}
+        },
+
+        biometrics: {
+            reason: getDefaultBiometricsReason(phase)
+        }
+    };
+}
+
+// ==========================================================
+// ⚡ FAST: UNIFIED TRACKER PAGE DATA (Single Trip)
+// ==========================================================
+export async function fetchTrackerPageDataFast(selectedDateStr?: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Get 90 days of logs (covers prev/current/next months + history for streak)
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - 90);
+
+    // ⚡ MEGA PARALLEL: Fetch ALL tracker data in one trip
+    const [settingsResult, logsResult, todayLogResult] = await Promise.all([
+        supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
+        supabase.from("daily_logs").select("*").eq("user_id", user.id).gte("date", pastDate.toISOString().split('T')[0]).order("date", { ascending: false }),
+        selectedDateStr
+            ? supabase.from("daily_logs").select("*").eq("user_id", user.id).eq("date", selectedDateStr).maybeSingle()
+            : Promise.resolve({ data: null })
+    ]);
+
+    const settings = settingsResult.data;
+    const allLogs = logsResult.data || [];
+
+    if (!settings) return null;
+
+    // Build log map for calendar
+    const monthLogs: Record<string, any> = {};
+    allLogs.forEach((l: any) => {
+        monthLogs[l.date] = l;
+    });
+
+    return {
+        settings: {
+            last_period_start: settings.last_period_start,
+            cycle_length_days: settings.cycle_length_days || 28,
+            period_length_days: settings.period_length_days || 5,
+        },
+        monthLogs,
+        selectedDayLog: todayLogResult.data,
+        hasSettings: !!settings.last_period_start
+    };
 }
 
 // ==========================================================
@@ -1148,24 +1338,26 @@ function calculatePhase(
 export async function getCanonicalCycleState(userId: string) {
     const supabase = await createClient();
 
-    // 1. Fetch settings
-    const { data: settings } = await supabase
-        .from("user_cycle_settings")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+    // ✅ OPTIMIZED: Parallel fetch of settings and logs
+    const [settingsResult, logsResult] = await Promise.all([
+        supabase
+            .from("user_cycle_settings")
+            .select("*")
+            .eq("user_id", userId)
+            .single(),
+        supabase
+            .from("daily_logs")
+            .select("date")
+            .eq("user_id", userId)
+            .eq("is_period", true)
+            .order("date", { ascending: false })
+            .limit(10) // Check last 10 period days
+    ]);
+
+    const settings = settingsResult.data;
+    const recentLogs = logsResult.data;
 
     if (!settings) return null;
-
-    // 2. Fetch latest logs (plural) to find streak start
-    // We need enough history to find the start of the current period
-    const { data: recentLogs } = await supabase
-        .from("daily_logs")
-        .select("date")
-        .eq("user_id", userId)
-        .eq("is_period", true)
-        .order("date", { ascending: false })
-        .limit(10); // Check last 10 period days
 
     let lastPeriodStart = settings.last_period_start;
     const periodLength = settings.period_length_days || 5;
@@ -1207,7 +1399,6 @@ export async function getCanonicalCycleState(userId: string) {
         // 1. Settings too old (lagging)
         // 2. Settings too new (incorrectly set to latest date instead of start)
         if (streakStart !== lastPeriodStart) {
-            console.log(`🩹 SELF-HEALING: Calculated Streak Start (${streakStart}) !== Settings (${lastPeriodStart}). Updating.`);
             lastPeriodStart = streakStart;
 
             // Background update
@@ -1226,7 +1417,7 @@ export async function getCanonicalCycleState(userId: string) {
         periodLength
     );
 
-    console.log(`🔄 CALCULATE: Start=${lastPeriodStart}, Today=${new Date().toISOString().split('T')[0]}, Day=${phaseResult.day}, Phase=${phaseResult.phase}`);
+
 
     // 5. Calculate Next Period
     // Use the same robust parsing for next period calculation

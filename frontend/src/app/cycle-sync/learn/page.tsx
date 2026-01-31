@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn, getStorageUrl } from "@/lib/utils";
 import { fetchLearnArticles, type LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
@@ -84,11 +85,7 @@ export default function LearnPage() {
     const featured = articles.length > 0 ? articles[0] : null;
     const featuredImage = featured ? getStorageUrl("learn-images", featured.image_path) : null;
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-white">
-            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
-        </div>
-    );
+    if (loading) return <LoadingScreen />;
 
     return (
         <div className="min-h-screen bg-white text-rove-charcoal pb-20">

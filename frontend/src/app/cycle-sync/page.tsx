@@ -8,9 +8,10 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync"; // Still needed for content
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
-import { calculateSmartPhase } from "@/lib/cycle/smart-calc"; // NEW
+import { calculateSmartPhase } from "@shared/cycle/smart-phase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 // --- 1. Helper Components ---
 
@@ -123,29 +124,116 @@ const phaseThemes: Record<string, any> = {
 // --- 2. Phase Data ---
 const PHASE_SNAPSHOTS: any = {
     "Menstrual": {
-        hormones: { title: "Low Levels", desc: "A reset for your body.", detail: "Estrogen and progesterone drop to their lowest levels, signalling your uterus to shed its lining. You may feel a desire to withdraw and rest." },
-        mind: { title: "Reflective", desc: "Turn inward & rest.", detail: "The communication between your left and right brain hemispheres is strongest now. It’s the perfect time for intuition and evaluating your path." },
-        body: { title: "Releasing", desc: "Prioritize comfort.", detail: "Inflammation may be slightly higher. Focus on gentle movements like walking or yin yoga, and keep warm." },
-        glow: { title: "Dry", desc: "Hydration is key.", detail: "Skin barrier might be weaker. Use rich moisturizers and avoid harsh actives to prevent irritation." }
+        hormones: {
+            title: "The Great Reset",
+            desc: "Biological baseline reached.",
+            detail: "Estrogen and progesterone hit their monthly nadir to trigger the shed. This 'biological winter' is a vital system reboot—not a shutdown.",
+            protocol: "Protect your energy. Magnesium glycinate (200-400mg) can soothe cramps and support deep restorative sleep tonight."
+        },
+        mind: {
+            title: "Intuitive Clarity",
+            desc: "Left & right brain sync.",
+            detail: "Communication between brain hemispheres is strongest now. It’s the perfect time for evaluating your path and setting intentions.",
+            protocol: "Journaling tonight is non-negotiable. Your intuition is louder than logic right now—listen to it."
+        },
+        body: {
+            title: "Active Recovery",
+            desc: "Inflammation peaks slightly.",
+            detail: "Your body is working hard to release. High intensity will backfire by spiking cortisol when resilience is low.",
+            protocol: "Focus on Yin Yoga or a slow 20-minute walk. Keep your lower back and feet warm to support circulation."
+        },
+        glow: {
+            title: "Hydration Barrier",
+            desc: "Skin is driest now.",
+            detail: "Low estrogen means less natural oil and moisture retention. Your skin barrier is more permeable and sensitive.",
+            protocol: "Skip the harsh exfoliants. Layer a hydrating serum with a rich ceramide moisturizer to lock in water."
+        }
     },
     "Follicular": {
-        hormones: { title: "Estrogen Rising", desc: "Energy is building.", detail: "FSH stimulates follicles, and estrogen begins to climb. You'll feel a lift in mood, energy, and brain fog clearing." },
-        mind: { title: "Creative", desc: "Brainstorm new ideas.", detail: "You are primed for learning and complex problem solving. Tackle challenging projects or start something new." },
-        body: { title: "Light", desc: "Ready for movement.", detail: "Your stamina is increasing. It's a great time for cardio, hiking, or trying a new fitness class." },
-        glow: { title: "Balanced", desc: "Collagen boosting.", detail: "Estrogen supports collagen production. Your skin is likely plump and resilient—enjoy the natural glow!" }
+        hormones: {
+            title: "The Awakening",
+            desc: "Estrogen begins its climb.",
+            detail: "FSH stimulates new follicles, and estrogen begins to climb. This neuro-stimulant hormone lifts your mood, energy, and mental speed.",
+            protocol: "Capitalize on this rising energy. Schedule your most demanding creative work for the morning hours."
+        },
+        mind: {
+            title: "Architect Mode",
+            desc: "Pattern recognition peaks.",
+            detail: "You are primed for learning and complex problem solving. Brain fog clears as you become open to new ideas and social connection.",
+            protocol: "Tackle that complex project you've been putting off. Your brain is hungry for challenge."
+        },
+        body: {
+            title: "Building Power",
+            desc: "Insulin sensitivity rises.",
+            detail: "Your body is ready to burn carbs for fuel and build muscle. Recovery time is faster now than at any other time.",
+            protocol: "Increase cardio intensity or heavy lifting. Your body can handle the stress and bounce back stronger."
+        },
+        glow: {
+            title: "Collagen Bloom",
+            desc: "Natural plumpness returns.",
+            detail: "Rising estrogen boosts collagen and hyaluronic acid production. Your skin is naturally more resilient and glowing.",
+            protocol: "A great time for a vitamin C serum to amplify that natural glow. You can tolerate more active treatments now."
+        }
     },
     "Ovulatory": {
-        hormones: { title: "Peak Estrogen", desc: "You are magnetic.", detail: "Estrogen peaks, triggering LH surge. You are at your biological peak for confidence, verbal skills, and libido." },
-        mind: { title: "Social", desc: "Connect/Speak up.", detail: "Your verbal center is lit up. Schedule important meetings, dates, or social gatherings now." },
-        body: { title: "Peak Power", desc: "Hit your PRs.", detail: "Testosterone adds a strength boost. Go for personal bests in lifting or high-intensity intervals." },
-        glow: { title: "Radiant", desc: "Natural glow.", detail: "Pores may be slightly more visible due to oil, but skin is generally vibrant. Double cleanse if you're sweating more." }
+        hormones: {
+            title: "The Main Event",
+            desc: "Peak estrogen & testosterone.",
+            detail: "The biological zenith. Estrogen peaks to trigger ovulation, while testosterone gives you a surge of confidence and libido.",
+            protocol: "You are magnetic. Schedule dates, pitches, or difficult conversations. You are chemically wired to persuade."
+        },
+        mind: {
+            title: "Social Butterfly",
+            desc: "Verbal centers light up.",
+            detail: "Your verbal skills and emotional intelligence are at their height. You are more articulate and persuasive.",
+            protocol: "Network, present, or record content. Your ability to connect with others is at its peak."
+        },
+        body: {
+            title: "Peak Performance",
+            desc: "Maximum power output.",
+            detail: "Testosterone adds a strength boost. You are at your strongest, but your ligaments are also looser (higher injury risk).",
+            protocol: "Go for a PR in the gym, but watch your form. High-intensity interval training (HIIT) is highly effective now."
+        },
+        glow: {
+            title: "Radiant but Oily",
+            desc: "The 'glow' is real.",
+            detail: "Sebum production increases slightly. You look vibrant, but pores may be more visible due to the surge.",
+            protocol: "Double cleanse in the evenings. Using a clay mask can help manage the extra oil without stripping your glow."
+        }
     },
     "Luteal": {
-        hormones: { title: "Progesterone", desc: "Calming influence.", detail: "Progesterone rises to maintain lining. It has a sedative effect but can also cause bloating or mood sensitivity." },
-        mind: { title: "Detailed", desc: "Focus mode on.", detail: "Brain chemistry shifts to detail-oriented tasks. Great for wrapping up projects, organizing, and administrative work." },
-        body: { title: "Heavy", desc: "Slow down.", detail: "Metabolism speeds up, but endurance drops. Switch to strength training with longer rests or pilates." },
-        glow: { title: "Oily", desc: "Congestion prone.", detail: "Progesterone stimulates sebum production. Use salicylic acid or clay masks to keep pores clear." }
+        hormones: {
+            title: "The Shift",
+            desc: "Progesterone takes over.",
+            detail: "Estrogen drops and progesterone rises. This has a sedative, calming effect, but withdrawal later triggers PMS.",
+            protocol: "Prioritize stability. Eat regular meals with protein to stabilize blood sugar and combat mood swings."
+        },
+        mind: {
+            title: "Deep Focus",
+            desc: "Detail-oriented brain.",
+            detail: "Brain chemistry shifts from social/expansive to internal/analytical. You notice things you missed before.",
+            protocol: "Edit, organize, and wrap up loose ends. It's the best time for administrative tasks and deep work."
+        },
+        body: {
+            title: "Metabolic Burn",
+            desc: "Calorie burn increases.",
+            detail: "Your metabolism speeds up (burning ~100-300 more calories), but endurance drops. Heat tolerance is lower.",
+            protocol: "Switch to strength training with longer rests. Honor your hunger with complex carbs to boost serotonin."
+        },
+        glow: {
+            title: "Congestion Alert",
+            desc: "Pores are prone to clogging.",
+            detail: "Progesterone stimulates oil production while pores tighten, leading to trapped bacteria and breakouts.",
+            protocol: "Use salicylic acid (BHA) to keep pores clear. Avoid heavy, pore-clogging makeup if possible."
+        }
     }
+};
+
+const PHASE_KEYWORDS: Record<string, string> = {
+    "Menstrual": "Winter • Rest & Reset",
+    "Follicular": "Spring • Energy Rising",
+    "Ovulatory": "Summer • Peak Confidence",
+    "Luteal": "Autumn • Winding Down"
 };
 
 // --- 3. Animated Components ---
@@ -294,15 +382,21 @@ export default function CycleSyncDashboard() {
     useEffect(() => {
         const load = async () => {
             try {
-                const [dashboardData, unified] = await Promise.all([
-                    fetchDashboardData(),
-                    fetchUnifiedCycleData()
-                ]);
+                // ⚡ ULTRA-FAST: Single action now includes all data
+                const dashboardData = await fetchDashboardData();
 
-                if (dashboardData) setData(dashboardData);
-                if (unified) setUnifiedData(unified);
-
-                if (!dashboardData) {
+                if (dashboardData) {
+                    setData(dashboardData);
+                    // Set unified data from the same response (no second call needed)
+                    if (dashboardData.settings && dashboardData.monthLogs) {
+                        setUnifiedData({
+                            settings: dashboardData.settings,
+                            monthLogs: dashboardData.monthLogs,
+                            smartPhase: { phase: dashboardData.phase.name, day: dashboardData.phase.day },
+                            userId: ""
+                        });
+                    }
+                } else {
                     router.push("/onboarding");
                 }
             } catch (error) {
@@ -312,14 +406,7 @@ export default function CycleSyncDashboard() {
         load();
     }, [router]);
 
-    if (!data) return (
-        <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full border-4 border-rove-red/20 border-t-rove-red animate-spin" />
-                <p className="text-rove-stone font-medium">Syncing with your cycle...</p>
-            </div>
-        </div>
-    );
+    if (!data) return <LoadingScreen />;
 
 
     // ✅ OVERRIDE PHASE DATA
@@ -407,12 +494,18 @@ export default function CycleSyncDashboard() {
 
                                             {/* ORB CONTENT */}
                                             <div className="relative text-center z-10 px-4">
-                                                <p className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-rove-stone uppercase mb-1.5">
+                                                <p className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-rove-stone/80 uppercase mb-1.5">
                                                     Current Phase
                                                 </p>
-                                                <h2 className={`text-3xl md:text-4xl font-heading ${theme.color} mb-2`}>
+                                                <h2 className={`text-3xl md:text-4xl font-heading ${theme.color} mb-1`}>
                                                     {currentPhase.name}
                                                 </h2>
+
+                                                {/* Keyword Subtitle */}
+                                                <p className="text-[10px] md:text-xs font-medium text-rove-charcoal/60 mb-2 tracking-wide opacity-90">
+                                                    {PHASE_KEYWORDS[currentPhase.name]}
+                                                </p>
+
                                                 <Badge variant="secondary" className={`${theme.badge} px-3 py-0.5 text-[9px] md:text-[10px] tracking-wider border`}>
                                                     {currentPhase.superpower}
                                                 </Badge>
@@ -540,17 +633,17 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("hormones")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Hormones</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Hormones</span>
                                     </div>
                                     <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-rove-red">
                                         <HormoneWave />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
+                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
+                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -560,17 +653,17 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("mind")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Mind</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Mind</span>
                                     </div>
                                     <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
                                         <MindSynapse color="#374151" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
+                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
+                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -580,17 +673,17 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("body")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Body</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Body</span>
                                     </div>
                                     <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
                                         <BodyDNA color="#22c55e" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
+                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
+                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -600,159 +693,166 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("glow")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/5 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">Glow</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Glow</span>
                                     </div>
                                     <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
                                         <GlowHalo color="#f59e0b" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-lg font-medium text-rove-charcoal leading-tight mb-0.5">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
-                                        <p className="text-[10px] text-gray-400 font-medium leading-relaxed opacity-90">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
+                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
+                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
                                     </div>
                                 </motion.div>
                             </div>
                         </section>
 
 
-                    </motion.div>
-                )}
+                    </motion.div >
+                )
+                }
 
                 {/* MODE: TTC */}
-                {trackerMode === "ttc" && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
-                    >
-                        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 mb-4">
-                            <Baby className="w-10 h-10" />
-                        </div>
-                        <h2 className="font-heading text-3xl text-rove-charcoal">Fertility Window</h2>
-                        <p className="text-rove-stone max-w-md">
-                            Your dedicated fertility dashboard is being prepared. <br />
-                            Soon you'll track BBT, cervical mucus, and peak ovulation days here.
-                        </p>
-                        <Button className="rounded-full">Log Temperature</Button>
-                    </motion.div>
-                )}
+                {
+                    trackerMode === "ttc" && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 mb-4">
+                                <Baby className="w-10 h-10" />
+                            </div>
+                            <h2 className="font-heading text-3xl text-rove-charcoal">Fertility Window</h2>
+                            <p className="text-rove-stone max-w-md">
+                                Your dedicated fertility dashboard is being prepared. <br />
+                                Soon you'll track BBT, cervical mucus, and peak ovulation days here.
+                            </p>
+                            <Button className="rounded-full">Log Temperature</Button>
+                        </motion.div>
+                    )
+                }
 
                 {/* MODE: Menopause */}
-                {trackerMode === "menopause" && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
-                    >
-                        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 mb-4">
-                            <Flower2 className="w-10 h-10" />
-                        </div>
-                        <h2 className="font-heading text-3xl text-rove-charcoal">Symptom Management</h2>
-                        <p className="text-rove-stone max-w-md">
-                            Your menopause support hub is coming soon. <br />
-                            Track hot flashes, sleep quality, and HRT adherence.
-                        </p>
-                        <Button className="rounded-full">Log Symptom</Button>
-                    </motion.div>
-                )}
-            </div>
+                {
+                    trackerMode === "menopause" && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="min-h-[50vh] flex flex-col items-center justify-center text-center space-y-4 py-12"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 mb-4">
+                                <Flower2 className="w-10 h-10" />
+                            </div>
+                            <h2 className="font-heading text-3xl text-rove-charcoal">Symptom Management</h2>
+                            <p className="text-rove-stone max-w-md">
+                                Your menopause support hub is coming soon. <br />
+                                Track hot flashes, sleep quality, and HRT adherence.
+                            </p>
+                            <Button className="rounded-full">Log Symptom</Button>
+                        </motion.div>
+                    )
+                }
+            </div >
 
             {/* EXPANDED MODAL OVERLAY (SCIENTIFIC / CLEAN) */}
             <AnimatePresence>
-                {selectedSnapshot && (
-                    <motion.div
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setSelectedSnapshot(null)}
-                    >
+                {
+                    selectedSnapshot && (
                         <motion.div
-                            className="bg-white/95 backdrop-blur-xl rounded-[1rem] w-full max-w-sm shadow-2xl relative border border-white/50 overflow-hidden ring-1 ring-black/5"
-                            initial={{ scale: 0.95, y: 10, opacity: 0 }}
-                            animate={{ scale: 1, y: 0, opacity: 1 }}
-                            exit={{ scale: 0.95, y: 10, opacity: 0 }}
-                            transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
-                            onClick={(e) => e.stopPropagation()}
-                            layoutId={selectedSnapshot}
+                            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedSnapshot(null)}
                         >
-                            {/* Decorative Top Bar */}
-                            <div className="h-1.5 w-full bg-gradient-to-r from-rove-stone/20 via-rove-charcoal/20 to-rove-stone/20" />
+                            <motion.div
+                                className="bg-white/95 backdrop-blur-xl rounded-[1rem] w-full max-w-sm shadow-2xl relative border border-white/50 overflow-hidden ring-1 ring-black/5"
+                                initial={{ scale: 0.95, y: 10, opacity: 0 }}
+                                animate={{ scale: 1, y: 0, opacity: 1 }}
+                                exit={{ scale: 0.95, y: 10, opacity: 0 }}
+                                transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
+                                onClick={(e) => e.stopPropagation()}
+                                layoutId={selectedSnapshot}
+                            >
+                                {/* Decorative Top Bar */}
+                                <div className="h-1.5 w-full bg-gradient-to-r from-rove-stone/20 via-rove-charcoal/20 to-rove-stone/20" />
 
-                            {/* Header Section */}
-                            <div className="px-6 pt-6 pb-2 flex justify-between items-start">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-rove-charcoal animate-pulse" />
-                                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-rove-stone/80">
-                                            {selectedSnapshot} // METRICS
-                                        </span>
-                                    </div>
-                                    <h3 className="text-3xl font-heading text-rove-charcoal tracking-tight">
-                                        {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].title}
-                                    </h3>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedSnapshot(null)}
-                                    className="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-full transition-colors group"
-                                >
-                                    <div className="relative w-6 h-6 flex items-center justify-center">
-                                        <span className="absolute w-4 h-[1.5px] bg-gray-400 rotate-45 group-hover:bg-gray-600 transition-colors" />
-                                        <span className="absolute w-4 h-[1.5px] bg-gray-400 -rotate-45 group-hover:bg-gray-600 transition-colors" />
-                                    </div>
-                                </button>
-                            </div>
-
-                            {/* Divider with ID */}
-                            <div className="w-full h-px bg-gray-100 my-2 flex items-center justify-end px-6">
-                                <span className="text-[8px] font-mono text-gray-300">ID: {currentPhase.name.substring(0, 3).toUpperCase()}-001</span>
-                            </div>
-
-                            {/* Content Body */}
-                            <div className="px-6 py-4 relative">
-                                {/* Ambient Background Graphic */}
-                                <div className="absolute top-0 right-0 w-40 h-40 opacity-[0.08] pointer-events-none translate-x-10 -translate-y-10">
-                                    {selectedSnapshot === "hormones" && <HormoneWave />}
-                                    {selectedSnapshot === "mind" && <MindSynapse color="#000" />}
-                                    {selectedSnapshot === "body" && <BodyDNA color="#000" />}
-                                    {selectedSnapshot === "glow" && <GlowHalo color="#000" />}
-                                </div>
-
-                                <div className="space-y-6 relative z-10">
-                                    {/* Observation */}
+                                {/* Header Section */}
+                                <div className="px-6 pt-6 pb-2 flex justify-between items-start">
                                     <div>
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Scientific Observation</span>
-                                        <p className="text-rove-charcoal/90 text-[15px] leading-relaxed font-sans border-l-2 border-rove-charcoal/10 pl-3">
-                                            {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].detail}
-                                        </p>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-rove-charcoal animate-pulse" />
+                                            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-rove-stone/80">
+                                                {selectedSnapshot} // METRICS
+                                            </span>
+                                        </div>
+                                        <h3 className="text-3xl font-heading text-rove-charcoal tracking-tight">
+                                            {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].title}
+                                        </h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedSnapshot(null)}
+                                        className="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-full transition-colors group"
+                                    >
+                                        <div className="relative w-6 h-6 flex items-center justify-center">
+                                            <span className="absolute w-4 h-[1.5px] bg-gray-400 rotate-45 group-hover:bg-gray-600 transition-colors" />
+                                            <span className="absolute w-4 h-[1.5px] bg-gray-400 -rotate-45 group-hover:bg-gray-600 transition-colors" />
+                                        </div>
+                                    </button>
+                                </div>
+
+                                {/* Divider with ID */}
+                                <div className="w-full h-px bg-gray-100 my-2 flex items-center justify-end px-6">
+                                    <span className="text-[8px] font-mono text-gray-300">ID: {currentPhase.name.substring(0, 3).toUpperCase()}-001</span>
+                                </div>
+
+                                {/* Content Body */}
+                                <div className="px-6 py-4 relative">
+                                    {/* Ambient Background Graphic */}
+                                    <div className="absolute top-0 right-0 w-40 h-40 opacity-[0.08] pointer-events-none translate-x-10 -translate-y-10">
+                                        {selectedSnapshot === "hormones" && <HormoneWave />}
+                                        {selectedSnapshot === "mind" && <MindSynapse color="#000" />}
+                                        {selectedSnapshot === "body" && <BodyDNA color="#000" />}
+                                        {selectedSnapshot === "glow" && <GlowHalo color="#000" />}
                                     </div>
 
-                                    {/* Action/Protocol */}
-                                    <div className="bg-rove-cream/40 rounded-lg p-4 border border-rove-stone/10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Sparkles className="w-3.5 h-3.5 text-rove-charcoal" />
-                                            <span className="text-[9px] font-bold text-rove-charcoal uppercase tracking-widest">Recommended Protocol</span>
+                                    <div className="space-y-6 relative z-10">
+                                        {/* Observation */}
+                                        <div>
+                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Scientific Observation</span>
+                                            <p className="text-rove-charcoal/90 text-[15px] leading-relaxed font-sans border-l-2 border-rove-charcoal/10 pl-3">
+                                                {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].detail}
+                                            </p>
                                         </div>
-                                        <p className="text-rove-stone text-xs leading-relaxed font-medium">
-                                            Align your routine by prioritizing specific nutrient timing and activity adjustments tailored to this phase.
-                                        </p>
+
+                                        {/* Action/Protocol */}
+                                        <div className="bg-rove-cream/40 rounded-lg p-4 border border-rove-stone/10">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Sparkles className="w-3.5 h-3.5 text-rove-charcoal" />
+                                                <span className="text-[9px] font-bold text-rove-charcoal uppercase tracking-widest">Recommended Protocol</span>
+                                            </div>
+                                            <p className="text-rove-stone text-xs leading-relaxed font-medium">
+                                                {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].protocol}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Footer Status */}
-                            <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-mono text-gray-400">
-                                <span>STATUS: ACTIVE</span>
-                                <span>UPDATED: TODAY</span>
-                            </div>
+                                {/* Footer Status */}
+                                <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-mono text-gray-400">
+                                    <span>STATUS: ACTIVE</span>
+                                    <span>UPDATED: TODAY</span>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                    )
+                }
+            </AnimatePresence >
+        </div >
     );
 }

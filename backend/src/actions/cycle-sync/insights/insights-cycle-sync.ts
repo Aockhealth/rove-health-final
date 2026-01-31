@@ -2,10 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
-import { calculatePhase } from "../../../lib/cycle/calculatePhase";
-// adjust path to match your project
-
-
+import { calculateSmartPhase } from "../../../../../shared/cycle/smart-phase";
 
 // ==========================================================
 // FETCH INSIGHTS DATA (Main Function)
@@ -19,7 +16,7 @@ export async function fetchInsightsData() {
     const [cycleSettingsResult, logsResult] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs")
-            .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+            .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
             .eq("user_id", user.id)
             .order('date', { ascending: false })
     ]);
@@ -46,14 +43,28 @@ export async function fetchInsightsData() {
     const allExercise = new Set<string>();
     let mostRecentNote = "";
 
+    // Build logMap first so we can use it for smart phase calculation
+    const logMap: Record<string, any> = {};
+    if (logs) {
+        logs.forEach((l: any) => {
+            logMap[l.date] = l;
+        });
+    }
+
+    const settings = {
+        last_period_start: cycleSettings.last_period_start,
+        cycle_length_days: cycleSettings.cycle_length_days,
+        period_length_days: cycleSettings.period_length_days
+    };
+
     if (logs) {
         // Grab the most recent non-empty note
-        const noteLog = logs.find(l => l.notes && l.notes.length > 0);
+        const noteLog = logs.find((l: any) => l.notes && l.notes.length > 0);
         if (noteLog) mostRecentNote = noteLog.notes;
 
-        logs.forEach((log) => {
-            // ✅ This now works because calculatePhase returns the object directly, not a Promise
-            const { phase } = calculatePhase(new Date(log.date), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+        logs.forEach((log: any) => {
+            // ✅ FIXED: Using calculateSmartPhase to respect manual period logs
+            const { phase } = calculateSmartPhase(new Date(log.date), settings, logMap);
 
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 
@@ -76,7 +87,11 @@ export async function fetchInsightsData() {
         });
     }
 
-    const currentStatus = calculatePhase(new Date(), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+    const currentStatus = calculateSmartPhase(new Date(), {
+        last_period_start: cycleSettings.last_period_start,
+        cycle_length_days: cycleSettings.cycle_length_days,
+        period_length_days: cycleSettings.period_length_days
+    }, logMap);
 
     // Generate tips from PHASE_CONTENT
     const tipsByPhase: Record<string, string[]> = {};

@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { calculateSmartPhase, CycleSettings, DailyLog } from "@/lib/cycle/smart-calc";
+import { calculateSmartPhase, CycleSettings, DailyLog } from "@shared/cycle/smart-phase";
 
 // Types
 export interface UnifiedCycleData {

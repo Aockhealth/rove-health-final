@@ -8,15 +8,16 @@ import { cn } from "@/lib/utils";
 
 // ✅ UPDATED IMPORTS: Using @backend alias from tsconfig.json
 import { fetchInsightsData } from "@backend/actions/cycle-sync/insights/insights-cycle-sync";
-import { 
-  generatePhaseAIInsight, 
-  type AIContext 
+import {
+  generatePhaseAIInsight,
+  type AIContext
 } from "@backend/actions/ai-actions/insights/insights-actions";
 // --- COMPONENTS ---
 import { AiAnalysisCard } from "@/components/cycle-sync/insights/AiAnalysisCard";
 import { EmotionalBaselineCard } from "@/components/cycle-sync/insights/EmotionalBaselineCard";
 import { CycleOverviewCard } from "@/components/cycle-sync/insights/CycleOverviewCard";
 import { PhaseInsightCard } from "@/components/cycle-sync/insights/PhaseInsightCard";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 // --- PHASE THEMES ---
 const phaseThemes: Record<string, any> = {
@@ -107,11 +108,7 @@ export default function InsightsPage() {
   // ✅ FIX 3: Guard render until we have a phase
   // ✅ FIX 3: Guard render until we have a phase
   if (loading || !selectedPhase) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-rove-cream/20">
-        <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   const currentPhase = stats?.phase?.name || "Luteal";

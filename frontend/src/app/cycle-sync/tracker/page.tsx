@@ -26,6 +26,7 @@ import SleepCard from "./components/SleepCard";
 import DisruptorsCard from "./components/DisruptorsCard";
 import SelfLoveCard from "./components/SelfLoveCard";
 import NoteCard from "./components/NoteCard";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
@@ -66,6 +67,10 @@ export default function TrackerPageRedesigned() {
 
     const calendarRef = useRef<HTMLDivElement>(null);
 
+    // NEW: Load states to prevent flash
+    const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+    const [isLogsLoaded, setIsLogsLoaded] = useState(false);
+
     // MPIQ Specific State
     const [mpiqConsistency, setMpiqConsistency] = useState<Consistency | null>(null);
     const [mpiqAppearance, setMpiqAppearance] = useState<Appearance | null>(null);
@@ -85,38 +90,68 @@ export default function TrackerPageRedesigned() {
         return `${year}-${month}-${day}`;
     }, []);
 
-    // Load cycle settings on mount
-    useEffect(() => {
-        const loadSettings = async () => {
-            const settings = await fetchUserCycleSettings();
-            if (settings) {
-                setCycleSettings({
-                    last_period_start: settings.last_period_start,
-                    cycle_length_days: settings.cycle_length_days || 28,
-                    period_length_days: settings.period_length_days || 5,
-                });
-
-                if (!settings.last_period_start) {
-                    setIsEditingCycle(true);
-                    toast.info("Welcome back! Please set your last period date to sync your cycle.", {
-                        duration: 6000,
-                    });
-                }
-            } else {
-                setIsEditingCycle(true);
-            }
-        };
-        loadSettings();
-    }, []);
-
-    // Fetch month logs (prev/current/next)
+    // ⚡ ULTRA-FAST: Single unified load for settings + all logs (runs ONCE on mount)
     useEffect(() => {
         let isMounted = true;
 
-        const loadMonthLogs = async () => {
-            const year = currentMonth.getFullYear();
-            const month = currentMonth.getMonth();
+        const loadTrackerData = async () => {
+            try {
+                const { fetchTrackerPageDataFast } = await import("@/app/actions/cycle-sync");
+                const data = await fetchTrackerPageDataFast();
 
+                if (!isMounted) return;
+
+                if (data) {
+                    // Set cycle settings
+                    setCycleSettings({
+                        last_period_start: data.settings.last_period_start,
+                        cycle_length_days: data.settings.cycle_length_days,
+                        period_length_days: data.settings.period_length_days,
+                    });
+
+                    if (!data.hasSettings) {
+                        setIsEditingCycle(true);
+                        toast.info("Welcome back! Please set your last period date to sync your cycle.", {
+                            duration: 6000,
+                        });
+                    }
+
+                    // Set all month logs at once (no need for 3 separate fetches)
+                    setMonthLogs(data.monthLogs);
+                    setIsSettingsLoaded(true);
+                    setIsLogsLoaded(true);
+                } else {
+                    setIsEditingCycle(true);
+                    setIsSettingsLoaded(true);
+                    setIsLogsLoaded(true);
+                }
+            } catch (error) {
+                console.error("Tracker load error:", error);
+                setIsSettingsLoaded(true);
+                setIsLogsLoaded(true);
+            }
+        };
+
+        loadTrackerData();
+
+        return () => { isMounted = false; };
+    }, []); // ⚡ Empty deps = runs ONCE on mount
+
+    // Fetch month logs when navigating months (only for months not already loaded)
+    useEffect(() => {
+        // Skip if we already have logs for this month range
+        const year = currentMonth.getFullYear();
+        const month = currentMonth.getMonth();
+        const firstDayKey = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+
+        // If we already have this month's data from initial load, skip fetch
+        if (Object.keys(monthLogs).some(k => k.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`))) {
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadMonthLogs = async () => {
             const monthsToFetch = [
                 new Date(year, month - 1, 1),
                 new Date(year, month, 1),
@@ -134,136 +169,107 @@ export default function TrackerPageRedesigned() {
 
             if (!isMounted) return;
 
-            const newLogMap: Record<string, any> = {};
+            const newLogMap: Record<string, any> = { ...monthLogs };
             results.flat().forEach((l: any) => {
                 newLogMap[l.date] = l;
             });
 
-            // deep comparison optimization to prevent loop
-            setMonthLogs(prev => {
-                const prevKeys = Object.keys(prev);
-                const newKeys = Object.keys(newLogMap);
-                if (prevKeys.length !== newKeys.length) return newLogMap;
-
-                // Simple check: if keys are same and last modified is same (if we had it), 
-                // but since we don't, we can just check if any key is missing or different.
-                // For now, let's just JSON stringify keys as a cheap proxy if value content changes are rare without navigation
-                const hasChanged = JSON.stringify(prevKeys.sort()) !== JSON.stringify(newKeys.sort());
-                // Note: deeper comparison is expensive, but we can assume if key set is same, and we just fetched, 
-                // we might be okay. Better to just update if we moved months.
-
-                // CRITICAL FIX: The loop happens because 'currentMonth' changes -> fetch -> setMonthLogs -> RENDER
-                // If we are just sliding months, we WANT to update.
-                // But the user says "continues rendering".
-                // If the user meant "while scrolling", we are fine.
-                // If it's an infinite loop, it means 'currentMonth' is being updated by something else.
-                // But there is NO code updating currentMonth here.
-
-                // However, let's at least avoid update if identical.
-                if (!hasChanged) {
-                    // Check a few values to be sure? 
-                    // Let's just return newMap for now, but the loop 6-7 times suggests strict mode + multiple updates.
-                    return newLogMap;
-                }
-                return newLogMap;
-            });
+            setMonthLogs(newLogMap);
         };
 
         loadMonthLogs();
 
         return () => { isMounted = false; };
-    }, [currentMonth]);
+    }, [currentMonth, monthLogs]);
 
-    // Fetch existing log when selected date changes
+    // ⚡ INSTANT: Load selected date log from cache (no API call)
     useEffect(() => {
-        const fetchLog = async () => {
-            const data = await getDailyLog(formatDate(selectedDate));
-            if (data) {
-                setSelectedSymptoms(data.symptoms || []);
-                setSelectedMoods(data.moods || []);
-                setSelectedExercise(data.exercise_types || []);
-                setExerciseMinutes(data.exercise_minutes ? String(data.exercise_minutes) : "");
-                setWaterIntake(data.water_intake || 0);
-                setSelectedSelfLove(data.self_love_tags || []);
-                setSelfLoveOther(data.self_love_other || "");
-                setSelectedSleepQuality(data.sleep_quality || []);
+        const dateKey = formatDate(selectedDate);
+        const data = monthLogs[dateKey]; // Use cached data instead of API call
 
-                if (data.sleep_minutes) {
-                    setSleepHours(Math.floor(data.sleep_minutes / 60).toString());
-                    setSleepMinutes((data.sleep_minutes % 60).toString());
-                } else {
-                    setSleepHours("");
-                    setSleepMinutes("");
-                }
+        if (data) {
+            setSelectedSymptoms(data.symptoms || []);
+            setSelectedMoods(data.moods || []);
+            setSelectedExercise(data.exercise_types || []);
+            setExerciseMinutes(data.exercise_minutes ? String(data.exercise_minutes) : "");
+            setWaterIntake(data.water_intake || 0);
+            setSelectedSelfLove(data.self_love_tags || []);
+            setSelfLoveOther(data.self_love_other || "");
+            setSelectedSleepQuality(data.sleep_quality || []);
 
-                setFlowIntensity(data.flow_intensity || null);
+            if (data.sleep_minutes) {
+                setSleepHours(Math.floor(data.sleep_minutes / 60).toString());
+                setSleepMinutes((data.sleep_minutes % 60).toString());
+            } else {
+                setSleepHours("");
+                setSleepMinutes("");
+            }
 
-                if (data.cervical_discharge) {
-                    try {
-                        if (data.cervical_discharge.startsWith("[")) {
-                            const parsed = JSON.parse(data.cervical_discharge);
-                            if (Array.isArray(parsed) && parsed.length >= 3) {
-                                setMpiqConsistency(parsed[0]);
-                                setMpiqAppearance(parsed[1]);
-                                setMpiqSensation(parsed[2]);
-                            }
-                        } else if (data.cervical_discharge.startsWith("{")) {
-                            const parsed = JSON.parse(data.cervical_discharge);
-                            if (parsed.type === "MPIQ") {
-                                setMpiqConsistency(parsed.consistency || null);
-                                setMpiqAppearance(parsed.appearance || null);
-                                setMpiqSensation(parsed.sensation || null);
-                                setCervicalDischarge(parsed.legacyLabel || null);
-                            } else {
-                                setCervicalDischarge(data.cervical_discharge);
-                            }
+            setFlowIntensity(data.flow_intensity || null);
+
+            if (data.cervical_discharge) {
+                try {
+                    if (data.cervical_discharge.startsWith("[")) {
+                        const parsed = JSON.parse(data.cervical_discharge);
+                        if (Array.isArray(parsed) && parsed.length >= 3) {
+                            setMpiqConsistency(parsed[0]);
+                            setMpiqAppearance(parsed[1]);
+                            setMpiqSensation(parsed[2]);
+                        }
+                    } else if (data.cervical_discharge.startsWith("{")) {
+                        const parsed = JSON.parse(data.cervical_discharge);
+                        if (parsed.type === "MPIQ") {
+                            setMpiqConsistency(parsed.consistency || null);
+                            setMpiqAppearance(parsed.appearance || null);
+                            setMpiqSensation(parsed.sensation || null);
+                            setCervicalDischarge(parsed.legacyLabel || null);
                         } else {
                             setCervicalDischarge(data.cervical_discharge);
-                            setMpiqConsistency(null);
-                            setMpiqAppearance(null);
-                            setMpiqSensation(null);
                         }
-                    } catch {
+                    } else {
                         setCervicalDischarge(data.cervical_discharge);
                         setMpiqConsistency(null);
                         setMpiqAppearance(null);
                         setMpiqSensation(null);
                     }
-                } else {
-                    setCervicalDischarge(null);
+                } catch {
+                    setCervicalDischarge(data.cervical_discharge);
                     setMpiqConsistency(null);
                     setMpiqAppearance(null);
                     setMpiqSensation(null);
                 }
-
-                setNote(data.notes || "");
-
-                if (data.flow_intensity || data.is_period) setTrackMode("period");
-                else setTrackMode("discharge");
             } else {
-                setSelectedSymptoms([]);
-                setSelectedMoods([]);
-                setSelectedExercise([]);
-                setExerciseMinutes("");
-                setWaterIntake(0);
-                setSelectedSelfLove([]);
-                setSelfLoveOther("");
-                setSelectedSleepQuality([]);
-                setSleepHours("");
-                setSleepMinutes("");
-                setSelectedDisruptors([]);
-                setFlowIntensity(null);
                 setCervicalDischarge(null);
-                setNote("");
-                setTrackMode("discharge");
                 setMpiqConsistency(null);
                 setMpiqAppearance(null);
                 setMpiqSensation(null);
             }
-        };
 
-        fetchLog();
-    }, [selectedDate]);
+            setNote(data.notes || "");
+
+            if (data.flow_intensity || data.is_period) setTrackMode("period");
+            else setTrackMode("discharge");
+        } else {
+            setSelectedSymptoms([]);
+            setSelectedMoods([]);
+            setSelectedExercise([]);
+            setExerciseMinutes("");
+            setWaterIntake(0);
+            setSelectedSelfLove([]);
+            setSelfLoveOther("");
+            setSelectedSleepQuality([]);
+            setSleepHours("");
+            setSleepMinutes("");
+            setSelectedDisruptors([]);
+            setFlowIntensity(null);
+            setCervicalDischarge(null);
+            setNote("");
+            setTrackMode("discharge");
+            setMpiqConsistency(null);
+            setMpiqAppearance(null);
+            setMpiqSensation(null);
+        }
+    }, [selectedDate, monthLogs, formatDate]);
 
 
 
@@ -735,6 +741,13 @@ export default function TrackerPageRedesigned() {
                 return "border-gray-100 shadow-sm";
         }
     };
+
+
+
+    if (!isSettingsLoaded || !isLogsLoaded) {
+        return <LoadingScreen />;
+    }
+
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">

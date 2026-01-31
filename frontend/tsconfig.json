@@ -29,6 +29,9 @@
       ],
       "@backend/*": [
         "../backend/src/*"
+      ],
+      "@shared/*": [
+        "../shared/*"
       ]
     }
   },
