@@ -181,7 +181,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
         },
         fuel: [
             { title: "Iron-Rich Sources", desc: "Blood Replenishment", icon: "Droplets", scientific_benefit: "Crucial to replenish hemoglobin lost during menstruation and prevent fatigue." },
-            { title: "Magnesium", desc: "Muscle Relaxation", icon: "Sparkles", scientific_benefit: "Natural muscle relaxant that reduces uterine contractions (cramps) and promotes sleep." },
+            { title: "Magnesium", desc: "Muscle Relaxation", icon: "Pill", scientific_benefit: "Natural muscle relaxant that reduces uterine contractions (cramps) and promotes sleep." },
             { title: "Omega-3 Fatty Acids", desc: "Anti-Inflammatory", icon: "Fish", scientific_benefit: "Inhibits prostaglandin production to significantly lower inflammation and pain sensitivity." },
             { title: "Warming Foods", desc: "Circulation", icon: "Soup", scientific_benefit: "Improves pelvic blood flow and prevents stagnation-related clotting and pain." }
         ],
@@ -203,7 +203,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Reading", desc: "Quiet", icon: "BookOpen" },
             { title: "Audiobook", desc: "Relax", icon: "Headphones" },
             { title: "Phone Putaway", desc: "Detox", icon: "Smartphone" },
-            { title: "Face Mask", desc: "Self Care", icon: "Sparkles" }
+            { title: "Face Mask", desc: "Self Care", icon: "Heart" }
         ],
         nutrients: [
             {
@@ -215,7 +215,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Magnesium",
                 desc: "Muscle Relaxant",
-                icon: "Sparkles",
+                icon: "Pill",
                 detail: "Acts as a natural nervous system relaxant. Helps alleviate uterine cramping and improves sleep quality. Sources: dark chocolate, almonds, spinach, avocado."
             },
             {
@@ -448,7 +448,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Vitamin E",
                 desc: "Follicle Health",
-                icon: "Sparkles",
+                icon: "Shield",
                 detail: "Antioxidant that protects developing follicles. Supports healthy skin and circulation. Sources: sunflower seeds, almonds, spinach, avocado."
             },
             {
@@ -516,7 +516,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Playfulness",
                 desc: "Fun",
-                icon: "Sparkles",
+                icon: "Star",
                 detail: "Engage in activities just for fun. Flirt with life and enjoy the lightness of this phase."
             }
         ],
@@ -638,7 +638,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Zinc",
                 desc: "Ovulation Support",
-                icon: "Sparkles",
+                icon: "Target",
                 detail: "Critical for egg maturation and ovulation. Supports immune health and hormonal signaling. Sources: oysters, pumpkin seeds, beef, lentils."
             },
             {
@@ -718,7 +718,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Manifesting",
                 desc: "Attraction",
-                icon: "Sparkles",
+                icon: "Target",
                 detail: "Focus on what you want to attract. Your personal magnetism makes this a potent time for goal setting."
             },
             {
@@ -857,7 +857,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             {
                 title: "Magnesium",
                 desc: "Calm Anxiety",
-                icon: "Sparkles",
+                icon: "Pill",
                 detail: "Calms the nervous system and reduces anxiety. Helps with fluid retention and sleep. Sources: pumpkin seeds, spinach, dark chocolate, almonds."
             },
             {
