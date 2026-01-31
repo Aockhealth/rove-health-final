@@ -591,3 +591,115 @@ export async function getFullPersonalizedPlan(
 
     return { cyclePhase, dietPlan, workoutPlan };
 }
+
+// ============================================
+// AI RECIPE GENERATOR (AI Chef)
+// ============================================
+
+export type RecipeType = "smoothie" | "dish" | "meal_prep";
+export type DietPreference = "Veg" | "Non-Veg" | "Vegan" | "Jain";
+
+export interface AIRecipe {
+    name: string;
+    ingredients: string;
+    why: string;
+    instructions?: string;
+}
+
+export interface GenerateRecipeInput {
+    phase: string;
+    recipeType: RecipeType;
+    dietPreference: DietPreference;
+    restrictions: string[];
+    customInstruction?: string;
+}
+
+export async function generateAIRecipe(input: GenerateRecipeInput): Promise<AIRecipe | null> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        console.error("Missing GROQ_API_KEY");
+        return null;
+    }
+
+    // Build the prompt
+    const recipeTypeLabels: Record<RecipeType, string> = {
+        smoothie: "a gut-healthy smoothie",
+        dish: "a complete meal/dish",
+        meal_prep: "a batch-cook meal prep idea (serves 4-6)"
+    };
+
+    const phaseNutrition: Record<string, string> = {
+        Menstrual: "Focus on iron-rich ingredients (spinach, beets, lentils), warming spices (ginger, turmeric), and anti-inflammatory foods to support blood loss and ease cramps.",
+        Follicular: "Focus on fresh, light foods, probiotics, and cruciferous vegetables to support rising estrogen and energy. Include fermented foods and lean proteins.",
+        Ovulatory: "Focus on fiber-rich foods, raw vegetables, and foods that help metabolize estrogen at its peak. Include flax, leafy greens, and light proteins.",
+        Luteal: "Focus on complex carbs (sweet potato, oats), magnesium-rich foods (dark chocolate, nuts), and serotonin-boosting ingredients to combat PMS cravings and mood swings."
+    };
+
+    const dietGuidelines: Record<DietPreference, string> = {
+        Veg: "Vegetarian - no meat or fish, but eggs and dairy are okay.",
+        "Non-Veg": "Non-vegetarian - can include chicken, fish, eggs, and any protein.",
+        Vegan: "Vegan - no animal products at all. No meat, fish, eggs, dairy, honey, or ghee.",
+        Jain: "Jain vegetarian - no onion, garlic, ginger, root vegetables, or anything grown underground. No eggs."
+    };
+
+    const prompt = `Create ${recipeTypeLabels[input.recipeType]} recipe for someone in their ${input.phase} phase of the menstrual cycle.
+
+PHASE NUTRITION FOCUS:
+${phaseNutrition[input.phase] || phaseNutrition.Menstrual}
+
+DIETARY REQUIREMENT:
+${dietGuidelines[input.dietPreference]}
+${input.restrictions.length > 0 ? `Additional restrictions: ${input.restrictions.join(", ")}` : ""}
+
+${input.customInstruction ? `USER'S SPECIAL REQUEST: "${input.customInstruction}"` : ""}
+
+Create a delicious, practical recipe they can actually make at home. Use common Indian + international ingredients available in typical kitchens.`;
+
+    try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                response_format: { type: "json_object" },
+                temperature: 0.7, // Higher for creativity
+                max_tokens: 500,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are an expert nutritionist and chef specializing in cycle-syncing nutrition.
+Create recipes that are:
+- Delicious and practical
+- Phase-appropriate (support hormonal balance)
+- Easy to make with common ingredients
+
+Return JSON ONLY with this exact structure:
+{
+    "name": "Creative recipe name (3-5 words)",
+    "ingredients": "Comma-separated list of main ingredients (6-10 items)",
+    "why": "One sentence explaining why this recipe is perfect for this phase (mention specific nutrients/benefits)"
+}`
+                    },
+                    { role: "user", content: prompt }
+                ]
+            }),
+        });
+
+        if (!response.ok) {
+            console.error("Groq API error:", await response.text());
+            return null;
+        }
+
+        const data = await response.json();
+        const result = JSON.parse(data.choices[0].message.content);
+
+        return result as AIRecipe;
+
+    } catch (error) {
+        console.error("AI Recipe Generation Error:", error);
+        return null;
+    }
+}

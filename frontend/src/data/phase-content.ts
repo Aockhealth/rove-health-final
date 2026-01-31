@@ -74,6 +74,8 @@ export type PhaseContent = {
     }[];
     move: { title: string; desc: string; icon: string }[];
     rituals: { title: string; desc: string; icon: string }[];
+    nutrients?: { title: string; desc: string; icon: string; detail: string }[];
+    phaseFocus?: { title: string; desc: string; icon: string; detail: string }[];
     snapshot: {
         hormones: { title: string; desc: string };
         mind: { title: string; desc: string };
@@ -203,6 +205,106 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Phone Putaway", desc: "Detox", icon: "Smartphone" },
             { title: "Face Mask", desc: "Self Care", icon: "Sparkles" }
         ],
+        nutrients: [
+            {
+                title: "Iron",
+                desc: "Replenish Blood",
+                icon: "Droplets",
+                detail: "Critical for replacing iron lost during menstruation. Prevents fatigue, brain fog, and weakness. Sources: pumpkin seeds, spinach, lentils, red meat."
+            },
+            {
+                title: "Magnesium",
+                desc: "Muscle Relaxant",
+                icon: "Sparkles",
+                detail: "Acts as a natural nervous system relaxant. Helps alleviate uterine cramping and improves sleep quality. Sources: dark chocolate, almonds, spinach, avocado."
+            },
+            {
+                title: "Omega-3 Fatty Acids",
+                desc: "Anti-Inflammatory",
+                icon: "Fish",
+                detail: "Essential fatty acids that reduce prostaglandin production. Lowers overall pain intensity and mood swings. Sources: salmon, chia seeds, flax seeds, walnuts."
+            },
+            {
+                title: "Vitamin C",
+                desc: "Absorption Aid",
+                icon: "Sun",
+                detail: "Enhances the body's ability to absorb non-heme iron from plants. Supports immune function and skin health. Sources: oranges, strawberries, bell peppers, broccoli."
+            },
+            {
+                title: "Zinc",
+                desc: "Tissue Repair",
+                icon: "Shield",
+                detail: "Supports the immune system and uterine lining repair. Reduces inflammation and period pain. Sources: pumpkin seeds, chickpeas, cashews, oysters."
+            },
+            {
+                title: "Complex Carbs",
+                desc: "Steady Energy",
+                icon: "Wheat",
+                detail: "Provides slow-release energy to stabilize blood sugar. Combats fatigue and sugar cravings. Sources: sweet potato, oats, quinoa, brown rice."
+            },
+            {
+                title: "Vitamin B12",
+                desc: "Red Blood Cells",
+                icon: "Zap",
+                detail: "Vital for red blood cell formation and neurological function. Combats brain fog and fatigue. Sources: nutritional yeast, eggs, salmon, beef."
+            },
+            {
+                title: "Protein",
+                desc: "Restoration",
+                icon: "Utensils",
+                detail: "Provides amino acids for hormone synthesis and tissue repair. Stabilizes blood sugar and energy. Sources: lentils, tofu, chicken, eggs."
+            }
+        ],
+        phaseFocus: [
+            {
+                title: "Rest & Nap",
+                desc: "Recharge",
+                icon: "Moon",
+                detail: "Your hormones are at their lowest levels. Listen to your body and prioritize sleep and naps over productivity."
+            },
+            {
+                title: "Gentle Stretching",
+                desc: "Light Movement",
+                icon: "Waves",
+                detail: "Avoid HIIT. Opt for Yin Yoga or gentle stretching to open the hips and release lower back tension."
+            },
+            {
+                title: "Journaling",
+                desc: "Reflection",
+                icon: "Book",
+                detail: "The veil between the conscious and subconscious is thin. Write down insights, dreams, or simply how you feel."
+            },
+            {
+                title: "Heat Therapy",
+                desc: "Comfort",
+                icon: "Flame",
+                detail: "Use a hot water bottle or heating pad on your lower belly to increase blood flow and relax cramping muscles."
+            },
+            {
+                title: "Social Detox",
+                desc: "Go Inward",
+                icon: "Smartphone",
+                detail: "It is okay to cancel plans. Step away from social media and drained social batteries to focus on yourself."
+            },
+            {
+                title: "Warm Bath",
+                desc: "Soothe Body",
+                icon: "Waves",
+                detail: "Immerse yourself in warm water with epsom salts to absorb magnesium through the skin and relax the nervous system."
+            },
+            {
+                title: "Nesting",
+                desc: "Safe Space",
+                icon: "Home",
+                detail: "Make your bedroom cozy. Change the sheets, dim the lights, and create a sanctuary for your bleed days."
+            },
+            {
+                title: "Slow Walking",
+                desc: "Fresh Air",
+                icon: "Footprints",
+                detail: "If you need to move, a slow walk in nature provides fresh air without stressing your adrenals."
+            }
+        ],
         snapshot: [
             {
                 hormones: { title: "Low Levels", desc: "Baseline state." },
@@ -318,6 +420,106 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Brainstorming", desc: "Ideas", icon: "Lightbulb" },
             { title: "Trying New", desc: "Novelty", icon: "Star" }
         ],
+        nutrients: [
+            {
+                title: "Probiotics",
+                desc: "Gut Microbiome",
+                icon: "Beaker",
+                detail: "Supports gut bacteria responsible for metabolizing rising estrogen. Improves digestion and immunity. Sources: yogurt, kimchi, sauerkraut, miso."
+            },
+            {
+                title: "Phytoestrogens",
+                desc: "Hormone Modulation",
+                icon: "Leaf",
+                detail: "Plant compounds that mimic mild estrogen. Helps modulate hormone levels naturally. Sources: flax seeds, tofu, edamame, sesame seeds."
+            },
+            {
+                title: "Protein",
+                desc: "Muscle Building",
+                icon: "Dumbbell",
+                detail: "Essential for supporting increased physical activity. Aids muscle recovery and growth. Sources: chicken breast, chickpeas, greek yogurt, tempeh."
+            },
+            {
+                title: "Healthy Fats",
+                desc: "Hormone Synthesis",
+                icon: "Leaf",
+                detail: "Provides structural components for hormone production. Supports brain health and satiety. Sources: avocado, olive oil, walnuts, salmon."
+            },
+            {
+                title: "Vitamin E",
+                desc: "Follicle Health",
+                icon: "Sparkles",
+                detail: "Antioxidant that protects developing follicles. Supports healthy skin and circulation. Sources: sunflower seeds, almonds, spinach, avocado."
+            },
+            {
+                title: "B-Complex",
+                desc: "Energy Metabolism",
+                icon: "Zap",
+                detail: "Converts food into energy to match rising stamina. Supports mood and cognitive function. Sources: eggs, nutritional yeast, beans, leafy greens."
+            },
+            {
+                title: "Antioxidants",
+                desc: "Cell Protection",
+                icon: "Shield",
+                detail: "Protects cells from oxidative stress during high metabolic activity. Supports egg quality. Sources: blueberries, dark leafy greens, green tea, citrus."
+            },
+            {
+                title: "Fiber",
+                desc: "Estrogen Detox",
+                icon: "Wheat",
+                detail: "Binds to excess estrogen in the gut. Promotes regular elimination and hormone balance. Sources: oats, apples, beans, chia seeds."
+            }
+        ],
+        phaseFocus: [
+            {
+                title: "Brainstorming",
+                desc: "New Ideas",
+                icon: "Lightbulb",
+                detail: "Your brain is optimized for creativity right now. Map out new projects or solve complex problems."
+            },
+            {
+                title: "Cardio",
+                desc: "Heart Health",
+                icon: "Activity",
+                detail: "Your stamina is returning. It's a great time for running, cycling, or dance classes."
+            },
+            {
+                title: "Plan Your Month",
+                desc: "Structure",
+                icon: "Book",
+                detail: "Utilize your rising mental clarity to schedule meetings, appointments, and social events for the coming weeks."
+            },
+            {
+                title: "Try Something New",
+                desc: "Adventure",
+                icon: "Star",
+                detail: "Your openness to experience is high. Try a new restaurant, hobby, or route to work."
+            },
+            {
+                title: "Socializing",
+                desc: "Connect",
+                icon: "Users",
+                detail: "You are becoming more extroverted. Say yes to happy hour or coffee dates with friends."
+            },
+            {
+                title: "Learning",
+                desc: "Curiosity",
+                icon: "Brain",
+                detail: "Read that complex book or take a workshop. Your cognitive skills and memory are sharper."
+            },
+            {
+                title: "Meal Prep",
+                desc: "Organization",
+                icon: "Utensils",
+                detail: "Use your newfound energy to chop veggies and prep meals for the busier days ahead."
+            },
+            {
+                title: "Playfulness",
+                desc: "Fun",
+                icon: "Sparkles",
+                detail: "Engage in activities just for fun. Flirt with life and enjoy the lightness of this phase."
+            }
+        ],
         snapshot: [
             {
                 hormones: { title: "Estrogen Rising", desc: "Energy climbing." },
@@ -425,6 +627,106 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Hosting", desc: "Community", icon: "Home" },
             { title: "Presentation", desc: "Lead", icon: "Briefcase" },
             { title: "Volunteering", desc: "Give", icon: "HeartHandshake" }
+        ],
+        nutrients: [
+            {
+                title: "Antioxidants",
+                desc: "Oxidative Stress",
+                icon: "Shield",
+                detail: "Neutralizes free radicals to protect the egg. Supports overall reproductive health. Sources: raspberries, dark chocolate, artichokes, pecans."
+            },
+            {
+                title: "Zinc",
+                desc: "Ovulation Support",
+                icon: "Sparkles",
+                detail: "Critical for egg maturation and ovulation. Supports immune health and hormonal signaling. Sources: oysters, pumpkin seeds, beef, lentils."
+            },
+            {
+                title: "Folic Acid",
+                desc: "Cell Division",
+                icon: "Dna",
+                detail: "Supports healthy cell division and DNA synthesis. Vital for reproductive readiness. Sources: spinach, asparagus, avocado, beans."
+            },
+            {
+                title: "Protein",
+                desc: "Peak Energy",
+                icon: "Utensils",
+                detail: "Sustains peak energy and stabilizes blood sugar. Vital for muscle repair after high activity. Sources: tuna, quinoa, eggs, lean beef."
+            },
+            {
+                title: "Selenium",
+                desc: "Thyroid Health",
+                icon: "Leaf",
+                detail: "Supports thyroid function and follicle health. Antioxidant properties protect cells. Sources: brazil nuts, sardines, turkey, cottage cheese."
+            },
+            {
+                title: "Fiber",
+                desc: "Detoxification",
+                icon: "Wheat",
+                detail: "Ensures elimination of metabolized hormones. Prevents bloating and supports gut health. Sources: raw carrots, berries, quinoa, almonds."
+            },
+            {
+                title: "Vitamin D",
+                desc: "Regulation",
+                icon: "Sun",
+                detail: "Acts as a hormone for sex hormone balance. Supports mood, bone health, and ovulation. Sources: sunlight, fatty fish, egg yolks, mushrooms."
+            },
+            {
+                title: "CoQ10",
+                desc: "Cellular Energy",
+                icon: "Zap",
+                detail: "Boosts mitochondrial energy for egg quality. Supports stamina and heart health. Sources: salmon, organ meats, peanuts, sesame seeds."
+            }
+        ],
+        phaseFocus: [
+            {
+                title: "HIIT Workout",
+                desc: "Max Effort",
+                icon: "Zap",
+                detail: "Your energy is at its peak. Push for personal bests in weightlifting or high-intensity interval training."
+            },
+            {
+                title: "Networking",
+                desc: "Communication",
+                icon: "Users",
+                detail: "Your verbal skills are magnetic. This is the best time for interviews, pitches, or difficult conversations."
+            },
+            {
+                title: "Date Night",
+                desc: "Connection",
+                icon: "Heart",
+                detail: "Libido and confidence are high. Plan romantic outings or quality time with partners."
+            },
+            {
+                title: "Public Speaking",
+                desc: "Visibility",
+                icon: "Lightbulb",
+                detail: "Step into the spotlight. You are biologically primed to be seen and heard right now."
+            },
+            {
+                title: "Community Events",
+                desc: "Group Energy",
+                icon: "Users",
+                detail: "Volunteer or attend group classes. You thrive on the collective energy of others."
+            },
+            {
+                title: "Collaborate",
+                desc: "Teamwork",
+                icon: "Brain",
+                detail: "Work on team projects. You are more empathetic and better at reading facial cues."
+            },
+            {
+                title: "Manifesting",
+                desc: "Attraction",
+                icon: "Sparkles",
+                detail: "Focus on what you want to attract. Your personal magnetism makes this a potent time for goal setting."
+            },
+            {
+                title: "Dance",
+                desc: "Expression",
+                icon: "Music",
+                detail: "Let your body move freely. Dancing releases endorphins and celebrates your body's capabilities."
+            }
         ],
         snapshot: [
             {
@@ -535,9 +837,109 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
         rituals: [
             { title: "Decluttering", desc: "Clean", icon: "Home" },
             { title: "Epsom Soak", desc: "Relax", icon: "Droplets" },
-            { title: "Budgeting", desc: "Plan", icon: "DollarSign" },
+            { title: "Listen to Music", desc: "Relax", icon: "Music" },
             { title: "Cooking", desc: "Nourish", icon: "Utensils" },
-            { title: "Organizing", desc: "Order", icon: "Folder" }
+            { title: "Cozy Time", desc: "Comfort", icon: "Coffee" }
+        ],
+        nutrients: [
+            {
+                title: "Complex Carbs",
+                desc: "Curb Cravings",
+                icon: "Wheat",
+                detail: "Stabilizes blood sugar to prevent mood swings. Boosts serotonin production to combat PMS. Sources: sweet potato, brown rice, squash, oats."
+            },
+            {
+                title: "Vitamin B6",
+                desc: "Progesterone",
+                icon: "Pill",
+                detail: "Essential for progesterone production. Reduces PMS mood swings and breast tenderness. Sources: chickpeas, bananas, salmon, potatoes."
+            },
+            {
+                title: "Magnesium",
+                desc: "Calm Anxiety",
+                icon: "Sparkles",
+                detail: "Calms the nervous system and reduces anxiety. Helps with fluid retention and sleep. Sources: pumpkin seeds, spinach, dark chocolate, almonds."
+            },
+            {
+                title: "Fiber",
+                desc: "Reduce Bloating",
+                icon: "Carrot",
+                detail: "Aids digestion and reduces bloating. Helps eliminate excess estrogen before menstruation. Sources: apples, pears, beans, broccoli."
+            },
+            {
+                title: "Vitamin E",
+                desc: "Cycle Support",
+                icon: "Leaf",
+                detail: "Supports progesterone production. Reduces breast pain and supports skin health. Sources: sunflower seeds, almonds, hazelnuts, avocado."
+            },
+            {
+                title: "Calcium",
+                desc: "PMS Relief",
+                icon: "Beaker",
+                detail: "Reduces physical PMS symptoms like cramping. Supports bone health and mood regulation. Sources: yogurt, leafy greens, almonds, sardines."
+            },
+            {
+                title: "Potassium",
+                desc: "Fluid Balance",
+                icon: "Droplets",
+                detail: "Helps regulate fluid balance. Reduces bloating and water retention common in this phase. Sources: avocado, bananas, sweet potato, spinach."
+            },
+            {
+                title: "Healthy Fats",
+                desc: "Mood Stability",
+                icon: "Fish",
+                detail: "Stabilizes mood and blood sugar. Provides satiety to curb pre-period cravings. Sources: walnuts, olive oil, eggs, chia seeds."
+            }
+        ],
+        phaseFocus: [
+            {
+                title: "Set Boundaries",
+                desc: "Say No",
+                icon: "Shield",
+                detail: "Your tolerance for nonsense is lower. It's healthy to say no to extra obligations and protect your peace."
+            },
+            {
+                title: "Organize Home",
+                desc: "Cleaning",
+                icon: "Home",
+                detail: "The 'nesting' instinct begins. Cleaning drawers or organizing your space feels satisfying now."
+            },
+            {
+                title: "Pilates/Yoga",
+                desc: "Strength",
+                icon: "Dumbbell",
+                detail: "Switch from cardio to strength-based, lower impact movement. Don't overstress the body."
+            },
+            {
+                title: "Early Bedtime",
+                desc: "Sleep",
+                icon: "Moon",
+                detail: "Your basal body temperature is higher, which can disrupt sleep. Wind down earlier to compensate."
+            },
+            {
+                title: "Skin Care",
+                desc: "Self Care",
+                icon: "Heart",
+                detail: "Oil production increases. Use a clay mask or extra pampering to prevent pre-period breakouts."
+            },
+            {
+                title: "Wrap Up Projects",
+                desc: "Completion",
+                icon: "Book",
+                detail: "Finish what you started. Focus on details and administrative tasks rather than starting big new things."
+            },
+            {
+                title: "Reduce Caffeine",
+                desc: "Anxiety",
+                icon: "Coffee",
+                detail: "You may be more sensitive to caffeine now. Switching to decaf or herbal tea can reduce jitters."
+            },
+            {
+                title: "Review Finances",
+                desc: "Check-in",
+                icon: "Lightbulb",
+                detail: "Your analytical brain is active. It's a good time to review budgets or monthly expenses."
+            }
         ],
         snapshot: [
             {

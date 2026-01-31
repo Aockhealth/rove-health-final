@@ -47,35 +47,7 @@ function getRandomItems<T>(items: T[], count: number): T[] {
     return shuffled.slice(0, count);
 }
 
-/**
- * Dynamic Cycle Tracking Logic
- * Calculates the current phase based on the target date and last period start.
- */
-function calculatePhase(
-    targetDate: Date,
-    lastPeriodStart: string,
-    cycleLength: number = 28,
-    periodLength: number = 5
-) {
-    const start = new Date(lastPeriodStart);
-    const d = new Date(targetDate);
-    const s = new Date(start);
-    d.setHours(0, 0, 0, 0);
-    s.setHours(0, 0, 0, 0);
 
-    const diffTime = d.getTime() - s.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let dayInCycle = (diffDays % cycleLength) + 1;
-    if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-    const estimatedOvulationDay = cycleLength - 14;
-
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
-    return { phase: "Luteal", day: dayInCycle };
-}
 
 
 // --- AI ACTIONS ---
@@ -249,71 +221,39 @@ export async function fetchDashboardData() {
         };
     }
 
-    const { data: cycleSettings } = await supabase
-        .from("user_cycle_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    // ✅ OPTIMIZED: Parallel DB fetch
+    const [profileResult, onboardingResult] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+        supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single()
+    ]);
 
-    if (!cycleSettings) return null;
+    const profile = profileResult.data;
+    const onboarding = onboardingResult.data;
 
-    const settings = {
-        last_period_start: cycleSettings.last_period_start,
-        cycle_length_days: cycleSettings.cycle_length_days || 28,
-        period_length_days: cycleSettings.period_length_days || 5
-    };
+    // ✅ CANONICAL STATE: Use the single source of truth
+    const cycleState = await getCanonicalCycleState(user.id);
+    if (!cycleState) return null;
 
-    const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .single();
+    const { phase, day, nextPeriodDate, cycleLength, settings: cycleSettings } = cycleState;
 
-    const { data: onboarding } = await supabase
-        .from("user_onboarding")
-        .select("tracker_mode, dietary_preferences, metabolic_conditions")
-        .eq("user_id", user.id)
-        .single();
-
-    // ✅ Use Edge Function for phase calculation
-    let phaseData: CyclePhaseResponse | null = null;
-    try {
-        phaseData = await getCyclePhase();
-    } catch (error) {
-        // Fallback to local calculation if edge function fails
-    }
-
-    // Fallback to local if edge function fails
-    const phase = phaseData?.phase || calculatePhase(
-        new Date(),
-        settings.last_period_start,
-        settings.cycle_length_days,
-        settings.period_length_days
-    ).phase;
-
-    const day = phaseData?.dayInCycle || calculatePhase(
-        new Date(),
-        settings.last_period_start,
-        settings.cycle_length_days,
-        settings.period_length_days
-    ).day;
-
-    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
-    const riverStr = getRandomItems(content.river, 1)[0] || "Rest • Restore • Reload";
+    // Fetched from DB or Fallback
+    const content = await getPhaseContentFromDB(phase);
+    const riverStr = getRandomItems((content as any).river, 1)[0] || "Rest • Restore • Reload";
 
     return {
         user: { ...user, name: profile?.full_name || "Rove Member" },
         phase: {
             name: phase,
-            day,
-            river: riverStr,
-            superpower: "Resilience",
-            // Add edge function data if available
-            hormoneState: phaseData?.hormoneState,
-            nextPeriodDate: phaseData?.nextPeriodDate,
-            daysUntilNextPeriod: phaseData?.daysUntilNextPeriod,
-            aiPowered: !!phaseData
+            day: day,
+            length: cycleLength || 28,
+            nextPeriodDate: nextPeriodDate,
+            hormones: "Rising Estrogen",
+            symptomFocus: "Energy rising? Time to create.",
         },
+        // New educational data for Daily Flow
+        nutrients: content.nutrients || [],
+        phaseFocus: content.phaseFocus || [],
+        // Keep old data for backward compatibility
         fuel: getRandomItems(content.fuel, 2),
         move: getRandomItems(content.move, 2),
         rituals: getRandomItems(content.rituals, 2),
@@ -336,17 +276,15 @@ export async function fetchUserCycleSettings() {
         };
     }
 
-    const { data: cycleSettings, error } = await supabase
-        .from("user_cycle_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    // ✅ CANONICAL STATE: Use the single source of truth
+    const cycleState = await getCanonicalCycleState(user.id);
+    if (!cycleState) return null;
 
-    if (error) {
-        return null;
-    }
-
-    return cycleSettings;
+    // Return settings with overridden canonical last_period_start
+    return {
+        ...cycleState.settings,
+        last_period_start: cycleState.lastPeriodStart
+    };
 }
 
 // --- CALORIE & MACRO ALGORITHMS ---
@@ -562,56 +500,31 @@ export async function fetchCycleIntelligenceAI() {
 
     if (!user) return null;
 
-    // 1. Fetch cycle settings
-    const { data: cycleSettings } = await supabase
-        .from("user_cycle_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+    // ✅ CANONICAL STATE: Use the single source of truth
+    const cycleState = await getCanonicalCycleState(user.id);
+    if (!cycleState) return null;
 
-    if (!cycleSettings) return null;
+    const { phase, day, nextPeriodDate, cycleLength, settings: cycleSettings } = cycleState;
 
-    // 2. Try to get phase from Edge Function
-    let phaseData: CyclePhaseResponse | null = null;
-    try {
-        phaseData = await getCyclePhase();
-    } catch (error) {
-        // Fallback
-    }
-
-    // Fallback to local calculation if edge function fails
-    const phase = phaseData?.phase || calculatePhase(
-        new Date(),
-        cycleSettings.last_period_start,
-        cycleSettings.cycle_length_days,
-        cycleSettings.period_length_days
-    ).phase;
-
-    const day = phaseData?.dayInCycle || calculatePhase(
-        new Date(),
-        cycleSettings.last_period_start,
-        cycleSettings.cycle_length_days,
-        cycleSettings.period_length_days
-    ).day;
-
-    // 3. Fetch lifestyle and weight goal data
-    const [lifestyleResult, weightGoalResult] = await Promise.all([
+    // ✅ OPTIMIZED: Fetch 3 things in parallel instead of sequential
+    const [lifestyleResult, weightGoalResult, dietPlanResult] = await Promise.all([
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
-        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle()
+        supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        getDietPlan({ phase, symptoms: [] }).catch(() => null), // AI call with fallback
     ]);
 
     const lifestyle = lifestyleResult.data;
     const weightGoal = weightGoalResult.data;
+    const dietPlan = dietPlanResult;
 
-    // 4. Get AI-powered diet plan from Edge Function
-    let dietPlan: DietPlanResponse | null = null;
-    try {
-        dietPlan = await getDietPlan({ phase, symptoms: [] });
-    } catch (error) {
-        // fallback
-    }
+    // ✅ FETCH CONTENT FROM DB (phase_content table)
+    const content = await getPhaseContentFromDB(phase);
 
-    const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    // Helper to get random items
+    const getRandom = (arr: any[], count: number) => {
+        if (!arr || arr.length === 0) return [];
+        return arr.sort(() => 0.5 - Math.random()).slice(0, count);
+    };
 
     // Build nutrition data - prefer AI, fallback to local
     const nutrition = dietPlan ? {
@@ -646,25 +559,31 @@ export async function fetchCycleIntelligenceAI() {
             phase === "Follicular" ? "bg-rove-peach" :
                 phase === "Ovulatory" ? "bg-rove-charcoal" : "bg-amber-500",
         hormones: {
-            title: phaseData?.hormoneState ? `Hormones ${phaseData.hormoneState} ` : "Hormonal State",
+            title: "Hormonal State",
             summary: content.plan?.hormones?.summary || "",
             desc: content.snapshot?.[0]?.hormones?.desc || "",
             symptoms: content.plan?.hormones?.symptoms || []
         },
         rituals: {
             focus: content.river?.[0] || "Rest & Restore",
-            practices: content.rituals || [],
+            practices: getRandom(content.rituals, 2),
             symptom_relief: []
         },
         diet: {
-            core_needs: dietPlan?.recommendedFoods || content.fuel?.map((f: any) => ({ ...f, id: f.title })) || [],
+            core_needs: getRandom(content.fuel, 2), // Use dynamic fuel items here
             ideal_meals: content.plan?.diet?.ideal_meals || [],
             cramp_relief: content.plan?.diet?.cramp_relief || [],
             avoid: dietPlan?.foodsToAvoid || content.plan?.diet?.avoid || []
         },
         exercise: {
             summary: content.plan?.exercise?.summary || "",
-            best: content.move?.map((m: any) => ({ ...m, time: "20-30 mins" })) || [],
+            // Map DB 'move' items to the UI format if needed, or just pass them if compatible
+            best: getRandom(content.move, 2).map((m: any) => ({
+                title: m.title,
+                desc: m.description,
+                time: "20-30 mins",
+                icon: m.icon
+            })),
             avoid: content.plan?.exercise?.avoid || []
         },
         supplements: content.plan?.supplements || [],
@@ -684,15 +603,12 @@ export async function fetchCycleIntelligenceAI() {
     return {
         phase,
         day,
+        nextPeriodDate: nextPeriodDate, // Exposed for parity
         nutrition,
         biometrics,
         blueprint,
-        phaseDetails: phaseData ? {
-            hormoneState: phaseData.hormoneState,
-            nextPeriodDate: phaseData.nextPeriodDate,
-            daysUntilNextPeriod: phaseData.daysUntilNextPeriod,
-            fertileWindow: phaseData.fertileWindow
-        } : null,
+        phaseDetails: null, // Removed Edge Function call for performance
+        settings: cycleSettings, // ✅ EXPOSE SETTINGS FOR CLIENT-SIDE RECALCULATION
         aiPowered: !!dietPlan,
         weightGoal: weightGoal ? {
             currentWeight: lifestyle?.weight_kg || weightGoal.current_weight_kg,
@@ -915,13 +831,28 @@ export async function updateLastPeriodDate(newDate: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Authentication required" };
 
-    const { error } = await supabase
+    console.log("🔧 SERVER: Updating last_period_start to:", newDate, "for user:", user.id);
+
+    const { error, data } = await supabase
         .from("user_cycle_settings")
         .update({ last_period_start: newDate, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .select();
+
+    console.log("🔧 SERVER: Update result - error:", error, "data:", data);
 
     if (error) return { success: false, error: error.message };
-    return { success: true };
+
+    // Verify the update by fetching back
+    const { data: verifyData } = await supabase
+        .from("user_cycle_settings")
+        .select("last_period_start")
+        .eq("user_id", user.id)
+        .single();
+
+    console.log("🔧 SERVER: Verification - last_period_start is now:", verifyData?.last_period_start);
+
+    return { success: true, updatedTo: verifyData?.last_period_start };
 }
 
 export async function getDailyLog(date: string) {
@@ -1141,4 +1072,176 @@ function formatDate(date: Date): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+// --- Helper: CMS Content Strategy ---
+async function getPhaseContentFromDB(phase: string): Promise<any> {
+    const supabase = await createClient();
+
+    // 1. Try to fetch from Supabase
+    const { data, error } = await supabase
+        .from('phase_content')
+        .select('content')
+        .eq('phase', phase)
+        .single();
+
+    // 2. If valid data exists, return it
+    if (data?.content) {
+        return data.content;
+    }
+
+    // 3. Fallback: Use static content & seed ALL phases (Bulk Seed)
+    // If one is missing, we assume the DB might need a full refresh.
+    const staticContent = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+
+    // Trigger background seeding for ALL phases
+    (async () => {
+        console.log("🌱 Triggering bulk seed for all phases...");
+        const phases = Object.keys(PHASE_CONTENT);
+        for (const p of phases) {
+            const { error } = await supabase.from('phase_content').upsert({
+                phase: p,
+                content: PHASE_CONTENT[p] as any,
+                updated_at: new Date().toISOString()
+            });
+            if (!error) console.log(`✅ Auto-seeded content for ${p}`);
+            else if (error.code !== '42501') console.error(`Failed to seed ${p}:`, error.message);
+        }
+    })(); // End of IIFE
+
+    return staticContent;
+}
+
+// ✅ ROBUST LOCAL DATE PARSING
+function calculatePhase(
+    targetDate: Date,
+    lastPeriodStart: string,
+    cycleLength: number = 28,
+    periodLength: number = 5
+) {
+    // Parse "YYYY-MM-DD" explicitly as local time components
+    const [y, m, d_str] = lastPeriodStart.split('-').map(Number);
+    const start = new Date(y, m - 1, d_str); // Local midnight
+
+    // Normalize target date to local midnight
+    const d = new Date(targetDate);
+    d.setHours(0, 0, 0, 0);
+
+    // Safety: also zero out start just in case
+    start.setHours(0, 0, 0, 0);
+
+    const diffTime = d.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let dayInCycle = (diffDays % cycleLength) + 1;
+    if (dayInCycle <= 0) dayInCycle += cycleLength;
+
+    const estimatedOvulationDay = cycleLength - 14;
+
+    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
+    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
+    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
+    return { phase: "Luteal", day: dayInCycle };
+}
+
+// ✅ UNIFIED CYCLE STATE: The Single Source of Truth
+export async function getCanonicalCycleState(userId: string) {
+    const supabase = await createClient();
+
+    // 1. Fetch settings
+    const { data: settings } = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+    if (!settings) return null;
+
+    // 2. Fetch latest logs (plural) to find streak start
+    // We need enough history to find the start of the current period
+    const { data: recentLogs } = await supabase
+        .from("daily_logs")
+        .select("date")
+        .eq("user_id", userId)
+        .eq("is_period", true)
+        .order("date", { ascending: false })
+        .limit(10); // Check last 10 period days
+
+    let lastPeriodStart = settings.last_period_start;
+    const periodLength = settings.period_length_days || 5;
+    const cycleLength = settings.cycle_length_days || 28;
+
+    if (recentLogs && recentLogs.length > 0) {
+        // Sort explicitly descending just in case
+        const dates = recentLogs.map(l => l.date).sort().reverse();
+        const latestDate = dates[0]; // e.g., "2026-01-29"
+
+        // ALWAYS calculate streak start from the latest log
+        // This ensures we fix cases where settings = latestDate (Day 1) but should be streakStart (Day 2+)
+        let streakStart = latestDate;
+        const dateSet = new Set(dates);
+
+        // Helper to subtract days
+        const getPrevDay = (dStr: string) => {
+            const [y, m, d] = dStr.split('-').map(Number);
+            const prev = new Date(y, m - 1, d - 1);
+            const py = prev.getFullYear();
+            const pm = String(prev.getMonth() + 1).padStart(2, '0');
+            const pd = String(prev.getDate()).padStart(2, '0');
+            return `${py}-${pm}-${pd}`;
+        };
+
+        let current = latestDate;
+        while (true) {
+            const prev = getPrevDay(current);
+            if (dateSet.has(prev)) {
+                current = prev;
+            } else {
+                break;
+            }
+        }
+        streakStart = current;
+
+        // If the calculated streak start differs from what's in settings, UPDATE IT
+        // This covers:
+        // 1. Settings too old (lagging)
+        // 2. Settings too new (incorrectly set to latest date instead of start)
+        if (streakStart !== lastPeriodStart) {
+            console.log(`🩹 SELF-HEALING: Calculated Streak Start (${streakStart}) !== Settings (${lastPeriodStart}). Updating.`);
+            lastPeriodStart = streakStart;
+
+            // Background update
+            supabase.from("user_cycle_settings")
+                .update({ last_period_start: lastPeriodStart, updated_at: new Date().toISOString() })
+                .eq("user_id", userId)
+                .then();
+        }
+    }
+
+    // 4. Calculate Phase
+    const phaseResult = calculatePhase(
+        new Date(),
+        lastPeriodStart,
+        cycleLength,
+        periodLength
+    );
+
+    console.log(`🔄 CALCULATE: Start=${lastPeriodStart}, Today=${new Date().toISOString().split('T')[0]}, Day=${phaseResult.day}, Phase=${phaseResult.phase}`);
+
+    // 5. Calculate Next Period
+    // Use the same robust parsing for next period calculation
+    const [py, pm, pd] = lastPeriodStart.split('-').map(Number);
+    const nextPeriodDateFallback = new Date(py, pm - 1, pd);
+    nextPeriodDateFallback.setDate(nextPeriodDateFallback.getDate() + cycleLength);
+    const nextPeriodDateStr = formatDate(nextPeriodDateFallback);
+
+    return {
+        phase: phaseResult.phase,
+        day: phaseResult.day,
+        lastPeriodStart,
+        nextPeriodDate: nextPeriodDateStr,
+        cycleLength,
+        periodLength,
+        settings // return original settings object if needed
+    };
 }

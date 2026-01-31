@@ -2,11 +2,13 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind, ChevronLeft } from "lucide-react";
+import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind, ChevronLeft, CalendarPlus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { fetchDashboardData } from "@/app/actions/cycle-sync";
+import { fetchDashboardData } from "@/app/actions/cycle-sync"; // Still needed for content
+import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
+import { calculateSmartPhase } from "@/lib/cycle/smart-calc"; // NEW
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -15,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { RiverTrack, iconMap } from "@/components/cycle-sync/RiverTrack";
 
 function DailyFlowRiver({ data }: { data: any }) {
+    const [expandedCard, setExpandedCard] = useState<{ title: string; desc: string; detail: string; icon: any; color: string } | null>(null);
+
     const mapItems = (items: any[], colorClass: string, bgClass: string) =>
         (items || []).map(item => ({
             ...item,
@@ -23,11 +27,10 @@ function DailyFlowRiver({ data }: { data: any }) {
             bg: bgClass
         }));
 
-    const fuel = mapItems(data?.fuel, "text-rove-green", "bg-rove-green/10");
-    const move = mapItems(data?.move, "text-rove-red", "bg-rove-red/10");
-    const rituals = mapItems(data?.rituals, "text-rove-purple", "bg-rove-purple/10");
+    const nutrients = mapItems(data?.nutrients, "text-emerald-600", "bg-emerald-100");
+    const phaseFocus = mapItems(data?.phaseFocus, "text-violet-600", "bg-violet-100");
 
-    if (!data || (!fuel.length && !move.length)) return (
+    if (!data || (!nutrients.length && !phaseFocus.length)) return (
         <div className="p-8 text-center border-2 border-dashed border-rove-stone/10 rounded-3xl bg-white/30">
             <p className="text-rove-stone text-sm mb-2">No flow data yet.</p>
             <Link href="/cycle-sync/tracker">
@@ -37,11 +40,75 @@ function DailyFlowRiver({ data }: { data: any }) {
     );
 
     return (
-        <div className="space-y-2 -mx-4 md:-mx-8">
-            <RiverTrack label="Recommended Fuel" items={fuel} direction="right" speed={40} />
-            <RiverTrack label="Movement Plan" items={move} direction="left" speed={38} />
-            <RiverTrack label="Daily Rituals" items={rituals} direction="right" speed={42} />
-        </div>
+        <>
+            <div className="space-y-4 -mx-4 md:-mx-8">
+                <RiverTrack
+                    label="Nutrients For This Phase"
+                    items={nutrients}
+                    direction="right"
+                    speed={40}
+                    onCardClick={(item) => setExpandedCard({ ...item, color: "emerald" })}
+                />
+                <RiverTrack
+                    label="What To Focus On"
+                    items={phaseFocus}
+                    direction="left"
+                    speed={38}
+                    onCardClick={(item) => setExpandedCard({ ...item, color: "violet" })}
+                />
+            </div>
+
+            {/* Expanded Card Modal */}
+            <AnimatePresence>
+                {expandedCard && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setExpandedCard(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className={cn(
+                                "relative w-full max-w-md p-6 rounded-3xl shadow-2xl border",
+                                expandedCard.color === "emerald"
+                                    ? "bg-gradient-to-br from-emerald-50 to-white border-emerald-200"
+                                    : "bg-gradient-to-br from-violet-50 to-white border-violet-200"
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setExpandedCard(null)}
+                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-rove-stone hover:bg-white transition-colors"
+                            >
+                                ✕
+                            </button>
+
+                            {/* Icon */}
+                            <div className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
+                                expandedCard.color === "emerald" ? "bg-emerald-100 text-emerald-600" : "bg-violet-100 text-violet-600"
+                            )}>
+                                {expandedCard.icon && <expandedCard.icon className="w-7 h-7" />}
+                            </div>
+
+                            {/* Content */}
+                            <h3 className="text-xl font-heading text-rove-charcoal mb-1">{expandedCard.title}</h3>
+                            <p className={cn(
+                                "text-sm font-medium mb-4",
+                                expandedCard.color === "emerald" ? "text-emerald-600" : "text-violet-600"
+                            )}>{expandedCard.desc}</p>
+                            <p className="text-sm text-rove-stone leading-relaxed">{expandedCard.detail}</p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
 
@@ -209,16 +276,33 @@ function SeasonalBackground({ phase }: { phase: string }) {
 export default function CycleSyncDashboard() {
     const [data, setData] = useState<any>(null);
     const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
+    const [unifiedData, setUnifiedData] = useState<UnifiedCycleData | null>(null); // NEW
     const router = useRouter();
+
+    // ✅ CLIENT-SIDE RECALCULATION
+    const [clientDay, setClientDay] = useState<number | null>(null);
+    const [clientPhaseName, setClientPhaseName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (unifiedData) {
+            const result = calculateSmartPhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
+            setClientDay(result.day);
+            setClientPhaseName(result.phase);
+        }
+    }, [unifiedData]);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const res = await fetchDashboardData();
-                if (res) {
-                    setData(res);
-                } else {
-                    // Safety Net: If no data found, redirect to Onboarding
+                const [dashboardData, unified] = await Promise.all([
+                    fetchDashboardData(),
+                    fetchUnifiedCycleData()
+                ]);
+
+                if (dashboardData) setData(dashboardData);
+                if (unified) setUnifiedData(unified);
+
+                if (!dashboardData) {
                     router.push("/onboarding");
                 }
             } catch (error) {
@@ -237,7 +321,15 @@ export default function CycleSyncDashboard() {
         </div>
     );
 
-    const { user, phase: currentPhase } = data;
+
+    // ✅ OVERRIDE PHASE DATA
+    const { user, phase: serverPhase } = data;
+    const currentPhase = {
+        ...serverPhase,
+        name: clientPhaseName || serverPhase.name,
+        day: clientDay || serverPhase.day
+    };
+
     const theme = phaseThemes[currentPhase.name] || phaseThemes["Follicular"];
     const trackerMode = data.tracker_mode || "menstruation";
 
@@ -279,80 +371,150 @@ export default function CycleSyncDashboard() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="relative flex flex-col items-center justify-center py-1 md:py-6"
+                            className="relative py-4 md:py-8"
                         >
-                            <div className="relative w-56 h-56 md:w-[300px] md:h-[300px] flex items-center justify-center">
-                                {/* SEASONAL BACKGROUND (Atmospheric) */}
-                                <div className="absolute inset-[-60px] z-0 rounded-full overflow-hidden">
-                                    <SeasonalBackground phase={currentPhase.name} />
-                                </div>
+                            {/* MAIN HERO LAYOUT: Orb (center) + Log Button (right) */}
+                            <div className="flex items-center justify-center gap-4 md:gap-8">
 
-                                {/* Outer Glow */}
-                                <div className={`absolute inset-0 rounded-full bg-gradient-to-tr ${theme.blob.replace("bg-", "from-")} to-transparent blur-3xl animate-pulse will-change-[opacity]`} />
+                                {/* Spacer for balance (hidden on mobile) */}
+                                <div className="hidden md:block w-24"></div>
 
-                                {/* Link to Tracker */}
-                                <Link href="/cycle-sync/tracker">
-                                    <motion.div
-                                        className="relative w-48 h-48 md:w-72 md:h-72 flex items-center justify-center cursor-pointer group"
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ duration: 0.8, ease: "easeOut" }}
-                                    >
-                                        {/* Rotating Gradient Ring */}
+                                {/* CENTER: The Phase Orb */}
+                                <div className="relative">
+                                    {/* Atmospheric Background */}
+                                    <div className="absolute inset-[-50px] z-0 rounded-full overflow-hidden opacity-60 pointer-events-none">
+                                        <SeasonalBackground phase={currentPhase.name} />
+                                    </div>
+
+                                    {/* Outer Glow */}
+                                    <div className={`absolute inset-[-20px] rounded-full ${theme.blob} blur-3xl opacity-40 pointer-events-none`} />
+
+                                    <Link href="/cycle-sync/tracker">
                                         <motion.div
-                                            className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                            style={{ willChange: "transform" }}
-                                        />
-
-                                        <div className={`absolute inset-2 rounded-full bg-white/80 backdrop-blur-3xl ${theme.glow}`} />
-
-                                        <motion.div
-                                            className={`absolute inset-0 rounded-full ${theme.blob} blur-3xl -z-10`}
-                                            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-                                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                        />
-
-                                        {/* ORB CONTENT */}
-                                        <div className="relative text-center z-10 px-4">
-                                            <motion.p
-                                                className="text-[9px] md:text-xs font-bold tracking-[0.2em] text-rove-stone uppercase mb-1"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.3 }}
-                                            >
-                                                Current Phase
-                                            </motion.p>
-                                            <motion.h2
-                                                className={`text-2xl md:text-5xl font-heading ${theme.color} mb-2`}
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: 0.4 }}
-                                            >
-                                                {currentPhase.name}
-                                            </motion.h2>
+                                            className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group"
+                                            whileHover={{ scale: 1.02 }}
+                                            transition={{ duration: 0.3, ease: "easeOut" }}
+                                        >
+                                            {/* Rotating Gradient Ring */}
                                             <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.5 }}
-                                            >
-                                                <Badge variant="secondary" className={`${theme.badge} px-3 py-1 md:px-4 md:py-1.5 text-[10px] md:text-xs tracking-wider transition-colors duration-500`}>
-                                                    <Sparkles className="w-3 h-3 mr-2 inline-block" />
+                                                className={`absolute inset-0 rounded-full border-[5px] md:border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+                                            />
+
+                                            {/* Inner Glass */}
+                                            <div className={`absolute inset-2 rounded-full bg-white/70 backdrop-blur-xl ${theme.glow}`} />
+
+                                            {/* ORB CONTENT */}
+                                            <div className="relative text-center z-10 px-4">
+                                                <p className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-rove-stone uppercase mb-1.5">
+                                                    Current Phase
+                                                </p>
+                                                <h2 className={`text-3xl md:text-4xl font-heading ${theme.color} mb-2`}>
+                                                    {currentPhase.name}
+                                                </h2>
+                                                <Badge variant="secondary" className={`${theme.badge} px-3 py-0.5 text-[9px] md:text-[10px] tracking-wider border`}>
                                                     {currentPhase.superpower}
                                                 </Badge>
-                                            </motion.div>
-                                        </div>
+                                            </div>
 
-                                        {/* Day Indicator */}
-                                        <motion.div
-                                            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-full px-3 py-1 border border-rove-stone/10"
-                                        >
-                                            <span className="text-xs font-bold text-rove-charcoal whitespace-nowrap">Day {currentPhase.day}</span>
+                                            {/* Day Indicator (Top) */}
+                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-full shadow-md border border-rove-stone/10">
+                                                <span className="text-xs font-bold text-rove-charcoal">Day {currentPhase.day}</span>
+                                            </div>
                                         </motion.div>
-                                    </motion.div>
-                                </Link>
+                                    </Link>
+                                </div>
+
+                                {/* RIGHT: Log Data Button */}
+                                <div className="flex flex-col items-center md:items-start gap-1">
+                                    <Link href="/cycle-sync/tracker">
+                                        <motion.button
+                                            whileHover={{ scale: 1.08, y: -2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-xl shadow-rove-charcoal/30 hover:shadow-2xl transition-all duration-300 ring-4 ring-white/50"
+                                        >
+                                            <CalendarPlus className="w-6 h-6 md:w-7 md:h-7" />
+                                        </motion.button>
+                                    </Link>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-charcoal/60 mt-1">Log Data</span>
+                                </div>
+                            </div>
+
+                            {/* CYCLE STATS CARDS */}
+                            <div className="mt-6 md:mt-8 grid grid-cols-3 gap-2 md:gap-4 px-2">
+                                {(() => {
+                                    // Calculate dates
+                                    const nextPeriod = currentPhase.nextPeriodDate ? new Date(currentPhase.nextPeriodDate) : null;
+                                    const ovulationDate = nextPeriod ? new Date(nextPeriod.getTime() - 14 * 24 * 60 * 60 * 1000) : null;
+                                    const fertileStart = ovulationDate ? new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000) : null;
+                                    const fertileEnd = ovulationDate ? new Date(ovulationDate.getTime() + 1 * 24 * 60 * 60 * 1000) : null;
+
+                                    const formatDate = (d: Date | null) => d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '--';
+                                    const formatShort = (d: Date | null) => d ? d.toLocaleDateString('en-US', { day: 'numeric' }) : '--';
+
+                                    return (
+                                        <>
+                                            {/* Next Period Card */}
+                                            <Link href="/cycle-sync/tracker">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.03, y: -2 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    className="bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl p-3 md:p-4 border border-rose-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
+                                                            <Droplets className="w-2.5 h-2.5 md:w-3 md:h-3 text-rose-500" />
+                                                        </div>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-rose-600/70">Period</span>
+                                                    </div>
+                                                    <p className="text-base md:text-xl font-bold text-rose-700">{formatDate(nextPeriod)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-rose-500/70 mt-0.5 group-hover:text-rose-600 transition-colors">
+                                                        {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : ''}
+                                                    </p>
+                                                </motion.div>
+                                            </Link>
+
+                                            {/* Ovulation Card */}
+                                            <Link href="/cycle-sync/tracker">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.03, y: -2 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    className="bg-gradient-to-br from-purple-50 to-indigo-100/50 rounded-2xl p-3 md:p-4 border border-purple-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
+                                                            <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3 text-purple-500" />
+                                                        </div>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-purple-600/70">Ovulation</span>
+                                                    </div>
+                                                    <p className="text-base md:text-xl font-bold text-purple-700">{formatDate(ovulationDate)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-purple-500/70 mt-0.5 group-hover:text-purple-600 transition-colors">Peak fertility</p>
+                                                </motion.div>
+                                            </Link>
+
+                                            {/* Fertile Window Card */}
+                                            <Link href="/cycle-sync/tracker">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.03, y: -2 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    className="bg-gradient-to-br from-teal-50 to-emerald-100/50 rounded-2xl p-3 md:p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-teal-500/10 flex items-center justify-center">
+                                                            <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-500" />
+                                                        </div>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-teal-600/70">Fertile</span>
+                                                    </div>
+                                                    <p className="text-base md:text-xl font-bold text-teal-700">
+                                                        {fertileStart && fertileEnd ? `${fertileStart.toLocaleDateString('en-US', { month: 'short' })} ${fertileStart.getDate()}-${fertileEnd.getDate()}` : '--'}
+                                                    </p>
+                                                    <p className="text-[9px] md:text-[10px] text-teal-500/70 mt-0.5 group-hover:text-teal-600 transition-colors">6-day window</p>
+                                                </motion.div>
+                                            </Link>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </motion.div>
 
@@ -454,30 +616,7 @@ export default function CycleSyncDashboard() {
                             </div>
                         </section>
 
-                        {/* Quick Actions */}
-                        <section>
-                            <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4">Quick Actions</h3>
-                            <div className="space-y-4">
-                                <Link href="/cycle-sync/tracker">
-                                    <button className="w-full flex items-center justify-between p-1 rounded-[2.5rem] bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm group transition-all hover:scale-[1.01]">
-                                        <div className="flex items-center gap-5 pl-5 py-4">
-                                            <div className="w-12 h-12 rounded-full bg-rove-charcoal text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20">
-                                                <Droplets className="w-5 h-5" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-heading text-lg text-rove-charcoal">Log Symptoms</p>
-                                                <p className="text-rove-stone text-sm">Track your daily rhythm</p>
-                                            </div>
-                                        </div>
-                                        <div className="pr-6">
-                                            <div className="w-10 h-10 rounded-full bg-white text-rove-charcoal flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm">
-                                                <ArrowRight className="w-5 h-5" />
-                                            </div>
-                                        </div>
-                                    </button>
-                                </Link>
-                            </div>
-                        </section>
+
                     </motion.div>
                 )}
 

@@ -65,9 +65,10 @@ interface RiverTrackProps {
     direction?: "left" | "right";
     speed?: number;
     label: string;
+    onCardClick?: (item: any) => void;
 }
 
-export function RiverTrack({ items, direction = "left", speed = 20, label }: RiverTrackProps) {
+export function RiverTrack({ items, direction = "left", speed = 20, label, onCardClick }: RiverTrackProps) {
     // Duplicate items for seamless loop (4x for smoothness)
     const riverItems = [...items, ...items, ...items, ...items];
 
@@ -108,13 +109,20 @@ export function RiverTrack({ items, direction = "left", speed = 20, label }: Riv
         }
     });
 
+    const handleCardClick = (item: any, e: React.MouseEvent) => {
+        if (onCardClick) {
+            e.stopPropagation();
+            onCardClick(item);
+        }
+    };
+
     return (
         <div className="w-full overflow-hidden">
             <div className="px-4 md:px-8 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70">{label}</span>
             </div>
 
-            <div className="relative overflow-hidden cursor-grab active:cursor-grabbing">
+            <div className="relative overflow-hidden cursor-grab active:cursor-grabbing px-4 md:px-8">
                 <motion.div
                     ref={containerRef}
                     className="flex gap-3 w-max"
@@ -130,15 +138,25 @@ export function RiverTrack({ items, direction = "left", speed = 20, label }: Riv
                 >
                     {riverItems.map((item, i) => {
                         const Icon = item.icon && typeof item.icon !== 'string' ? item.icon : (iconMap[item.icon as string] || Sparkles);
+                        const isClickable = !!onCardClick && item.detail;
 
                         return (
-                            <div key={i} className="w-auto min-w-[180px] flex-shrink-0 p-2.5 rounded-[1.25rem] bg-white/40 backdrop-blur-md border border-white/40 shadow-sm flex items-center gap-3 hover:bg-white/60 transition-colors pointer-events-none select-none">
-                                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-transform", item.bg || "bg-white", item.color)}>
-                                    <Icon className="w-4 h-4" />
+                            <div
+                                key={i}
+                                className={cn(
+                                    "w-auto min-w-[180px] flex-shrink-0 p-3 rounded-2xl bg-white/60 backdrop-blur-md border border-white/50 shadow-sm flex items-center gap-3 transition-all select-none",
+                                    isClickable
+                                        ? "cursor-pointer hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] pointer-events-auto"
+                                        : "pointer-events-none"
+                                )}
+                                onClick={(e) => isClickable && handleCardClick(item, e)}
+                            >
+                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform", item.bg || "bg-white", item.color)}>
+                                    <Icon className="w-5 h-5" />
                                 </div>
-                                <div className="text-left">
-                                    <h4 className="font-heading text-sm text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
-                                    <p className="text-rove-stone text-[9px] whitespace-nowrap">{item.desc || item.description}</p>
+                                <div className="text-left flex-1">
+                                    <h4 className="font-heading text-sm font-semibold text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
+                                    <p className="text-rove-charcoal/60 text-xs font-medium whitespace-nowrap">{item.desc || item.description}</p>
                                 </div>
                             </div>
                         );

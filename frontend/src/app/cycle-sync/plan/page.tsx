@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef, useTransition } from "react";
 import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
+import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
+import { calculateSmartPhase } from "@/lib/cycle/smart-calc"; // NEW
 import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
@@ -14,7 +16,7 @@ import {
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2, Target, Scale
+    Flower2, Target, Scale, Plus, Trash2
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 
@@ -87,7 +89,28 @@ const BLUEPRINTS: any = {
             { time: "Afternoon", activity: "Khichdi + Greens → 15min Walk" },
             { time: "Evening", activity: "Warm snack → Stretching" },
             { time: "Night", activity: "Light soup → Magnesium → Early sleep" }
-        ]
+        ],
+        nutrition_guide: {
+            macro_fuel: {
+                calories: 1800, protein: 60, fats: 65, carbs: 220,
+                proteinLabel: "60g", fatsLabel: "High (Support)", carbsLabel: "Comfort (Mod)",
+                proteinDesc: "Protein (Blood Replenishment)",
+                fatsDesc: "Healthy Fats (Block Cramps)",
+                carbsDesc: "Complex Carbs (Comfort)"
+            },
+            symptom_decoder: {
+                title: "Period Symptoms",
+                subtitle: "Body Literacy",
+                cards: [
+                    { title: "Cramps", condition: "Pain", biology: "Prostaglandins causing contractions", fix: "Magnesium & Heat" },
+                    { title: "Fatigue", condition: "Low Energy", biology: "Low hormones", fix: "Rest & Iron" }
+                ]
+            },
+            cheat_sheet: {
+                focus: { title: "What to Eat", items: ["Warm Foods", "Iron", "Rest"] },
+                avoid: { title: "What to Limit", items: ["Cold Salads", "Caffeine", "HIIT"] }
+            }
+        }
     },
     "Follicular": {
         color: "bg-rove-peach",
@@ -147,7 +170,28 @@ const BLUEPRINTS: any = {
             { time: "Afternoon", activity: "Salad/Grain Bowl → Creative Work" },
             { time: "Evening", activity: "Socializing → Light Dinner" },
             { time: "Night", activity: "Reading → Planning tomorrow" }
-        ]
+        ],
+        nutrition_guide: {
+            macro_fuel: {
+                calories: 2000, protein: 75, fats: 55, carbs: 260,
+                proteinLabel: "75g", fatsLabel: "Low (Light)", carbsLabel: "High (Energy)",
+                proteinDesc: "Protein (Muscle Repair)",
+                fatsDesc: "Healthy Fats (Hormone Synthesis)",
+                carbsDesc: "Complex Carbs (Building Energy)"
+            },
+            symptom_decoder: {
+                title: "Rising Energy",
+                subtitle: "Body Literacy",
+                cards: [
+                    { title: "Restlessness", condition: "High Energy", biology: "Estrogen rising", fix: "Movement" },
+                    { title: "Sensory Seek", condition: "Curiosity", biology: "Brain lighting up", fix: "New experiences" }
+                ]
+            },
+            cheat_sheet: {
+                focus: { title: "What to Eat", items: ["Fresh Veggies", "Probiotics", "Cardio"] },
+                avoid: { title: "What to Limit", items: ["Heavy Oils", "Processed Sugar"] }
+            }
+        }
     },
     "Ovulatory": {
         color: "bg-rove-charcoal",
@@ -207,7 +251,28 @@ const BLUEPRINTS: any = {
             { time: "Afternoon", activity: "Raw Lunch → Important Meetings" },
             { time: "Evening", activity: "Social Event / Date Night" },
             { time: "Night", activity: "Wind down routine → Sleep mask" }
-        ]
+        ],
+        nutrition_guide: {
+            macro_fuel: {
+                calories: 2100, protein: 80, fats: 60, carbs: 280,
+                proteinLabel: "80g", fatsLabel: "Low (Digestion)", carbsLabel: "Peak (Fuel)",
+                proteinDesc: "Protein (Support)",
+                fatsDesc: "Healthy Fats (Anti-Inflammatory)",
+                carbsDesc: "Complex Carbs (Peak Fuel)"
+            },
+            symptom_decoder: {
+                title: "Peak Performance",
+                subtitle: "Body Literacy",
+                cards: [
+                    { title: "High Libido", condition: "Arousal", biology: "Peak estrogen & testosterone", fix: "Intimacy" },
+                    { title: "Social Buzz", condition: "Extroversion", biology: "Verbal center active", fix: "Socializing" }
+                ]
+            },
+            cheat_sheet: {
+                focus: { title: "What to Eat", items: ["Fiber", "Cruciferous Veg", "HIIT"] },
+                avoid: { title: "What to Limit", items: ["Alcohol", "Heavy Carbs"] }
+            }
+        }
     },
     "Luteal": {
         color: "bg-amber-500",
@@ -267,7 +332,28 @@ const BLUEPRINTS: any = {
             { time: "Afternoon", activity: "Focus Work → Roasted Snack" },
             { time: "Evening", activity: "Pilates/Strength → Warm Dinner" },
             { time: "Night", activity: "Journaling → Tea → Early Bed" }
-        ]
+        ],
+        nutrition_guide: {
+            macro_fuel: {
+                calories: 1900, protein: 70, fats: 70, carbs: 240,
+                proteinLabel: "70g", fatsLabel: "High (Satiety)", carbsLabel: "Low (Stable)",
+                proteinDesc: "Protein (Stabilize)",
+                fatsDesc: "Healthy Fats (Mood Stability)",
+                carbsDesc: "Complex Carbs (Fight Cravings)"
+            },
+            symptom_decoder: {
+                title: "PMS Decoder",
+                subtitle: "Body Literacy",
+                cards: [
+                    { title: "Bloating", condition: "Water Retention", biology: "Progesterone slowing digestion", fix: "Potassium & Water" },
+                    { title: "Anxiety", condition: "Mood Swing", biology: "Drop in GABA", fix: "Magnesium & B6" }
+                ]
+            },
+            cheat_sheet: {
+                focus: { title: "What to Eat", items: ["Complex Carbs", "Magnesium", "Pilates"] },
+                avoid: { title: "What to Limit", items: ["Salt", "Sugar", "Caffeine"] }
+            }
+        }
     }
 };
 
@@ -306,42 +392,126 @@ function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     );
 }
 
-function RitualCheckbox({ item, theme, index, total }: { item: any, theme: any, index: number, total: number }) {
-    const [checked, setChecked] = useState(false);
+function ActivitiesWidget({ practices, theme }: { practices: any[], theme: any }) {
+    const [customItems, setCustomItems] = useState<any[]>([]);
+    const [newItem, setNewItem] = useState("");
+    const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
+
+    // Load state on mount
+    useEffect(() => {
+        try {
+            const savedCustom = localStorage.getItem('rove_custom_activities');
+            if (savedCustom) setCustomItems(JSON.parse(savedCustom));
+
+            const savedChecks = localStorage.getItem('rove_activity_checks');
+            // Logic to clear checks if date changed could go here, but simple persistence is fine for now
+            if (savedChecks) setCheckedState(JSON.parse(savedChecks));
+        } catch (e) {
+            console.error("Failed to load local storage", e);
+        }
+    }, []);
+
+    const toggleCheck = (id: string) => {
+        const newState = { ...checkedState, [id]: !checkedState[id] };
+        setCheckedState(newState);
+        localStorage.setItem('rove_activity_checks', JSON.stringify(newState));
+    };
+
+    const addCustom = () => {
+        if (!newItem.trim()) return;
+        const item = {
+            title: newItem,
+            desc: "Personal Goal",
+            icon: "Sparkles",
+            id: `custom-${Date.now()}`,
+            isCustom: true
+        };
+        const next = [...customItems, item];
+        setCustomItems(next);
+        localStorage.setItem('rove_custom_activities', JSON.stringify(next));
+        setNewItem("");
+    };
+
+    const removeCustom = (id: string) => {
+        const next = customItems.filter(i => i.id !== id);
+        setCustomItems(next);
+        localStorage.setItem('rove_custom_activities', JSON.stringify(next));
+    };
+
+    // Merge lists directly in render for simplicity
+    const mergedList = [
+        ...practices.map((p, i) => ({ ...p, id: `sys-${p.title || i}`, isCustom: false })),
+        ...customItems
+    ];
+
     return (
-        <div
-            onClick={() => setChecked(!checked)}
-            className={cn(
-                "group flex items-center gap-4 p-4 cursor-pointer transition-all duration-300 hover:bg-white/40",
-                index !== total - 1 && "border-b border-white/40"
-            )}
-        >
-            <div className={cn(
-                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300",
-                checked
-                    ? cn("border-transparent scale-110", theme.accent, "text-white shadow-sm")
-                    : "border-rove-stone/30 bg-white/50 group-hover:border-rove-stone/50"
-            )}>
-                {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
-            </div>
+        <section>
+            <SectionHeader title="Activities Recommended For You" icon={CheckCircle2} />
+            <div className={cn("backdrop-blur-xl rounded-[1.5rem] border shadow-sm overflow-hidden transition-all duration-500", theme.softBg, theme.border)}>
+                <div className="divide-y divide-black/5">
+                    {mergedList.map((item) => {
+                        const isChecked = checkedState[item.id];
+                        return (
+                            <div key={item.id} className="group flex items-center gap-4 p-4 hover:bg-white/40 transition-colors cursor-pointer" onClick={() => toggleCheck(item.id)}>
+                                {/* Checkbox */}
+                                <div
+                                    className={cn(
+                                        "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0",
+                                        isChecked
+                                            ? cn("border-transparent scale-110 text-white shadow-sm", theme.accent)
+                                            : "border-rove-stone/30 bg-white/50 group-hover:border-rove-stone/50"
+                                    )}
+                                >
+                                    {isChecked && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                </div>
 
-            <div className="flex-1 opacity-90 transition-opacity duration-300" style={{ opacity: checked ? 0.5 : 1 }}>
-                <h4 className={cn(
-                    "font-bold text-rove-charcoal text-sm transition-all duration-300",
-                    checked && "line-through text-rove-stone"
-                )}>
-                    {item.title}
-                </h4>
-                <p className="text-xs text-rove-stone/80">{item.desc}</p>
-            </div>
+                                {/* Text */}
+                                <div className="flex-1">
+                                    <h4 className={cn(
+                                        "font-bold text-sm transition-all duration-300",
+                                        isChecked ? "text-rove-stone line-through decoration-rove-stone/50" : "text-rove-charcoal"
+                                    )}>
+                                        {item.title}
+                                    </h4>
+                                    {item.desc && <p className="text-[10px] text-rove-stone/80">{item.desc}</p>}
+                                </div>
 
-            <div className={cn(
-                "p-2 rounded-full bg-white/40 text-rove-stone/40 opacity-0 group-hover:opacity-100 transition-all duration-300",
-                checked && "opacity-0"
-            )}>
-                <Sparkles className="w-3 h-3" />
+                                {/* Actions */}
+                                {item.isCustom && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); removeCustom(item.id); }}
+                                        className="p-2 text-rove-stone/40 hover:text-red-400 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Add Input */}
+                <div className="p-3 bg-white/30 border-t border-white/20 flex gap-2 items-center">
+                    <input
+                        value={newItem}
+                        onChange={e => setNewItem(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addCustom()}
+                        placeholder="Add your own activity or supplement..."
+                        className="flex-1 bg-transparent text-sm font-medium placeholder:text-rove-stone/50 outline-none p-2 text-rove-charcoal"
+                    />
+                    <button
+                        onClick={addCustom}
+                        disabled={!newItem.trim()}
+                        className={cn(
+                            "w-8 h-8 flex items-center justify-center rounded-full text-white transition-all shadow-sm hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
+                            theme.accent
+                        )}
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
-        </div>
+        </section>
     );
 }
 
@@ -417,16 +587,41 @@ export default function DetailedPlanPage() {
     const [weeklyRate, setWeeklyRate] = useState("0.4");
 
     const [data, setData] = useState<any>(null);
+    const [unifiedData, setUnifiedData] = useState<UnifiedCycleData | null>(null); // NEW
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
+
+    // ✅ CLIENT-SIDE RECALCULATION (Unified Smart Logic)
+    const [clientDay, setClientDay] = useState<number | null>(null);
+    const [clientPhaseName, setClientPhaseName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (unifiedData) {
+            // Run the EXACT same logic as Tracker, but on Client (Local Time)
+            const result = calculateSmartPhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
+            setClientDay(result.day);
+            setClientPhaseName(result.phase);
+        }
+    }, [unifiedData]);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const planSettings = await fetchPlanSettings();
+                // ✅ OPTIMIZED: Fetch all in parallel
+                const [planSettings, unified, cycleData] = await Promise.all([
+                    fetchPlanSettings(),
+                    fetchUnifiedCycleData(),      // 1. Sync Logic
+                    fetchCycleIntelligenceAI()    // 2. Content Logic (Legacy)
+                ]);
+
                 if (planSettings) {
                     setHasPlanSetup(true);
-                    const res = await fetchCycleIntelligenceAI();
-                    if (res) setData(res);
+                    if (planSettings.weight_kg) setWeight(planSettings.weight_kg.toString());
+                    if (planSettings.height_cm) setHeight(planSettings.height_cm.toString());
+                    if (planSettings.activity_level) setActivity(planSettings.activity_level);
+                    if (planSettings.fitness_goal) setFitnessGoal(planSettings.fitness_goal); // ✅ Capture Goal
+
+                    if (unified) setUnifiedData(unified);
+                    if (cycleData) setData(cycleData);
                 } else {
                     setHasPlanSetup(false);
                 }
@@ -438,6 +633,96 @@ export default function DetailedPlanPage() {
         };
         load();
     }, []);
+
+    // Helper: Calculate Personalized Macros based on Phase & Biometrics
+    const getPersonalizedMacros = (phaseName: string, w: number, h: number, age: number = 30, act: string, goal: string) => {
+        // 1. Calculate BMR (Mifflin-St Jeor for Women)
+        // BMR = 10W + 6.25H - 5A - 161
+        const bmr = (10 * w) + (6.25 * h) - (5 * age) - 161;
+
+        // 2. Activity Multiplier (Refined for User Feedback)
+        let multiplier = 1.2; // Sedentary
+        if (act === "Active") multiplier = 1.375; // Moderate (was 1.55)
+        if (act === "Highly Active") multiplier = 1.55; // High (was 1.725)
+
+        // 3. TDEE (Total Daily Energy Expenditure)
+        let tdee = bmr * multiplier;
+
+        // 4. Goal Adjustment (Deficit/Surplus)
+        if (goal === "weight_loss") tdee -= 400; // ~0.4kg/week loss
+        if (goal === "muscle_gain") tdee += 200; // Small surplus
+
+        // 5. Phase Adjustments (Metabolic Shift)
+        // Luteal: +100-200 kcal (Metabolism increases)
+        // Follicular: Base
+        if (phaseName === "Luteal") tdee += 150;
+        if (phaseName === "Follicular") tdee += 50;
+
+        // 6. Weight-Based Protein (Female Physiology Friendly)
+        // Standard: 0.8g/kg
+        // Active: 1.2 - 1.4g/kg
+        // Highly Active: 1.6g/kg
+        let proteinPerKg = 1.0;
+        if (act === "Active") proteinPerKg = 1.3;
+        if (act === "Highly Active") proteinPerKg = 1.6;
+
+        // Phase Tweak: Luteal needs slightly more protein for satiety
+        if (phaseName === "Luteal") proteinPerKg += 0.1;
+
+        const proteinGrams = Math.round(w * proteinPerKg);
+        const proteinCals = proteinGrams * 4;
+
+        // 7. Healthy Fats (Crucial for Hormones - min 0.8g/kg or 30%)
+        let fatPct = 0.30;
+        if (phaseName === "Menstrual" || phaseName === "Luteal") fatPct = 0.35; // Higher fat for hormone support
+
+        const fatCals = tdee * fatPct;
+        const fatGrams = Math.round(fatCals / 9);
+
+        // 8. Carbs (Remainder)
+        const carbCals = Math.max(0, tdee - proteinCals - fatCals);
+        const carbGrams = Math.round(carbCals / 4);
+
+        // 9. Qualitative Labels & Descriptions (Phase-Specific Suggestions)
+        let cLabel = "Moderate", fLabel = "Moderate", pLabel = "Moderate";
+        let cDesc = "Complex Carbs", fDesc = "Healthy Fats", pDesc = "Protein";
+
+        switch (phaseName) {
+            case "Menstrual":
+                pLabel = `${proteinGrams}g`; pDesc = "Protein (Blood Replenishment)";
+                fLabel = "High (Support)"; fDesc = "Healthy Fats (Block Cramps)";
+                cLabel = "Comfort (Mod)"; cDesc = "Complex Carbs (Comfort)";
+                break;
+            case "Follicular":
+                pLabel = `${proteinGrams}g`; pDesc = "Protein (Muscle Repair)";
+                fLabel = "Low (Light)"; fDesc = "Healthy Fats (Hormone Synthesis)";
+                cLabel = "High (Energy)"; cDesc = "Complex Carbs (Building Energy)";
+                break;
+            case "Ovulatory":
+                pLabel = `${proteinGrams}g`; pDesc = "Protein (Support)";
+                fLabel = "Low (Digestion)"; fDesc = "Healthy Fats (Anti-Inflammatory)";
+                cLabel = "Peak (Fuel)"; cDesc = "Complex Carbs (Peak Fuel)";
+                break;
+            case "Luteal":
+                pLabel = `${proteinGrams}g`; pDesc = "Protein (Stabilize)";
+                fLabel = "High (Satiety)"; fDesc = "Healthy Fats (Mood Stability)";
+                cLabel = "Low (Stable)"; cDesc = "Complex Carbs (Fight Cravings)";
+                break;
+        }
+
+        return {
+            calories: Math.round(tdee),
+            protein: proteinGrams,
+            fats: fatGrams,
+            carbs: carbGrams,
+            proteinLabel: pLabel,
+            fatsLabel: fLabel,
+            carbsLabel: cLabel,
+            proteinDesc: pDesc,
+            fatsDesc: fDesc,
+            carbsDesc: cDesc
+        };
+    };
     const handleSetupNext = () => {
         if (setupStep === 1) {
             if (!height || !weight) return alert("Please enter height and weight.");
@@ -849,8 +1134,33 @@ export default function DetailedPlanPage() {
         </div>
     );
 
-    const phaseName = data.phase || "Menstrual";
-    const BP = data.blueprint || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+    const phaseName = clientPhaseName || data.phase || "Menstrual";
+    const displayDay = clientDay || data.day;
+
+    // Only use server blueprint if phases match, otherwise fallback to static content for the new phase
+    const useServerBlueprint = !clientPhaseName || (clientPhaseName === data.phase);
+    let BP = (useServerBlueprint ? data.blueprint : null) || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+
+    // ✅ DYNAMIC OVERRIDE: Personalize Macros if we have user metrics
+    if (weight && height) {
+        const pMacros = getPersonalizedMacros(
+            phaseName,
+            parseFloat(weight),
+            parseFloat(height),
+            30, // Default age if not tracked
+            activity || "Active",
+            fitnessGoal || "maintenance"
+        );
+
+        BP = {
+            ...BP,
+            nutrition_guide: {
+                ...BP.nutrition_guide,
+                macro_fuel: pMacros
+            }
+        };
+    }
+
     const theme = phaseThemes[phaseName] || phaseThemes["Menstrual"];
     const headerImage = PHASE_IMAGES[phaseName] || PHASE_IMAGES["Menstrual"];
     const todayStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -867,11 +1177,11 @@ export default function DetailedPlanPage() {
 
                     <div className="flex flex-col items-center">
                         <h1 className={cn("text-lg font-heading leading-none mb-0.5", theme.color)}>{phaseName}</h1>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone/60">Day {data.day} of Cycle</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone/60">Day {displayDay} of Cycle</span>
                     </div>
 
                     <div className={cn("w-9 h-9 rounded-full border flex items-center justify-center shadow-sm", theme.cardBg, theme.border)}>
-                        <span className={cn("text-xs font-bold", theme.color)}>{data.day}</span>
+                        <span className={cn("text-xs font-bold", theme.color)}>{displayDay}</span>
                     </div>
                 </div>
             </div>
@@ -945,7 +1255,9 @@ export default function DetailedPlanPage() {
                                             </span>
                                         </div>
 
-                                        {/* Weight Row - Inline */}
+
+
+                                        {/* Main Dashboard (Weight Goal + Diet + Activity) */}
                                         <div className={cn("flex items-center justify-between rounded-xl p-3 mb-3", theme.softBg)}>
                                             <div className="text-center flex-1">
                                                 <p className="text-lg font-heading font-bold text-rove-charcoal/70">{data.weightGoal.startWeight}<span className="text-xs text-rove-stone">kg</span></p>
@@ -1112,20 +1424,7 @@ export default function DetailedPlanPage() {
                                 </div>
                             </section>
 
-                            <section>
-                                <SectionHeader title="Daily Rituals" icon={CheckCircle2} />
-                                <div className={cn("backdrop-blur-xl rounded-[1.5rem] border shadow-sm overflow-hidden p-1 transition-all duration-500", theme.softBg, theme.border)}>
-                                    {BP.rituals.practices.map((practice: any, i: number) => (
-                                        <RitualCheckbox
-                                            key={i}
-                                            item={practice}
-                                            theme={theme}
-                                            index={i}
-                                            total={BP.rituals.practices.length}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
+                            <ActivitiesWidget practices={BP.rituals.practices} theme={theme} />
 
                             <div className="mt-4">
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-3">Symptom Soothers</h3>
@@ -1224,9 +1523,7 @@ export default function DetailedPlanPage() {
                             )}
 
                             {/* 5. The AI Chef (Plate Builder) */}
-                            {BP.nutrition_guide?.ai_chef && (
-                                <PlateBuilder phase={phaseName} data={BP.nutrition_guide.ai_chef} theme={theme} />
-                            )}
+                            <PlateBuilder phase={phaseName} theme={theme} />
                         </motion.div>
                     )}
 

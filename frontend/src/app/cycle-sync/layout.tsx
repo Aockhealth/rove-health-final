@@ -39,17 +39,22 @@ export default function CycleSyncLayout({
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    "flex flex-col items-center gap-1 transition-colors",
-                                    isActive ? "text-rove-charcoal" : "text-rove-stone/50 hover:text-rove-stone"
+                                    "flex flex-col items-center gap-1 transition-all duration-300",
+                                    isActive ? "text-gray-900 font-semibold scale-105" : "text-gray-500 hover:text-gray-900"
                                 )}
                             >
                                 <div className={cn(
-                                    "p-1.5 rounded-xl transition-all",
-                                    isActive && "bg-rove-charcoal/5"
+                                    "p-2 rounded-xl transition-all duration-300",
+                                    isActive
+                                        ? "bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] border border-gray-100 -translate-y-2 text-rose-500"
+                                        : "transparent text-gray-400"
                                 )}>
-                                    <item.icon className={cn("w-6 h-6", isActive && "fill-current")} />
+                                    <item.icon className={cn("w-6 h-6", isActive && "fill-current stroke-[2.5px]")} />
                                 </div>
-                                <span className="text-[10px] font-medium">{item.label}</span>
+                                <span className={cn(
+                                    "text-[10px] uppercase tracking-wider transition-all",
+                                    isActive ? "opacity-100 translate-y-0" : "opacity-80"
+                                )}>{item.label}</span>
                             </Link>
                         );
                     })}

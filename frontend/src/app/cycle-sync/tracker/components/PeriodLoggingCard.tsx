@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useMemo, useTransition, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,10 +42,11 @@ interface PeriodLoggingCardProps {
 
     // CTA
     onEnablePeriodLogging: () => void;
+    onEndPeriod?: () => void; // Optional for backward compatibility if needed, but we'll pass it
     currentPhase?: string | null;
 }
 
-export default function PeriodLoggingCard({
+const PeriodLoggingCard = memo(function PeriodLoggingCard({
     selectedDate,
     onSelectDate,
 
@@ -60,6 +61,7 @@ export default function PeriodLoggingCard({
 
     onTogglePeriodDate,
     onExitPeriodLogging,
+    onEndPeriod,
 
     isFutureDate,
     formatDate,
@@ -82,12 +84,20 @@ export default function PeriodLoggingCard({
     };
 
     // ---- logs-first anchor: use latest logged period start if present, else settings ----
+    // Optimization: Memoize sorted keys once to avoid re-sorting inside the loop for every day
+    const sortedLogDates = useMemo(() => {
+        return Object.keys(monthLogs).sort().reverse();
+    }, [monthLogs]);
+
     const getRelevantPeriodStart = useMemo(() => {
         const findStreakStart = (startStr: string) => {
             let cur = new Date(startStr);
             cur.setHours(0, 0, 0, 0);
             let first = startStr;
 
+            // Look backwards for contiguous period days
+            // We can optimize this by checking map directly without loop limit if needed,
+            // but for now, just iterating back is safe enough given the data size.
             while (true) {
                 cur.setDate(cur.getDate() - 1);
                 const prevStr = formatDate(cur);
@@ -104,23 +114,39 @@ export default function PeriodLoggingCard({
             if (monthLogs[dateStr]?.is_period) return findStreakStart(dateStr);
 
             // otherwise find most recent logged period day before target
-            const datesDesc = Object.keys(monthLogs).sort().reverse();
-            for (const d of datesDesc) {
+            // Usage of pre-sorted dates prevents O(N^2) sorting in the render loop
+            for (const d of sortedLogDates) {
                 if (d < dateStr && monthLogs[d]?.is_period) return findStreakStart(d);
             }
 
-            // fallback: project forward from cycleSettings.last_period_start
+            // fallback: use cycleSettings.last_period_start
             if (cycleSettings.last_period_start) {
                 const globalStart = new Date(cycleSettings.last_period_start);
                 globalStart.setHours(0, 0, 0, 0);
                 const check = new Date(targetDate);
                 check.setHours(0, 0, 0, 0);
-                if (check >= globalStart) return cycleSettings.last_period_start;
+
+                // Enforce minimum cycle length
+                const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
+
+                if (check >= globalStart) {
+                    // Forward projection - use last_period_start directly
+                    return cycleSettings.last_period_start;
+                } else {
+                    // Backcast: calculate which previous cycle this date falls into
+                    const diffTime = globalStart.getTime() - check.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const cyclesBack = Math.ceil(diffDays / cycleLength);
+
+                    const simulatedStart = new Date(globalStart);
+                    simulatedStart.setDate(globalStart.getDate() - (cyclesBack * cycleLength));
+                    return formatDate(simulatedStart);
+                }
             }
 
             return null;
         };
-    }, [monthLogs, cycleSettings.last_period_start, formatDate]);
+    }, [monthLogs, sortedLogDates, cycleSettings.last_period_start, formatDate, cycleSettings.cycle_length_days]);
 
     const getDayInCycle = useMemo(() => {
         return (date: Date): number | null => {
@@ -136,7 +162,8 @@ export default function PeriodLoggingCard({
             const diffDays = Math.floor((check.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
             if (diffDays < 0) return null;
 
-            const cycleLength = cycleSettings.cycle_length_days || 28;
+            // Enforce minimum 21-day cycle (handle bad data)
+            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
             let dayInCycle = (diffDays % cycleLength) + 1;
             if (dayInCycle <= 0) dayInCycle += cycleLength;
             return dayInCycle;
@@ -148,13 +175,25 @@ export default function PeriodLoggingCard({
             const day = getDayInCycle(date);
             if (!day) return null;
 
-            const cycleLength = cycleSettings.cycle_length_days || 28;
-            const periodLength = cycleSettings.period_length_days || 5;
-            const ovulationDay = cycleLength - 14;
+            // Enforce minimum reasonable values (cycle can't be less than 21 days)
+            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
+            const periodLength = Math.max(Math.min(cycleSettings.period_length_days || 5, 10), 3);
+            const ovulationDay = Math.max(cycleLength - 14, periodLength + 1);
 
-            if (day <= periodLength) return "Menstrual";
+            // Look up log for this specific date
+            const dateStr = formatDate(date);
+            const isExplicitlyNotPeriod = monthLogs[dateStr] && monthLogs[dateStr]?.is_period === false;
+
+            // Day 1-periodLength = Menstrual (works for all cycles via modulo)
+            if (day <= periodLength && !isExplicitlyNotPeriod) return "Menstrual";
+
+            // Ovulatory window (around day 14 in a 28-day cycle)
             if (day >= ovulationDay - 1 && day <= ovulationDay + 1) return "Ovulatory";
+
+            // After ovulation = Luteal
             if (day > ovulationDay + 1) return "Luteal";
+
+            // Between period and ovulation = Follicular
             return "Follicular";
         };
     }, [getDayInCycle, cycleSettings.cycle_length_days, cycleSettings.period_length_days]);
@@ -164,11 +203,23 @@ export default function PeriodLoggingCard({
             const day = getDayInCycle(date);
             if (!day) return false;
 
-            const cycleLength = cycleSettings.cycle_length_days || 28;
-            const ovulationDay = cycleLength - 14;
+            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
+            const ovulationDay = Math.max(cycleLength - 14, 7);
             return day >= ovulationDay - 5 && day <= ovulationDay + 2;
         };
     }, [getDayInCycle, cycleSettings.cycle_length_days]);
+
+    // Pre-compute phases for all calendar days (prevents redundant calculations)
+    const phaseMap = useMemo(() => {
+        const map: Record<string, Phase | null> = {};
+        calendarDays.forEach(dayItem => {
+            if (!dayItem.isPadding) {
+                const dateStr = formatDate(dayItem.date);
+                map[dateStr] = getPredictedPhase(dayItem.date);
+            }
+        });
+        return map;
+    }, [calendarDays, getPredictedPhase, formatDate]);
 
     // Days until next period
     const daysUntilPeriod = useMemo(() => {
@@ -232,7 +283,10 @@ export default function PeriodLoggingCard({
                 >
                     <div>
                         <h2 className="text-xl font-heading font-semibold text-gray-900 leading-tight">
-                            {daysUntilPeriod === 0 ? "Period starts today" : `Period in ${daysUntilPeriod} days`}
+                            {currentPhase === "Menstrual"
+                                ? "Period Day " + (getDayInCycle(selectedDate) || 1)
+                                : (daysUntilPeriod === 0 ? "Period starts today" : `Period in ${daysUntilPeriod} days`)
+                            }
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">Tap a date to log symptoms</p>
                     </div>
@@ -241,24 +295,32 @@ export default function PeriodLoggingCard({
                         disabled={isPending}
                         className="bg-[#1C1C1E] hover:bg-[#2C2C2E] disabled:opacity-60 transition-all text-white rounded-full px-6 py-2.5 text-sm font-medium shadow-lg shadow-gray-200"
                     >
-                        Log period
+                        {currentPhase === "Menstrual" ? "Edit Period" : "Log Period"}
                     </button>
                 </motion.div>
             )}
 
             {/* Logging mode banner */}
             {isPeriodLoggingMode && (
-                <div className="mb-8 p-6 bg-rose-50/50 rounded-3xl border border-rose-100 flex items-center justify-between">
+                <div className="mb-8 p-6 bg-rose-50/50 rounded-3xl border border-rose-100 flex items-center justify-between flex-wrap gap-4">
                     <div>
                         <h3 className="text-sm font-heading font-semibold text-rose-900">Select period dates</h3>
-                        <p className="text-xs text-rose-600 mt-0.5">Mark your flow days on the calendar</p>
+                        <p className="text-xs text-rose-600 mt-0.5">Tap days to mark/unmark bleeding</p>
                     </div>
-                    <button
-                        onClick={onExitPeriodLogging}
-                        className="px-6 py-2 bg-[#fb7185] hover:bg-[#fb7185]/90 text-white text-sm font-medium rounded-full transition-colors shadow-lg shadow-rose-200"
-                    >
-                        Done
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onEndPeriod}
+                            className="px-4 py-2 bg-white text-rose-500 border border-rose-200 hover:bg-rose-50 text-xs font-semibold rounded-full transition-colors"
+                        >
+                            End Period Here
+                        </button>
+                        <button
+                            onClick={onExitPeriodLogging}
+                            className="px-6 py-2 bg-[#fb7185] hover:bg-[#fb7185]/90 text-white text-sm font-medium rounded-full transition-colors shadow-lg shadow-rose-200"
+                        >
+                            Done
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -301,13 +363,13 @@ export default function PeriodLoggingCard({
                             if (dayItem.isPadding) return <div key={i} className="aspect-square" />;
 
                             const date = dayItem.date;
-                            const dateStr = formatDate(date);
+                            const dateStr = formatDate(dayItem.date);
                             const disabled = isFutureDate(date);
                             const today = isToday(date);
                             const selected = !isPeriodLoggingMode && date.toDateString() === selectedDate.toDateString();
                             const loggedPeriod = monthLogs[dateStr]?.is_period === true;
 
-                            const phase = getPredictedPhase(date);
+                            const phase = phaseMap[dateStr] ?? null;
                             const fertile = isFertileDay(date);
 
                             // Styling Logic based on rules
@@ -395,4 +457,6 @@ export default function PeriodLoggingCard({
             </div>
         </div>
     );
-}
+});
+
+export default PeriodLoggingCard;

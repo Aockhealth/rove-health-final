@@ -97,7 +97,8 @@ serve(async (req) => {
 
     // Determine average cycle length
     let avgCycleLength = DEFAULT_CYCLE_LENGTH;
-    if (cycleLengths.length > 0) {
+    // optimization: only use average if we have enough history (3+ cycles)
+    if (cycleLengths.length >= 3) {
       const sum = cycleLengths.reduce((a, b) => a + b, 0);
       avgCycleLength = Math.round(sum / cycleLengths.length);
     }

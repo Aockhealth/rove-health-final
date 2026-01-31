@@ -10,6 +10,12 @@ interface MacroFuelGaugeProps {
         fats: number;
         carbs: number;
         calories?: number;
+        proteinLabel?: string;
+        fatsLabel?: string;
+        carbsLabel?: string;
+        proteinDesc?: string;
+        fatsDesc?: string;
+        carbsDesc?: string;
     };
     theme: any;
 }
@@ -18,20 +24,14 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
     if (!data) return null;
 
     // Calculate total weight to derive percentages for the visual gauge
-    // Note: This is an approximation based on weight, not calories, for the circular chart visualization.
-    // Ideally we'd map back to calories, but weight ratio is fine for visual distinction.
     const totalGrams = data.protein + data.fats + data.carbs || 1;
-
-    // Calculate visual percentages
     const pPct = Math.round((data.protein / totalGrams) * 100);
     const fPct = Math.round((data.fats / totalGrams) * 100);
-    // const cPct gets the rest
 
-    // Gradient string: Protein (Red), Fats (Green), Carbs (Blue/Yellow)
     const gradient = `conic-gradient(
-        #ef4444 0% ${pPct}%, 
-        #10b981 ${pPct}% ${pPct + fPct}%, 
-        #eab308 ${pPct + fPct}% 100%
+        #DC4C3E 0% ${pPct}%, 
+        #8FBC8F ${pPct}% ${pPct + fPct}%, 
+        #F59E0B ${pPct + fPct}% 100%
     )`;
 
     return (
@@ -42,7 +42,7 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                 {/* Visual Gauge */}
-                <div className="relative w-40 h-40 rounded-full" style={{ background: gradient }}>
+                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full shrink-0" style={{ background: gradient }}>
                     <div className="absolute inset-2 bg-white rounded-full flex flex-col items-center justify-center shadow-inner pt-1">
                         <div className="text-center">
                             <span className="text-[10px] text-rove-stone font-medium uppercase tracking-wider">Target</span>
@@ -56,26 +56,41 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
 
                 {/* Legend */}
                 <div className="space-y-4 w-full md:w-auto">
-                    <div className="flex items-center justify-between md:justify-start gap-4">
-                        <div className="flex items-center gap-2 w-24">
-                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                            <span className="font-bold text-sm">{data.protein}g</span>
+                    {/* Protein */}
+                    <div className="flex items-center justify-between gap-4">
+                        <span className="text-sm font-medium text-rove-charcoal/80">
+                            {data.proteinDesc || "Protein"}
+                        </span>
+                        <div className="flex items-center gap-2 min-w-[100px] justify-end">
+                            <div className="w-3 h-3 rounded-full bg-[#DC4C3E] shrink-0"></div>
+                            <span className="font-bold text-sm text-rove-charcoal">
+                                {data.proteinLabel || `${data.protein}g`}
+                            </span>
                         </div>
-                        <span className="text-xs text-rove-stone">Protein (Blood Replenishment)</span>
                     </div>
-                    <div className="flex items-center justify-between md:justify-start gap-4">
-                        <div className="flex items-center gap-2 w-24">
-                            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                            <span className="font-bold text-sm">{data.fats}g</span>
+                    {/* Fats */}
+                    <div className="flex items-center justify-between gap-4">
+                        <span className="text-sm font-medium text-rove-charcoal/80">
+                            {data.fatsDesc || "Healthy Fats"}
+                        </span>
+                        <div className="flex items-center gap-2 min-w-[100px] justify-end">
+                            <div className="w-3 h-3 rounded-full bg-[#8FBC8F] shrink-0"></div>
+                            <span className="font-bold text-sm text-rove-charcoal">
+                                {data.fatsLabel || `${data.fats}g`}
+                            </span>
                         </div>
-                        <span className="text-xs text-rove-stone">Healthy Fats (Block Cramps)</span>
                     </div>
-                    <div className="flex items-center justify-between md:justify-start gap-4">
-                        <div className="flex items-center gap-2 w-24">
-                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <span className="font-bold text-sm">{data.carbs}g</span>
+                    {/* Carbs */}
+                    <div className="flex items-center justify-between gap-4">
+                        <span className="text-sm font-medium text-rove-charcoal/80">
+                            {data.carbsDesc || "Complex Carbs"}
+                        </span>
+                        <div className="flex items-center gap-2 min-w-[100px] justify-end">
+                            <div className="w-3 h-3 rounded-full bg-[#F59E0B] shrink-0"></div>
+                            <span className="font-bold text-sm text-rove-charcoal">
+                                {data.carbsLabel || `${data.carbs}g`}
+                            </span>
                         </div>
-                        <span className="text-xs text-rove-stone">Complex Carbs (Stable Mood)</span>
                     </div>
                 </div>
             </div>

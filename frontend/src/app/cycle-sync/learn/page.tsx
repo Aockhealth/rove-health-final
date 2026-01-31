@@ -5,12 +5,12 @@ import { motion } from "framer-motion";
 import { ChevronLeft, Play, ArrowRight, Bookmark } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { cn, getStorageUrl } from "@/lib/utils"; 
+import { cn, getStorageUrl } from "@/lib/utils";
 import { fetchLearnArticles, type LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
-    
+
     return (
         <div className="mb-10 pl-4 md:pl-8">
             <h3 className="text-lg md:text-xl font-heading text-rove-charcoal mb-4 flex items-center gap-2 group cursor-pointer hover:text-black">
@@ -19,7 +19,7 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-8 -ml-4 pl-4 md:pl-8 pr-4 mask-fade-right">
                 {articles.map((article) => {
                     const imageUrl = getStorageUrl("learn-images", article.image_path);
-                    
+
                     return (
                         <Link href={`/cycle-sync/learn/${article.id}`} key={article.id}>
                             <motion.div
@@ -33,8 +33,9 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
                                             alt={article.title}
                                             fill
                                             className="object-cover"
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            unoptimized // ✅ FIX: Prevents 500 errors
+                                            sizes="(max-width: 768px) 200px, 260px"
+                                            loading="lazy"
+                                            unoptimized
                                         />
                                     ) : (
                                         <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center text-neutral-400">
@@ -101,14 +102,14 @@ export default function LearnPage() {
                 <div className="relative h-[70vh] w-full overflow-hidden">
                     <div className="absolute inset-0 bg-neutral-900">
                         {featuredImage && (
-                            <Image 
-                                src={featuredImage} 
-                                alt={featured.title} 
-                                fill 
+                            <Image
+                                src={featuredImage}
+                                alt={featured.title}
+                                fill
                                 className="object-cover opacity-80"
                                 priority
                                 sizes="100vw"
-                                unoptimized // ✅ FIX: Prevents 500 errors
+                                unoptimized
                             />
                         )}
                         <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-gradient-to-br from-purple-900 to-rose-900" />
@@ -172,20 +173,20 @@ export default function LearnPage() {
                     <div className="text-xs text-neutral-400 space-y-1">
                         <p>
                             Icons made by{' '}
-                            <a 
-                                href="https://www.flaticon.com/authors/freepik" 
+                            <a
+                                href="https://www.flaticon.com/authors/freepik"
                                 title="Freepik"
-                                target="_blank" 
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-neutral-600 underline transition-colors"
                             >
                                 Freepik
                             </a>{' '}
                             from{' '}
-                            <a 
-                                href="https://www.flaticon.com/" 
+                            <a
+                                href="https://www.flaticon.com/"
                                 title="Flaticon"
-                                target="_blank" 
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-neutral-600 underline transition-colors"
                             >
@@ -194,20 +195,20 @@ export default function LearnPage() {
                         </p>
                         <p>
                             Icons made by{' '}
-                            <a 
-                                href="https://www.flaticon.com/authors/pixel-perfect" 
+                            <a
+                                href="https://www.flaticon.com/authors/pixel-perfect"
                                 title="Pixel perfect"
-                                target="_blank" 
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-neutral-600 underline transition-colors"
                             >
                                 Pixel perfect
                             </a>{' '}
                             from{' '}
-                            <a 
-                                href="https://www.flaticon.com/" 
+                            <a
+                                href="https://www.flaticon.com/"
                                 title="Flaticon"
-                                target="_blank" 
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-neutral-600 underline transition-colors"
                             >

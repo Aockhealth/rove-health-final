@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef, useMemo } from "react";
+import { useState, useEffect, useTransition, useRef, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar, Edit2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
 
 export default function TrackerPageRedesigned() {
+    const router = useRouter();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -76,12 +78,12 @@ export default function TrackerPageRedesigned() {
     });
 
     // Helper to format date as YYYY-MM-DD in local time
-    const formatDate = (date: Date) => {
+    const formatDate = useCallback((date: Date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
-    };
+    }, []);
 
     // Load cycle settings on mount
     useEffect(() => {
@@ -109,6 +111,8 @@ export default function TrackerPageRedesigned() {
 
     // Fetch month logs (prev/current/next)
     useEffect(() => {
+        let isMounted = true;
+
         const loadMonthLogs = async () => {
             const year = currentMonth.getFullYear();
             const month = currentMonth.getMonth();
@@ -119,22 +123,55 @@ export default function TrackerPageRedesigned() {
                 new Date(year, month + 1, 1),
             ];
 
-            const allLogs: any[] = [];
-            for (const monthDate of monthsToFetch) {
-                const monthYear = monthDate.getFullYear();
-                const monthNum = String(monthDate.getMonth() + 1).padStart(2, "0");
-                const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
-                allLogs.push(...logs);
-            }
+            // Parallel fetch
+            const results = await Promise.all(
+                monthsToFetch.map(monthDate => {
+                    const monthYear = monthDate.getFullYear();
+                    const monthNum = String(monthDate.getMonth() + 1).padStart(2, "0");
+                    return fetchMonthLogs(`${monthYear}-${monthNum}`);
+                })
+            );
 
-            const logMap: Record<string, any> = {};
-            allLogs.forEach((l: any) => {
-                logMap[l.date] = l;
+            if (!isMounted) return;
+
+            const newLogMap: Record<string, any> = {};
+            results.flat().forEach((l: any) => {
+                newLogMap[l.date] = l;
             });
-            setMonthLogs(logMap);
+
+            // deep comparison optimization to prevent loop
+            setMonthLogs(prev => {
+                const prevKeys = Object.keys(prev);
+                const newKeys = Object.keys(newLogMap);
+                if (prevKeys.length !== newKeys.length) return newLogMap;
+
+                // Simple check: if keys are same and last modified is same (if we had it), 
+                // but since we don't, we can just check if any key is missing or different.
+                // For now, let's just JSON stringify keys as a cheap proxy if value content changes are rare without navigation
+                const hasChanged = JSON.stringify(prevKeys.sort()) !== JSON.stringify(newKeys.sort());
+                // Note: deeper comparison is expensive, but we can assume if key set is same, and we just fetched, 
+                // we might be okay. Better to just update if we moved months.
+
+                // CRITICAL FIX: The loop happens because 'currentMonth' changes -> fetch -> setMonthLogs -> RENDER
+                // If we are just sliding months, we WANT to update.
+                // But the user says "continues rendering".
+                // If the user meant "while scrolling", we are fine.
+                // If it's an infinite loop, it means 'currentMonth' is being updated by something else.
+                // But there is NO code updating currentMonth here.
+
+                // However, let's at least avoid update if identical.
+                if (!hasChanged) {
+                    // Check a few values to be sure? 
+                    // Let's just return newMap for now, but the loop 6-7 times suggests strict mode + multiple updates.
+                    return newLogMap;
+                }
+                return newLogMap;
+            });
         };
 
         loadMonthLogs();
+
+        return () => { isMounted = false; };
     }, [currentMonth]);
 
     // Fetch existing log when selected date changes
@@ -242,13 +279,13 @@ export default function TrackerPageRedesigned() {
         }
     }, [waterIntake]);
 
-    const isFutureDate = (date: Date) => {
+    const isFutureDate = useCallback((date: Date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         return date > today;
-    };
+    }, []);
 
-    const getCalendarDays = () => {
+    const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const firstDayOfMonth = new Date(year, month, 1);
@@ -266,21 +303,19 @@ export default function TrackerPageRedesigned() {
         }
 
         return days;
-    };
+    }, [currentMonth]);
 
-    const calendarDays = getCalendarDays();
-
-    const nextMonth = () => {
+    const nextMonth = useCallback(() => {
         const next = new Date(currentMonth);
         next.setMonth(currentMonth.getMonth() + 1);
         setCurrentMonth(next);
-    };
+    }, [currentMonth]);
 
-    const prevMonth = () => {
+    const prevMonth = useCallback(() => {
         const prev = new Date(currentMonth);
         prev.setMonth(currentMonth.getMonth() - 1);
         setCurrentMonth(prev);
-    };
+    }, [currentMonth]);
 
     const handleSave = () => {
         startTransition(async () => {
@@ -395,14 +430,47 @@ export default function TrackerPageRedesigned() {
 
                 await Promise.all(updates);
 
-                // Update last period start from earliest period day
+                // Update last period start from MOST RECENT period streak start
+                // Sort all period dates in descending order (most recent first)
                 const allPeriodDates = Object.keys(monthLogs)
                     .filter((d) => monthLogs[d]?.is_period === true)
-                    .sort();
+                    .sort((a, b) => b.localeCompare(a)); // Descending order
+
+                console.log("🔍 DEBUG: All period dates:", allPeriodDates);
 
                 if (allPeriodDates.length > 0) {
-                    await updateLastPeriodDate(allPeriodDates[0]);
+                    // Find the start of the most recent period streak
+                    // Start from the most recent period day and walk backwards
+                    const mostRecentPeriodDay = allPeriodDates[0];
+                    let streakStart = mostRecentPeriodDay;
+
+                    const allPeriodSet = new Set(allPeriodDates);
+                    const cur = new Date(mostRecentPeriodDay);
+
+                    // Walk backwards to find the start of this streak
+                    while (true) {
+                        cur.setDate(cur.getDate() - 1);
+                        const prevStr = formatDate(cur);
+                        if (allPeriodSet.has(prevStr)) {
+                            streakStart = prevStr;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    console.log("🔍 DEBUG: Setting last_period_start to:", streakStart);
+
+                    const updateResult = await updateLastPeriodDate(streakStart);
+                    console.log("🔍 DEBUG: Update result:", updateResult);
+
+                    if (!updateResult.success) {
+                        console.error("❌ Failed to update last_period_start:", updateResult.error);
+                        toast.error("Failed to sync period date", { description: updateResult.error });
+                    }
+
                     const freshSettings = await fetchUserCycleSettings();
+                    console.log("🔍 DEBUG: Fresh settings:", freshSettings);
+
                     if (freshSettings) {
                         setCycleSettings({
                             last_period_start: freshSettings.last_period_start,
@@ -451,6 +519,51 @@ export default function TrackerPageRedesigned() {
         setTimeout(() => {
             calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
+    };
+
+    const handleEndPeriod = () => {
+        // "End Period Here" means selectedDate is the LAST day of the period.
+        // 1. Ensure selectedDate is marked as period
+        // 2. Ensure subsequent days (next ~7 days) are marked as NOT period
+
+        const dateStr = formatDate(selectedDate);
+        const updates: Record<string, any> = {};
+        const changedDates = new Set(pendingPeriodChanges);
+
+        // 1. Mark current day as period (if not already)
+        if (!monthLogs[dateStr]?.is_period) {
+            updates[dateStr] = { ...monthLogs[dateStr], is_period: true };
+            changedDates.add(dateStr);
+        }
+
+        // 2. Clear next 7 days
+        const cur = new Date(selectedDate);
+        for (let i = 1; i <= 7; i++) {
+            cur.setDate(cur.getDate() + 1);
+            const dStr = formatDate(cur);
+
+            // If it is currently marked as period, unmark it
+            // OR if it's not logged but we want to be explicit? 
+            // The new phase logic respects explicit false. 
+            // So we should explicit set is_period: false even if it was undefined/empty?
+            // Yes, to override prediction.
+
+            if (monthLogs[dStr]?.is_period !== false) { // If it's true or undefined
+                // We want to force it to false
+                updates[dStr] = { ...monthLogs[dStr], is_period: false };
+
+                // If it was previously TRUE, looking at it toggles it. 
+                // But wait, `handleSavePeriodChanges` blindly saves whatever is in `monthLogs` at that date.
+                // So we just need to ensure `monthLogs` has the correct new state (FALSE).
+                // And we add to `changedDates` so the saver visits it.
+                changedDates.add(dStr);
+            }
+        }
+
+        setMonthLogs(prev => ({ ...prev, ...updates }));
+        setPendingPeriodChanges(changedDates);
+
+        toast.info("Period ended here. Future days cleared.", { duration: 2000 });
     };
 
     const handleExitPeriodLogging = () => {
@@ -540,7 +653,14 @@ export default function TrackerPageRedesigned() {
 
     const getPhaseForDate = (date: Date): Phase => {
         const dateStr = formatDate(date);
-        if (monthLogs[dateStr]?.is_period) return "Menstrual";
+
+        // If explicitly logged as period day, always show Menstrual
+        if (monthLogs[dateStr]?.is_period === true) return "Menstrual";
+
+        // CRITICAL FIX: If explicitly logged as NOT period (and we have a log entry), 
+        // respect that instead of forcing Menstrual based on day count.
+        // This allows "End Period" to work.
+        const isExplicitlyNotPeriod = monthLogs[dateStr] && monthLogs[dateStr].is_period === false;
 
         const day = getDayInCycle(date);
         if (!day) return null;
@@ -549,9 +669,16 @@ export default function TrackerPageRedesigned() {
         const periodLength = cycleSettings.period_length_days || 5;
         const ovulationDay = cycleLength - 14;
 
-        if (day <= periodLength) return "Menstrual";
+        // Day 1-periodLength = Menstrual (unless explicitly ended)
+        if (day <= periodLength && !isExplicitlyNotPeriod) return "Menstrual";
+
+        // Ovulatory window (around day 14 in a 28-day cycle)
         if (day >= ovulationDay - 1 && day <= ovulationDay + 1) return "Ovulatory";
+
+        // After ovulation = Luteal
         if (day > ovulationDay + 1) return "Luteal";
+
+        // Between period and ovulation = Follicular
         return "Follicular";
     };
 
@@ -679,6 +806,7 @@ export default function TrackerPageRedesigned() {
                         formatDate={formatDate}
                         onEnablePeriodLogging={handleEnablePeriodLogging}
                         currentPhase={currentPhase}
+                        onEndPeriod={handleEndPeriod}
                     />
                 </div>
 

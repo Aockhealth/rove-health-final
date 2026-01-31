@@ -222,6 +222,26 @@ export const getPhaseForDate = (
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   const cycleLength = cycleSettings.cycle_length_days || 28;
+
+  // 🔹 LATE PERIOD FIX:
+  // If we are past the cycle length (diffDays >= cycleLength)
+  // AND the user hasn't logged a period (checked above at line 211)
+  // Then they are "Late" -> Return Luteal instead of wrapping to Menstrual.
+  // We only wrap if it's a future prediction (not today/late).
+  // But strictly, if they haven't logged it, we should probably show Luteal?
+  // Or at least for Today/Past.
+
+  if (diffDays >= cycleLength) {
+    // If today or past, show Luteal.
+    // If strict future date, we can show prediction (Menstrual).
+    // But let's check if the date is <= Today.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (checkDate <= today) {
+      return "Luteal";
+    }
+  }
+
   let dayInCycle = (diffDays % cycleLength) + 1;
   if (dayInCycle <= 0) dayInCycle += cycleLength;
 

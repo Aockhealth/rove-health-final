@@ -15,15 +15,19 @@ export async function fetchInsightsData() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data: cycleSettings } = await supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single();
-    if (!cycleSettings) return null;
+    // ✅ OPTIMIZED: Parallel fetch of cycleSettings and logs
+    const [cycleSettingsResult, logsResult] = await Promise.all([
+        supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
+        supabase.from("daily_logs")
+            .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+            .eq("user_id", user.id)
+            .order('date', { ascending: false })
+    ]);
 
-    // ✅ UPDATE: Select ALL relevant columns
-    const { data: logs } = await supabase
-        .from("daily_logs")
-        .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
-        .eq("user_id", user.id)
-        .order('date', { ascending: false }); // Get newest first for "Recent Note"
+    const cycleSettings = cycleSettingsResult.data;
+    const logs = logsResult.data;
+
+    if (!cycleSettings) return null;
 
     const phases = ["Menstrual", "Follicular", "Ovulatory", "Luteal"];
     const phaseCounts: Record<string, number> = { "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0 };
