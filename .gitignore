@@ -43,3 +43,6 @@ frontend/out
 backup_temp/
 frontend/.env
 frontend/.env.*
+
+# backend dependencies in monorepo
+backend/node_modules
