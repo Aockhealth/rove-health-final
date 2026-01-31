@@ -39,3 +39,7 @@ next-env.d.ts
 frontend/node_modules
 frontend/.next
 frontend/out
+
+backup_temp/
+frontend/.env
+frontend/.env.*
