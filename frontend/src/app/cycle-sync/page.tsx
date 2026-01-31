@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Droplets, Zap, Moon, Sun, ArrowRight, Sparkles, TrendingUp, Brain, Activity, Utensils, Dumbbell, Baby, Flower2, Heart, Wind, ChevronLeft, CalendarPlus, Plus } from "lucide-react";
+import { Droplets, Zap, Moon, Sun, ArrowRight, Baby, TrendingUp, Brain, Activity, Utensils, Dumbbell, Flower2, Heart, Wind, ChevronLeft, CalendarPlus, Plus, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ function DailyFlowRiver({ data }: { data: any }) {
     const mapItems = (items: any[], colorClass: string, bgClass: string) =>
         (items || []).map(item => ({
             ...item,
-            icon: iconMap[item.icon] || Sparkles,
+            icon: iconMap[item.icon] || Zap,
             color: colorClass,
             bg: bgClass
         }));
@@ -577,7 +577,7 @@ export default function CycleSyncDashboard() {
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
-                                                            <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3 text-purple-500" />
+                                                            <Baby className="w-2.5 h-2.5 md:w-3 md:h-3 text-purple-500" />
                                                         </div>
                                                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-purple-600/70">Ovulation</span>
                                                     </div>
@@ -833,7 +833,7 @@ export default function CycleSyncDashboard() {
                                         {/* Action/Protocol */}
                                         <div className="bg-rove-cream/40 rounded-lg p-4 border border-rove-stone/10">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <Sparkles className="w-3.5 h-3.5 text-rove-charcoal" />
+                                                <Lightbulb className="w-3.5 h-3.5 text-rove-charcoal" />
                                                 <span className="text-[9px] font-bold text-rove-charcoal uppercase tracking-widest">Recommended Protocol</span>
                                             </div>
                                             <p className="text-rove-stone text-xs leading-relaxed font-medium">

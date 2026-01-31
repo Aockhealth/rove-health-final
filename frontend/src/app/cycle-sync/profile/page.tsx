@@ -6,7 +6,7 @@ import { fetchUserCycleSettings, updateCycleLength, updateLastPeriodDate } from 
 import { Button } from "@/components/ui/Button";
 import {
     Calendar, LogOut, Bell, ChevronRight, Scale, Activity, Crown, Moon,
-    Minus, Plus, HeartPulse, Sparkles, AlertCircle, Utensils, Zap, Trophy, Armchair, Pizza, Leaf, Beef, Egg, Flame, Fish, Wheat, Edit2, Check
+    Minus, Plus, HeartPulse, Target, AlertCircle, Utensils, Zap, Trophy, Armchair, Pizza, Leaf, Beef, Egg, Flame, Fish, Wheat, Edit2, Check
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -268,7 +268,7 @@ export default function ProfilePage() {
                     {/* Goals Tags (New from Onboarding) */}
                     <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mb-5">
                         <div className="flex items-center gap-2 mb-4">
-                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            <Target className="w-4 h-4 text-amber-500" />
                             <span className="text-sm font-bold text-stone-900">Focus Areas</span>
                         </div>
                         <div className="flex flex-wrap gap-2">

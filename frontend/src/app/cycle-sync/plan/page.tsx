@@ -16,7 +16,7 @@ import {
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2, Target, Scale, Plus, Trash2
+    Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 import LoadingScreen from "@/components/ui/LoadingScreen";
@@ -56,7 +56,7 @@ const BLUEPRINTS: any = {
         diet: {
             core_needs: [
                 { id: "iron", title: "Iron-Rich", desc: "Restore blood loss", icon: Droplets },
-                { id: "magnesium", title: "Magnesium", desc: "Reduce cramps", icon: Sparkles },
+                { id: "magnesium", title: "Magnesium", desc: "Reduce cramps", icon: Pill },
                 { id: "omega", title: "Omega-3", desc: "Reduce pain", icon: Fish },
                 { id: "warm", title: "Warm Foods", desc: "Support digestion", icon: Soup }
             ],
@@ -103,8 +103,10 @@ const BLUEPRINTS: any = {
                 title: "Period Symptoms",
                 subtitle: "Body Literacy",
                 cards: [
-                    { title: "Cramps", condition: "Pain", biology: "Prostaglandins causing contractions", fix: "Magnesium & Heat" },
-                    { title: "Fatigue", condition: "Low Energy", biology: "Low hormones", fix: "Rest & Iron" }
+                    { title: "Cramps", condition: "Lower abdominal pain", biology: "Prostaglandins trigger uterine contractions to shed lining", diet: "Ginger tea, dark chocolate, salmon, turmeric" },
+                    { title: "Fatigue", condition: "Feeling drained", biology: "Iron loss from bleeding + low estrogen & progesterone", diet: "Spinach, red meat, lentils, pumpkin seeds" },
+                    { title: "Headaches", condition: "Throbbing pain", biology: "Sudden estrogen drop affects blood vessels in brain", diet: "Magnesium-rich foods, almonds, avocado, water" },
+                    { title: "Lower Back Pain", condition: "Aching back", biology: "Prostaglandins cause contractions that radiate to lower back", diet: "Anti-inflammatory foods, fatty fish, walnuts" }
                 ]
             },
             cheat_sheet: {
@@ -184,8 +186,10 @@ const BLUEPRINTS: any = {
                 title: "Rising Energy",
                 subtitle: "Body Literacy",
                 cards: [
-                    { title: "Restlessness", condition: "High Energy", biology: "Estrogen rising", fix: "Movement" },
-                    { title: "Sensory Seek", condition: "Curiosity", biology: "Brain lighting up", fix: "New experiences" }
+                    { title: "Energy Surge", condition: "Feeling motivated", biology: "Rising estrogen boosts dopamine & serotonin levels", diet: "Lean protein, fresh fruits, green smoothies" },
+                    { title: "Clear Skin", condition: "Glowing complexion", biology: "Estrogen promotes collagen & reduces sebum production", diet: "Berries, citrus fruits, leafy greens, water" },
+                    { title: "Increased Focus", condition: "Mental clarity", biology: "Estrogen enhances cognitive function & memory", diet: "Omega-3s, walnuts, blueberries, eggs" },
+                    { title: "Light Cervical Mucus", condition: "Vaginal changes", biology: "Estrogen starts producing cervical fluid for fertility", diet: "Hydrating foods, cucumber, watermelon" }
                 ]
             },
             cheat_sheet: {
@@ -207,7 +211,7 @@ const BLUEPRINTS: any = {
             practices: [
                 { title: "Community", desc: "Host a gathering", icon: "Users" },
                 { title: "Gratitude", desc: "Express appreciation", icon: "Heart" },
-                { title: "Date Night", desc: "Romantic or self-date", icon: "Sparkles" },
+                { title: "Date Night", desc: "Romantic or self-date", icon: "Heart" },
                 { title: "Public Speaking", desc: "Pitch ideas now", icon: "Mic" }
             ],
             symptom_relief: [
@@ -265,8 +269,10 @@ const BLUEPRINTS: any = {
                 title: "Peak Performance",
                 subtitle: "Body Literacy",
                 cards: [
-                    { title: "High Libido", condition: "Arousal", biology: "Peak estrogen & testosterone", fix: "Intimacy" },
-                    { title: "Social Buzz", condition: "Extroversion", biology: "Verbal center active", fix: "Socializing" }
+                    { title: "Ovulation Pain", condition: "One-sided pelvic twinge", biology: "Egg releasing from ovary can cause mild pain (Mittelschmerz)", diet: "Anti-inflammatory foods, turmeric, ginger" },
+                    { title: "Increased Libido", condition: "Heightened desire", biology: "Peak estrogen & testosterone boost sex drive", diet: "Zinc-rich foods, oysters, pumpkin seeds" },
+                    { title: "Breast Tenderness", condition: "Sensitive chest", biology: "Hormonal surge causes breast tissue swelling", diet: "Low-sodium foods, flaxseeds, evening primrose" },
+                    { title: "Light Spotting", condition: "Minor bleeding", biology: "Estrogen dip during ovulation can cause spotting", diet: "Iron-rich foods, beets, leafy greens" }
                 ]
             },
             cheat_sheet: {
@@ -289,7 +295,7 @@ const BLUEPRINTS: any = {
                 { title: "Declutter", desc: "Organize your space", icon: "Home" },
                 { title: "Boundaries", desc: "Say no to extra plans", icon: "Shield" },
                 { title: "Budgeting", desc: "Review finances", icon: "FileText" },
-                { title: "Self-Care", desc: "Spa night at home", icon: "Sparkles" }
+                { title: "Self-Care", desc: "Spa night at home", icon: "Flower2" }
             ],
             symptom_relief: [
                 { symptom: "PMS", remedy: "Magnesium Spray" },
@@ -300,7 +306,7 @@ const BLUEPRINTS: any = {
             core_needs: [
                 { id: "complex_carbs", title: "Complex Carbs", desc: "Mood stability", icon: Wheat },
                 { id: "b6", title: "Vitamin B6", desc: "Reduce PMS", icon: Pill },
-                { id: "magnesium", title: "Magnesium", desc: "Relaxation", icon: Sparkles },
+                { id: "magnesium", title: "Magnesium", desc: "Relaxation", icon: Pill },
                 { id: "fiber", title: "Fiber", desc: "Prevent bloating", icon: Leaf }
             ],
             ideal_meals: [
@@ -346,8 +352,12 @@ const BLUEPRINTS: any = {
                 title: "PMS Decoder",
                 subtitle: "Body Literacy",
                 cards: [
-                    { title: "Bloating", condition: "Water Retention", biology: "Progesterone slowing digestion", fix: "Potassium & Water" },
-                    { title: "Anxiety", condition: "Mood Swing", biology: "Drop in GABA", fix: "Magnesium & B6" }
+                    { title: "Bloating", condition: "Puffy/swollen feeling", biology: "Progesterone slows digestion & causes water retention", diet: "Potassium-rich bananas, asparagus, cucumber" },
+                    { title: "Mood Swings", condition: "Emotional ups & downs", biology: "Progesterone drop affects serotonin & GABA levels", diet: "Complex carbs, oatmeal, sweet potato" },
+                    { title: "Cravings", condition: "Sugar/carb hunger", biology: "Serotonin dip triggers comfort food cravings", diet: "Dark chocolate, dates, whole grains" },
+                    { title: "Acne Breakouts", condition: "Skin flare-ups", biology: "Rising testosterone increases sebum production", diet: "Zinc, probiotics, low-glycemic foods" },
+                    { title: "Breast Tenderness", condition: "Sore/heavy feeling", biology: "Progesterone causes fluid retention in breast tissue", diet: "Reduce caffeine, add vitamin E, flaxseeds" },
+                    { title: "Insomnia", condition: "Trouble sleeping", biology: "Progesterone (a sedative) drops before period", diet: "Magnesium, chamomile tea, tart cherry" }
                 ]
             },
             cheat_sheet: {
@@ -423,7 +433,7 @@ function ActivitiesWidget({ practices, theme }: { practices: any[], theme: any }
         const item = {
             title: newItem,
             desc: "Personal Goal",
-            icon: "Sparkles",
+            icon: "Star",
             id: `custom-${Date.now()}`,
             isCustom: true
         };
@@ -1125,7 +1135,7 @@ export default function DetailedPlanPage() {
                                     className="rounded-2xl px-8 py-5 bg-rove-charcoal text-white hover:bg-black shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     {isPending ? "Generating Plan..." : "Generate Plan"}
-                                    {!isPending && <Sparkles size={18} className="ml-2" />}
+                                    {!isPending && <Wand2 size={18} className="ml-2" />}
                                 </Button>
                             )}
                         </div>
@@ -1197,29 +1207,50 @@ export default function DetailedPlanPage() {
 
             <div className="container mx-auto px-4 py-6 max-w-5xl">
 
-                {/* 2. TABS (Moved Up) */}
-                {/* Tabs - Floating Glass Pill */}
-                <div className="flex p-1 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/40 shadow-sm mx-auto w-full max-w-md mb-6">
-                    {[
-                        { id: 'guide', label: 'Guide', icon: Sparkles },
-                        { id: 'diet', label: 'Diet', icon: Utensils },
-                        { id: 'exercise', label: 'Move', icon: Dumbbell }
-                    ].map(tab => {
-                        const isActive = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={cn(
-                                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                                    isActive ? cn("bg-white shadow-sm", theme.color) : "text-rove-charcoal/60 hover:bg-white/30"
-                                )}
-                            >
-                                <tab.icon className="w-3.5 h-3.5" />
-                                <span>{tab.label}</span>
-                            </button>
-                        );
-                    })}
+                {/* 2. TABS - More Prominent with Animated Indicator */}
+                <div className="mb-6">
+                    {/* Swipe hint */}
+                    <p className={`text-center text-[10px] font-medium uppercase tracking-wider mb-2 ${theme.color} opacity-70`}>
+                        ↔ Tap to explore
+                    </p>
+
+                    {/* Tab Container */}
+                    <div className="relative flex p-1.5 bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg mx-auto w-full max-w-md">
+                        {/* Animated Background Indicator */}
+                        <motion.div
+                            className={cn(
+                                "absolute top-1.5 bottom-1.5 rounded-xl shadow-md",
+                                theme.bannerBg
+                            )}
+                            initial={false}
+                            animate={{
+                                left: activeTab === 'guide' ? '6px' : activeTab === 'diet' ? 'calc(33.33% + 2px)' : 'calc(66.66% - 2px)',
+                                width: 'calc(33.33% - 4px)'
+                            }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+
+                        {[
+                            { id: 'guide', label: 'Guide', icon: Compass, desc: 'Phase Tips' },
+                            { id: 'diet', label: 'Nutrition', icon: Utensils, desc: 'What to Eat' },
+                            { id: 'exercise', label: 'Movement', icon: Dumbbell, desc: 'Workouts' }
+                        ].map(tab => {
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={cn(
+                                        "relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl text-xs font-bold transition-all duration-300",
+                                        isActive ? "text-white" : "text-rove-charcoal/60 hover:text-rove-charcoal"
+                                    )}
+                                >
+                                    <tab.icon className={cn("w-5 h-5 mb-0.5", isActive && "drop-shadow-sm")} />
+                                    <span className="uppercase tracking-wider">{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -1242,7 +1273,7 @@ export default function DetailedPlanPage() {
                                     </h3>
                                 </div>
                                 <div className="relative z-10 bg-white/20 p-2.5 rounded-full backdrop-blur-md border border-white/10">
-                                    <Sparkles className="w-5 h-5 text-white" />
+                                    <Compass className="w-5 h-5 text-white" />
                                 </div>
                             </div>
 

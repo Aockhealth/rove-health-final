@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import {
     Activity, ArrowLeft, Brain, CheckCircle2,
-    Leaf, Pill, Sparkles, Utensils, Beaker,
+    Leaf, Pill, Utensils, Beaker,
     Moon, Zap, Wind, Fish, Drumstick, Heart, Coffee, Soup,
-    Shield, Droplets, Ban, LayoutGrid, Dumbbell, Sun, Sunrise, Wheat
+    Shield, Droplets, Ban, LayoutGrid, Dumbbell, Sun, Sunrise, Wheat, Flower2
 } from "lucide-react";
 import { getPhaseData, type PhaseData } from "@/data/phase-data";
 import Link from "next/link";
@@ -19,7 +19,6 @@ import Link from "next/link";
 const iconMap: Record<string, any> = {
     "Moon": Moon,
     "Zap": Zap,
-    "Sparkles": Sparkles,
     "Brain": Brain,
     "Droplets": Droplets,
     "Fish": Fish,
@@ -140,9 +139,9 @@ export default function PhaseDetailPage() {
     );
 
     const isCurrentPhase = data.phase === phaseName;
-    const PhaseIcon = iconMap[BP.core.icon] || Sparkles;
+    const PhaseIcon = iconMap[BP.core.icon] || Zap;
 
-    const getDietIcon = (iconName: string) => iconMap[iconName] || Sparkles;
+    const getDietIcon = (iconName: string) => iconMap[iconName] || Zap;
 
     return (
         <div className="min-h-screen bg-rove-cream/20 pt-20 pb-32 px-4 md:px-8">
@@ -300,7 +299,7 @@ export default function PhaseDetailPage() {
                             {/* Ayurvedic Tip */}
                             <BlueprintCard className={cn("border-l-4", BP.core.color.replace("bg-", "border-l-"))}>
                                 <div className="flex items-start gap-2">
-                                    <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                                    <Flower2 className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                                     <div>
                                         <h4 className="font-bold text-rove-charcoal text-xs mb-1">Ayurvedic Wisdom</h4>
                                         <p className="text-xs text-rove-stone italic leading-relaxed">{BP.diet.ayurvedicTip}</p>

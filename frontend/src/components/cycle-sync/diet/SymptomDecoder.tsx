@@ -1,8 +1,7 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Info, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
-import { useRef } from "react";
+import { motion } from "framer-motion";
+import { Info, Utensils, Zap, Leaf } from "lucide-react";
 
 interface SymptomDecoderProps {
     data: {
@@ -13,100 +12,120 @@ interface SymptomDecoderProps {
             condition: string;
             biology: string;
             fix: string;
+            diet?: string;
         }[];
-
-
     };
-    theme?: any;
+    theme?: {
+        color?: string;
+        bannerBg?: string;
+        cardBg?: string;
+        border?: string;
+        softBg?: string;
+        iconContainer?: string;
+        accent?: string;
+        blob?: string;
+    };
 }
 
 export function SymptomDecoder({ data, theme }: SymptomDecoderProps) {
     if (!data) return null;
 
+    const colorBase = theme?.color?.replace("text-", "") || "rose-600";
+    const colorFamily = colorBase.split("-")[0];
+
     return (
-        <section className="mb-10">
-            {/* Header */}
-            <div className="px-2 mb-6">
-                <span className="text-xs font-bold tracking-widest text-rove-stone/60 uppercase block mb-1">
+        <section className="mb-8">
+            {/* Compact Header */}
+            <div className="px-2 mb-4">
+                <span className={`text-[10px] font-bold tracking-widest uppercase block mb-0.5 ${theme?.color || "text-rove-stone/60"}`}>
                     {data.subtitle}
                 </span>
-                <h2 className="font-heading text-2xl text-rove-charcoal">{data.title}</h2>
+                <h2 className="font-heading text-xl text-rove-charcoal">{data.title}</h2>
             </div>
 
-            {/* Carousel */}
-            <div className="relative -mx-4 px-4 overflow-x-auto pb-8 snap-x snap-mandatory hide-scrollbar flex gap-4">
+            {/* Compact Cards Carousel */}
+            <div className="relative -mx-4 px-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar flex gap-3">
                 {data.cards.map((card, idx) => (
-                    <DecoderCard key={idx} card={card} index={idx} theme={theme} />
+                    <SymptomCard key={idx} card={card} index={idx} theme={theme} colorFamily={colorFamily} />
                 ))}
-                {/* Spacer for end of list padding */}
-                <div className="w-4 shrink-0" />
+                <div className="w-2 shrink-0" />
             </div>
         </section>
     );
 }
 
-function DecoderCard({ card, index, theme }: { card: any, index: number, theme: any }) {
+function SymptomCard({ card, index, theme, colorFamily }: { card: any, index: number, theme: any, colorFamily: string }) {
+    const phaseGradients: Record<string, { gradient: string, glow: string }> = {
+        "rose": { gradient: "from-rose-50/80 via-white/60 to-pink-50/40", glow: "bg-rose-400/20" },
+        "teal": { gradient: "from-teal-50/80 via-white/60 to-emerald-50/40", glow: "bg-teal-400/20" },
+        "amber": { gradient: "from-amber-50/80 via-white/60 to-orange-50/40", glow: "bg-amber-400/20" },
+        "indigo": { gradient: "from-indigo-50/80 via-white/60 to-purple-50/40", glow: "bg-indigo-400/20" }
+    };
+
+    const style = phaseGradients[colorFamily] || phaseGradients["rose"];
+
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            viewport={{ once: true, margin: "-10%" }}
-            transition={{
-                duration: 0.5,
-                delay: index * 0.1,
-                type: "spring",
-                stiffness: 100
-            }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
             whileTap={{ scale: 0.98 }}
-            className="snap-center shrink-0 w-[85vw] md:w-[400px] h-full"
+            className="snap-center shrink-0 w-[75vw] md:w-[300px]"
         >
-            <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/60 shadow-sm h-full flex flex-col relative overflow-hidden group hover:bg-white/50 transition-colors duration-500">
-                {/* Subtle Gradient Blob from Theme */}
-                <div className={`absolute -right-10 -top-10 w-32 h-32 ${theme.blob} rounded-full blur-[40px] group-hover:scale-150 transition-transform duration-700`} />
+            <div className={`
+                relative overflow-hidden
+                bg-gradient-to-br ${style.gradient}
+                backdrop-blur-xl 
+                rounded-2xl
+                p-4
+                border ${theme?.border || "border-white/50"}
+                shadow-md shadow-black/5
+                h-full
+                group
+            `}>
+                {/* Subtle Glow */}
+                <div className={`absolute -right-8 -top-8 w-20 h-20 ${style.glow} rounded-full blur-3xl opacity-50`} />
 
-                {/* Card Header */}
-                <div className="mb-6 pb-4 border-b border-white/20 relative z-10">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className={`text-[10px] font-bold uppercase tracking-widest ${theme.badge} px-2 py-1 rounded-full border`}>
-                            Symptom {index + 1}
-                        </div>
+                {/* Symptom Title */}
+                <div className="relative z-10 mb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Zap className={`w-4 h-4 ${theme?.color || "text-rose-500"}`} />
+                        <h4 className="font-heading text-lg text-rove-charcoal leading-tight">{card.title}</h4>
                     </div>
-                    <h4 className="font-heading text-2xl text-rove-charcoal mb-1 leading-tight">{card.title}</h4>
-                    <div className="text-sm text-rove-stone font-medium italic">
-                        "If you feel {card.condition}..."
+                    <p className="text-xs text-rove-stone/70 italic pl-6">
+                        {card.condition}
+                    </p>
+                </div>
+
+                {/* Science Section */}
+                <div className="relative z-10 mb-3">
+                    <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide mb-1.5 ${theme?.color || "text-rove-stone/70"}`}>
+                        <Info className="w-3 h-3" />
+                        Why This Happens
+                    </div>
+                    <div className={`${theme?.softBg || "bg-white/50"} p-2.5 rounded-xl border ${theme?.border || "border-white/40"}`}>
+                        <p className="text-xs text-rove-charcoal/80 leading-relaxed">
+                            {card.biology}
+                        </p>
                     </div>
                 </div>
 
-                {/* The Biology - Delayed Entry */}
-                <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + (index * 0.1) }}
-                    className="mb-4 relative z-10"
-                >
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-rove-stone/80 mb-2 tracking-wide">
-                        <Info className="w-3 h-3 text-blue-400" /> Maximum Biology
-                    </span>
-                    <p className="text-sm text-rove-charcoal/90 leading-relaxed bg-white/40 p-4 rounded-2xl border border-white/40 backdrop-blur-sm">
-                        {card.biology}
-                    </p>
-                </motion.div>
-
-                {/* The Fix - Delayed Entry 2 */}
-                <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + (index * 0.1) }}
-                    className="mt-auto relative z-10"
-                >
-                    <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase ${theme.color} mb-2 tracking-wide`}>
-                        <Sparkles className="w-3 h-3" /> The Bio-Hack
-                    </span>
-                    <div className={`text-sm font-bold text-rove-charcoal bg-white/60 p-4 rounded-2xl border border-white/60 backdrop-blur-sm flex items-start gap-3 shadow-sm`}>
-                        <div className="mt-0.5 min-w-[16px]">💊</div>
-                        {card.fix}
+                {/* Diet Recommendation - NEW */}
+                <div className="relative z-10">
+                    <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide mb-1.5 ${theme?.color || "text-rose-600"}`}>
+                        <Leaf className="w-3 h-3" />
+                        Foods That Help
                     </div>
-                </motion.div>
+                    <div className="flex items-start gap-2 bg-white/60 p-2.5 rounded-xl border border-white/50">
+                        <div className={`w-7 h-7 rounded-lg ${theme?.iconContainer || "bg-rose-100 text-rose-600"} flex items-center justify-center shrink-0`}>
+                            <Utensils className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-medium text-rove-charcoal leading-relaxed">
+                            {card.diet || card.fix}
+                        </span>
+                    </div>
+                </div>
             </div>
         </motion.div>
     );
