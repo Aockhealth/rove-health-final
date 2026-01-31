@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "cd ../backend && npm i",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
