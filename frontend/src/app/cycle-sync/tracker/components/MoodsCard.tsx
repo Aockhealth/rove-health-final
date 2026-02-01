@@ -1,23 +1,15 @@
 import { Smile, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { MOODS_LIST } from "../constants";
 
 interface MoodsCardProps {
   selectedMoods: string[];
   setSelectedMoods: (moods: string[]) => void;
+  currentPhase?: string | null;
 }
 
-const moodsList = [
-  { label: "Energetic", type: "blue" },
-  { label: "Calm", type: "blue" },
-  { label: "Anxious", type: "orange" },
-  { label: "Unfocused", type: "orange" },
-  { label: "Irritable", type: "negative" },
-  { label: "Low mood", type: "negative" },
-  { label: "Overwhelmed", type: "negative" },
-];
-
-export default function MoodsCard({ selectedMoods, setSelectedMoods }: MoodsCardProps) {
+export default function MoodsCard({ selectedMoods, setSelectedMoods, currentPhase }: MoodsCardProps) {
   const toggleItem = (item: string) => {
     if (selectedMoods.includes(item)) {
       setSelectedMoods(selectedMoods.filter((i) => i !== item));
@@ -26,8 +18,26 @@ export default function MoodsCard({ selectedMoods, setSelectedMoods }: MoodsCard
     }
   };
 
+  const getPhaseColor = (p: string | null | undefined) => {
+    switch (p) {
+      case "Menstrual": return "rose";
+      case "Follicular": return "teal";
+      case "Ovulatory": return "amber";
+      case "Luteal": return "indigo";
+      default: return "rose";
+    }
+  };
+
+  const phaseColor = getPhaseColor(currentPhase);
+
   return (
-    <div className="bg-gradient-to-br from-white to-rose-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100">
+    <div className={cn(
+      "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 transition-all",
+      phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
+        phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
+          phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
+            "border-indigo-100 shadow-indigo-100/20"
+    )}>
       <div className="flex items-center gap-3 mb-4">
         <motion.div
           animate={{
@@ -35,43 +45,51 @@ export default function MoodsCard({ selectedMoods, setSelectedMoods }: MoodsCard
             rotate: [0, 10, -10, 0],
           }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center"
+          className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center",
+            phaseColor === "rose" ? "bg-rose-100" :
+              phaseColor === "teal" ? "bg-teal-100" :
+                phaseColor === "amber" ? "bg-amber-100" :
+                  "bg-indigo-100"
+          )}
         >
-          <Smile className="w-4 h-4 text-rose-500" />
+          <Smile className={cn(
+            "w-4 h-4",
+            phaseColor === "rose" ? "text-rose-500" :
+              phaseColor === "teal" ? "text-teal-500" :
+                phaseColor === "amber" ? "text-amber-500" :
+                  "text-indigo-500"
+          )} />
         </motion.div>
         <h3 className="text-base font-heading font-semibold text-gray-900">Moods</h3>
       </div>
       <div className="flex flex-wrap gap-2">
-        {moodsList.map((m) => {
+        {MOODS_LIST.map((m) => {
           const isActive = selectedMoods.includes(m.label);
 
           let activeClass = "";
           let inactiveClass = "";
 
-          switch (m.type) {
-            case "positive":
-              activeClass = "bg-green-100 text-green-800 border-green-300 shadow-sm";
-              inactiveClass =
-                "bg-white text-gray-600 border-green-100 ring-1 ring-green-50 hover:bg-green-50/50";
+          switch (phaseColor) {
+            case "rose":
+              activeClass = "bg-rose-100 text-rose-800 border-rose-300 shadow-sm";
+              inactiveClass = "bg-white text-gray-600 border-rose-100 ring-1 ring-rose-50/50 hover:bg-rose-50/50";
               break;
-            case "blue":
-              activeClass = "bg-blue-100 text-blue-800 border-blue-300 shadow-sm";
-              inactiveClass =
-                "bg-white text-gray-600 border-blue-100 ring-1 ring-blue-50 hover:bg-blue-50/50";
+            case "teal":
+              activeClass = "bg-teal-100 text-teal-800 border-teal-300 shadow-sm";
+              inactiveClass = "bg-white text-gray-600 border-teal-100 ring-1 ring-teal-50/50 hover:bg-teal-50/50";
               break;
-            case "orange":
-              activeClass = "bg-orange-100 text-orange-800 border-orange-300 shadow-sm";
-              inactiveClass =
-                "bg-white text-gray-600 border-orange-100 ring-1 ring-orange-50 hover:bg-orange-50/50";
+            case "amber":
+              activeClass = "bg-amber-100 text-amber-800 border-amber-300 shadow-sm";
+              inactiveClass = "bg-white text-gray-600 border-amber-100 ring-1 ring-amber-50/50 hover:bg-amber-50/50";
               break;
-            case "negative":
-              activeClass = "bg-red-100 text-red-800 border-red-300 shadow-sm";
-              inactiveClass =
-                "bg-white text-gray-600 border-red-100 ring-1 ring-red-50 hover:bg-red-50/50";
+            case "indigo":
+              activeClass = "bg-indigo-100 text-indigo-800 border-indigo-300 shadow-sm";
+              inactiveClass = "bg-white text-gray-600 border-indigo-100 ring-1 ring-indigo-50/50 hover:bg-indigo-50/50";
               break;
             default:
-              activeClass = "bg-gray-200 text-gray-900";
-              inactiveClass = "bg-white text-gray-600 border-gray-100";
+              activeClass = "bg-rose-100 text-rose-800 border-rose-300";
+              inactiveClass = "bg-white text-gray-600 border-rose-50";
           }
 
           return (

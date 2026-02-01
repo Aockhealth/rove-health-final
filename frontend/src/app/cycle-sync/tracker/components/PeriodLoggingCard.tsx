@@ -2,7 +2,8 @@
 
 import { useMemo, useTransition, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shield, HelpCircle, X, Calendar, Edit3, Activity, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
@@ -70,6 +71,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
     currentPhase,
 }: PeriodLoggingCardProps) {
     const [isPending] = useTransition();
+    const [showTutorial, setShowTutorial] = useState(false);
 
     // Color Palette
     const colors = {
@@ -326,9 +328,18 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
 
             {/* Month header */}
             <div className="flex items-center justify-between mb-8 px-2">
-                <h3 className="text-base font-heading font-bold text-gray-900 uppercase tracking-wider">
-                    {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                </h3>
+                <div className="flex items-center gap-3">
+                    <h3 className="text-base font-heading font-bold text-gray-900 uppercase tracking-wider">
+                        {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                    </h3>
+                    <button
+                        onClick={() => setShowTutorial(true)}
+                        className="p-1 hover:text-rose-500 transition-colors"
+                        title="How to use"
+                    >
+                        <HelpCircle className="w-4 h-4 text-gray-400 hover:text-rose-500" />
+                    </button>
+                </div>
                 <div className="flex gap-4">
                     <button onClick={onPrevMonth} className="p-1 hover:text-rose-500 transition-colors">
                         <ChevronLeft className="w-5 h-5" />
@@ -450,11 +461,148 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                 </motion.div>
             </AnimatePresence>
 
-            {/* Privacy notice (moved to bottom and made even subtler) */}
-            <div className="flex items-center justify-center gap-2 mt-8 pt-4">
-                <Shield className="w-3 h-3 text-gray-300" />
-                <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">End-to-end encrypted</p>
+            {/* Phase Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 pt-6 border-t border-gray-100">
+                {[
+                    { label: "Menstrual", color: colors.menstrual },
+                    { label: "Follicular", color: colors.follicular },
+                    { label: "Ovulatory", color: colors.ovulatory },
+                    { label: "Luteal", color: colors.luteal },
+                ].map((phase) => (
+                    <div key={phase.label} className="flex items-center gap-2">
+                        <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: phase.color }}
+                        />
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                            {phase.label}
+                        </span>
+                    </div>
+                ))}
+                <div className="flex items-center gap-3 border-l border-gray-100 pl-6 ml-2">
+                    <div className="flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-gray-400 font-bold mb-0.5">14</span>
+                        <div className="w-1 h-1 rounded-full bg-[#fbbf24]" />
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                        Fertile Window
+                    </span>
+                </div>
             </div>
+
+
+            {/* Tutorial Modal */}
+            <AnimatePresence>
+                {showTutorial && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl relative"
+                        >
+                            {/* Header */}
+                            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex items-center justify-between z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-rose-100 rounded-2xl flex items-center justify-center">
+                                        <HelpCircle className="w-5 h-5 text-rose-500" />
+                                    </div>
+                                    <h2 className="text-xl font-heading font-bold text-gray-900">Tracker Guide</h2>
+                                </div>
+                                <button
+                                    onClick={() => setShowTutorial(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-gray-400" />
+                                </button>
+                            </div>
+
+                            <div className="px-8 py-8 space-y-10">
+                                {/* Step 1: Selection */}
+                                <section className="flex gap-6">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+                                        <Calendar className="w-6 h-6" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-lg font-heading font-semibold text-gray-900">1. Navigate & Select</h4>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Use the arrows at the top of the calendar to switch months.
+                                            <span className="font-semibold text-gray-900"> Tap any date</span> to select it—the tracker cards below will instantly update to show your logs for that specific day.
+                                        </p>
+                                    </div>
+                                </section>
+
+                                {/* Step 2: Logging Period */}
+                                <section className="flex gap-6">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500">
+                                        <Edit3 className="w-6 h-6" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-lg font-heading font-semibold text-gray-900">2. Log Your Period</h4>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Tap the <span className="inline-flex items-center px-2 py-0.5 bg-gray-900 text-white text-[10px] rounded-full font-bold">LOG PERIOD</span> button.
+                                            The calendar will highlight in pink. Tap days to toggle bleeding on or off. Click <span className="font-semibold text-gray-900">Done</span> to save your cycle dates.
+                                        </p>
+                                    </div>
+                                </section>
+
+                                {/* Step 3: Daily Logging */}
+                                <section className="flex gap-6">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500">
+                                        <Activity className="w-6 h-6" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="text-lg font-heading font-semibold text-gray-900">3. Log Daily Rhythm</h4>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            Scroll down to see dynamic cards for symptoms, moods, water intake, and more.
+                                            Each card is tailored to your current phase. Changes are saved automatically as you tap.
+                                        </p>
+                                    </div>
+                                </section>
+
+                                {/* Step 4: Understanding Phases */}
+                                <section className="space-y-4 pt-4 border-t border-gray-100">
+                                    <h4 className="text-lg font-heading font-semibold text-gray-900 flex items-center gap-2">
+                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                        Cycle Phases
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                                            <div className="w-3 h-3 bg-rose-400 rounded-full mb-2" />
+                                            <p className="text-xs font-bold text-rose-900">Menstrual</p>
+                                            <p className="text-[10px] text-rose-700">Days 1-5 (Period)</p>
+                                        </div>
+                                        <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl">
+                                            <div className="w-3 h-3 bg-teal-400 rounded-full mb-2" />
+                                            <p className="text-xs font-bold text-teal-900">Follicular</p>
+                                            <p className="text-[10px] text-teal-700">Pre-ovulation energy</p>
+                                        </div>
+                                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+                                            <div className="w-3 h-3 bg-amber-400 rounded-full mb-2" />
+                                            <p className="text-xs font-bold text-amber-900">Ovulatory</p>
+                                            <p className="text-[10px] text-amber-700">Highest fertility</p>
+                                        </div>
+                                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                                            <div className="w-3 h-3 bg-indigo-400 rounded-full mb-2" />
+                                            <p className="text-xs font-bold text-indigo-900">Luteal</p>
+                                            <p className="text-[10px] text-indigo-700">Winding down</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <div className="pt-4">
+                                    <button
+                                        onClick={() => setShowTutorial(false)}
+                                        className="w-full py-4 bg-gray-900 text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-xl shadow-gray-200"
+                                    >
+                                        Start Tracking
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 });

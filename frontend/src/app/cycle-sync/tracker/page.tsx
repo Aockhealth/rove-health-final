@@ -26,6 +26,7 @@ import WaterIntakeCard from "./components/WaterIntakeCard";
 import SleepCard from "./components/SleepCard";
 import DisruptorsCard from "./components/DisruptorsCard";
 import SelfLoveCard from "./components/SelfLoveCard";
+import SexualWellnessCard from "./components/SexualWellnessCard";
 import NoteCard from "./components/NoteCard";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 
@@ -51,6 +52,8 @@ export default function TrackerPageRedesigned() {
     const [sleepHours, setSleepHours] = useState<string>("");
     const [sleepMinutes, setSleepMinutes] = useState<string>("");
     const [selectedDisruptors, setSelectedDisruptors] = useState<string[]>([]);
+    const [selectedSexActivity, setSelectedSexActivity] = useState<string[]>([]);
+    const [selectedContraception, setSelectedContraception] = useState<string[]>([]);
     const [flowIntensity, setFlowIntensity] = useState<string | null>(null);
     const [cervicalDischarge, setCervicalDischarge] = useState<string | null>(null);
     const [note, setNote] = useState("");
@@ -197,6 +200,9 @@ export default function TrackerPageRedesigned() {
             setSelectedSelfLove(data.self_love_tags || []);
             setSelfLoveOther(data.self_love_other || "");
             setSelectedSleepQuality(data.sleep_quality || []);
+            setSelectedDisruptors(data.disruptors || []);
+            setSelectedSexActivity(data.sex_activity || []);
+            setSelectedContraception(data.contraception || []);
 
             if (data.sleep_minutes) {
                 setSleepHours(Math.floor(data.sleep_minutes / 60).toString());
@@ -262,6 +268,7 @@ export default function TrackerPageRedesigned() {
             setSleepHours("");
             setSleepMinutes("");
             setSelectedDisruptors([]);
+            setSelectedSexActivity([]);
             setFlowIntensity(null);
             setCervicalDischarge(null);
             setNote("");
@@ -350,6 +357,8 @@ export default function TrackerPageRedesigned() {
                     ? parseInt(sleepHours || "0") * 60 + parseInt(sleepMinutes || "0")
                     : null,
                 disruptors: selectedDisruptors,
+                sexActivity: selectedSexActivity,
+                contraception: selectedContraception,
                 isPeriod: isPeriodMode,
                 flowIntensity: isPeriodMode ? flowIntensity || "Normal" : undefined,
                 cervicalDischarge: finalCervicalDischarge || undefined,
@@ -428,10 +437,20 @@ export default function TrackerPageRedesigned() {
                         date: dateStr,
                         symptoms: monthLogs[dateStr]?.symptoms || [],
                         isPeriod: isCurrentlyLogged,
-                        flowIntensity: isCurrentlyLogged ? "Normal" : undefined,
+                        flowIntensity: isCurrentlyLogged ? (monthLogs[dateStr]?.flow_intensity || "Normal") : undefined,
                         moods: monthLogs[dateStr]?.moods || [],
                         notes: monthLogs[dateStr]?.notes || "",
+                        cervicalDischarge: monthLogs[dateStr]?.cervical_discharge || undefined,
+                        exerciseTypes: monthLogs[dateStr]?.exercise_types || [],
+                        exerciseMinutes: monthLogs[dateStr]?.exercise_minutes || null,
                         waterIntake: monthLogs[dateStr]?.water_intake || 0,
+                        selfLoveTags: monthLogs[dateStr]?.self_love_tags || [],
+                        selfLoveOther: monthLogs[dateStr]?.self_love_other || "",
+                        sleepQuality: monthLogs[dateStr]?.sleep_quality || [],
+                        sleepMinutes: monthLogs[dateStr]?.sleep_minutes || null,
+                        disruptors: monthLogs[dateStr]?.disruptors || [],
+                        sexActivity: monthLogs[dateStr]?.sex_activity || [],
+                        contraception: monthLogs[dateStr]?.contraception || [],
                     });
                 });
 
@@ -840,18 +859,19 @@ export default function TrackerPageRedesigned() {
                                 mpiqSensation={mpiqSensation}
                                 setMpiqSensation={setMpiqSensation}
                                 selectedDate={selectedDate}
-                                getRelevantPeriodStart={getRelevantPeriodStart}
+                                currentPhase={currentPhase}
                             />
                         )}
 
-                        <SymptomsCard selectedSymptoms={selectedSymptoms} setSelectedSymptoms={setSelectedSymptoms} />
-                        <MoodsCard selectedMoods={selectedMoods} setSelectedMoods={setSelectedMoods} />
+                        <SymptomsCard selectedSymptoms={selectedSymptoms} setSelectedSymptoms={setSelectedSymptoms} currentPhase={currentPhase} />
+                        <MoodsCard selectedMoods={selectedMoods} setSelectedMoods={setSelectedMoods} currentPhase={currentPhase} />
 
                         <ExerciseCard
                             selectedExercise={selectedExercise}
                             exerciseMinutes={exerciseMinutes}
                             setSelectedExercise={setSelectedExercise}
                             setExerciseMinutes={setExerciseMinutes}
+                            currentPhase={currentPhase}
                         />
 
                         <WaterIntakeCard
@@ -859,6 +879,7 @@ export default function TrackerPageRedesigned() {
                             setWaterIntake={setWaterIntake}
                             isPouring={isPouring}
                             setIsPouring={setIsPouring}
+                            currentPhase={currentPhase}
                         />
 
                         <SleepCard
@@ -868,18 +889,28 @@ export default function TrackerPageRedesigned() {
                             setSelectedSleepQuality={setSelectedSleepQuality}
                             setSleepHours={setSleepHours}
                             setSleepMinutes={setSleepMinutes}
+                            currentPhase={currentPhase}
                         />
 
-                        <DisruptorsCard selectedDisruptors={selectedDisruptors} setSelectedDisruptors={setSelectedDisruptors} />
+                        <DisruptorsCard selectedDisruptors={selectedDisruptors} setSelectedDisruptors={setSelectedDisruptors} currentPhase={currentPhase} />
 
                         <SelfLoveCard
                             selectedSelfLove={selectedSelfLove}
                             selfLoveOther={selfLoveOther}
                             setSelectedSelfLove={setSelectedSelfLove}
                             setSelfLoveOther={setSelfLoveOther}
+                            currentPhase={currentPhase}
                         />
 
-                        <NoteCard note={note} setNote={setNote} />
+                        <SexualWellnessCard
+                            selectedSexActivity={selectedSexActivity}
+                            setSelectedSexActivity={setSelectedSexActivity}
+                            selectedContraception={selectedContraception}
+                            setSelectedContraception={setSelectedContraception}
+                            currentPhase={currentPhase}
+                        />
+
+                        <NoteCard note={note} setNote={setNote} currentPhase={currentPhase} />
                     </motion.div>
                 )}
 

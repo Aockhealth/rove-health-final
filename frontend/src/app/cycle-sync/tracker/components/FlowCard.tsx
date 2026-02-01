@@ -10,7 +10,7 @@ const flowOptions = ["Spotting", "Low", "Normal", "High", "Heavy"];
 
 export default function FlowCard({ flowIntensity, setFlowIntensity }: FlowCardProps) {
   return (
-    <div className="bg-gradient-to-br from-white to-rose-50/50 backdrop-blur-xl rounded-3xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100">
+    <div className="bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 border-rose-100 shadow-rose-100/20">
       <div className="flex items-center gap-2 mb-4">
         <Droplets className="w-5 h-5 text-rose-500" />
         <h3 className="text-base font-heading font-semibold text-gray-900">Flow</h3>
@@ -23,10 +23,10 @@ export default function FlowCard({ flowIntensity, setFlowIntensity }: FlowCardPr
               key={f}
               onClick={() => setFlowIntensity(isActive ? null : f)}
               className={cn(
-                "px-4 py-2.5 rounded-full text-sm font-medium transition-all border",
+                "px-3 py-1.5 rounded-xl text-xs font-medium transition-all border-2",
                 isActive
-                  ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white border-transparent shadow-md shadow-rose-200"
-                  : "bg-white border-rose-100/50 text-gray-600 hover:border-rose-200 hover:bg-rose-50/30"
+                  ? "bg-rose-100 text-rose-800 border-rose-300 shadow-sm"
+                  : "bg-white text-gray-600 border-rose-100 ring-1 ring-rose-50/50 hover:bg-rose-50/50"
               )}
             >
               {f}

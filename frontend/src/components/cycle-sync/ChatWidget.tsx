@@ -9,36 +9,78 @@ import { cn } from "@/lib/utils";
 
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isDocked, setIsDocked] = useState(false);
 
     return (
         <>
-            {/* Floating Action Button */}
-            <motion.div
-                className="fixed bottom-40 right-6 md:bottom-10 md:right-10 z-[75]"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 1, type: "spring" }}
-            >
-                <Button
-                    onClick={() => setIsOpen(!isOpen)}
-                    size="icon"
-                    className={cn(
-                        "w-14 h-14 rounded-full shadow-2xl transition-all duration-300 relative",
-                        isOpen
-                            ? "bg-rove-stone text-white rotate-90"
-                            : "bg-gradient-to-tr from-rove-charcoal to-rove-stone text-white hover:scale-110"
-                    )}
-                >
-                    {isOpen ? (
-                        <X className="w-6 h-6" />
-                    ) : (
-                        <>
-                            <MessageCircle className="w-6 h-6" />
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-rove-red rounded-full border-2 border-white" />
-                        </>
-                    )}
-                </Button>
-            </motion.div>
+            {/* Floating Action Button / Docked Handle */}
+            <AnimatePresence mode="wait">
+                {!isDocked ? (
+                    <motion.div
+                        key="active-widget"
+                        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 z-[75]"
+                        initial={{ scale: 0, x: 100 }}
+                        animate={{ scale: 1, x: 0 }}
+                        exit={{ scale: 0, x: 100 }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        onDragEnd={(_, info) => {
+                            // If swiped right enough, dock it
+                            if (info.offset.x > 50) {
+                                setIsDocked(true);
+                            }
+                        }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                    >
+                        <Button
+                            onClick={() => setIsOpen(!isOpen)}
+                            size="icon"
+                            className={cn(
+                                "w-12 h-12 rounded-full shadow-2xl transition-all duration-300 relative touch-none",
+                                isOpen
+                                    ? "bg-rove-stone text-white rotate-90"
+                                    : "bg-gradient-to-tr from-rove-charcoal to-rove-stone text-white hover:scale-110 active:scale-95"
+                            )}
+                        >
+                            {isOpen ? (
+                                <X className="w-5 h-5" />
+                            ) : (
+                                <>
+                                    <MessageCircle className="w-5 h-5" />
+                                    <span className="absolute top-0 right-0 w-3 h-3 bg-rove-red rounded-full border-2 border-white" />
+                                </>
+                            )}
+                        </Button>
+                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                            <span className="text-[10px] text-gray-400">Swipe right to hide</span>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="docked-handle"
+                        className="fixed bottom-28 -right-2 md:bottom-8 md:-right-2 z-[75] cursor-pointer group"
+                        initial={{ x: 50 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: 50 }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        onDragEnd={(_, info) => {
+                            // If swiped left enough, restore it
+                            if (info.offset.x < -20) {
+                                setIsDocked(false);
+                            }
+                        }}
+                        onClick={() => setIsDocked(false)}
+                    >
+                        <div className="w-4 h-16 bg-rove-stone/20 backdrop-blur-md rounded-l-xl border-y border-l border-white/20 flex items-center justify-center group-hover:bg-rove-stone/40 transition-colors">
+                            <div className="w-1 h-8 bg-white/40 rounded-full" />
+                        </div>
+                        <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">
+                            <span className="bg-rove-stone text-white px-2 py-1 rounded-md text-[10px] shadow-lg">Swipe left to restore</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Chat Window */}
             <AnimatePresence>
@@ -75,3 +117,4 @@ export function ChatWidget() {
         </>
     );
 }
+

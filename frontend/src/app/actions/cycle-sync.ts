@@ -38,6 +38,8 @@ const DailyLogSchema = z.object({
     sleepQuality: z.array(z.string()).optional().default([]),
     sleepMinutes: z.number().min(0).max(1440, "Sleep cannot exceed 24 hours").optional().nullable(),
     disruptors: z.array(z.string()).optional().default([]),
+    sexActivity: z.array(z.string()).optional().default([]),
+    contraception: z.array(z.string()).optional().default([])
 });
 
 // --- HELPERS ---
@@ -962,6 +964,8 @@ export interface LogDailySymptomsPayload {
     sleepQuality?: string[];
     sleepMinutes?: number | null;
     disruptors?: string[];
+    sexActivity?: string[];
+    contraception?: string[];
 }
 export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
     // ✅ VALIDATION: Strict Zod check
@@ -997,6 +1001,8 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
             sleep_quality: safeData.sleepQuality || [],
             sleep_minutes: safeData.sleepMinutes || null,
             disruptors: safeData.disruptors || [],
+            sex_activity: safeData.sexActivity || [],
+            contraception: safeData.contraception || [],
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id, date'

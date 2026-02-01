@@ -5,63 +5,64 @@ export const FLOW_OPTIONS = ["Spotting", "Low", "Normal", "High", "Heavy"];
 
 // Symptom Options
 export const SYMPTOM_OPTIONS = [
-  "Headache", "Cramps", "Bloating", "Acne", 
-  "Backache", "Fatigue", "Breast Pain", "Nausea"
+  "Headache", "Cramps", "Bloating", "Acne",
+  "Muscle pain", "Fatigue", "Breast Pain", "Nausea",
+  "Diarrheoa", "Constipation", "Hot flushes", "Vulvular pain"
 ];
 
 // MPIQ Options
 export const CONSISTENCY_OPTIONS: MPIQOption[] = [
-  { 
-    label: "Tacky", 
-    score: 4, 
-    desc: "Sticky, glue-like", 
-    type: "video", 
-    src: "/images/gifs/tacky.mp4" 
+  {
+    label: "Tacky",
+    score: 4,
+    desc: "Sticky, glue-like",
+    type: "video",
+    src: "/images/gifs/tacky.mp4"
   },
-  { 
-    label: "Creamy", 
-    score: 3, 
-    desc: "Lotion-like, smooth", 
-    type: "video", 
-    src: "/images/gifs/creamy.mp4" 
+  {
+    label: "Creamy",
+    score: 3,
+    desc: "Lotion-like, smooth",
+    type: "video",
+    src: "/images/gifs/creamy.mp4"
   },
-  { 
-    label: "Stretchy", 
-    score: 2, 
-    desc: "Raw egg white, elastic", 
-    type: "video", 
-    src: "/images/gifs/stretchy.mp4" 
+  {
+    label: "Stretchy",
+    score: 2,
+    desc: "Raw egg white, elastic",
+    type: "video",
+    src: "/images/gifs/stretchy.mp4"
   },
-  { 
-    label: "Bloody", 
-    score: 1, 
-    desc: "Red/brown tint", 
-    type: "video", 
-    src: "/images/gifs/bloody.mp4" 
+  {
+    label: "Bloody",
+    score: 1,
+    desc: "Red/brown tint",
+    type: "video",
+    src: "/images/gifs/bloody.mp4"
   },
 ];
 
 export const APPEARANCE_OPTIONS: MPIQOption[] = [
-  { 
-    label: "White/Yellow", 
-    score: 3, 
-    desc: "Cloudy or cream colored", 
-    type: "image", 
-    src: "/images/gifs/white yellow appearance.jpeg" 
+  {
+    label: "White/Yellow",
+    score: 3,
+    desc: "Cloudy or cream colored",
+    type: "image",
+    src: "/images/gifs/white yellow appearance.jpeg"
   },
-  { 
-    label: "Clear", 
-    score: 2, 
-    desc: "Transparent like glass", 
-    type: "image", 
-    src: "/images/gifs/clear appearance.jpeg" 
+  {
+    label: "Clear",
+    score: 2,
+    desc: "Transparent like glass",
+    type: "image",
+    src: "/images/gifs/clear appearance.jpeg"
   },
-  { 
-    label: "Red", 
-    score: 1, 
-    desc: "Pink to bright red", 
-    type: "image", 
-    src: "/images/gifs/red appearance.jpeg" 
+  {
+    label: "Red",
+    score: 1,
+    desc: "Pink to bright red",
+    type: "image",
+    src: "/images/gifs/red appearance.jpeg"
   },
 ];
 
@@ -85,9 +86,9 @@ export const MOODS_LIST: MoodOption[] = [
 
 // Exercise Options
 export const EXERCISE_OPTIONS = [
-  "Rest Day", 
-  "Light (Walk, Yoga)", 
-  "Moderate (Gym, Pilates)", 
+  "Rest Day",
+  "Light (Walk, Yoga)",
+  "Moderate (Gym, Pilates)",
   "Intense (HIIT, Run)"
 ];
 
@@ -112,7 +113,20 @@ export const DISRUPTORS_LIST: DisruptorOption[] = [
   { label: "Illness", type: "negative" },
   { label: "High stress event", type: "negative" },
   { label: "Painkillers", type: "orange" },
-  { label: "Contraceptive", type: "orange" },
+  { label: "Emergency contraceptive", type: "orange" },
+];
+
+// Sexual Wellness
+export const SEX_ACTIVITY_OPTIONS = [
+  { label: "Sex", type: "positive" },
+  { label: "Painful", type: "negative" },
+  { label: "High sex drive", type: "positive" },
+  { label: "Low sex drive", type: "negative" },
+  { label: "Enjoyable", type: "positive" },
+];
+
+export const CONTRACEPTION_OPTIONS = [
+  "Pill", "Condom", "IUD", "Withdrawal", "None"
 ];
 
 // Calendar
