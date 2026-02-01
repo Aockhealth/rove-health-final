@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Edit2, X } from "lucide-react";
+import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -763,7 +764,7 @@ export default function TrackerPageRedesigned() {
                         <h1 className="text-xl font-heading font-semibold text-gray-900">Rove Tracker</h1>
                         <p className="text-xs text-gray-500">Log your daily rhythm</p>
                     </div>
-                    <div className="w-10" /> {/* Spacer to balance the left icon for perfect centering */}
+                    <ProfileAvatar /> {/* Spacer to balance the left icon for perfect centering */}
                 </div>
             </div>
 

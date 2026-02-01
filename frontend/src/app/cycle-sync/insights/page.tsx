@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Activity, Calendar, Zap } from "lucide-react";
+import { ChevronLeft, Activity, Calendar, Zap, User } from "lucide-react";
+import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -139,7 +140,7 @@ export default function InsightsPage() {
             </span>
           </div>
 
-          <Activity className={cn("w-4 h-4", theme.color)} />
+          <ProfileAvatar />
         </div>
       </div>
 

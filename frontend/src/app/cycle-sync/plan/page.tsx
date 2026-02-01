@@ -8,6 +8,7 @@ import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -1199,9 +1200,7 @@ export default function DetailedPlanPage() {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone/60">Day {displayDay} of Cycle</span>
                     </div>
 
-                    <div className={cn("w-9 h-9 rounded-full border flex items-center justify-center shadow-sm", theme.cardBg, theme.border)}>
-                        <span className={cn("text-xs font-bold", theme.color)}>{displayDay}</span>
-                    </div>
+                    <ProfileAvatar />
                 </div>
             </div>
 

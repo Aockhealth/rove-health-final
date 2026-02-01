@@ -32,7 +32,7 @@ export async function submitOnboarding(data: OnboardingData) {
   }
 
   try {
-    // 1. Update Profile (Name)
+    // 1. Update Profile (Database Storage)
     const { error: profileError } = await supabase
       .from("profiles")
       .update({
@@ -46,7 +46,22 @@ export async function submitOnboarding(data: OnboardingData) {
       throw new Error("Failed to update profile");
     }
 
-    // 2. Save Onboarding Details (Goals, Conditions, Symptoms)
+    // 2. 🔥 CRITICAL FIX: Force Session Refresh
+    // This updates the active session token immediately so the Dashboard 
+    // sees the new name instantly without waiting for a re-login.
+    const { error: authUpdateError } = await supabase.auth.updateUser({
+      data: { 
+        full_name: data.name,
+        onboarding_completed: true
+      }
+    });
+
+    if (authUpdateError) {
+      console.error("Failed to refresh session metadata:", authUpdateError);
+      // We continue because the critical database write (Step 1) succeeded.
+    }
+
+    // 3. Save Onboarding Details (Goals, Conditions, Symptoms)
     const { error: onboardingError } = await supabase
       .from("user_onboarding")
       .upsert({
@@ -59,10 +74,9 @@ export async function submitOnboarding(data: OnboardingData) {
 
     if (onboardingError) {
       console.error("Onboarding save error:", onboardingError);
-      // Continue even if this fails - not critical
     }
 
-    // 3. Save Cycle Stats
+    // 4. Save Cycle Stats
     const { error: cycleError } = await supabase
       .from("user_cycle_settings")
       .upsert({
@@ -79,7 +93,7 @@ export async function submitOnboarding(data: OnboardingData) {
       throw new Error("Failed to save cycle settings");
     }
 
-    // 4. 🔥 SAVE HISTORICAL PERIODS TO DAILY LOGS
+    // 5. Save Historical Periods to Daily Logs
     if (data.periodHistory && data.periodHistory.length > 0) {
       const logsToInsert: any[] = [];
 
@@ -112,10 +126,11 @@ export async function submitOnboarding(data: OnboardingData) {
 
     revalidatePath("/cycle-sync");
 
-    // ✅ FIXED: Redirect to Dashboard instead of Tracker
+    // ✅ Redirect to Dashboard
     redirect("/cycle-sync");
+
   } catch (error) {
     console.error("Onboarding submission error:", error);
-    throw error; // Re-throw to be caught by the client
+    throw error; 
   }
 }

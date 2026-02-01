@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { Droplets, Zap, Moon, Sun, ArrowRight, Baby, TrendingUp, Brain, Activity, Utensils, Dumbbell, Flower2, Heart, Wind, ChevronLeft, CalendarPlus, Plus, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -437,11 +438,7 @@ export default function CycleSyncDashboard() {
                         <span className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
                     </div>
 
-                    <Link href="/cycle-sync/profile">
-                        <div className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95">
-                            <span className="font-heading text-lg text-rove-charcoal">{user?.name?.[0] || "R"}</span>
-                        </div>
-                    </Link>
+                    <ProfileAvatar />
                 </div>
 
                 {/* MODE: Menstruation (Default) */}
