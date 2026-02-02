@@ -144,19 +144,19 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
                             <div
                                 key={i}
                                 className={cn(
-                                    "w-auto min-w-[180px] flex-shrink-0 p-3 rounded-2xl bg-white/60 backdrop-blur-md border border-white/50 shadow-sm flex items-center gap-3 transition-all select-none",
+                                    "w-auto min-w-[140px] sm:min-w-[160px] md:min-w-[180px] flex-shrink-0 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-md border border-white/50 shadow-sm flex items-center gap-2 sm:gap-3 transition-all select-none",
                                     isClickable
                                         ? "cursor-pointer hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] pointer-events-auto"
                                         : "pointer-events-none"
                                 )}
                                 onClick={(e) => isClickable && handleCardClick(item, e)}
                             >
-                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-transform", item.bg || "bg-white", item.color)}>
-                                    <Icon className="w-5 h-5" />
+                                <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm transition-transform", item.bg || "bg-white", item.color)}>
+                                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </div>
                                 <div className="text-left flex-1">
-                                    <h4 className="font-heading text-sm font-semibold text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
-                                    <p className="text-rove-charcoal/60 text-xs font-medium whitespace-nowrap">{item.desc || item.description}</p>
+                                    <h4 className="font-heading text-xs sm:text-sm font-semibold text-rove-charcoal leading-tight whitespace-nowrap">{item.title}</h4>
+                                    <p className="text-rove-charcoal/60 text-[10px] sm:text-xs font-medium whitespace-nowrap">{item.desc || item.description}</p>
                                 </div>
                             </div>
                         );

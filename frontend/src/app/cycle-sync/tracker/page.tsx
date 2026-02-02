@@ -934,7 +934,7 @@ export default function TrackerPageRedesigned() {
 
                 {/* Extra spacing for sticky bottom button */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <div className="h-24" />
+                    <div className="h-48" />
                 )}
             </div>
         </div>

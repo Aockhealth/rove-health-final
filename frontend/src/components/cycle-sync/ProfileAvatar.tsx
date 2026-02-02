@@ -11,10 +11,29 @@ export default function ProfileAvatar() {
         const getUser = async () => {
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
-            if (user?.user_metadata?.full_name) {
-                setInitial(user.user_metadata.full_name[0]);
+
+            if (!user) {
+                setInitial("U");
+                return;
+            }
+
+            // Fetch from profiles table where the name is actually stored
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", user.id)
+                .single();
+
+            // Try profile full_name first, then user_metadata, then email
+            const name = profile?.full_name
+                || user.user_metadata?.full_name
+                || user.user_metadata?.name
+                || user.email?.split('@')[0];
+
+            if (name && name.length > 0) {
+                setInitial(name[0]);
             } else {
-                setInitial("R"); // Default fallback
+                setInitial("U");
             }
         };
         getUser();

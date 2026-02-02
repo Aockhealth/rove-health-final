@@ -397,9 +397,9 @@ function Counter({ from, to }: { from: number; to: number }) {
 
 function SectionHeader({ title, icon: Icon }: { title: string, icon: any }) {
     return (
-        <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-white/50 text-rove-charcoal rounded-full shadow-sm border border-white/60"><Icon className="w-5 h-5" /></div>
-            <h2 className="font-heading text-xl text-rove-charcoal">{title}</h2>
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <div className="p-1.5 sm:p-2 bg-white/60 text-rove-charcoal rounded-lg sm:rounded-full shadow-sm border border-white/60"><Icon className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+            <h2 className="font-heading text-base sm:text-xl text-rove-charcoal">{title}</h2>
         </div>
     );
 }
@@ -1206,15 +1206,15 @@ export default function DetailedPlanPage() {
 
             <div className="container mx-auto px-4 py-6 max-w-5xl">
 
-                {/* 2. TABS - More Prominent with Animated Indicator */}
+                {/* 2. TABS - Modern Pill Design */}
                 <div className="mb-6">
                     {/* Swipe hint */}
-                    <p className={`text-center text-[10px] font-medium uppercase tracking-wider mb-2 ${theme.color} opacity-70`}>
+                    <p className={`text-center text-[9px] font-bold uppercase tracking-widest mb-3 ${theme.color} opacity-60`}>
                         ↔ Tap to explore
                     </p>
 
-                    {/* Tab Container */}
-                    <div className="relative flex p-1.5 bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg mx-auto w-full max-w-md">
+                    {/* Tab Container - More compact on mobile */}
+                    <div className="relative flex p-1 sm:p-1.5 bg-white/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/60 shadow-lg shadow-black/5 mx-auto w-full max-w-md">
                         {/* Animated Background Indicator */}
                         <motion.div
                             className={cn(
@@ -1230,9 +1230,9 @@ export default function DetailedPlanPage() {
                         />
 
                         {[
-                            { id: 'guide', label: 'Guide', icon: Compass, desc: 'Phase Tips' },
-                            { id: 'diet', label: 'Nutrition', icon: Utensils, desc: 'What to Eat' },
-                            { id: 'exercise', label: 'Movement', icon: Dumbbell, desc: 'Workouts' }
+                            { id: 'guide', label: 'Guide', icon: Compass },
+                            { id: 'diet', label: 'Nutrition', icon: Utensils },
+                            { id: 'exercise', label: 'Move', icon: Dumbbell }
                         ].map(tab => {
                             const isActive = activeTab === tab.id;
                             return (
@@ -1240,12 +1240,12 @@ export default function DetailedPlanPage() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={cn(
-                                        "relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-3 rounded-xl text-xs font-bold transition-all duration-300",
-                                        isActive ? "text-white" : "text-rove-charcoal/60 hover:text-rove-charcoal"
+                                        "relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs font-bold transition-all duration-300",
+                                        isActive ? "text-white drop-shadow-sm" : "text-rove-charcoal/50 hover:text-rove-charcoal/80"
                                     )}
                                 >
-                                    <tab.icon className={cn("w-5 h-5 mb-0.5", isActive && "drop-shadow-sm")} />
-                                    <span className="uppercase tracking-wider">{tab.label}</span>
+                                    <tab.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isActive && "drop-shadow-sm")} />
+                                    <span className="uppercase tracking-wide text-[10px] sm:text-xs">{tab.label}</span>
                                 </button>
                             );
                         })}

@@ -429,7 +429,7 @@ export default function CycleSyncDashboard() {
                 <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-white rounded-full blur-[60px] opacity-60" />
             </div>
 
-            <div className="relative z-10 p-4 md:p-8 space-y-2 md:space-y-8 pb-32">
+            <div className="relative z-10 p-4 md:p-8 space-y-2 md:space-y-8 pb-4 md:pb-32">
                 {/* NANO HEADER (Personalized) */}
                 <div className="flex items-center justify-between mb-8 px-2">
                     <div className="flex flex-col">
@@ -457,33 +457,43 @@ export default function CycleSyncDashboard() {
                             transition={{ duration: 0.8, ease: "easeOut" }}
                             className="relative py-4 md:py-8"
                         >
-                            {/* MAIN HERO LAYOUT: Orb (center) + Log Button (right) */}
-                            <div className="flex items-center justify-center gap-4 md:gap-8">
+                            {/* MAIN HERO LAYOUT: Orb centered with diagonal Log Button */}
+                            <div className="flex items-center justify-center">
 
                                 {/* Spacer for balance (hidden on mobile) */}
                                 <div className="hidden md:block w-24"></div>
 
-                                {/* CENTER: The Phase Orb */}
+                                {/* CENTER: The Phase Orb with diagonal button */}
                                 <div className="relative">
                                     {/* Atmospheric Background */}
                                     <div className="absolute inset-[-50px] z-0 rounded-full overflow-hidden opacity-60 pointer-events-none">
                                         <SeasonalBackground phase={currentPhase.name} />
                                     </div>
 
-                                    {/* Outer Glow */}
-                                    <div className={`absolute inset-[-20px] rounded-full ${theme.blob} blur-3xl opacity-40 pointer-events-none`} />
+                                    {/* Outer Glow - Enhanced with pulsing */}
+                                    <motion.div
+                                        className={`absolute inset-[-20px] rounded-full ${theme.blob} blur-3xl pointer-events-none`}
+                                        animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                    />
 
                                     <Link href="/cycle-sync/tracker">
                                         <motion.div
-                                            className="relative w-52 h-52 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group"
+                                            className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group"
                                             whileHover={{ scale: 1.02 }}
                                             transition={{ duration: 0.3, ease: "easeOut" }}
                                         >
-                                            {/* Rotating Gradient Ring */}
+                                            {/* Rotating Gradient Ring - Enhanced visibility */}
                                             <motion.div
-                                                className={`absolute inset-0 rounded-full border-[5px] md:border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
+                                                className={`absolute inset-0 rounded-full border-[4px] sm:border-[5px] md:border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
                                                 animate={{ rotate: 360 }}
-                                                transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+                                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                            />
+                                            {/* Second rotating ring for more prominent effect */}
+                                            <motion.div
+                                                className={`absolute inset-[-4px] sm:inset-[-5px] md:inset-[-6px] rounded-full border-[2px] sm:border-[3px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] opacity-50`}
+                                                animate={{ rotate: -360 }}
+                                                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                                             />
 
                                             {/* Inner Glass */}
@@ -491,19 +501,19 @@ export default function CycleSyncDashboard() {
 
                                             {/* ORB CONTENT */}
                                             <div className="relative text-center z-10 px-4">
-                                                <p className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-rove-stone/80 uppercase mb-1.5">
+                                                <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.2em] text-rove-stone/80 uppercase mb-1">
                                                     Current Phase
                                                 </p>
-                                                <h2 className={`text-3xl md:text-4xl font-heading ${theme.color} mb-1`}>
+                                                <h2 className={`text-2xl sm:text-3xl md:text-4xl font-heading ${theme.color} mb-0.5 sm:mb-1`}>
                                                     {currentPhase.name}
                                                 </h2>
 
                                                 {/* Keyword Subtitle */}
-                                                <p className="text-[10px] md:text-xs font-medium text-rove-charcoal/60 mb-2 tracking-wide opacity-90">
+                                                <p className="text-[9px] sm:text-[10px] md:text-xs font-medium text-rove-charcoal/60 mb-1 sm:mb-2 tracking-wide opacity-90">
                                                     {PHASE_KEYWORDS[currentPhase.name]}
                                                 </p>
 
-                                                <Badge variant="secondary" className={`${theme.badge} px-3 py-0.5 text-[9px] md:text-[10px] tracking-wider border`}>
+                                                <Badge variant="secondary" className={`${theme.badge} px-2 sm:px-3 py-0.5 text-[8px] sm:text-[9px] md:text-[10px] tracking-wider border`}>
                                                     {currentPhase.superpower}
                                                 </Badge>
                                             </div>
@@ -514,21 +524,24 @@ export default function CycleSyncDashboard() {
                                             </div>
                                         </motion.div>
                                     </Link>
+
+                                    {/* DIAGONAL Log Data Button - Bottom Right */}
+                                    <div className="absolute -bottom-2 -right-2 sm:bottom-0 sm:right-0 md:bottom-2 md:right-[-60px] flex flex-col items-center gap-1.5 z-20">
+                                        <Link href="/cycle-sync/tracker">
+                                            <motion.button
+                                                whileHover={{ scale: 1.1, y: -2 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20 hover:shadow-xl transition-all duration-300 ring-4 ring-white/80"
+                                            >
+                                                <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                                            </motion.button>
+                                        </Link>
+                                        <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-rove-charcoal/80">Log</span>
+                                    </div>
                                 </div>
 
-                                {/* RIGHT: Log Data Button */}
-                                <div className="flex flex-col items-center md:items-start gap-1">
-                                    <Link href="/cycle-sync/tracker">
-                                        <motion.button
-                                            whileHover={{ scale: 1.08, y: -2 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-xl shadow-rove-charcoal/30 hover:shadow-2xl transition-all duration-300 ring-4 ring-white/50"
-                                        >
-                                            <CalendarPlus className="w-6 h-6 md:w-7 md:h-7" />
-                                        </motion.button>
-                                    </Link>
-                                    <span className="text-[9px] font-bold uppercase tracking-wider text-rove-charcoal/60 mt-1">Log Data</span>
-                                </div>
+                                {/* Spacer for balance on desktop */}
+                                <div className="hidden md:block w-24"></div>
                             </div>
 
                             {/* CYCLE STATS CARDS */}
@@ -550,7 +563,7 @@ export default function CycleSyncDashboard() {
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl p-3 md:p-4 border border-rose-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl p-3 md:p-4 border border-rose-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
@@ -558,9 +571,9 @@ export default function CycleSyncDashboard() {
                                                         </div>
                                                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-rose-600/70">Period</span>
                                                     </div>
-                                                    <p className="text-base md:text-xl font-bold text-rose-700">{formatDate(nextPeriod)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-rose-500/70 mt-0.5 group-hover:text-rose-600 transition-colors">
-                                                        {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : ''}
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-rose-700">{formatDate(nextPeriod)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-rose-500/70 mt-0.5 group-hover:text-rose-600 transition-colors min-h-[14px]">
+                                                        {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : 'Next cycle'}
                                                     </p>
                                                 </motion.div>
                                             </Link>
@@ -570,7 +583,7 @@ export default function CycleSyncDashboard() {
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="bg-gradient-to-br from-purple-50 to-indigo-100/50 rounded-2xl p-3 md:p-4 border border-purple-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-purple-50 to-indigo-100/50 rounded-2xl p-3 md:p-4 border border-purple-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
@@ -578,8 +591,8 @@ export default function CycleSyncDashboard() {
                                                         </div>
                                                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-purple-600/70">Ovulation</span>
                                                     </div>
-                                                    <p className="text-base md:text-xl font-bold text-purple-700">{formatDate(ovulationDate)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-purple-500/70 mt-0.5 group-hover:text-purple-600 transition-colors">Peak fertility</p>
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-purple-700">{formatDate(ovulationDate)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-purple-500/70 mt-0.5 group-hover:text-purple-600 transition-colors min-h-[14px]">Peak fertility</p>
                                                 </motion.div>
                                             </Link>
 
@@ -588,7 +601,7 @@ export default function CycleSyncDashboard() {
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="bg-gradient-to-br from-teal-50 to-emerald-100/50 rounded-2xl p-3 md:p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-teal-50 to-emerald-100/50 rounded-2xl p-3 md:p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-teal-500/10 flex items-center justify-center">
@@ -596,10 +609,10 @@ export default function CycleSyncDashboard() {
                                                         </div>
                                                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-teal-600/70">Fertile</span>
                                                     </div>
-                                                    <p className="text-base md:text-xl font-bold text-teal-700">
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-teal-700">
                                                         {fertileStart && fertileEnd ? `${fertileStart.toLocaleDateString('en-US', { month: 'short' })} ${fertileStart.getDate()}-${fertileEnd.getDate()}` : '--'}
                                                     </p>
-                                                    <p className="text-[9px] md:text-[10px] text-teal-500/70 mt-0.5 group-hover:text-teal-600 transition-colors">6-day window</p>
+                                                    <p className="text-[9px] md:text-[10px] text-teal-500/70 mt-0.5 group-hover:text-teal-600 transition-colors min-h-[14px]">6-day window</p>
                                                 </motion.div>
                                             </Link>
                                         </>
@@ -639,8 +652,8 @@ export default function CycleSyncDashboard() {
                                         <HormoneWave />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
-                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
+                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -659,8 +672,8 @@ export default function CycleSyncDashboard() {
                                         <MindSynapse color="#374151" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
-                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
+                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -679,8 +692,8 @@ export default function CycleSyncDashboard() {
                                         <BodyDNA color="#22c55e" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
-                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
+                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
                                     </div>
                                 </motion.div>
 
@@ -699,8 +712,8 @@ export default function CycleSyncDashboard() {
                                         <GlowHalo color="#f59e0b" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-xl font-heading text-rove-charcoal leading-tight mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
-                                        <p className="text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
+                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
                                     </div>
                                 </motion.div>
                             </div>
