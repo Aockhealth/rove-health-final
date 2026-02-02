@@ -1474,23 +1474,7 @@ export default function DetailedPlanPage() {
 
                             <ActivitiesWidget practices={BP.rituals.practices} theme={theme} />
 
-                            <div className="mt-4">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-rove-stone ml-1 mb-3">Symptom Soothers</h3>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    {BP.rituals.symptom_relief.map((item: any, i: number) => (
-                                        <div key={i} className={cn("p-5 rounded-[1.5rem] backdrop-blur-xl border shadow-sm transition-all duration-500", theme.cardBg, theme.border)}>
-                                            <div className="text-[9px] font-bold uppercase tracking-widest text-rove-stone/60 mb-2">
-                                                For {item.symptom}
-                                            </div>
-                                            <div className={cn("text-base font-heading flex items-center gap-2", theme.color)}>
-                                                <Leaf className="w-4 h-4" />
-                                                {item.remedy}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
                         </motion.div>
                     )}
 
