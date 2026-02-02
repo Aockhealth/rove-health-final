@@ -29,6 +29,7 @@ import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
 import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
+import { ExerciseOrb } from "@/components/cycle-sync/ExerciseOrb";
 import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
 
 // --- Data: Phase Blueprints (PRESERVED) ---
@@ -540,7 +541,9 @@ const phaseThemes: Record<string, any> = {
         pageGradient: "from-rose-50/50 via-white to-white",
         iconContainer: "bg-rose-100 text-rose-600",
         orbRing: "from-rose-300 via-rose-100 to-rose-400",
-        accent: "bg-rose-500"
+        accent: "bg-rose-500",
+        blob: "bg-rose-200/20",
+        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]"
     },
     "Follicular": {
         color: "text-teal-600",
@@ -551,7 +554,9 @@ const phaseThemes: Record<string, any> = {
         pageGradient: "from-teal-50/50 via-white to-white",
         iconContainer: "bg-teal-100 text-teal-600",
         orbRing: "from-teal-300 via-teal-100 to-teal-400",
-        accent: "bg-teal-500"
+        accent: "bg-teal-500",
+        blob: "bg-teal-200/15",
+        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]"
     },
     "Ovulatory": {
         color: "text-amber-600",
@@ -562,7 +567,9 @@ const phaseThemes: Record<string, any> = {
         pageGradient: "from-amber-50/50 via-white to-white",
         iconContainer: "bg-amber-100 text-amber-600",
         orbRing: "from-amber-300 via-amber-100 to-amber-400",
-        accent: "bg-amber-500"
+        accent: "bg-amber-500",
+        blob: "bg-amber-100/30",
+        glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]"
     },
     "Luteal": {
         color: "text-indigo-600",
@@ -573,7 +580,9 @@ const phaseThemes: Record<string, any> = {
         pageGradient: "from-indigo-50/50 via-white to-white",
         iconContainer: "bg-indigo-100 text-indigo-600",
         orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
-        accent: "bg-indigo-500"
+        accent: "bg-indigo-500",
+        blob: "bg-indigo-200/15",
+        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]"
     }
 };
 
@@ -714,23 +723,23 @@ export default function DetailedPlanPage() {
         switch (phaseName) {
             case "Menstrual":
                 pLabel = `${proteinGrams}g`; pDesc = "Protein (Blood Replenishment)";
-                fLabel = "High (Support)"; fDesc = "Healthy Fats (Block Cramps)";
-                cLabel = "Comfort (Mod)"; cDesc = "Complex Carbs (Comfort)";
+                fLabel = "Nourishing"; fDesc = "Healthy Fats (Block Cramps)";
+                cLabel = "Comforting"; cDesc = "Complex Carbs (Comfort)";
                 break;
             case "Follicular":
                 pLabel = `${proteinGrams}g`; pDesc = "Protein (Muscle Repair)";
-                fLabel = "Low (Light)"; fDesc = "Healthy Fats (Hormone Synthesis)";
-                cLabel = "High (Energy)"; cDesc = "Complex Carbs (Building Energy)";
+                fLabel = "Light"; fDesc = "Healthy Fats (Hormone Synthesis)";
+                cLabel = "Energizing"; cDesc = "Complex Carbs (Building Energy)";
                 break;
             case "Ovulatory":
                 pLabel = `${proteinGrams}g`; pDesc = "Protein (Support)";
-                fLabel = "Low (Digestion)"; fDesc = "Healthy Fats (Anti-Inflammatory)";
-                cLabel = "Peak (Fuel)"; cDesc = "Complex Carbs (Peak Fuel)";
+                fLabel = "Easy Digest"; fDesc = "Healthy Fats (Anti-Inflammatory)";
+                cLabel = "Peak Fuel"; cDesc = "Complex Carbs (Peak Fuel)";
                 break;
             case "Luteal":
                 pLabel = `${proteinGrams}g`; pDesc = "Protein (Stabilize)";
-                fLabel = "High (Satiety)"; fDesc = "Healthy Fats (Mood Stability)";
-                cLabel = "Low (Stable)"; cDesc = "Complex Carbs (Fight Cravings)";
+                fLabel = "Satiating"; fDesc = "Healthy Fats (Mood Stability)";
+                cLabel = "Stabilizing"; cDesc = "Complex Carbs (Fight Cravings)";
                 break;
         }
 
@@ -1562,7 +1571,9 @@ export default function DetailedPlanPage() {
                             )}
 
                             {/* 5. The AI Chef (Plate Builder) */}
-                            <PlateBuilder phase={phaseName} theme={theme} />
+                            <div id="ai-chef" className="scroll-mt-24">
+                                <PlateBuilder phase={phaseName} theme={theme} />
+                            </div>
                         </motion.div>
                     )}
 
@@ -1575,56 +1586,54 @@ export default function DetailedPlanPage() {
                                 initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-6"
                             >
-                                <section>
-                                    <SectionHeader title="Movement Plan" icon={Activity} />
-                                    {/* Compact Summary */}
-                                    <div className="p-5 rounded-[1.5rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border border-white/60 shadow-sm mb-6">
-                                        <p className="text-rove-charcoal italic text-base font-heading leading-relaxed">"{BP.exercise.summary}"</p>
-                                    </div>
+                                {/* 1. Exercise Orb (Visual Top) */}
+                                <ExerciseOrb phase={phaseName} data={BP.exercise} theme={theme} />
 
-                                    <div className="space-y-3 mb-6">
-                                        <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
-                                        {/* Horizontal Scroll Carousel */}
-                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4">
-                                            {BP.exercise.best.map((ex: any, i: number) => (
-                                                <div key={i} className="min-w-[260px] snap-center p-4 rounded-[1.25rem] bg-white/60 backdrop-blur-sm border border-white/80 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h4 className="font-bold text-base text-rove-charcoal">{ex.title}</h4>
-                                                            <div className="text-2xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
-                                                        </div>
-                                                        <p className="text-xs text-rove-stone leading-relaxed mb-3 h-8 overflow-hidden line-clamp-2">{ex.desc}</p>
+                                <div className="space-y-3 mb-6">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
+                                    {/* Horizontal Scroll Carousel */}
+                                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4">
+                                        {BP.exercise.best.map((ex: any, i: number) => (
+                                            <div key={i} className="min-w-[260px] snap-center p-4 rounded-[1.25rem] bg-white/60 backdrop-blur-sm border border-white/80 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h4 className="font-bold text-base text-rove-charcoal">{ex.title}</h4>
+                                                        <div className="text-2xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
                                                     </div>
-                                                    <Badge variant="outline" className="w-fit text-[9px] bg-white border-gray-200 self-start">{ex.time}</Badge>
+                                                    <p className="text-xs text-rove-stone leading-relaxed mb-3 h-8 overflow-hidden line-clamp-2">{ex.desc}</p>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                <Badge variant="outline" className="w-fit text-[9px] bg-white border-gray-200 self-start">{ex.time}</Badge>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    {/* Compact Avoid Section */}
-                                    <div className="p-4 rounded-[1.5rem] bg-gray-50/60 border border-gray-200/60 backdrop-blur-sm">
-                                        <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
-                                            <Ban className="w-3 h-3" /> Avoid High Intensity
-                                        </h4>
-                                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                                            {BP.exercise.avoid.map((item: string) => (
-                                                <span key={item} className="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-100 rounded-full text-xs text-gray-500 shadow-sm opacity-80 decoration-gray-300">
-                                                    {item}
-                                                </span>
-                                            ))}
-                                        </div>
+                                {/* Compact Avoid Section */}
+                                <div className="p-4 rounded-[1.5rem] bg-gray-50/60 border border-gray-200/60 backdrop-blur-sm">
+                                    <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
+                                        <Ban className="w-3 h-3" /> Avoid High Intensity
+                                    </h4>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                                        {BP.exercise.avoid.map((item: string) => (
+                                            <span key={item} className="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-100 rounded-full text-xs text-gray-500 shadow-sm opacity-80 decoration-gray-300">
+                                                {item}
+                                            </span>
+                                        ))}
                                     </div>
-                                </section>
+                                </div>
+
 
                                 {/* AI Exercise Builder */}
-                                <ExerciseBuilder phase={phaseName} theme={theme} />
+                                <div id="ai-exercise-builder" className="scroll-mt-24">
+                                    <ExerciseBuilder phase={phaseName} theme={theme} />
+                                </div>
                             </motion.div>
                         )
                     }
 
                 </AnimatePresence >
 
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

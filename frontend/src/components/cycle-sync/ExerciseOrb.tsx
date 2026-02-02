@@ -1,41 +1,63 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { Dumbbell } from "lucide-react";
 
-interface MacroFuelGaugeProps {
-    data: {
-        title: string;
-        protein: number;
-        fats: number;
-        carbs: number;
-        calories?: number;
-        proteinLabel?: string;
-        fatsLabel?: string;
-        carbsLabel?: string;
-        proteinDesc?: string;
-        fatsDesc?: string;
-        carbsDesc?: string;
-    };
+interface ExerciseOrbProps {
+    phase: string;
+    data: any;
     theme: any;
 }
 
-import { ChefHat } from "lucide-react";
-
-
-export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
+export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
     if (!data) return null;
 
-    // Calculate total weight to derive percentages for the visual gauge
-    const totalGrams = data.protein + data.fats + data.carbs || 1;
-    const pPct = Math.round((data.protein / totalGrams) * 100);
-    const fPct = Math.round((data.fats / totalGrams) * 100);
+    // Map Phase to Metrics
+    const metrics: Record<string, any> = {
+        "Menstrual": {
+            time: "20",
+            unit: "mins",
+            intensity: "Low",
+            intensityColor: "#8FBC8F", // Green
+            type: "Restorative",
+            typeColor: "#DDD6FE", // Violet
+            energy: 20
+        },
+        "Follicular": {
+            time: "45",
+            unit: "mins",
+            intensity: "Moderate",
+            intensityColor: "#F59E0B", // Amber
+            type: "Cardio",
+            typeColor: "#2DD4BF", // Teal
+            energy: 60
+        },
+        "Ovulatory": {
+            time: "60",
+            unit: "mins",
+            intensity: "High",
+            intensityColor: "#DC4C3E", // Red
+            type: "HIIT",
+            typeColor: "#F472B6", // Pink
+            energy: 90
+        },
+        "Luteal": {
+            time: "40",
+            unit: "mins",
+            intensity: "Mod/High",
+            intensityColor: "#818CF8", // Indigo
+            type: "Strength",
+            typeColor: "#A78BFA", // Purple
+            energy: 50
+        }
+    };
 
-    // Functional Gradient (Data Layer)
-    const macroGradient = `conic-gradient(
-        #DC4C3E 0% ${pPct}%, 
-        #8FBC8F ${pPct}% ${pPct + fPct}%, 
-        #F59E0B ${pPct + fPct}% 100%
+    const current = metrics[phase] || metrics["Follicular"];
+
+    // Gradient based on energy level
+    const intensityGradient = `conic-gradient(
+        ${current.intensityColor} 0% ${current.energy}%, 
+        ${theme.bg || '#f3f4f6'} ${current.energy}% 100%
     )`;
 
     return (
@@ -67,10 +89,10 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                 />
 
-                {/* Layer 4: Functional Macro Ring (Data) - Sitting slightly inside */}
+                {/* Layer 4: Functional Energy Ring (Intensity) - Sitting slightly inside */}
                 <div
                     className="absolute inset-[14px] rounded-full"
-                    style={{ background: macroGradient }}
+                    style={{ background: intensityGradient }}
                 >
                     {/* Mask inner part to create ring effect */}
                     <div className="absolute inset-[6px] bg-white/90 backdrop-blur-xl rounded-full" />
@@ -79,51 +101,47 @@ export function MacroFuelGauge({ data, theme }: MacroFuelGaugeProps) {
                 {/* Layer 5: Inner Content Glass */}
                 <div className="absolute inset-[24px] rounded-full bg-white/40 backdrop-blur-md flex flex-col items-center justify-center shadow-inner text-center z-10 border border-white/50">
                     <p className="text-[9px] font-bold tracking-[0.2em] text-rove-stone/80 uppercase mb-1">
-                        Daily Fuel
+                        Movement
                     </p>
                     <h2 className={`text-4xl font-heading ${theme.color} mb-0.5 leading-none`}>
-                        {data.calories || "2000"}
+                        {current.time}
                     </h2>
                     <span className="text-[10px] font-medium text-rove-charcoal/40 uppercase tracking-widest">
-                        kcal
+                        {current.unit}
                     </span>
                 </div>
 
-                {/* BUTTON: Diagonal "Log" Style Button */}
+                {/* BUTTON: Diagonal "AI Coach" Style Button */}
                 <div className="absolute -bottom-2 -right-4 flex flex-col items-center gap-1.5 z-20">
                     <button
-                        onClick={() => document.getElementById('ai-chef')?.scrollIntoView({ behavior: 'smooth' })}
+                        onClick={() => document.getElementById('ai-exercise-builder')?.scrollIntoView({ behavior: 'smooth' })}
                         className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20 hover:shadow-xl transition-all duration-300 ring-4 ring-white/80 group transform hover:-translate-y-1 hover:scale-105"
                     >
-                        <ChefHat className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform" />
+                        <Dumbbell className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform" />
                     </button>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-rove-charcoal/80">AI Chef</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-rove-charcoal/80">AI Coach</span>
                 </div>
             </div>
 
             {/* LEGEND BELOW */}
             <div className="flex gap-2 sm:gap-4 w-full max-w-sm justify-center">
-                {/* Protein */}
+                {/* Intensity */}
                 <div className="flex flex-col items-center bg-white/50 px-3 py-2 rounded-xl border border-white/40 min-w-[80px]">
-                    <div className="w-2 h-2 rounded-full bg-[#DC4C3E] mb-1"></div>
-                    <span className="text-sm font-bold text-rove-charcoal">{data.proteinLabel || `${data.protein}g`}</span>
-                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Protein</span>
+                    <div className="w-2 h-2 rounded-full mb-1" style={{ backgroundColor: current.intensityColor }}></div>
+                    <span className="text-sm font-bold text-rove-charcoal">{current.intensity}</span>
+                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Intensity</span>
                 </div>
-                {/* Fats */}
+                {/* Type */}
                 <div className="flex flex-col items-center bg-white/50 px-3 py-2 rounded-xl border border-white/40 min-w-[80px]">
-                    <div className="w-2 h-2 rounded-full bg-[#8FBC8F] mb-1"></div>
-                    <span className="text-sm font-bold text-rove-charcoal">{data.fatsLabel || `${data.fats}g`}</span>
-                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Fats</span>
-                </div>
-                {/* Carbs */}
-                <div className="flex flex-col items-center bg-white/50 px-3 py-2 rounded-xl border border-white/40 min-w-[80px]">
-                    <div className="w-2 h-2 rounded-full bg-[#F59E0B] mb-1"></div>
-                    <span className="text-sm font-bold text-rove-charcoal">{data.carbsLabel || `${data.carbs}g`}</span>
-                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Carbs</span>
+                    <div className="w-2 h-2 rounded-full mb-1" style={{ backgroundColor: current.typeColor }}></div>
+                    <span className="text-sm font-bold text-rove-charcoal">{current.type}</span>
+                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Type</span>
                 </div>
             </div>
 
-            <h3 className="font-heading text-lg text-rove-charcoal mt-6 text-center">{data.title}</h3>
+            <p className="text-center text-rove-charcoal/60 text-xs italic mt-6 max-w-xs mx-auto leading-relaxed">
+                "{data.summary}"
+            </p>
         </section>
     );
 }
