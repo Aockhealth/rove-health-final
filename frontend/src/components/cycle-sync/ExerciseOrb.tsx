@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Dumbbell } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface ExerciseOrbProps {
     phase: string;
@@ -14,96 +15,50 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
 
     // Map Phase to Metrics
     const metrics: Record<string, any> = {
-        "Menstrual": {
-            time: "20",
-            unit: "mins",
-            intensity: "Low",
-            intensityColor: "#8FBC8F", // Green
-            type: "Restorative",
-            typeColor: "#DDD6FE", // Violet
-            energy: 20
-        },
-        "Follicular": {
-            time: "45",
-            unit: "mins",
-            intensity: "Moderate",
-            intensityColor: "#F59E0B", // Amber
-            type: "Cardio",
-            typeColor: "#2DD4BF", // Teal
-            energy: 60
-        },
-        "Ovulatory": {
-            time: "60",
-            unit: "mins",
-            intensity: "High",
-            intensityColor: "#DC4C3E", // Red
-            type: "HIIT",
-            typeColor: "#F472B6", // Pink
-            energy: 90
-        },
-        "Luteal": {
-            time: "40",
-            unit: "mins",
-            intensity: "Mod/High",
-            intensityColor: "#818CF8", // Indigo
-            type: "Strength",
-            typeColor: "#A78BFA", // Purple
-            energy: 50
-        }
+        "Menstrual": { time: "20", unit: "mins", intensity: "Low", type: "Restorative" },
+        "Follicular": { time: "45", unit: "mins", intensity: "Moderate", type: "Cardio" },
+        "Ovulatory": { time: "60", unit: "mins", intensity: "High", type: "HIIT" },
+        "Luteal": { time: "40", unit: "mins", intensity: "Mod-High", type: "Strength" }
     };
 
     const current = metrics[phase] || metrics["Follicular"];
 
-    // Gradient based on energy level
-    const intensityGradient = `conic-gradient(
-        ${current.intensityColor} 0% ${current.energy}%, 
-        ${theme.bg || '#f3f4f6'} ${current.energy}% 100%
-    )`;
-
     return (
         <section className="relative flex flex-col items-center mb-10">
-            {/* Ambient Back Glow - Large */}
+            {/* Ambient Back Glow */}
             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[200px] ${theme.blob || 'bg-rove-peach/20'} opacity-40 blur-[80px] -z-10`} />
 
-            {/* MAIN ORB CONTAINER */}
-            <div className="relative w-56 h-56 md:w-64 md:h-64 flex items-center justify-center mb-8">
+            {/* MAIN ORB CONTAINER - Smaller like Diet */}
+            <div className="relative w-44 h-44 md:w-52 md:h-52 flex items-center justify-center mb-6">
 
-                {/* Layer 1: Outer Decorative Glow Ring (Phase Theme) */}
+                {/* Layer 1: Outer Soft Glow */}
                 <motion.div
-                    className={`absolute inset-[-10px] rounded-full blur-[40px] opacity-40 ${theme.bg || 'bg-white'}`}
-                    animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className={`absolute inset-[-12px] rounded-full blur-[50px] opacity-30 ${theme.bg || 'bg-amber-200'}`}
+                    animate={{ scale: [1, 1.03, 1], opacity: [0.25, 0.4, 0.25] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                {/* Layer 2: Rotating Decorative Ring (Phase Theme) */}
-                <motion.div
-                    className={`absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing || 'from-rove-peach via-white to-rove-peach'} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                />
-
-                {/* Layer 3: Secondary Reverse Rotating Ring (Subtle) */}
-                <motion.div
-                    className={`absolute inset-2 rounded-full border-[2px] border-transparent bg-gradient-to-br ${theme.orbRing} opacity-40`}
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                />
-
-                {/* Layer 4: Functional Energy Ring (Intensity) - Sitting slightly inside */}
+                {/* Layer 2: Main Golden Gradient Ring */}
                 <div
-                    className="absolute inset-[14px] rounded-full"
-                    style={{ background: intensityGradient }}
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                        background: `conic-gradient(from 0deg, ${theme.primary || '#F59E0B'}, ${theme.secondary || '#FBBF24'}, ${theme.primary || '#F59E0B'})`,
+                        padding: '8px',
+                    }}
                 >
-                    {/* Mask inner part to create ring effect */}
-                    <div className="absolute inset-[6px] bg-white/90 backdrop-blur-xl rounded-full" />
+                    {/* Inner white mask to create ring effect */}
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-white/95 via-white/90 to-white/85" />
                 </div>
 
-                {/* Layer 5: Inner Content Glass */}
-                <div className="absolute inset-[24px] rounded-full bg-white/40 backdrop-blur-md flex flex-col items-center justify-center shadow-inner text-center z-10 border border-white/50">
-                    <p className="text-[9px] font-bold tracking-[0.2em] text-rove-stone/80 uppercase mb-1">
+                {/* Layer 3: Subtle Inner Ring */}
+                <div className="absolute inset-3 rounded-full border-[3px] border-white/60" />
+
+                {/* Layer 4: Inner Content Glass */}
+                <div className="absolute inset-[16px] rounded-full bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center text-center z-10">
+                    <p className="text-[9px] font-bold tracking-[0.2em] text-rove-stone/70 uppercase mb-1">
                         Movement
                     </p>
-                    <h2 className={`text-4xl font-heading ${theme.color} mb-0.5 leading-none`}>
+                    <h2 className={`text-3xl font-heading ${theme.color || 'text-amber-500'} mb-0.5 leading-none`}>
                         {current.time}
                     </h2>
                     <span className="text-[10px] font-medium text-rove-charcoal/40 uppercase tracking-widest">
@@ -111,7 +66,7 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
                     </span>
                 </div>
 
-                {/* BUTTON: Diagonal "AI Coach" Style Button */}
+                {/* BUTTON: "AI Coach" */}
                 <div className="absolute -bottom-2 -right-4 flex flex-col items-center gap-1.5 z-20">
                     <button
                         onClick={() => document.getElementById('ai-exercise-builder')?.scrollIntoView({ behavior: 'smooth' })}
@@ -123,21 +78,8 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
                 </div>
             </div>
 
-            {/* LEGEND BELOW */}
-            <div className="flex gap-2 sm:gap-4 w-full max-w-sm justify-center">
-                {/* Intensity */}
-                <div className="flex flex-col items-center bg-white/50 px-3 py-2 rounded-xl border border-white/40 min-w-[80px]">
-                    <div className="w-2 h-2 rounded-full mb-1" style={{ backgroundColor: current.intensityColor }}></div>
-                    <span className="text-sm font-bold text-rove-charcoal">{current.intensity}</span>
-                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Intensity</span>
-                </div>
-                {/* Type */}
-                <div className="flex flex-col items-center bg-white/50 px-3 py-2 rounded-xl border border-white/40 min-w-[80px]">
-                    <div className="w-2 h-2 rounded-full mb-1" style={{ backgroundColor: current.typeColor }}></div>
-                    <span className="text-sm font-bold text-rove-charcoal">{current.type}</span>
-                    <span className="text-[9px] text-rove-stone uppercase tracking-wide">Type</span>
-                </div>
-            </div>
+            {/* ANIMATED EXERCISE FACTS */}
+            <ExerciseFactsCarousel phase={phase} current={current} theme={theme} />
 
             <p className="text-center text-rove-charcoal/60 text-xs italic mt-6 max-w-xs mx-auto leading-relaxed">
                 "{data.summary}"
@@ -145,3 +87,89 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
         </section>
     );
 }
+
+// Animated Exercise Facts Component
+function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; current: any; theme: any }) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Phase-specific exercise guidance
+    const phaseGuidance: Record<string, any[]> = {
+        "Menstrual": [
+            { icon: "🧘", title: "Gentle Movement", tip: "Stick to restorative yoga", desc: "Honor your body's need for rest" },
+            { icon: "🚶", title: "Easy Walks", tip: "20 min slow walks are perfect", desc: "Light movement helps with cramps" },
+            { icon: "🚫", title: "Skip Intensity", tip: "Avoid HIIT & heavy lifting", desc: "Your body is already working hard" },
+            { icon: "🔥", title: "Warm It Up", tip: "Keep lower body warm", desc: "Warmth supports circulation" }
+        ],
+        "Follicular": [
+            { icon: "🏃", title: "Ramp It Up", tip: "Increase cardio intensity", desc: "Rising estrogen = more endurance" },
+            { icon: "💪", title: "Try New Things", tip: "Perfect time for new workouts", desc: "Your brain is primed for learning" },
+            { icon: "⚡", title: "Push Harder", tip: "Challenge yourself this week", desc: "Energy levels are climbing" },
+            { icon: "🎯", title: "Set Goals", tip: "Aim for 45 min sessions", desc: "Your body can handle more now" }
+        ],
+        "Ovulatory": [
+            { icon: "🔥", title: "Peak Performance", tip: "Go for your personal best!", desc: "Strength & speed at their highest" },
+            { icon: "🏋️", title: "High Intensity", tip: "HIIT & heavy lifting shine now", desc: "Maximum power output" },
+            { icon: "⚠️", title: "Watch Form", tip: "Ligaments are more lax", desc: "Higher injury risk - focus on form" },
+            { icon: "💥", title: "60 Min Sessions", tip: "Your stamina is peak", desc: "Make the most of this window" }
+        ],
+        "Luteal": [
+            { icon: "🏋️", title: "Strength Focus", tip: "Prioritize strength training", desc: "Progesterone supports muscle" },
+            { icon: "📉", title: "Lower Intensity", tip: "Reduce cardio as PMS nears", desc: "Switch from HIIT to steady-state" },
+            { icon: "🧘", title: "Flexibility", tip: "Add stretching & pilates", desc: "Helps with bloating & tension" },
+            { icon: "💤", title: "Rest More", tip: "Take extra rest days if needed", desc: "Listen to fatigue signals" }
+        ]
+    };
+
+    const facts = phaseGuidance[phase] || phaseGuidance["Follicular"];
+
+    // Auto-cycle through facts
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % facts.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [facts.length]);
+
+    const currentFact = facts[currentIndex];
+
+    return (
+        <div className="w-full max-w-sm mx-auto">
+            <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+                className="relative bg-white/60 backdrop-blur-xl rounded-2xl p-5 border border-white/50 shadow-sm"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="text-3xl">{currentFact.icon}</div>
+                    <div className="flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70 mb-0.5">
+                            {currentFact.title}
+                        </p>
+                        <p className={`text-lg font-heading ${theme.color || 'text-amber-500'} leading-tight`}>
+                            {currentFact.tip}
+                        </p>
+                        <p className="text-xs text-rove-stone/80 mt-1">{currentFact.desc}</p>
+                    </div>
+                </div>
+
+                {/* Progress dots */}
+                <div className="flex justify-center gap-1.5 mt-4">
+                    {facts.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setCurrentIndex(idx)}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentIndex
+                                    ? 'bg-rove-charcoal w-4'
+                                    : 'bg-rove-stone/30 hover:bg-rove-stone/50'
+                                }`}
+                        />
+                    ))}
+                </div>
+            </motion.div>
+        </div>
+    );
+}
+

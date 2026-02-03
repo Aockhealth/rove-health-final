@@ -1573,29 +1573,72 @@ export default function DetailedPlanPage() {
                                 {/* 1. Exercise Orb (Visual Top) */}
                                 <ExerciseOrb phase={phaseName} data={BP.exercise} theme={theme} />
 
-                                <div className="space-y-3 mb-6">
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1">Best Practices</h3>
-                                    {/* Horizontal Scroll Carousel */}
-                                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar -mx-4 px-4">
-                                        {BP.exercise.best.map((ex: any, i: number) => (
-                                            <div key={i} className="min-w-[260px] snap-center p-4 rounded-[1.25rem] bg-white/60 backdrop-blur-sm border border-white/80 flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="font-bold text-base text-rove-charcoal">{ex.title}</h4>
-                                                        <div className="text-2xl opacity-10 font-heading text-rove-charcoal">0{i + 1}</div>
+                                <div className="space-y-4 mb-8">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1 flex items-center gap-2">
+                                        <span className="w-6 h-0.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"></span>
+                                        Best For This Phase
+                                    </h3>
+
+                                    {/* Premium Card Grid */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {BP.exercise.best.slice(0, 4).map((ex: any, i: number) => {
+                                            // Assign icons based on exercise type
+                                            const getIcon = (title: string) => {
+                                                const t = title.toLowerCase();
+                                                if (t.includes('yoga') || t.includes('stretch')) return '🧘';
+                                                if (t.includes('walk') || t.includes('stroll')) return '🚶';
+                                                if (t.includes('hiit') || t.includes('interval')) return '🔥';
+                                                if (t.includes('spin') || t.includes('cardio') || t.includes('cycling')) return '🚴';
+                                                if (t.includes('lift') || t.includes('strength') || t.includes('weight')) return '🏋️';
+                                                if (t.includes('swim')) return '🏊';
+                                                if (t.includes('sport') || t.includes('team')) return '⚽';
+                                                if (t.includes('pilates')) return '🤸';
+                                                if (t.includes('dance')) return '💃';
+                                                if (t.includes('run') || t.includes('jog')) return '🏃';
+                                                return '💪';
+                                            };
+
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className="group relative p-4 rounded-2xl bg-gradient-to-br from-white via-white to-amber-50/30 border border-white/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                                                >
+                                                    {/* Background Number */}
+                                                    <div className="absolute -right-2 -top-2 text-6xl font-heading text-amber-100/50 select-none">
+                                                        {i + 1}
                                                     </div>
-                                                    <p className="text-xs text-rove-stone leading-relaxed mb-3 h-8 overflow-hidden line-clamp-2">{ex.desc}</p>
+
+                                                    {/* Content */}
+                                                    <div className="relative z-10">
+                                                        {/* Icon */}
+                                                        <div className="text-2xl mb-2">{getIcon(ex.title)}</div>
+
+                                                        {/* Title */}
+                                                        <h4 className="font-bold text-sm text-rove-charcoal mb-1 group-hover:text-amber-600 transition-colors">
+                                                            {ex.title}
+                                                        </h4>
+
+                                                        {/* Description */}
+                                                        <p className="text-[11px] text-rove-stone/80 leading-snug mb-3 line-clamp-2">
+                                                            {ex.desc}
+                                                        </p>
+
+                                                        {/* Time Badge */}
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                                                            <span className="text-[10px] font-semibold text-amber-600">{ex.time}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <Badge variant="outline" className="w-fit text-[9px] bg-white border-gray-200 self-start">{ex.time}</Badge>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
                                 {/* Compact Avoid Section */}
                                 <div className="p-4 rounded-[1.5rem] bg-gray-50/60 border border-gray-200/60 backdrop-blur-sm">
                                     <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
-                                        <Ban className="w-3 h-3" /> Avoid High Intensity
+                                        <Ban className="w-3 h-3" /> {phaseName === "Ovulatory" || phaseName === "Ovulation" ? "Watch Out For" : "Avoid This Phase"}
                                     </h4>
                                     <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                                         {BP.exercise.avoid.map((item: string) => (

@@ -558,61 +558,61 @@ export default function CycleSyncDashboard() {
 
                                     return (
                                         <>
-                                            {/* Next Period Card */}
+                                            {/* Next Period Card - Warm Terracotta */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-2xl p-3 md:p-4 border border-rose-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-orange-50 to-amber-50/80 rounded-2xl p-3 md:p-4 border border-orange-200/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
-                                                            <Droplets className="w-2.5 h-2.5 md:w-3 md:h-3 text-rose-500" />
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-orange-400/15 flex items-center justify-center">
+                                                            <Droplets className="w-2.5 h-2.5 md:w-3 md:h-3 text-orange-500" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-rose-600/70">Period</span>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-orange-600/80">Period</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-rose-700">{formatDate(nextPeriod)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-rose-500/70 mt-0.5 group-hover:text-rose-600 transition-colors min-h-[14px]">
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-orange-700">{formatDate(nextPeriod)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-orange-500/70 mt-0.5 group-hover:text-orange-600 transition-colors min-h-[14px]">
                                                         {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : 'Next cycle'}
                                                     </p>
                                                 </motion.div>
                                             </Link>
 
-                                            {/* Ovulation Card */}
+                                            {/* Ovulation Card - Deep Gold/Bronze */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-purple-50 to-indigo-100/50 rounded-2xl p-3 md:p-4 border border-purple-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-yellow-50 to-amber-100/60 rounded-2xl p-3 md:p-4 border border-yellow-300/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
-                                                            <Baby className="w-2.5 h-2.5 md:w-3 md:h-3 text-purple-500" />
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-yellow-400/20 flex items-center justify-center">
+                                                            <Baby className="w-2.5 h-2.5 md:w-3 md:h-3 text-yellow-600" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-purple-600/70">Ovulation</span>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-yellow-700/80">Ovulation</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-purple-700">{formatDate(ovulationDate)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-purple-500/70 mt-0.5 group-hover:text-purple-600 transition-colors min-h-[14px]">Peak fertility</p>
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-yellow-700">{formatDate(ovulationDate)}</p>
+                                                    <p className="text-[9px] md:text-[10px] text-yellow-600/70 mt-0.5 group-hover:text-yellow-700 transition-colors min-h-[14px]">Peak fertility</p>
                                                 </motion.div>
                                             </Link>
 
-                                            {/* Fertile Window Card */}
+                                            {/* Fertile Window Card - Sage/Olive */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-teal-50 to-emerald-100/50 rounded-2xl p-3 md:p-4 border border-teal-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-gradient-to-br from-lime-50 to-green-50/70 rounded-2xl p-3 md:p-4 border border-lime-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-teal-500/10 flex items-center justify-center">
-                                                            <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-500" />
+                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-lime-500/15 flex items-center justify-center">
+                                                            <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 text-lime-600" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-teal-600/70">Fertile</span>
+                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-lime-700/80">Fertile</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-teal-700">
+                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-lime-700">
                                                         {fertileStart && fertileEnd ? `${fertileStart.toLocaleDateString('en-US', { month: 'short' })} ${fertileStart.getDate()}-${fertileEnd.getDate()}` : '--'}
                                                     </p>
-                                                    <p className="text-[9px] md:text-[10px] text-teal-500/70 mt-0.5 group-hover:text-teal-600 transition-colors min-h-[14px]">6-day window</p>
+                                                    <p className="text-[9px] md:text-[10px] text-lime-600/70 mt-0.5 group-hover:text-lime-700 transition-colors min-h-[14px]">6-day window</p>
                                                 </motion.div>
                                             </Link>
                                         </>
