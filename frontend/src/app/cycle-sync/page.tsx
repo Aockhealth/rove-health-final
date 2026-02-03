@@ -18,19 +18,20 @@ import LoadingScreen from "@/components/ui/LoadingScreen";
 
 import { RiverTrack, iconMap } from "@/components/cycle-sync/RiverTrack";
 
-function DailyFlowRiver({ data }: { data: any }) {
-    const [expandedCard, setExpandedCard] = useState<{ title: string; desc: string; detail: string; icon: any; color: string } | null>(null);
+function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
+    const [expandedCard, setExpandedCard] = useState<{ title: string; desc: string; detail: string; icon: any; } | null>(null);
 
-    const mapItems = (items: any[], colorClass: string, bgClass: string) =>
+    const mapItems = (items: any[]) =>
         (items || []).map(item => ({
             ...item,
             icon: iconMap[item.icon] || Zap,
-            color: colorClass,
-            bg: bgClass
+            // Use theme colors
+            color: theme.iconColor,
+            bg: theme.iconBg
         }));
 
-    const nutrients = mapItems(data?.nutrients, "text-emerald-600", "bg-emerald-100");
-    const phaseFocus = mapItems(data?.phaseFocus, "text-violet-600", "bg-violet-100");
+    const nutrients = mapItems(data?.nutrients);
+    const phaseFocus = mapItems(data?.phaseFocus);
 
     if (!data || (!nutrients.length && !phaseFocus.length)) return (
         <div className="p-8 text-center border-2 border-dashed border-rove-stone/10 rounded-3xl bg-white/30">
@@ -49,14 +50,14 @@ function DailyFlowRiver({ data }: { data: any }) {
                     items={nutrients}
                     direction="right"
                     speed={40}
-                    onCardClick={(item) => setExpandedCard({ ...item, color: "emerald" })}
+                    onCardClick={(item) => setExpandedCard(item)}
                 />
                 <RiverTrack
                     label="What To Focus On"
                     items={phaseFocus}
                     direction="left"
                     speed={38}
-                    onCardClick={(item) => setExpandedCard({ ...item, color: "violet" })}
+                    onCardClick={(item) => setExpandedCard(item)}
                 />
             </div>
 
@@ -76,10 +77,9 @@ function DailyFlowRiver({ data }: { data: any }) {
                             exit={{ scale: 0.8, opacity: 0, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className={cn(
-                                "relative w-full max-w-md p-6 rounded-3xl shadow-2xl border",
-                                expandedCard.color === "emerald"
-                                    ? "bg-gradient-to-br from-emerald-50 to-white border-emerald-200"
-                                    : "bg-gradient-to-br from-violet-50 to-white border-violet-200"
+                                "relative w-full max-w-md p-6 rounded-3xl shadow-2xl border bg-gradient-to-br",
+                                theme.gradient,
+                                theme.borderColor
                             )}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -94,7 +94,8 @@ function DailyFlowRiver({ data }: { data: any }) {
                             {/* Icon */}
                             <div className={cn(
                                 "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
-                                expandedCard.color === "emerald" ? "bg-emerald-100 text-emerald-600" : "bg-violet-100 text-violet-600"
+                                theme.iconBg,
+                                theme.iconColor
                             )}>
                                 {expandedCard.icon && <expandedCard.icon className="w-7 h-7" />}
                             </div>
@@ -103,7 +104,7 @@ function DailyFlowRiver({ data }: { data: any }) {
                             <h3 className="text-xl font-heading text-rove-charcoal mb-1">{expandedCard.title}</h3>
                             <p className={cn(
                                 "text-sm font-medium mb-4",
-                                expandedCard.color === "emerald" ? "text-emerald-600" : "text-violet-600"
+                                theme.iconColor
                             )}>{expandedCard.desc}</p>
                             <p className="text-sm text-rove-stone leading-relaxed">{expandedCard.detail}</p>
                         </motion.div>
@@ -116,10 +117,50 @@ function DailyFlowRiver({ data }: { data: any }) {
 
 // Phase Theme Logic
 const phaseThemes: Record<string, any> = {
-    "Menstrual": { color: "text-rose-500", blob: "bg-rose-200/20", orbRing: "from-rose-300 via-rose-100 to-rose-400", glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]", badge: "bg-rose-50 text-rose-600 border-rose-100" },
-    "Follicular": { color: "text-teal-600", blob: "bg-teal-200/15", orbRing: "from-teal-300 via-emerald-100 to-teal-400", glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]", badge: "bg-teal-50 text-teal-700 border-teal-100" },
-    "Ovulatory": { color: "text-amber-500/90", blob: "bg-amber-100/30", orbRing: "from-amber-300 via-yellow-100 to-amber-400", glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]", badge: "bg-amber-50 text-amber-700 border-amber-100" },
-    "Luteal": { color: "text-indigo-500", blob: "bg-indigo-200/15", orbRing: "from-indigo-300 via-blue-100 to-indigo-400", glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]", badge: "bg-indigo-50 text-indigo-600 border-indigo-100" }
+    "Menstrual": {
+        color: "text-rose-500",
+        blob: "bg-rose-200/20",
+        orbRing: "from-rose-300 via-rose-100 to-rose-400",
+        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]",
+        badge: "bg-rose-50 text-rose-600 border-rose-100",
+        iconBg: "bg-rose-100",
+        iconColor: "text-rose-600",
+        gradient: "from-rose-50 to-white",
+        borderColor: "border-rose-200"
+    },
+    "Follicular": {
+        color: "text-teal-600",
+        blob: "bg-teal-200/15",
+        orbRing: "from-teal-300 via-emerald-100 to-teal-400",
+        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]",
+        badge: "bg-teal-50 text-teal-700 border-teal-100",
+        iconBg: "bg-teal-100",
+        iconColor: "text-teal-600",
+        gradient: "from-teal-50 to-white",
+        borderColor: "border-teal-200"
+    },
+    "Ovulatory": {
+        color: "text-amber-700",
+        blob: "bg-amber-100/30",
+        orbRing: "from-amber-300 via-yellow-100 to-amber-300",
+        glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]",
+        badge: "bg-amber-50 text-amber-800 border-amber-200",
+        iconBg: "bg-amber-100",
+        iconColor: "text-amber-800",
+        gradient: "from-amber-50 to-white",
+        borderColor: "border-amber-200"
+    },
+    "Luteal": {
+        color: "text-indigo-500",
+        blob: "bg-indigo-200/15",
+        orbRing: "from-indigo-300 via-blue-100 to-indigo-400",
+        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]",
+        badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
+        iconBg: "bg-indigo-100",
+        iconColor: "text-indigo-600",
+        gradient: "from-indigo-50 to-white",
+        borderColor: "border-indigo-200"
+    }
 };
 
 // --- 2. Phase Data ---
@@ -624,7 +665,7 @@ export default function CycleSyncDashboard() {
                         {/* Daily Flow Animation */}
                         <section className="relative">
                             <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal mb-4 px-2">Daily Flow</h3>
-                            <DailyFlowRiver data={data} />
+                            <DailyFlowRiver data={data} theme={theme} />
                         </section>
 
                         {/* Today's Snapshot */}

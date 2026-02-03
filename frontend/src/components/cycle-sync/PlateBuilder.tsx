@@ -168,8 +168,8 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
             </div>
 
             {/* Main Card */}
-            <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-sm overflow-hidden relative">
-                <div className={cn("absolute -right-10 -top-10 w-40 h-40 rounded-full blur-[60px] opacity-30 pointer-events-none", theme.blob)} />
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative">
+                <div className={cn("absolute -right-10 -top-10 w-40 h-40 rounded-full blur-[60px] opacity-20 pointer-events-none", theme.blob)} />
 
                 <div className="p-6 relative z-10">
                     <AnimatePresence mode="wait">
@@ -192,8 +192,8 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                                 className={cn(
                                                     "flex-1 py-3 px-4 rounded-2xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 border",
                                                     isActive
-                                                        ? cn("bg-white/80 shadow-sm border-white/80 text-rove-charcoal", theme.color)
-                                                        : "bg-white/30 border-white/40 text-rove-stone/70 hover:bg-white/50"
+                                                        ? cn("bg-white shadow-md border-gray-100 text-rove-charcoal", theme.color)
+                                                        : "bg-gray-50 border-transparent text-rove-stone/70 hover:bg-gray-100"
                                                 )}
                                             >
                                                 <span className="text-lg">{tab.emoji}</span>
@@ -218,8 +218,8 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                                     className={cn(
                                                         "px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 border",
                                                         isSelected
-                                                            ? cn("text-white border-transparent shadow-sm", theme.accent)
-                                                            : "bg-white/50 text-rove-charcoal/80 border-white/60 hover:bg-white/80"
+                                                            ? cn("text-white border-transparent shadow-md", theme.accent)
+                                                            : "bg-white text-rove-charcoal/80 border-gray-200 hover:border-gray-300"
                                                     )}
                                                 >
                                                     {isSelected && "✓ "}{opt}
@@ -244,8 +244,8 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                                     className={cn(
                                                         "px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
                                                         isSelected
-                                                            ? "bg-rove-charcoal text-white border-transparent"
-                                                            : "bg-white/30 text-rove-stone/70 border-white/40 hover:bg-white/60"
+                                                            ? "bg-rove-charcoal text-white border-transparent shadow-sm"
+                                                            : "bg-white text-rove-stone/70 border-gray-200 hover:border-gray-300"
                                                     )}
                                                 >
                                                     {isSelected ? "✓ " : "+ "}{opt}
@@ -256,7 +256,7 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                 </div>
 
                                 {/* Custom Instruction */}
-                                <div className="bg-white/40 rounded-2xl p-4 border border-white/40">
+                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 focus-within:bg-white focus-within:ring-2 ring-black/5 transition-all">
                                     <span className="text-[10px] font-bold uppercase text-rove-stone/60 mb-2 tracking-wide block">
                                         Special Request (AI will consider this)
                                     </span>
@@ -273,12 +273,14 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                 <button
                                     onClick={handleGenerate}
                                     className={cn(
-                                        "w-full py-4 rounded-2xl font-bold text-white text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]",
-                                        theme.accent
+                                        "w-full py-4 rounded-2xl font-bold text-white text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden",
+                                        theme.primaryGradient,
+                                        theme.buttonShadow
                                     )}
                                 >
-                                    <Sparkles className="w-4 h-4" />
-                                    Create {phase} {TABS.find(t => t.id === activeTab)?.label}
+                                    <div className="absolute inset-0 bg-white/20 hover:bg-transparent transition-colors duration-300" />
+                                    <Sparkles className="w-4 h-4 relative z-10" />
+                                    <span className="relative z-10">Create {phase} {TABS.find(t => t.id === activeTab)?.label}</span>
                                 </button>
                             </motion.div>
                         ) : isPending ? (
@@ -308,12 +310,12 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                 className="space-y-4"
                             >
                                 {/* Result Card */}
-                                <div className="bg-white/60 rounded-3xl p-6 border border-white/60 relative overflow-hidden">
+                                <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100 relative overflow-hidden">
                                     <div className={cn("absolute -right-8 -top-8 w-24 h-24 rounded-full blur-[40px] opacity-40", theme.blob)} />
 
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-white/60 flex items-center justify-center text-2xl">
+                                            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-gray-100 flex items-center justify-center text-2xl">
                                                 {TABS.find(t => t.id === activeTab)?.emoji}
                                             </div>
                                             <div>
@@ -338,12 +340,12 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                             <span className="text-[10px] font-bold uppercase text-rove-stone/60 mb-2 block tracking-wide">
                                                 Ingredients
                                             </span>
-                                            <p className="text-sm text-rove-charcoal/90 bg-white/50 p-3 rounded-xl border border-white/40">
+                                            <p className="text-sm text-rove-charcoal/90 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
                                                 {result!.ingredients}
                                             </p>
                                         </div>
 
-                                        <div className="bg-white/40 p-4 rounded-2xl border border-white/40">
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                                             <span className={cn("flex items-center gap-1.5 text-[10px] font-bold uppercase mb-2 tracking-wide", theme.color)}>
                                                 <Sparkles className="w-3 h-3" /> Why This Works
                                             </span>
@@ -360,15 +362,15 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
                                         onClick={handleGenerate}
                                         disabled={isPending}
                                         className={cn(
-                                            "flex-1 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all border",
-                                            "bg-white/60 border-white/60 text-rove-charcoal hover:bg-white/80 disabled:opacity-50"
+                                            "flex-1 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all border shadow-sm",
+                                            "bg-white border-gray-200 text-rove-charcoal hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50"
                                         )}
                                     >
                                         <Sparkles className="w-4 h-4" /> New Recipe
                                     </button>
                                     <button
                                         onClick={() => setResult(null)}
-                                        className="flex-1 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-rove-stone/70 bg-white/30 border border-white/40 hover:bg-white/50 transition-all"
+                                        className="flex-1 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-rove-stone/70 bg-transparent border border-gray-200 hover:bg-gray-50 transition-all"
                                     >
                                         ← Start Over
                                     </button>
@@ -381,3 +383,4 @@ export function PlateBuilder({ phase, theme }: PlateBuilderProps) {
         </section>
     );
 }
+

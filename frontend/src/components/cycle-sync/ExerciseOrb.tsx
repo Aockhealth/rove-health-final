@@ -162,8 +162,8 @@ function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; curre
                             key={idx}
                             onClick={() => setCurrentIndex(idx)}
                             className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentIndex
-                                    ? 'bg-rove-charcoal w-4'
-                                    : 'bg-rove-stone/30 hover:bg-rove-stone/50'
+                                ? 'bg-rove-charcoal w-4'
+                                : 'bg-rove-stone/30 hover:bg-rove-stone/50'
                                 }`}
                         />
                     ))}

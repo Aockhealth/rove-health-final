@@ -2,15 +2,19 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { getUserProfile, updateUserProfile } from "./actions";
-import { fetchUserCycleSettings, updateCycleLength, updateLastPeriodDate } from "@/app/actions/cycle-sync";
+import { updateCycleLength, updateLastPeriodDate } from "@/app/actions/cycle-sync";
+import { fetchUnifiedCycleData } from "@/app/actions/unified-cycle";
 import { Button } from "@/components/ui/Button";
 import {
-    Calendar, LogOut, Bell, ChevronRight, Scale, Activity, Crown, Moon,
-    Minus, Plus, HeartPulse, Target, AlertCircle, Utensils, Zap, Trophy, Armchair, Pizza, Leaf, Beef, Egg, Flame, Fish, Wheat, Edit2, Check
+    Calendar, LogOut, ChevronLeft, Crown, Edit2
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { CycleSignature } from "./components/CycleSignature";
+import { HealthPassport } from "./components/HealthPassport";
+import { AccountSettings } from "./components/AccountSettings";
+import { HistoryView } from "./components/HistoryView";
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -32,20 +36,23 @@ export default function ProfilePage() {
         is_irregular: false
     });
 
-    // Cycle Settings State
+    // Cycle Settings State (Unified)
     const [cycleData, setCycleData] = useState({
         last_period_start: "",
         cycle_length_days: 28,
         period_length_days: 5
     });
+
+    // Unified Data for correct Phase Calculation
+    const [unifiedPhase, setUnifiedPhase] = useState<string>("Menstrual");
     const [isEditingCycle, setIsEditingCycle] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
-            // Run all data fetches in parallel for faster loading
-            const [profile, cycle, authUser] = await Promise.all([
+            // Run all data fetches in parallel
+            const [profile, unifiedRes, authUser] = await Promise.all([
                 getUserProfile(),
-                fetchUserCycleSettings(),
+                fetchUnifiedCycleData(),
                 supabase.auth.getUser()
             ]);
 
@@ -64,13 +71,14 @@ export default function ProfilePage() {
                 });
             }
 
-            // 2. Set Cycle Settings
-            if (cycle) {
+            // 2. Set Cycle Settings & Phase from Unified Data
+            if (unifiedRes) {
                 setCycleData({
-                    last_period_start: cycle.last_period_start || "",
-                    cycle_length_days: cycle.cycle_length_days || 28,
-                    period_length_days: cycle.period_length_days || 5
+                    last_period_start: unifiedRes.settings.last_period_start || "",
+                    cycle_length_days: unifiedRes.settings.cycle_length_days || 28,
+                    period_length_days: unifiedRes.settings.period_length_days || 5
                 });
+                setUnifiedPhase(unifiedRes.smartPhase.phase);
             }
 
             // 3. Set Auth User
@@ -95,8 +103,14 @@ export default function ProfilePage() {
 
     const handleSaveCycle = () => {
         startTransition(async () => {
+            // Only update if changed
             await updateLastPeriodDate(cycleData.last_period_start);
             await updateCycleLength(cycleData.period_length_days, cycleData.cycle_length_days, formData.is_irregular);
+
+            // Re-fetch to sync
+            const unifiedRes = await fetchUnifiedCycleData();
+            if (unifiedRes) setUnifiedPhase(unifiedRes.smartPhase.phase);
+
             alert("Cycle settings updated!");
         });
     };
@@ -106,335 +120,137 @@ export default function ProfilePage() {
         router.push("/login");
     };
 
+    // --- LUXURY THEMES ---
+    const PROFILE_THEMES: Record<string, { bg: string, ring: string, accent: string, badge: string }> = {
+        "Menstrual": { bg: "bg-gradient-to-br from-rose-50 via-white to-rose-50", ring: "ring-rose-100", accent: "text-rose-900", badge: "border-rose-200 text-rose-700 bg-rose-50" },
+        "Follicular": { bg: "bg-gradient-to-br from-teal-50 via-white to-teal-50", ring: "ring-teal-100", accent: "text-teal-900", badge: "border-teal-200 text-teal-700 bg-teal-50" },
+        "Ovulatory": { bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50", ring: "ring-amber-100", accent: "text-amber-900", badge: "border-amber-200 text-amber-700 bg-amber-50" },
+        "Luteal": { bg: "bg-gradient-to-br from-indigo-50 via-white to-violet-50", ring: "ring-indigo-100", accent: "text-indigo-900", badge: "border-indigo-200 text-indigo-700 bg-indigo-50" },
+    };
+    const theme = PROFILE_THEMES[unifiedPhase || "Menstrual"] || PROFILE_THEMES["Menstrual"];
+
     if (loading) {
-        return <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center text-sm text-stone-400 font-bold tracking-widest uppercase">Loading Profile...</div>;
+        return <div className="min-h-screen flex items-center justify-center text-xs text-stone-300 font-bold tracking-[0.2em] uppercase">Loading Profile...</div>;
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] pb-32">
-            {/* Header / Banner */}
-            <div className="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-stone-100">
-                <div className="max-w-xl mx-auto px-6 py-5 flex items-center justify-between">
-                    <h1 className="text-xl font-heading text-rove-charcoal tracking-tight">Profile</h1>
-                    <button onClick={handleLogout} className="p-2 text-stone-400 hover:text-rove-red transition-colors">
-                        <LogOut className="w-5 h-5" />
-                    </button>
-                </div>
+        <div className={cn("min-h-screen pb-32 transition-colors duration-700", theme.bg)}>
+            {/* 1. Header with Glass Nav */}
+            <div className="sticky top-0 z-30 px-6 py-4 flex items-center justify-between bg-white/60 backdrop-blur-xl border-b border-white/40 support-[backdrop-filter]:bg-white/40">
+                <button onClick={() => router.back()} className="p-2 -ml-2 text-stone-400 hover:text-stone-800 transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-xs font-bold text-stone-500 uppercase tracking-widest opacity-80">Profile</span>
+                <div className="w-9" /> {/* Spacer */}
             </div>
 
-            <div className="max-w-xl mx-auto px-6 py-8 space-y-10">
+            <main className="max-w-xl mx-auto px-6 pt-8 space-y-12">
 
-                {/* 1. Identity Card */}
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-full bg-rove-cream flex items-center justify-center text-3xl font-heading text-rove-charcoal shadow-sm ring-4 ring-white">
-                        {formData.full_name?.[0] || user?.email?.[0] || "R"}
-                    </div>
-                    <div className="flex-1">
-                        <h2 className="text-2xl font-heading text-rove-charcoal">{formData.full_name || "Rove Member"}</h2>
-                        <p className="text-sm text-stone-500 font-medium">{user?.email}</p>
-                    </div>
-                </div>
-
-                {/* 2. Cycle Settings (The "Luxurious" Config) */}
-                <section>
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-rove-charcoal" />
-                            <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Cycle Architecture</h3>
-                        </div>
-                        <button
-                            onClick={() => setIsEditingCycle(!isEditingCycle)}
-                            className="text-xs font-medium text-rove-charcoal hover:text-stone-600 underline"
-                        >
-                            {isEditingCycle ? "Cancel" : "Edit"}
-                        </button>
-                    </div>
-
-                    {!isEditingCycle ? (
-                        <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p className="text-3xl font-heading text-rove-charcoal">{cycleData.period_length_days} / {cycleData.cycle_length_days}</p>
-                                <p className="text-xs text-stone-400 font-medium tracking-wide mt-1">PERIOD / CYCLE DAYS</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-stone-900">{formData.is_irregular ? "Irregular" : "Regular"}</p>
-                                <p className="text-xs text-stone-400 mt-1">Last: {new Date(cycleData.last_period_start || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                {/* 2. Identity Section */}
+                <section className="flex flex-col items-center text-center">
+                    <div className="relative mb-6">
+                        {/* Breathing Phase Ring */}
+                        <div className={cn("absolute inset-0 rounded-full animate-pulse opacity-50 blur-xl", theme.ring.replace("ring-", "bg-"))} />
+                        <div className={cn("relative w-28 h-28 rounded-full flex items-center justify-center text-4xl font-heading text-stone-700 bg-white shadow-2xl ring-8 transition-all duration-700", theme.ring)}>
+                            {formData.full_name?.[0] || user?.email?.[0] || "R"}
+                            {/* Edit Overlay */}
+                            <div className="absolute inset-0 rounded-full bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer backdrop-blur-[2px]">
+                                <span className="text-[9px] font-bold text-white uppercase tracking-widest">Edit</span>
                             </div>
                         </div>
-                    ) : (
-                        <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm ring-1 ring-stone-100">
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                {/* Period Length */}
-                                <div className="p-4 rounded-xl bg-stone-50 border border-stone-100 flex flex-col items-center justify-center gap-2">
-                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Period</span>
-                                    <div className="flex items-center gap-3">
-                                        <button onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.max(1, p.period_length_days - 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
-                                            <Minus className="w-3 h-3" />
-                                        </button>
-                                        <span className="text-xl font-heading text-rove-charcoal w-6 text-center">{cycleData.period_length_days}</span>
-                                        <button onClick={() => setCycleData(p => ({ ...p, period_length_days: Math.min(10, p.period_length_days + 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
-                                            <Plus className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Cycle Length */}
-                                <div className="p-4 rounded-xl bg-stone-50 border border-stone-100 flex flex-col items-center justify-center gap-2">
-                                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Cycle</span>
-                                    <div className="flex items-center gap-3">
-                                        <button onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.max(21, p.cycle_length_days - 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
-                                            <Minus className="w-3 h-3" />
-                                        </button>
-                                        <span className="text-xl font-heading text-rove-charcoal w-8 text-center">{cycleData.cycle_length_days}</span>
-                                        <button onClick={() => setCycleData(p => ({ ...p, cycle_length_days: Math.min(45, p.cycle_length_days + 1) }))} className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-stone-400 hover:text-rove-charcoal active:scale-90 transition-all">
-                                            <Plus className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                {/* Last Period Input */}
-                                <div className="flex-1 relative">
-                                    <span className="absolute left-3 top-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest">Last Period</span>
-                                    <input
-                                        type="date"
-                                        className="w-full bg-stone-50 border border-stone-100 rounded-xl px-3 pt-6 pb-2 text-sm font-medium text-rove-charcoal outline-none focus:ring-1 focus:ring-rove-charcoal/10 cursor-pointer"
-                                        value={cycleData.last_period_start}
-                                        onChange={(e) => setCycleData(p => ({ ...p, last_period_start: e.target.value }))}
-                                    />
-                                </div>
-
-                                {/* Regularity Toggle */}
-                                <button
-                                    onClick={() => setFormData(p => ({ ...p, is_irregular: !p.is_irregular }))}
-                                    className={cn(
-                                        "flex-1 h-[60px] rounded-xl border flex flex-col items-center justify-center gap-1 transition-all",
-                                        formData.is_irregular
-                                            ? "bg-amber-50 border-amber-100 text-amber-700"
-                                            : "bg-white border-stone-100 text-stone-400 hover:border-stone-200"
-                                    )}
-                                >
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Regularity</span>
-                                    <span className="text-sm font-bold">{formData.is_irregular ? "Irregular" : "Regular"}</span>
-                                </button>
-                            </div>
-
-                            <Button
-                                onClick={() => {
-                                    handleSaveCycle();
-                                    setIsEditingCycle(false);
-                                }}
-                                disabled={isPending}
-                                className="mt-4 w-full bg-rove-charcoal text-white py-4 rounded-xl hover:bg-black/90 transition-all font-medium text-sm font-heading shadow-xl shadow-rove-charcoal/10 flex items-center justify-center gap-2"
-                            >
-                                <Check className="w-4 h-4" />
-                                Save Updates
-                            </Button>
+                        <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border border-stone-100">
+                            <Crown className={cn("w-4 h-4", theme.accent)} />
                         </div>
-                    )}
+                    </div>
+
+                    <div className="group relative">
+                        <input
+                            value={formData.full_name}
+                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                            onBlur={handleSaveProfile}
+                            className="bg-transparent text-3xl md:text-4xl font-heading text-stone-800 mb-2 tracking-tight text-center focus:outline-none focus:border-b border-stone-300 w-full"
+                            placeholder="Your Name"
+                        />
+                        <Edit2 className="w-3 h-3 text-stone-300 absolute -right-4 top-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                 </section>
 
-                {/* 3. Health & Biometrics */}
-                <section>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Scale className="w-4 h-4 text-rove-charcoal" />
-                        <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Health & Body</h3>
-                    </div>
+                {/* 3. Cycle Signature */}
+                <CycleSignature
+                    cycleLength={cycleData.cycle_length_days}
+                    periodLength={cycleData.period_length_days}
+                    isIrregular={formData.is_irregular}
+                    phaseName={unifiedPhase}
+                    lastPeriod={cycleData.last_period_start}
+                    theme={theme}
+                />
 
-                    {/* Conditions Tags (New from Onboarding) */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mb-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <HeartPulse className="w-4 h-4 text-rove-red" />
-                            <span className="text-sm font-bold text-stone-900">Conditions</span>
+                {/* 5. Settings Section */}
+                <div className="space-y-6">
+                    {/* Cycle Settings Card */}
+                    <div className="group relative overflow-hidden bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg transition-all duration-500">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Calendar className="w-32 h-32" />
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {/* Mock Editing for now - visualizing what they selected */}
-                            {formData.conditions.length > 0 ? (
-                                formData.conditions.map(c => (
-                                    <span key={c} className="px-3 py-1.5 rounded-full bg-rove-red/5 text-rove-red text-xs font-medium border border-rove-red/10">
-                                        {c}
-                                    </span>
-                                ))
-                            ) : (
-                                <span className="text-xs text-stone-400 italic">No conditions logged</span>
-                            )}
-                            <button onClick={() => alert("Condition editing coming soon")} className="px-3 py-1.5 rounded-full border border-dashed border-stone-200 text-stone-400 text-xs hover:border-stone-400 hover:text-stone-600 transition-colors">
-                                + Edit
-                            </button>
-                        </div>
-                    </div>
 
-                    {/* Goals Tags (New from Onboarding) */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mb-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Target className="w-4 h-4 text-amber-500" />
-                            <span className="text-sm font-bold text-stone-900">Focus Areas</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {formData.goals.length > 0 ? (
-                                formData.goals.map(g => (
-                                    <span key={g} className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
-                                        {g}
-                                    </span>
-                                ))
-                            ) : (
-                                <span className="text-xs text-stone-400 italic">No goals selected</span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Diet Preference */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mb-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Utensils className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-bold text-stone-900">Diet Preference</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { id: "jain", label: "Jain (Sattvic)", icon: Leaf },
-                                { id: "vegan", label: "Vegan", icon: Leaf },
-                                { id: "vegetarian", label: "Vegetarian", icon: Pizza },
-                                { id: "non_veg", label: "Non-Vegetarian", icon: Beef }
-                            ].map((diet) => (
-                                <button
-                                    key={diet.id}
-                                    onClick={() => setFormData(p => ({ ...p, diet_preference: diet.id }))}
-                                    className={cn(
-                                        "p-3 rounded-xl border flex flex-col items-center gap-2 transition-all",
-                                        formData.diet_preference === diet.id
-                                            ? "bg-emerald-50 border-emerald-200 text-emerald-800 ring-1 ring-emerald-200"
-                                            : "bg-stone-50 border-transparent text-stone-500 hover:bg-stone-100"
-                                    )}
-                                >
-                                    <diet.icon className="w-5 h-5" />
-                                    <span className="text-xs font-semibold">{diet.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Activity Level */}
-                    <div className="bg-white rounded-[2rem] p-6 border border-stone-100 shadow-sm mb-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Flame className="w-4 h-4 text-orange-500" />
-                            <span className="text-sm font-bold text-stone-900">Activity Level</span>
-                        </div>
-                        <div className="space-y-3">
-                            {[
-                                { id: "sedentary", label: "Sedentary", desc: "Little to no formal exercise", icon: Armchair },
-                                { id: "moderate", label: "Moderate", desc: "1-3 days/week", icon: Zap },
-                                { id: "active", label: "Active", desc: "3-5 days/week", icon: Activity },
-                                { id: "athlete", label: "Athlete", desc: "Daily intense training", icon: Trophy }
-                            ].map((level) => (
-                                <button
-                                    key={level.id}
-                                    onClick={() => setFormData(p => ({ ...p, activity_level: level.id }))}
-                                    className={cn(
-                                        "w-full p-4 rounded-xl border flex items-center justify-between transition-all group",
-                                        formData.activity_level === level.id
-                                            ? "bg-orange-50 border-orange-200 ring-1 ring-orange-200"
-                                            : "bg-white border-stone-100 hover:border-stone-200 hover:bg-stone-50/50"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn(
-                                            "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                                            formData.activity_level === level.id ? "bg-white text-orange-600" : "bg-stone-50 text-stone-400 group-hover:bg-white"
-                                        )}>
-                                            <level.icon className="w-5 h-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className={cn("text-sm font-bold", formData.activity_level === level.id ? "text-orange-900" : "text-stone-700")}>
-                                                {level.label}
-                                            </p>
-                                            <p className="text-xs text-stone-400">{level.desc}</p>
-                                        </div>
-                                    </div>
-                                    {formData.activity_level === level.id && (
-                                        <div className="w-4 h-4 rounded-full bg-orange-500 border-2 border-white ring-1 ring-orange-200" />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Height & Weight (Compact Row) */}
-                    <div className="bg-white rounded-2xl p-4 border border-stone-100 shadow-sm flex divide-x divide-stone-100 mb-5">
-                        <div className="flex-1 pr-4 flex items-center justify-between">
-                            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider">Height</label>
-                            <div className="flex items-baseline gap-1">
-                                <input
-                                    type="number"
-                                    value={formData.height}
-                                    onChange={(e) => setFormData(p => ({ ...p, height: Number(e.target.value) }))}
-                                    className="text-xl font-heading text-rove-charcoal w-16 bg-transparent outline-none p-0 text-right"
-                                />
-                                <span className="text-xs text-stone-400 font-medium">cm</span>
-                            </div>
-                        </div>
-                        <div className="flex-1 pl-4 flex items-center justify-between">
-                            <label className="text-xs font-bold text-stone-400 uppercase tracking-wider">Weight</label>
-                            <div className="flex items-baseline gap-1">
-                                <input
-                                    type="number"
-                                    value={formData.weight}
-                                    onChange={(e) => setFormData(p => ({ ...p, weight: Number(e.target.value) }))}
-                                    className="text-xl font-heading text-rove-charcoal w-16 bg-transparent outline-none p-0 text-right"
-                                />
-                                <span className="text-xs text-stone-400 font-medium">kg</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Button
-                        onClick={handleSaveProfile}
-                        disabled={isPending}
-                        className="mt-4 w-full bg-white border border-stone-200 text-stone-900 py-6 rounded-2xl hover:bg-stone-50 transition-all font-medium"
-                    >
-                        Save Health Data
-                    </Button>
-                </section>
-
-                {/* 4. Settings Menu */}
-                <section>
-                    <div className="flex items-center gap-2 mb-5">
-                        <Activity className="w-4 h-4 text-rove-charcoal" />
-                        <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Preferences</h3>
-                    </div>
-                    <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-stone-100">
-                        <div className="p-5 flex items-center justify-between border-b border-stone-50 hover:bg-stone-50/50 transition-colors cursor-pointer group">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center group-hover:bg-white transition-colors">
-                                    <Bell className="w-5 h-5 text-stone-600" />
-                                </div>
+                        <div className="p-8 relative z-10">
+                            <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <p className="text-sm font-semibold text-stone-900 font-heading">Notifications</p>
-                                    <p className="text-xs text-stone-400">Daily reminders</p>
+                                    <h3 className="font-heading text-xl text-stone-800">Cycle Settings</h3>
+                                    <p className="text-xs text-stone-400 mt-1">Adjust cycle & period lengths</p>
                                 </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-stone-300" />
-                        </div>
 
-                        <div className="p-5 flex items-center justify-between hover:bg-stone-50/50 transition-colors cursor-pointer group">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-stone-50 flex items-center justify-center group-hover:bg-white transition-colors">
-                                    <Moon className="w-5 h-5 text-stone-600" />
+                            <div className="space-y-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Cycle Length</span>
+                                            <span className="font-heading font-bold text-stone-800">{cycleData.cycle_length_days} Days</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="21"
+                                            max="45"
+                                            value={cycleData.cycle_length_days}
+                                            onChange={(e) => setCycleData(p => ({ ...p, cycle_length_days: parseInt(e.target.value) }))}
+                                            className="w-full h-2 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-stone-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <span className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Last Period Start</span>
+                                        <input
+                                            type="date"
+                                            value={cycleData.last_period_start}
+                                            onChange={(e) => setCycleData(p => ({ ...p, last_period_start: e.target.value }))}
+                                            className="w-full p-3 bg-stone-50 border-none rounded-xl text-stone-700 font-medium focus:ring-2 focus:ring-stone-200"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-stone-900 font-heading">Appearance</p>
-                                    <p className="text-xs text-stone-400">System Default</p>
-                                </div>
+                                <Button onClick={handleSaveCycle} className="w-full py-6 rounded-xl bg-stone-900 text-white font-bold tracking-wide shadow-lg hover:shadow-xl transition-all">
+                                    Update Cycle
+                                </Button>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-stone-300" />
                         </div>
                     </div>
-                </section>
 
-                <div className="pt-8 flex justify-center">
-                    <p className="text-[10px] text-stone-300 font-medium uppercase tracking-widest">Rove Health v1.0.3</p>
+                    {/* Health Passport Card */}
+                    <HealthPassport
+                        formData={formData}
+                        setFormData={setFormData}
+                        onSave={handleSaveProfile}
+                        isPending={isPending}
+                        theme={theme}
+                    />
+
+                    {/* History View */}
+                    <HistoryView theme={theme} />
+
+                    {/* Account Settings */}
+                    <AccountSettings email={user?.email} onLogout={handleLogout} />
+
                 </div>
-            </div >
+            </main>
         </div >
     );
 }

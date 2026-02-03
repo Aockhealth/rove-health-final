@@ -538,10 +538,14 @@ const phaseThemes: Record<string, any> = {
         cardBg: "bg-white/60",
         border: "border-rose-100",
         softBg: "bg-rose-50/30",
-        pageGradient: "from-rose-50/50 via-white to-white",
+        pageGradient: "from-white to-white",
         iconContainer: "bg-rose-100 text-rose-600",
         orbRing: "from-rose-300 via-rose-100 to-rose-400",
         accent: "bg-rose-500",
+        primaryGradient: "bg-gradient-to-r from-rose-500 to-pink-600",
+        buttonShadow: "shadow-rose-200",
+        bannerTextColor: "text-white",
+        textShadow: "drop-shadow-sm",
         blob: "bg-rose-200/20",
         glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]"
     },
@@ -551,25 +555,33 @@ const phaseThemes: Record<string, any> = {
         cardBg: "bg-teal-50/30",
         border: "border-teal-100",
         softBg: "bg-teal-50/30",
-        pageGradient: "from-teal-50/50 via-white to-white",
+        pageGradient: "from-white to-white",
         iconContainer: "bg-teal-100 text-teal-600",
         orbRing: "from-teal-300 via-teal-100 to-teal-400",
         accent: "bg-teal-500",
+        primaryGradient: "bg-gradient-to-r from-teal-400 to-emerald-500",
+        buttonShadow: "shadow-teal-200",
+        bannerTextColor: "text-white",
+        textShadow: "drop-shadow-sm",
         blob: "bg-teal-200/15",
         glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]"
     },
     "Ovulatory": {
-        color: "text-amber-600",
-        bannerBg: "bg-gradient-to-r from-amber-400 to-orange-500",
-        cardBg: "bg-amber-50/30",
-        border: "border-amber-100",
-        softBg: "bg-amber-50/30",
-        pageGradient: "from-amber-50/50 via-white to-white",
-        iconContainer: "bg-amber-100 text-amber-600",
-        orbRing: "from-amber-300 via-amber-100 to-amber-400",
-        accent: "bg-amber-500",
-        blob: "bg-amber-100/30",
-        glow: "shadow-[0_0_40px_rgba(251,191,36,0.25)]"
+        color: "text-amber-950",
+        bannerBg: "bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100",
+        cardBg: "bg-gradient-to-br from-orange-50/50 to-white",
+        border: "border-orange-200",
+        softBg: "bg-orange-50/50",
+        pageGradient: "from-white to-white",
+        iconContainer: "bg-orange-100 text-orange-800",
+        orbRing: "from-amber-300 via-orange-200 to-amber-300",
+        accent: "bg-orange-400",
+        primaryGradient: "bg-gradient-to-r from-amber-400 to-orange-500",
+        buttonShadow: "shadow-orange-200",
+        bannerTextColor: "text-amber-900",
+        textShadow: "",
+        blob: "bg-orange-200/20",
+        glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]"
     },
     "Luteal": {
         color: "text-indigo-600",
@@ -577,10 +589,14 @@ const phaseThemes: Record<string, any> = {
         cardBg: "bg-indigo-50/30",
         border: "border-indigo-100",
         softBg: "bg-indigo-50/30",
-        pageGradient: "from-indigo-50/50 via-white to-white",
+        pageGradient: "from-white to-white",
         iconContainer: "bg-indigo-100 text-indigo-600",
         orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
         accent: "bg-indigo-500",
+        primaryGradient: "bg-gradient-to-r from-indigo-500 to-purple-600",
+        buttonShadow: "shadow-indigo-200",
+        bannerTextColor: "text-white",
+        textShadow: "drop-shadow-sm",
         blob: "bg-indigo-200/15",
         glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]"
     }
@@ -1250,10 +1266,10 @@ export default function DetailedPlanPage() {
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={cn(
                                         "relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs font-bold transition-all duration-300",
-                                        isActive ? "text-white drop-shadow-sm" : "text-rove-charcoal/50 hover:text-rove-charcoal/80"
+                                        isActive ? cn(theme.bannerTextColor, theme.textShadow) : "text-rove-charcoal/50 hover:text-rove-charcoal/80"
                                     )}
                                 >
-                                    <tab.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isActive && "drop-shadow-sm")} />
+                                    <tab.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isActive && theme.textShadow)} />
                                     <span className="uppercase tracking-wide text-[10px] sm:text-xs">{tab.label}</span>
                                 </button>
                             );
@@ -1271,17 +1287,17 @@ export default function DetailedPlanPage() {
                             className="space-y-6"
                         >
                             {/* Slim Focus Banner - Phase Colored */}
-                            <div className={cn("p-5 rounded-2xl relative overflow-hidden shadow-md flex items-center justify-between gap-4 text-white transition-all duration-500", theme.bannerBg)}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none" />
+                            <div className={cn("p-5 rounded-2xl relative overflow-hidden shadow-sm flex items-center justify-between gap-4 transition-all duration-500", theme.bannerBg, theme.bannerTextColor)}>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-full blur-[40px] pointer-events-none" />
 
-                                <div className="relative z-10 text-white text-left">
-                                    <p className="opacity-80 uppercase tracking-widest text-[9px] font-bold mb-1">Current Focus</p>
+                                <div className="relative z-10 text-left">
+                                    <p className="opacity-70 uppercase tracking-widest text-[9px] font-bold mb-1">Current Focus</p>
                                     <h3 className="text-xl md:text-2xl font-heading leading-tight">
                                         {BP.rituals.focus}
                                     </h3>
                                 </div>
-                                <div className="relative z-10 bg-white/20 p-2.5 rounded-full backdrop-blur-md border border-white/10">
-                                    <Compass className="w-5 h-5 text-white" />
+                                <div className={cn("relative z-10 p-2.5 rounded-full backdrop-blur-md border border-black/5", theme.iconContainer)}>
+                                    <Compass className="w-5 h-5" />
                                 </div>
                             </div>
 
@@ -1535,9 +1551,9 @@ export default function DetailedPlanPage() {
 
                                         return (
                                             <>
-                                                <RiverTrack label="Core Nutrients" items={row1} speed={80} />
-                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={95} />
-                                                <RiverTrack label="Replenishing" items={row3} speed={90} />
+                                                <RiverTrack label="Core Nutrients" items={row1} speed={80} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={95} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Replenishing" items={row3} speed={90} cardClass={cn(theme.cardBg, theme.border)} />
                                             </>
                                         )
                                     })()}

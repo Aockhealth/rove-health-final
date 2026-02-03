@@ -44,6 +44,28 @@ export async function getUserProfile() {
     };
 }
 
+export async function getHeaderProfile() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    // Fast query just for the name
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+    // Fallback logic on server side
+    const name = profile?.full_name
+        || user.user_metadata?.full_name
+        || user.user_metadata?.name
+        || user.email?.split('@')[0];
+
+    return { name };
+}
+
 export async function updateUserProfile(data: {
     tracker_mode: string;
     goals: string[];

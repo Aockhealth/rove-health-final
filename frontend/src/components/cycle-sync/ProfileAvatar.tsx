@@ -3,40 +3,29 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { User } from "lucide-react";
 
 export default function ProfileAvatar() {
     const [initial, setInitial] = useState<string | null>(null);
 
     useEffect(() => {
-        const getUser = async () => {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
+        const loadProfile = async () => {
+            try {
+                // Use server action for reliable fetching
+                const { getHeaderProfile } = await import("@/app/cycle-sync/profile/actions");
+                const data = await getHeaderProfile();
 
-            if (!user) {
-                setInitial("U");
-                return;
-            }
-
-            // Fetch from profiles table where the name is actually stored
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", user.id)
-                .single();
-
-            // Try profile full_name first, then user_metadata, then email
-            const name = profile?.full_name
-                || user.user_metadata?.full_name
-                || user.user_metadata?.name
-                || user.email?.split('@')[0];
-
-            if (name && name.length > 0) {
-                setInitial(name[0]);
-            } else {
-                setInitial("U");
+                if (data?.name && data.name.length > 0) {
+                    setInitial(data.name[0]);
+                } else {
+                    setInitial(null); // Fallback to User icon
+                }
+            } catch (e) {
+                console.error("Failed to load profile avatar", e);
+                setInitial(null);
             }
         };
-        getUser();
+        loadProfile();
     }, []);
 
     return (
@@ -47,8 +36,7 @@ export default function ProfileAvatar() {
                         {initial.toUpperCase()}
                     </span>
                 ) : (
-                    // Loading skeleton
-                    <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
+                    <User className="w-5 h-5 text-rove-stone/50" />
                 )}
             </div>
         </Link>

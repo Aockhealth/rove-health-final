@@ -52,7 +52,7 @@ function TypingText({ text, delay = 0 }: { text: string; delay?: number }) {
   useEffect(() => {
     setDisplayedText("");
     setIsComplete(false);
-    
+
     const timeout = setTimeout(() => {
       let i = 0;
       const intervalId = setInterval(() => {
@@ -100,13 +100,13 @@ export function EmotionalBaselineCard({
 
   return (
     <div className="relative rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm mt-6 overflow-hidden">
-      
+
       {/* Subtle background gradient */}
       <div className={cn(
         "absolute inset-0 bg-gradient-to-br opacity-30 pointer-events-none",
         PHASE_GRADIENTS[activePhase]
       )} />
-      
+
       {/* Top-Right Blob */}
       <div className={cn(
         "absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none transition-colors duration-500",
@@ -175,7 +175,7 @@ export function EmotionalBaselineCard({
             "absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-3xl opacity-20",
             PHASE_GLOW[activePhase]
           )} />
-          
+
           <div className="relative">
             <h4 className={cn(
               "text-base font-heading font-bold mb-3 flex items-center gap-2",

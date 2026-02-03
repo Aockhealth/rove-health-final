@@ -63,12 +63,13 @@ export const iconMap: Record<string, any> = {
 interface RiverTrackProps {
     items: any[];
     direction?: "left" | "right";
-    speed?: number;
     label: string;
+    speed?: number;
     onCardClick?: (item: any) => void;
+    cardClass?: string;
 }
 
-export function RiverTrack({ items, direction = "left", speed = 20, label, onCardClick }: RiverTrackProps) {
+export function RiverTrack({ items, direction = "left", speed = 20, label, onCardClick, cardClass }: RiverTrackProps) {
     // Duplicate items for seamless loop (4x for smoothness)
     const riverItems = [...items, ...items, ...items, ...items];
 
@@ -144,7 +145,8 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
                             <div
                                 key={i}
                                 className={cn(
-                                    "w-auto min-w-[140px] sm:min-w-[160px] md:min-w-[180px] flex-shrink-0 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-md border border-white/50 shadow-sm flex items-center gap-2 sm:gap-3 transition-all select-none",
+                                    "w-auto min-w-[140px] sm:min-w-[160px] md:min-w-[180px] flex-shrink-0 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl backdrop-blur-md shadow-sm flex items-center gap-2 sm:gap-3 transition-all select-none",
+                                    cardClass || "bg-white/60 border border-white/50",
                                     isClickable
                                         ? "cursor-pointer hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] pointer-events-auto"
                                         : "pointer-events-none"

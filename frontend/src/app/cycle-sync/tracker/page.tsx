@@ -141,25 +141,36 @@ export default function TrackerPageRedesigned() {
         return () => { isMounted = false; };
     }, []); // ⚡ Empty deps = runs ONCE on mount
 
+    // Track loaded months to prevent infinite re-fetching of empty months
+    const loadedMonthsRef = useRef<Set<string>>(new Set());
+
     // Fetch month logs when navigating months (only for months not already loaded)
     useEffect(() => {
-        // Skip if we already have logs for this month range
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
-        const firstDayKey = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+        const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-        // If we already have this month's data from initial load, skip fetch
-        if (Object.keys(monthLogs).some(k => k.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`))) {
+        // Skip if we already fetched this month session
+        if (loadedMonthsRef.current.has(monthKey)) {
             return;
         }
 
         let isMounted = true;
 
         const loadMonthLogs = async () => {
+            // Mark as fetching immediately to prevent double-fire
+            loadedMonthsRef.current.add(monthKey);
+
+            // Also mark prev/next as we fetch them too
+            const nextMonth = new Date(year, month + 1, 1);
+            const prevMonth = new Date(year, month - 1, 1);
+            loadedMonthsRef.current.add(`${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}`);
+            loadedMonthsRef.current.add(`${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`);
+
             const monthsToFetch = [
-                new Date(year, month - 1, 1),
+                prevMonth,
                 new Date(year, month, 1),
-                new Date(year, month + 1, 1),
+                nextMonth,
             ];
 
             // Parallel fetch
@@ -173,18 +184,19 @@ export default function TrackerPageRedesigned() {
 
             if (!isMounted) return;
 
-            const newLogMap: Record<string, any> = { ...monthLogs };
-            results.flat().forEach((l: any) => {
-                newLogMap[l.date] = l;
+            setMonthLogs(prev => {
+                const newLogMap = { ...prev };
+                results.flat().forEach((l: any) => {
+                    newLogMap[l.date] = l;
+                });
+                return newLogMap;
             });
-
-            setMonthLogs(newLogMap);
         };
 
         loadMonthLogs();
 
         return () => { isMounted = false; };
-    }, [currentMonth, monthLogs]);
+    }, [currentMonth]);
 
     // ⚡ INSTANT: Load selected date log from cache (no API call)
     useEffect(() => {
