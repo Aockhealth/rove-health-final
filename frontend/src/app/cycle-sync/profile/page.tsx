@@ -181,7 +181,6 @@ export default function ProfilePage() {
                     periodLength={cycleData.period_length_days}
                     isIrregular={formData.is_irregular}
                     phaseName={unifiedPhase}
-                    lastPeriod={cycleData.last_period_start}
                     theme={theme}
                 />
 

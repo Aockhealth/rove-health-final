@@ -1,6 +1,6 @@
 import { fetchArticleById } from "@backend/actions/cycle-sync/learn/learn-actions";
 import { getStorageUrl } from "@/lib/utils";
-import { ChevronLeft, Calendar, Clock, User } from "lucide-react";
+import { ChevronLeft, Calendar, Clock, User, Share2, Bookmark, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -62,11 +62,11 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/30" />
-        
+
         {/* Navbar */}
         <div className="absolute top-0 left-0 p-6 z-10">
-          <Link 
-            href="/cycle-sync/learn" 
+          <Link
+            href="/cycle-sync/learn"
             className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white font-bold hover:bg-white/30 transition-all"
           >
             <ChevronLeft className="w-5 h-5" /> Back
@@ -77,7 +77,7 @@ export default async function ArticlePage({ params }: Props) {
       {/* --- CONTENT CONTAINER --- */}
       <div className="relative z-10 -mt-16 px-4">
         <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8 md:p-12 overflow-hidden">
-          
+
           {/* Metadata Pills */}
           <div className="flex flex-wrap gap-4 text-sm text-neutral-500 mb-6 font-medium">
             <span className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full uppercase tracking-wider text-xs font-bold">
@@ -90,7 +90,7 @@ export default async function ArticlePage({ params }: Props) {
             )}
             {article.published_date && (
               <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" /> 
+                <Calendar className="w-4 h-4" />
                 {new Date(article.published_date).toLocaleDateString()}
               </span>
             )}
@@ -119,7 +119,7 @@ export default async function ArticlePage({ params }: Props) {
             {article.excerpt}
           </p>
 
-          <hr className="my-8"/>
+          <hr className="my-8" />
 
           {/* ✅ RENDERED MARKDOWN CONTENT */}
           <article className="prose prose-lg prose-rose max-w-none prose-headings:font-heading prose-img:rounded-xl text-neutral-700">
@@ -129,20 +129,20 @@ export default async function ArticlePage({ params }: Props) {
                 img: ({ src, alt }) => {
                   if (!src) return null; // Stop empty src error
                   return (
-                    <img 
-                      src={src} 
-                      alt={alt || "Article Image"} 
-                      className="rounded-xl w-full h-auto my-4" 
-                      loading="lazy" 
+                    <img
+                      src={src}
+                      alt={alt || "Article Image"}
+                      className="rounded-xl w-full h-auto my-4"
+                      loading="lazy"
                     />
                   );
                 },
                 // 2. FIX OVERFLOW: Force links to break
                 a: ({ href, children }) => (
-                  <a 
-                    href={href} 
-                    className="text-rose-600 break-all hover:underline" 
-                    target="_blank" 
+                  <a
+                    href={href}
+                    className="text-rose-600 break-all hover:underline"
+                    target="_blank"
                     rel="noopener noreferrer"
                   >
                     {children}

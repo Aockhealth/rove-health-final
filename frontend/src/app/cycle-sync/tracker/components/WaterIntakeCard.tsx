@@ -32,25 +32,55 @@ export default function WaterIntakeCard({
     }
   }, [waterIntake]);
 
-  const getPhaseColor = (p: string | null | undefined) => {
-    switch (p) {
-      case "Menstrual": return "rose";
-      case "Follicular": return "teal";
-      case "Ovulatory": return "amber";
-      case "Luteal": return "indigo";
-      default: return "rose";
+  // Organic Chromatics Styling
+  const phase = currentPhase || "Menstrual";
+
+  const themes: Record<string, any> = {
+    "Menstrual": {
+      border: "border-phase-menstrual/20",
+      shadow: "shadow-phase-menstrual/5",
+      iconBg: "bg-phase-menstrual/10",
+      iconColor: "text-phase-menstrual",
+      btnPlus: "bg-phase-menstrual shadow-phase-menstrual/30 hover:bg-phase-menstrual/90",
+      btnMinus: "border-phase-menstrual/20 text-gray-400 hover:bg-phase-menstrual/5",
+      glassBorder: "border-phase-menstrual/30"
+    },
+    "Follicular": {
+      border: "border-phase-follicular/20",
+      shadow: "shadow-phase-follicular/5",
+      iconBg: "bg-phase-follicular/10",
+      iconColor: "text-phase-follicular",
+      btnPlus: "bg-phase-follicular shadow-phase-follicular/30 hover:bg-phase-follicular/90",
+      btnMinus: "border-phase-follicular/20 text-gray-400 hover:bg-phase-follicular/5",
+      glassBorder: "border-phase-follicular/30"
+    },
+    "Ovulatory": {
+      border: "border-phase-ovulatory/20",
+      shadow: "shadow-phase-ovulatory/5",
+      iconBg: "bg-phase-ovulatory/10",
+      iconColor: "text-phase-ovulatory",
+      btnPlus: "bg-phase-ovulatory shadow-phase-ovulatory/30 hover:bg-phase-ovulatory/90",
+      btnMinus: "border-phase-ovulatory/20 text-gray-400 hover:bg-phase-ovulatory/5",
+      glassBorder: "border-phase-ovulatory/30"
+    },
+    "Luteal": {
+      border: "border-phase-luteal/20",
+      shadow: "shadow-phase-luteal/5",
+      iconBg: "bg-phase-luteal/10",
+      iconColor: "text-phase-luteal",
+      btnPlus: "bg-phase-luteal shadow-phase-luteal/30 hover:bg-phase-luteal/90",
+      btnMinus: "border-phase-luteal/20 text-gray-400 hover:bg-phase-luteal/5",
+      glassBorder: "border-phase-luteal/30"
     }
   };
 
-  const phaseColor = getPhaseColor(currentPhase);
+  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
-      "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 transition-all",
-      phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-        phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-          phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-            "border-indigo-100 shadow-indigo-100/20"
+      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      theme.border,
+      theme.shadow
     )}>
       <div className="flex items-center gap-3 mb-6">
         <motion.div
@@ -61,19 +91,10 @@ export default function WaterIntakeCard({
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
-            phaseColor === "rose" ? "bg-rose-100" :
-              phaseColor === "teal" ? "bg-teal-100" :
-                phaseColor === "amber" ? "bg-amber-100" :
-                  "bg-indigo-100"
+            theme.iconBg
           )}
         >
-          <Droplet className={cn(
-            "w-4 h-4 fill-current",
-            phaseColor === "rose" ? "text-rose-500" :
-              phaseColor === "teal" ? "text-teal-500" :
-                phaseColor === "amber" ? "text-amber-500" :
-                  "text-indigo-500"
-          )} />
+          <Droplet className={cn("w-4 h-4 fill-current", theme.iconColor)} />
         </motion.div>
         <div className="flex items-center gap-2 relative">
           <h3 className="text-base font-heading font-semibold text-gray-900">Hydration</h3>
@@ -111,10 +132,7 @@ export default function WaterIntakeCard({
         {/* Glass Animation */}
         <div className={cn(
           "relative w-24 h-32 border-4 border-t-0 rounded-b-3xl bg-white/10 backdrop-blur-sm overflow-hidden flex-shrink-0 shadow-inner",
-          phaseColor === "rose" ? "border-rose-200" :
-            phaseColor === "teal" ? "border-teal-200" :
-              phaseColor === "amber" ? "border-amber-200" :
-                "border-indigo-200"
+          theme.glassBorder
         )}>
           {/* Liquid */}
           <motion.div
@@ -195,7 +213,10 @@ export default function WaterIntakeCard({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setWaterIntake(Math.max(0, waterIntake - 1))}
-              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 active:scale-95 transition-all"
+              className={cn(
+                "w-10 h-10 rounded-full border flex items-center justify-center transition-all",
+                theme.btnMinus
+              )}
             >
               <Minus className="w-5 h-5" />
             </button>
@@ -207,10 +228,7 @@ export default function WaterIntakeCard({
               }}
               className={cn(
                 "w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg active:scale-95 transition-all",
-                phaseColor === "rose" ? "bg-rose-500 shadow-rose-200 hover:bg-rose-600" :
-                  phaseColor === "teal" ? "bg-teal-500 shadow-teal-200 hover:bg-teal-600" :
-                    phaseColor === "amber" ? "bg-amber-500 shadow-amber-200 hover:bg-amber-600" :
-                      "bg-indigo-500 shadow-indigo-200 hover:bg-indigo-600"
+                theme.btnPlus
               )}
             >
               <Plus className="w-6 h-6" />

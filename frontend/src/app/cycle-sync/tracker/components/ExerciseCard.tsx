@@ -28,25 +28,55 @@ export default function ExerciseCard({
     }
   };
 
-  const getPhaseColor = (p: string | null | undefined) => {
-    switch (p) {
-      case "Menstrual": return "rose";
-      case "Follicular": return "teal";
-      case "Ovulatory": return "amber";
-      case "Luteal": return "indigo";
-      default: return "rose";
+  // Organic Chromatics Styling
+  const phase = currentPhase || "Menstrual";
+
+  const themes: Record<string, any> = {
+    "Menstrual": {
+      border: "border-phase-menstrual/20",
+      shadow: "shadow-phase-menstrual/5",
+      iconBg: "bg-phase-menstrual/10",
+      iconColor: "text-phase-menstrual",
+      active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
+      inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5",
+      inputBorder: "border-phase-menstrual/50"
+    },
+    "Follicular": {
+      border: "border-phase-follicular/20",
+      shadow: "shadow-phase-follicular/5",
+      iconBg: "bg-phase-follicular/10",
+      iconColor: "text-phase-follicular",
+      active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
+      inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5",
+      inputBorder: "border-phase-follicular/50"
+    },
+    "Ovulatory": {
+      border: "border-phase-ovulatory/20",
+      shadow: "shadow-phase-ovulatory/5",
+      iconBg: "bg-phase-ovulatory/10",
+      iconColor: "text-phase-ovulatory",
+      active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
+      inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5",
+      inputBorder: "border-phase-ovulatory/50"
+    },
+    "Luteal": {
+      border: "border-phase-luteal/20",
+      shadow: "shadow-phase-luteal/5",
+      iconBg: "bg-phase-luteal/10",
+      iconColor: "text-phase-luteal",
+      active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
+      inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5",
+      inputBorder: "border-phase-luteal/50"
     }
   };
 
-  const phaseColor = getPhaseColor(currentPhase);
+  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
-      "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 transition-all",
-      phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-        phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-          phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-            "border-indigo-100 shadow-indigo-100/20"
+      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      theme.border,
+      theme.shadow
     )}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -57,19 +87,10 @@ export default function ExerciseCard({
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center",
-              phaseColor === "rose" ? "bg-rose-100" :
-                phaseColor === "teal" ? "bg-teal-100" :
-                  phaseColor === "amber" ? "bg-amber-100" :
-                    "bg-indigo-100"
+              theme.iconBg
             )}
           >
-            <Dumbbell className={cn(
-              "w-4 h-4",
-              phaseColor === "rose" ? "text-rose-500" :
-                phaseColor === "teal" ? "text-teal-500" :
-                  phaseColor === "amber" ? "text-amber-500" :
-                    "text-indigo-500"
-            )} />
+            <Dumbbell className={cn("w-4 h-4", theme.iconColor)} />
           </motion.div>
           <div className="flex items-center gap-2 relative">
             <h3 className="text-base font-heading font-semibold text-gray-900">Exercise Log</h3>
@@ -122,16 +143,8 @@ export default function ExerciseCard({
                 key={e}
                 onClick={() => toggleItem(e)}
                 className={cn(
-                  "px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border-2",
-                  isActive
-                    ? phaseColor === "rose" ? "bg-rose-100 text-rose-800 border-rose-300 shadow-sm" :
-                      phaseColor === "teal" ? "bg-teal-100 text-teal-800 border-teal-300 shadow-sm" :
-                        phaseColor === "amber" ? "bg-amber-100 text-amber-800 border-amber-300 shadow-sm" :
-                          "bg-indigo-100 text-indigo-800 border-indigo-300 shadow-sm"
-                    : phaseColor === "rose" ? "bg-white border-rose-100/50 text-gray-600 hover:border-rose-200 hover:bg-rose-50/30" :
-                      phaseColor === "teal" ? "bg-white border-teal-100/50 text-gray-600 hover:border-teal-200 hover:bg-teal-50/30" :
-                        phaseColor === "amber" ? "bg-white border-amber-100/50 text-gray-600 hover:border-amber-200 hover:bg-amber-50/30" :
-                          "bg-white border-indigo-100/50 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/30"
+                  "px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border",
+                  isActive ? theme.active : theme.inactive
                 )}
               >
                 {isActive && <Check className="w-3.5 h-3.5" />}
@@ -143,25 +156,13 @@ export default function ExerciseCard({
 
         <div className={cn(
           "flex items-center gap-3 bg-white/60 p-3 rounded-2xl border",
-          phaseColor === "rose" ? "border-rose-100/50" :
-            phaseColor === "teal" ? "border-teal-100/50" :
-              phaseColor === "amber" ? "border-amber-100/50" :
-                "border-indigo-100/50"
+          theme.inputBorder
         )}>
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
-            phaseColor === "rose" ? "bg-rose-100" :
-              phaseColor === "teal" ? "bg-teal-100" :
-                phaseColor === "amber" ? "bg-amber-100" :
-                  "bg-indigo-100"
+            theme.iconBg
           )}>
-            <Clock className={cn(
-              "w-4 h-4",
-              phaseColor === "rose" ? "text-rose-600" :
-                phaseColor === "teal" ? "text-teal-600" :
-                  phaseColor === "amber" ? "text-amber-600" :
-                    "text-indigo-600"
-            )} />
+            <Clock className={cn("w-4 h-4", theme.iconColor)} />
           </div>
           <div className="flex-1">
             <label className="text-xs text-gray-500 block mb-1">Duration (minutes)</label>

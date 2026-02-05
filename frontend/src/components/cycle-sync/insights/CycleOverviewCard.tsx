@@ -4,9 +4,9 @@ import { Activity, Calendar, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function getPredictionStatus(daysLeft: number) {
-  if (daysLeft <= 7) return { label: "Imminent", color: "text-rose-500" };
-  if (daysLeft <= 14) return { label: "Approaching", color: "text-amber-500" };
-  return { label: "Distant", color: "text-emerald-600" };
+  if (daysLeft <= 7) return { label: "Imminent", color: "text-phase-menstrual" };
+  if (daysLeft <= 14) return { label: "Approaching", color: "text-phase-ovulatory" };
+  return { label: "Distant", color: "text-phase-follicular" };
 }
 
 export function CycleOverviewCard({

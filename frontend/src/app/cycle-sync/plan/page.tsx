@@ -35,7 +35,7 @@ import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
 // --- Data: Phase Blueprints (PRESERVED) ---
 const BLUEPRINTS: any = {
     "Menstrual": {
-        color: "bg-rove-red",
+        color: "bg-phase-menstrual",
         hormones: {
             title: "Hormones Now",
             summary: "Estrogen & progesterone are lowest.",
@@ -43,7 +43,7 @@ const BLUEPRINTS: any = {
             symptoms: ["Energy Dips", "Cramps", "Mood Sensitivity", "Inflammation"]
         },
         rituals: {
-            focus: "Inner Winter",
+            focus: "Rest & Restore",
             practices: [
                 { title: "Journaling", desc: "Reflect on the past month", icon: "Book" },
                 { title: "Yoga Nidra", desc: "Deep conscious rest", icon: "Moon" },
@@ -118,7 +118,7 @@ const BLUEPRINTS: any = {
         }
     },
     "Follicular": {
-        color: "bg-rove-peach",
+        color: "bg-phase-follicular",
         hormones: {
             title: "Hormones Rising",
             summary: "Estrogen is rising, boosting energy.",
@@ -126,7 +126,7 @@ const BLUEPRINTS: any = {
             symptoms: ["Increasing Energy", "Better Mood", "Curiosity", "Lightness"]
         },
         rituals: {
-            focus: "Inner Spring",
+            focus: "Rising Energy",
             practices: [
                 { title: "Vision Boarding", desc: "Plan your month ahead", icon: "Sun" },
                 { title: "Morning Pages", desc: "Brain dump ideas", icon: "Book" },
@@ -201,7 +201,7 @@ const BLUEPRINTS: any = {
         }
     },
     "Ovulatory": {
-        color: "bg-rove-charcoal",
+        color: "bg-phase-ovulatory",
         hormones: {
             title: "Peak Hormones",
             summary: "Estrogen at peak, testosterone surge.",
@@ -209,7 +209,7 @@ const BLUEPRINTS: any = {
             symptoms: ["Peak Energy", "High Libido", "Confidence", "Social Buzz"]
         },
         rituals: {
-            focus: "Inner Summer",
+            focus: "Peak Performance",
             practices: [
                 { title: "Community", desc: "Host a gathering", icon: "Users" },
                 { title: "Gratitude", desc: "Express appreciation", icon: "Heart" },
@@ -284,7 +284,7 @@ const BLUEPRINTS: any = {
         }
     },
     "Luteal": {
-        color: "bg-amber-500",
+        color: "bg-phase-luteal",
         hormones: {
             title: "Progesterone Rise",
             summary: "Progesterone rises, then drops.",
@@ -292,7 +292,7 @@ const BLUEPRINTS: any = {
             symptoms: ["PMS Possible", "Bloating", "Cravings", "Introversion"]
         },
         rituals: {
-            focus: "Inner Autumn",
+            focus: "Winding Down",
             practices: [
                 { title: "Declutter", desc: "Organize your space", icon: "Home" },
                 { title: "Boundaries", desc: "Say no to extra plans", icon: "Shield" },
@@ -531,74 +531,76 @@ function ActivitiesWidget({ practices, theme }: { practices: any[], theme: any }
 
 
 // Phase Theme Logic - Expanded for Full UI Theming
+// Phase Theme Logic - Visual Identity 2.0 (Organic Chromatics)
 const phaseThemes: Record<string, any> = {
     "Menstrual": {
-        color: "text-rose-600",
-        bannerBg: "bg-gradient-to-r from-rose-500 to-pink-600",
-        cardBg: "bg-white/60",
-        border: "border-rose-100",
-        softBg: "bg-rose-50/30",
-        pageGradient: "from-white to-white",
-        iconContainer: "bg-rose-100 text-rose-600",
-        orbRing: "from-rose-300 via-rose-100 to-rose-400",
-        accent: "bg-rose-500",
-        primaryGradient: "bg-gradient-to-r from-rose-500 to-pink-600",
-        buttonShadow: "shadow-rose-200",
+        color: "text-phase-menstrual",
+        bannerBg: "bg-gradient-to-r from-phase-menstrual/90 to-phase-menstrual/80", // Terra Rose
+        cardBg: "bg-white/60 backdrop-blur-md", // Bone White feel
+        border: "border-phase-menstrual/20",
+        softBg: "bg-phase-menstrual/5",
+        pageGradient: "from-phase-menstrual/5 via-white-bone to-white-bone",
+        iconContainer: "bg-phase-menstrual/10 text-phase-menstrual",
+        orbRing: "from-phase-menstrual/40 via-white to-phase-menstrual/20",
+        accent: "bg-phase-menstrual",
+        primaryGradient: "bg-gradient-to-r from-phase-menstrual to-phase-menstrual/80",
+        buttonShadow: "shadow-phase-menstrual/20",
         bannerTextColor: "text-white",
         textShadow: "drop-shadow-sm",
-        blob: "bg-rose-200/20",
-        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]"
+        blob: "bg-phase-menstrual/10",
+        glow: "shadow-[0_20px_50px_rgba(175,107,107,0.12)]" // Terra Rose Aura
     },
     "Follicular": {
-        color: "text-teal-600",
-        bannerBg: "bg-gradient-to-r from-teal-400 to-emerald-500",
-        cardBg: "bg-teal-50/30",
-        border: "border-teal-100",
-        softBg: "bg-teal-50/30",
-        pageGradient: "from-white to-white",
-        iconContainer: "bg-teal-100 text-teal-600",
-        orbRing: "from-teal-300 via-teal-100 to-teal-400",
-        accent: "bg-teal-500",
-        primaryGradient: "bg-gradient-to-r from-teal-400 to-emerald-500",
-        buttonShadow: "shadow-teal-200",
+        color: "text-phase-follicular",
+        bannerBg: "bg-gradient-to-r from-phase-follicular/90 to-phase-follicular/80", // Sage Dew
+        cardBg: "bg-white/60 backdrop-blur-md",
+        border: "border-phase-follicular/20",
+        softBg: "bg-phase-follicular/5",
+        pageGradient: "from-phase-follicular/5 via-white-bone to-white-bone",
+        iconContainer: "bg-phase-follicular/10 text-phase-follicular",
+        orbRing: "from-phase-follicular/40 via-white to-phase-follicular/20",
+        accent: "bg-phase-follicular",
+        primaryGradient: "bg-gradient-to-r from-phase-follicular to-phase-follicular/80",
+        buttonShadow: "shadow-phase-follicular/20",
         bannerTextColor: "text-white",
         textShadow: "drop-shadow-sm",
-        blob: "bg-teal-200/15",
-        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]"
+        blob: "bg-phase-follicular/10",
+        glow: "shadow-[0_20px_50px_rgba(141,170,157,0.12)]" // Sage Dew Aura
     },
     "Ovulatory": {
-        color: "text-amber-950",
-        bannerBg: "bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100",
-        cardBg: "bg-gradient-to-br from-orange-50/50 to-white",
-        border: "border-orange-200",
-        softBg: "bg-orange-50/50",
-        pageGradient: "from-white to-white",
-        iconContainer: "bg-orange-100 text-orange-800",
-        orbRing: "from-amber-300 via-orange-200 to-amber-300",
-        accent: "bg-orange-400",
-        primaryGradient: "bg-gradient-to-r from-amber-400 to-orange-500",
-        buttonShadow: "shadow-orange-200",
-        bannerTextColor: "text-amber-900",
-        textShadow: "",
-        blob: "bg-orange-200/20",
-        glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]"
+        // High-Performance / Deep Obsidian Mode
+        color: "text-phase-ovulatory", // Soleil Ochre
+        bannerBg: "bg-obsidian border-b border-phase-ovulatory/20",
+        cardBg: "bg-obsidian/60 backdrop-blur-xl border border-phase-ovulatory/10", // Dark Glass
+        border: "border-phase-ovulatory/30",
+        softBg: "bg-phase-ovulatory/5", // Very subtle gold tint on dark
+        pageGradient: "bg-obsidian via-neutral-900 to-obsidian", // Dark layout
+        iconContainer: "bg-phase-ovulatory/20 text-phase-ovulatory",
+        orbRing: "from-phase-ovulatory via-white/10 to-phase-ovulatory/50",
+        accent: "bg-phase-ovulatory",
+        primaryGradient: "bg-gradient-to-r from-phase-ovulatory to-amber-400", // Gold gradients
+        buttonShadow: "shadow-phase-ovulatory/20",
+        bannerTextColor: "text-phase-ovulatory",
+        textShadow: "shadow-[0_0_10px_rgba(212,162,95,0.5)]", // Gold Glow
+        blob: "bg-phase-ovulatory/20", // Warm Gold Blob
+        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.15)]" // Soleil Aura
     },
     "Luteal": {
-        color: "text-indigo-600",
-        bannerBg: "bg-gradient-to-r from-indigo-500 to-purple-600",
-        cardBg: "bg-indigo-50/30",
-        border: "border-indigo-100",
-        softBg: "bg-indigo-50/30",
-        pageGradient: "from-white to-white",
-        iconContainer: "bg-indigo-100 text-indigo-600",
-        orbRing: "from-indigo-300 via-indigo-100 to-indigo-400",
-        accent: "bg-indigo-500",
-        primaryGradient: "bg-gradient-to-r from-indigo-500 to-purple-600",
-        buttonShadow: "shadow-indigo-200",
+        color: "text-phase-luteal",
+        bannerBg: "bg-gradient-to-r from-phase-luteal/90 to-phase-luteal/80", // Dusk Slate
+        cardBg: "bg-white/60 backdrop-blur-md",
+        border: "border-phase-luteal/20",
+        softBg: "bg-phase-luteal/5",
+        pageGradient: "from-phase-luteal/5 via-white-bone to-white-bone",
+        iconContainer: "bg-phase-luteal/10 text-phase-luteal",
+        orbRing: "from-phase-luteal/40 via-white to-phase-luteal/20",
+        accent: "bg-phase-luteal",
+        primaryGradient: "bg-gradient-to-r from-phase-luteal to-phase-luteal/80",
+        buttonShadow: "shadow-phase-luteal/20",
         bannerTextColor: "text-white",
         textShadow: "drop-shadow-sm",
-        blob: "bg-indigo-200/15",
-        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]"
+        blob: "bg-phase-luteal/10",
+        glow: "shadow-[0_20px_50px_rgba(123,130,168,0.12)]" // Dusk Slate Aura
     }
 };
 
@@ -821,7 +823,7 @@ export default function DetailedPlanPage() {
     if (!hasPlanSetup) {
         return (
             // ✅ Updated Background (#FDFBF7)
-            <div className="min-h-screen bg-[#FDFBF7] relative overflow-hidden flex justify-center items-center p-4">
+            <div className="min-h-screen bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay relative overflow-hidden flex justify-center items-center p-4">
 
                 {/* ✅ Updated Visuals: Only Peach Blob + Orbs (Privacy Style) */}
                 <div className="blob-glow-peach" />
@@ -1182,9 +1184,28 @@ export default function DetailedPlanPage() {
     const phaseName = clientPhaseName || data.phase || "Menstrual";
     const displayDay = clientDay || data.day;
 
-    // Only use server blueprint if phases match, otherwise fallback to static content for the new phase
     const useServerBlueprint = !clientPhaseName || (clientPhaseName === data.phase);
     let BP = (useServerBlueprint ? data.blueprint : null) || BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+
+    // ✅ VOICE REFACTOR FORCE UPDATE:
+    // Ensure new "Body Whisperer" strings override old database values for existing users.
+    const localBP = BLUEPRINTS[phaseName] || BLUEPRINTS["Menstrual"];
+    if (BP && localBP) {
+        BP = {
+            ...BP,
+            hormones: { ...BP.hormones, ...localBP.hormones },
+            rituals: localBP.rituals, // Force full update (Focus title + descriptions)
+            exercise: localBP.exercise, // Force full update (Summary + Best/Avoid lists)
+            diet: localBP.diet, // Force full update (Renamed sections etc)
+            supplements: localBP.supplements,
+            daily_flow: localBP.daily_flow,
+            nutrition_guide: {
+                ...BP.nutrition_guide,
+                ...localBP.nutrition_guide, // Update static guides like Symptom Decoder
+                macro_fuel: BP.nutrition_guide?.macro_fuel || localBP.nutrition_guide?.macro_fuel // Keep calculated macros if exist
+            }
+        };
+    }
 
     // ✅ DYNAMIC OVERRIDE: Personalize Macros if we have user metrics
     if (weight && height) {
@@ -1211,7 +1232,7 @@ export default function DetailedPlanPage() {
     const todayStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     return (
-        <div className={cn("min-h-screen bg-gradient-to-b transition-colors duration-500", theme.pageGradient)}>
+        <div className={cn("min-h-screen bg-gradient-to-b transition-colors duration-500 grain-overlay", theme.pageGradient)}>
 
             {/* 1. TOP NAVIGATION (High Density) */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
@@ -1256,7 +1277,7 @@ export default function DetailedPlanPage() {
 
                         {[
                             { id: 'guide', label: 'Guide', icon: Compass },
-                            { id: 'diet', label: 'Nutrition', icon: Utensils },
+                            { id: 'diet', label: 'Nourish', icon: Utensils },
                             { id: 'exercise', label: 'Move', icon: Dumbbell }
                         ].map(tab => {
                             const isActive = activeTab === tab.id;
@@ -1503,7 +1524,7 @@ export default function DetailedPlanPage() {
                         >
                             {/* 1. The Macro Fuel Gauge (Visual Top) */}
                             {BP.nutrition_guide?.macro_fuel && (
-                                <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} />
+                                <MacroFuelGauge data={BP.nutrition_guide.macro_fuel} theme={theme} phase={phaseName} />
                             )}
 
                             {/* 2. Recommended Fuel (River Flow - Aggregated) */}
@@ -1562,12 +1583,12 @@ export default function DetailedPlanPage() {
 
                             {/* 3. The Symptom Decoder (Top Carousel) */}
                             {BP.nutrition_guide?.symptom_decoder && (
-                                <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} />
+                                <SymptomDecoder data={BP.nutrition_guide.symptom_decoder} theme={theme} phase={phaseName} />
                             )}
 
                             {/* 4. Focus vs Avoid Cheat Sheet (T-Chart) */}
                             {BP.nutrition_guide?.cheat_sheet && (
-                                <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} />
+                                <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} phase={phaseName} />
                             )}
 
                             {/* 5. The AI Chef (Plate Builder) */}
@@ -1591,7 +1612,7 @@ export default function DetailedPlanPage() {
 
                                 <div className="space-y-4 mb-8">
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-rove-stone ml-1 flex items-center gap-2">
-                                        <span className="w-6 h-0.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"></span>
+                                        <span className={cn("w-6 h-0.5 rounded-full", theme.primaryGradient)}></span>
                                         Best For This Phase
                                     </h3>
 
@@ -1617,10 +1638,16 @@ export default function DetailedPlanPage() {
                                             return (
                                                 <div
                                                     key={i}
-                                                    className="group relative p-4 rounded-2xl bg-gradient-to-br from-white via-white to-amber-50/30 border border-white/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden"
+                                                    className={cn(
+                                                        "group relative p-4 rounded-2xl bg-gradient-to-br from-white via-white border border-white/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden",
+                                                        theme.softBg
+                                                    )}
                                                 >
                                                     {/* Background Number */}
-                                                    <div className="absolute -right-2 -top-2 text-6xl font-heading text-amber-100/50 select-none">
+                                                    <div className={cn(
+                                                        "absolute -right-2 -top-2 text-7xl font-heading select-none opacity-10",
+                                                        theme.color
+                                                    )}>
                                                         {i + 1}
                                                     </div>
 
@@ -1630,7 +1657,10 @@ export default function DetailedPlanPage() {
                                                         <div className="text-2xl mb-2">{getIcon(ex.title)}</div>
 
                                                         {/* Title */}
-                                                        <h4 className="font-bold text-sm text-rove-charcoal mb-1 group-hover:text-amber-600 transition-colors">
+                                                        <h4 className={cn(
+                                                            "font-bold text-sm text-rove-charcoal mb-1 transition-colors",
+                                                            `group-hover:text-phase-${phaseName.toLowerCase()}`
+                                                        )}>
                                                             {ex.title}
                                                         </h4>
 
@@ -1641,8 +1671,8 @@ export default function DetailedPlanPage() {
 
                                                         {/* Time Badge */}
                                                         <div className="flex items-center gap-1.5">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                                                            <span className="text-[10px] font-semibold text-amber-600">{ex.time}</span>
+                                                            <div className={cn("w-1.5 h-1.5 rounded-full", `bg-phase-${phaseName.toLowerCase()}`)}></div>
+                                                            <span className={cn("text-[10px] font-semibold", `text-phase-${phaseName.toLowerCase()}`)}>{ex.time}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1652,8 +1682,8 @@ export default function DetailedPlanPage() {
                                 </div>
 
                                 {/* Compact Avoid Section */}
-                                <div className="p-4 rounded-[1.5rem] bg-gray-50/60 border border-gray-200/60 backdrop-blur-sm">
-                                    <h4 className="font-bold text-gray-400 uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2">
+                                <div className={cn("p-4 rounded-[1.5rem] backdrop-blur-sm border", theme.softBg, theme.border)}>
+                                    <h4 className={cn("font-bold uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2", theme.color)}>
                                         <Ban className="w-3 h-3" /> {phaseName === "Ovulatory" || phaseName === "Ovulation" ? "Watch Out For" : "Avoid This Phase"}
                                     </h4>
                                     <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">

@@ -40,6 +40,10 @@ export const DialogContent: React.FC<DialogContentProps> = ({ children, classNam
 
     useEffect(() => {
         setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    useEffect(() => {
         if (open) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -47,7 +51,6 @@ export const DialogContent: React.FC<DialogContentProps> = ({ children, classNam
         }
         return () => {
             document.body.style.overflow = 'unset';
-            setMounted(false);
         };
     }, [open]);
 

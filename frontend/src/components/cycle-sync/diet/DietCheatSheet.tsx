@@ -1,22 +1,39 @@
 "use client";
 import { Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DietCheatSheetProps {
     data: {
         focus: { title: string; items: string[] };
         avoid: { title: string; items: string[] };
     };
-    theme: any;
+    theme?: any;
+    phase?: string;
 }
 
-export function DietCheatSheet({ data, theme }: DietCheatSheetProps) {
+export function DietCheatSheet({ data, theme, phase }: DietCheatSheetProps) {
     if (!data) return null;
+
+    // Organic Chromatics Styling
+    const currentPhase = phase || "Menstrual";
+    const themes: Record<string, any> = {
+        "Menstrual": { border: "border-phase-menstrual/20", shadow: "shadow-phase-menstrual/5" },
+        "Follicular": { border: "border-phase-follicular/20", shadow: "shadow-phase-follicular/5" },
+        "Ovulatory": { border: "border-phase-ovulatory/20", shadow: "shadow-phase-ovulatory/5" },
+        "Luteal": { border: "border-phase-luteal/20", shadow: "shadow-phase-luteal/5" }
+    };
+    const currentTheme = themes[currentPhase] || themes["Menstrual"];
 
     return (
         <section className="mb-6">
-            <h3 className="font-heading text-lg text-rove-charcoal mb-4 px-2">One-Glance Strategy</h3>
+            <h3 className="font-heading text-lg text-gray-800 mb-4 px-2">One-Glance Strategy</h3>
 
-            <div className="bg-white/40 border border-white/60 p-5 rounded-[2rem] backdrop-blur-md shadow-sm space-y-6">
+            <div className={cn(
+                "bg-white/60 backdrop-blur-md rounded-[2rem] p-5 transition-all text-sm",
+                currentTheme.border,
+                currentTheme.shadow,
+                "border shadow-sm"
+            )}>
 
                 {/* Focus Row */}
                 <div>
@@ -35,7 +52,7 @@ export function DietCheatSheet({ data, theme }: DietCheatSheetProps) {
                     </div>
                 </div>
 
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-black/5 to-transparent" />
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent my-6" />
 
                 {/* Avoid Row */}
                 <div>

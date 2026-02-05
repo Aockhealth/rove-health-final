@@ -42,26 +42,60 @@ export default function DischargeCard({
             (mpiqSensation ? 33.3 : 0)) *
         1;
 
-    const getPhaseColor = (p: string | null | undefined) => {
-        switch (p) {
-            case "Menstrual": return "rose";
-            case "Follicular": return "teal";
-            case "Ovulatory": return "amber";
-            case "Luteal": return "indigo";
-            default: return "rose";
+    // Organic Chromatics Styling
+    const phase = currentPhase || "Menstrual";
+
+    const themes: Record<string, any> = {
+        "Menstrual": {
+            border: "border-phase-menstrual/20",
+            shadow: "shadow-phase-menstrual/5",
+            iconBg: "bg-phase-menstrual/10",
+            iconColor: "text-phase-menstrual",
+            active: "bg-phase-menstrual/10 border-phase-menstrual/30 shadow-sm",
+            inactive: "bg-white border-gray-100 hover:bg-phase-menstrual/5",
+            waveFrom: "from-phase-menstrual/40",
+            waveTo: "to-phase-menstrual"
+        },
+        "Follicular": {
+            border: "border-phase-follicular/20",
+            shadow: "shadow-phase-follicular/5",
+            iconBg: "bg-phase-follicular/10",
+            iconColor: "text-phase-follicular",
+            active: "bg-phase-follicular/10 border-phase-follicular/30 shadow-sm",
+            inactive: "bg-white border-gray-100 hover:bg-phase-follicular/5",
+            waveFrom: "from-phase-follicular/40",
+            waveTo: "to-phase-follicular"
+        },
+        "Ovulatory": {
+            border: "border-phase-ovulatory/20",
+            shadow: "shadow-phase-ovulatory/5",
+            iconBg: "bg-phase-ovulatory/10",
+            iconColor: "text-phase-ovulatory",
+            active: "bg-phase-ovulatory/10 border-phase-ovulatory/30 shadow-sm",
+            inactive: "bg-white border-gray-100 hover:bg-phase-ovulatory/5",
+            waveFrom: "from-phase-ovulatory/40",
+            waveTo: "to-phase-ovulatory"
+        },
+        "Luteal": {
+            border: "border-phase-luteal/20",
+            shadow: "shadow-phase-luteal/5",
+            iconBg: "bg-phase-luteal/10",
+            iconColor: "text-phase-luteal",
+            active: "bg-phase-luteal/10 border-phase-luteal/30 shadow-sm",
+            inactive: "bg-white border-gray-100 hover:bg-phase-luteal/5",
+            waveFrom: "from-phase-luteal/40",
+            waveTo: "to-phase-luteal"
         }
     };
 
-    const phaseColor = getPhaseColor(currentPhase);
+    const theme = themes[phase] || themes["Menstrual"];
 
     return (
         <div
             className={cn(
-                "relative overflow-hidden bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-[2rem] shadow-xl transition-all duration-300 border-2",
-                phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-                    phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-                        phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-                            "border-indigo-100 shadow-indigo-100/20"
+                "relative overflow-hidden bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-xl transition-all duration-300 border",
+                theme.border,
+                theme.shadow
             )}
         >
             {!isDischargeExpanded ? (
@@ -76,18 +110,9 @@ export default function DischargeCard({
                     <div className="flex items-center gap-3 flex-grow text-left relative z-20 pointer-events-none">
                         <div className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform",
-                            phaseColor === "rose" ? "bg-rose-100" :
-                                phaseColor === "teal" ? "bg-teal-100" :
-                                    phaseColor === "amber" ? "bg-amber-100" :
-                                        "bg-indigo-100"
+                            theme.iconBg
                         )}>
-                            <Waves className={cn(
-                                "w-5 h-5",
-                                phaseColor === "rose" ? "text-rose-500" :
-                                    phaseColor === "teal" ? "text-teal-500" :
-                                        phaseColor === "amber" ? "text-amber-500" :
-                                            "text-indigo-500"
-                            )} />
+                            <Waves className={cn("w-5 h-5", theme.iconColor)} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -100,7 +125,7 @@ export default function DischargeCard({
                                         setShowInfo(!showInfo);
                                         if (!isDischargeExpanded) setIsDischargeExpanded(true);
                                     }}
-                                    className="text-blue-400 hover:text-blue-600 transition-colors relative z-30 pointer-events-auto"
+                                    className="text-gray-400 hover:text-gray-600 transition-colors relative z-30 pointer-events-auto"
                                 >
                                     <Info className="w-3.5 h-3.5" />
                                 </button>
@@ -110,8 +135,8 @@ export default function DischargeCard({
                             </p>
                         </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center relative z-20 pointer-events-none">
-                        <ChevronRight className="w-4 h-4 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center relative z-20 pointer-events-none transition-colors", theme.iconBg)}>
+                        <ChevronRight className={cn("w-4 h-4 transition-colors", theme.iconColor)} />
                     </div>
                 </div>
             ) : (
@@ -119,7 +144,7 @@ export default function DischargeCard({
                     {/* Wave Progress Bar */}
                     <div className="absolute top-0 left-0 right-0 h-3 bg-gray-100/50 z-0">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-teal-300 via-blue-400 to-indigo-400"
+                            className={cn("h-full bg-gradient-to-r", theme.waveFrom, theme.waveTo)}
                             initial={{ width: 0 }}
                             animate={{ width: `${waveProgress}%` }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -136,15 +161,15 @@ export default function DischargeCard({
                     <div className="p-6 pt-8 relative z-10">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <Waves className="w-5 h-5 text-blue-600" />
+                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", theme.iconBg)}>
+                                    <Waves className={cn("w-5 h-5", theme.iconColor)} />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h3 className="text-lg font-heading font-semibold text-gray-900">Cervical Discharge</h3>
                                         <button
                                             onClick={() => setShowInfo(!showInfo)}
-                                            className="text-blue-400 hover:text-blue-600 transition-colors"
+                                            className="text-gray-400 hover:text-gray-600 transition-colors"
                                         >
                                             <Info className="w-4 h-4" />
                                         </button>
@@ -154,7 +179,7 @@ export default function DischargeCard({
                             </div>
                             <button
                                 onClick={() => setIsDischargeExpanded(false)}
-                                className="p-2 hover:bg-blue-50/50 rounded-full transition-colors text-blue-400 hover:text-blue-600"
+                                className={cn("p-2 rounded-full transition-colors", theme.iconBg, theme.iconColor)}
                             >
                                 <div className="sr-only">Collapse</div>
                                 <ChevronRight className="w-5 h-5 -rotate-90" />
@@ -169,14 +194,14 @@ export default function DischargeCard({
                                     exit={{ opacity: 0, height: 0 }}
                                     className="mb-6 overflow-hidden"
                                 >
-                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 relative">
+                                    <div className={cn("border rounded-2xl p-4 relative", theme.iconBg, theme.border)}>
                                         <button
                                             onClick={() => setShowInfo(false)}
-                                            className="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
+                                            className={cn("absolute top-2 right-2", theme.iconColor)}
                                         >
                                             <X className="w-3 h-3" />
                                         </button>
-                                        <p className="text-xs text-blue-800 leading-relaxed pr-4">
+                                        <p className={cn("text-xs leading-relaxed pr-4", theme.iconColor)}>
                                             This questionnaire (MPIQ) helps predict your cycle phase with <strong>more than 95% accuracy</strong> by analyzing your body's biological markers.
                                         </p>
                                     </div>
@@ -202,9 +227,7 @@ export default function DischargeCard({
                                             onClick={() => setMpiqConsistency(opt.label as Consistency)}
                                             className={cn(
                                                 "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                mpiqConsistency === opt.label
-                                                    ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                    : "bg-white border-gray-100 hover:bg-gray-50"
+                                                mpiqConsistency === opt.label ? theme.active : theme.inactive
                                             )}
                                         >
                                             <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
@@ -251,9 +274,7 @@ export default function DischargeCard({
                                             onClick={() => setMpiqAppearance(opt.label as Appearance)}
                                             className={cn(
                                                 "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                mpiqAppearance === opt.label
-                                                    ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                    : "bg-white border-gray-100 hover:bg-gray-50"
+                                                mpiqAppearance === opt.label ? theme.active : theme.inactive
                                             )}
                                         >
                                             <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg mb-2 overflow-hidden shadow-inner">
@@ -297,9 +318,7 @@ export default function DischargeCard({
                                             onClick={() => setMpiqSensation(opt.label as Sensation)}
                                             className={cn(
                                                 "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
-                                                mpiqSensation === opt.label
-                                                    ? "bg-blue-50 border-blue-200 shadow-sm"
-                                                    : "bg-white border-gray-100 hover:bg-gray-50"
+                                                mpiqSensation === opt.label ? theme.active : theme.inactive
                                             )}
                                         >
                                             <span className="text-xs font-heading font-semibold text-gray-800">{opt.label}</span>

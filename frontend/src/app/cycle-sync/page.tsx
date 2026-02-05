@@ -72,41 +72,57 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
                         onClick={() => setExpandedCard(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             className={cn(
-                                "relative w-full max-w-md p-6 rounded-3xl shadow-2xl border bg-gradient-to-br",
-                                theme.gradient,
+                                "relative w-full max-w-md p-8 bg-white/95 backdrop-blur-2xl rounded-[2.5rem] border shadow-2xl overflow-hidden",
                                 theme.borderColor
                             )}
                             onClick={(e) => e.stopPropagation()}
                         >
+                            {/* Decorative Background Glow */}
+                            <div className={cn("absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-10", theme.iconBg)} />
+
                             {/* Close Button */}
                             <button
                                 onClick={() => setExpandedCard(null)}
-                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-rove-stone hover:bg-white transition-colors"
+                                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 flex items-center justify-center text-rove-charcoal hover:bg-black/10 transition-all border border-black/5 z-10"
                             >
-                                ✕
+                                <Plus className="w-5 h-5 rotate-45" />
                             </button>
 
-                            {/* Icon */}
+                            {/* Icon Container */}
                             <div className={cn(
-                                "w-14 h-14 rounded-2xl flex items-center justify-center mb-4",
+                                "w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-sm",
                                 theme.iconBg,
                                 theme.iconColor
                             )}>
-                                {expandedCard.icon && <expandedCard.icon className="w-7 h-7" />}
+                                {expandedCard.icon && <expandedCard.icon className="w-8 h-8" />}
                             </div>
 
                             {/* Content */}
-                            <h3 className="text-xl font-heading text-rove-charcoal mb-1">{expandedCard.title}</h3>
+                            <h3 className="text-3xl font-heading text-rove-charcoal mb-1 leading-tight">{expandedCard.title}</h3>
                             <p className={cn(
-                                "text-sm font-medium mb-4",
+                                "text-sm font-bold mb-6 tracking-[0.15em] uppercase",
                                 theme.iconColor
                             )}>{expandedCard.desc}</p>
-                            <p className="text-sm text-rove-stone leading-relaxed">{expandedCard.detail}</p>
+
+                            <div className="space-y-6">
+                                <p className="text-base text-gray-800 leading-relaxed font-sans font-medium">
+                                    {expandedCard.detail}
+                                </p>
+
+                                {expandedCard.detail.includes("Sources:") && (
+                                    <div className="pt-4 border-t border-black/10">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Food Sources</p>
+                                        <p className="text-[13px] text-gray-700 leading-relaxed italic">
+                                            {expandedCard.detail.split("Sources:")[1]}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
@@ -116,50 +132,51 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
 }
 
 // Phase Theme Logic
+// Phase Theme Logic - Visual Identity 2.0 (Organic Chromatics)
 const phaseThemes: Record<string, any> = {
     "Menstrual": {
-        color: "text-rose-500",
-        blob: "bg-rose-200/20",
-        orbRing: "from-rose-300 via-rose-100 to-rose-400",
-        glow: "shadow-[0_0_40px_rgba(251,113,133,0.2)]",
-        badge: "bg-rose-50 text-rose-600 border-rose-100",
-        iconBg: "bg-rose-100",
-        iconColor: "text-rose-600",
-        gradient: "from-rose-50 to-white",
-        borderColor: "border-rose-200"
+        color: "text-phase-menstrual",
+        blob: "bg-phase-menstrual/10",
+        orbRing: "from-phase-menstrual/40 via-white to-phase-menstrual/20",
+        glow: "shadow-[0_20px_50px_rgba(175,107,107,0.12)]", // Terra Rose Aura
+        badge: "bg-transparent text-phase-menstrual border border-phase-menstrual/20",
+        iconBg: "bg-phase-menstrual/10",
+        iconColor: "text-phase-menstrual",
+        gradient: "from-phase-menstrual/5 to-white/0", // Subtle wash
+        borderColor: "border-phase-menstrual/20"
     },
     "Follicular": {
-        color: "text-teal-600",
-        blob: "bg-teal-200/15",
-        orbRing: "from-teal-300 via-emerald-100 to-teal-400",
-        glow: "shadow-[0_0_40px_rgba(45,212,191,0.2)]",
-        badge: "bg-teal-50 text-teal-700 border-teal-100",
-        iconBg: "bg-teal-100",
-        iconColor: "text-teal-600",
-        gradient: "from-teal-50 to-white",
-        borderColor: "border-teal-200"
+        color: "text-phase-follicular",
+        blob: "bg-phase-follicular/10",
+        orbRing: "from-phase-follicular/40 via-white to-phase-follicular/20",
+        glow: "shadow-[0_20px_50px_rgba(141,170,157,0.12)]", // Sage Dew Aura
+        badge: "bg-transparent text-phase-follicular border border-phase-follicular/20",
+        iconBg: "bg-phase-follicular/10",
+        iconColor: "text-phase-follicular",
+        gradient: "from-phase-follicular/5 to-white/0",
+        borderColor: "border-phase-follicular/20"
     },
     "Ovulatory": {
-        color: "text-amber-700",
-        blob: "bg-amber-100/30",
-        orbRing: "from-amber-300 via-yellow-100 to-amber-300",
-        glow: "shadow-[0_0_40px_rgba(251,191,36,0.3)]",
-        badge: "bg-amber-50 text-amber-800 border-amber-200",
-        iconBg: "bg-amber-100",
-        iconColor: "text-amber-800",
-        gradient: "from-amber-50 to-white",
-        borderColor: "border-amber-200"
+        color: "text-phase-ovulatory",
+        blob: "bg-phase-ovulatory/10",
+        orbRing: "from-phase-ovulatory/40 via-white to-phase-ovulatory/20",
+        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.15)]", // Soleil Ochre Aura (slightly stronger)
+        badge: "bg-transparent text-phase-ovulatory border border-phase-ovulatory/20",
+        iconBg: "bg-phase-ovulatory/10",
+        iconColor: "text-phase-ovulatory",
+        gradient: "from-phase-ovulatory/5 to-white/0",
+        borderColor: "border-phase-ovulatory/20"
     },
     "Luteal": {
-        color: "text-indigo-500",
-        blob: "bg-indigo-200/15",
-        orbRing: "from-indigo-300 via-blue-100 to-indigo-400",
-        glow: "shadow-[0_0_40px_rgba(129,140,248,0.2)]",
-        badge: "bg-indigo-50 text-indigo-600 border-indigo-100",
-        iconBg: "bg-indigo-100",
-        iconColor: "text-indigo-600",
-        gradient: "from-indigo-50 to-white",
-        borderColor: "border-indigo-200"
+        color: "text-phase-luteal",
+        blob: "bg-phase-luteal/10",
+        orbRing: "from-phase-luteal/40 via-white to-phase-luteal/20",
+        glow: "shadow-[0_20px_50px_rgba(123,130,168,0.12)]", // Dusk Slate Aura
+        badge: "bg-transparent text-phase-luteal border border-phase-luteal/20",
+        iconBg: "bg-phase-luteal/10",
+        iconColor: "text-phase-luteal",
+        gradient: "from-phase-luteal/5 to-white/0",
+        borderColor: "border-phase-luteal/20"
     }
 };
 
@@ -274,8 +291,8 @@ const PHASE_SNAPSHOTS: any = {
 const PHASE_KEYWORDS: Record<string, string> = {
     "Menstrual": "Winter • Rest & Reset",
     "Follicular": "Spring • Energy Rising",
-    "Ovulatory": "Summer • Peak Confidence",
-    "Luteal": "Autumn • Winding Down"
+    "Ovulatory": "Performer • Peak Confidence",
+    "Luteal": "Reflective Phase"
 };
 
 // --- 3. Animated Components ---
@@ -463,7 +480,7 @@ export default function CycleSyncDashboard() {
     const trackerMode = data.tracker_mode || "menstruation";
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20">
+        <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20 grain-overlay">
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className={`absolute top-[-10%] left-[-10%] w-[500px] h-[500px] ${theme.blob} rounded-full blur-[80px] animate-pulse will-change-[opacity]`} style={{ animationDuration: "10s" }} />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rove-charcoal/5 rounded-full blur-[80px] animate-pulse will-change-[opacity]" style={{ animationDuration: "15s" }} />
@@ -599,61 +616,61 @@ export default function CycleSyncDashboard() {
 
                                     return (
                                         <>
-                                            {/* Next Period Card - Warm Terracotta */}
+                                            {/* Next Period Card - Terra Rose (Menstrual) */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-orange-50 to-amber-50/80 rounded-2xl p-3 md:p-4 border border-orange-200/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-phase-menstrual/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-menstrual/15 hover:bg-phase-menstrual/[0.06] hover:border-phase-menstrual/30 transition-all cursor-pointer group shadow-sm"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-orange-400/15 flex items-center justify-center">
-                                                            <Droplets className="w-2.5 h-2.5 md:w-3 md:h-3 text-orange-500" />
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        <div className="w-6 h-6 rounded-xl bg-phase-menstrual/10 flex items-center justify-center">
+                                                            <Droplets className="w-3.5 h-3.5 text-phase-menstrual" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-orange-600/80">Period</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-menstrual/80">Period</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-orange-700">{formatDate(nextPeriod)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-orange-500/70 mt-0.5 group-hover:text-orange-600 transition-colors min-h-[14px]">
+                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">{formatDate(nextPeriod)}</p>
+                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-menstrual/80 transition-colors">
                                                         {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : 'Next cycle'}
                                                     </p>
                                                 </motion.div>
                                             </Link>
 
-                                            {/* Ovulation Card - Deep Gold/Bronze */}
+                                            {/* Ovulation Card - Soleil Ochre (Ovulatory) */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-yellow-50 to-amber-100/60 rounded-2xl p-3 md:p-4 border border-yellow-300/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-phase-ovulatory/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-ovulatory/15 hover:bg-phase-ovulatory/[0.06] hover:border-phase-ovulatory/30 transition-all cursor-pointer group shadow-sm"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-yellow-400/20 flex items-center justify-center">
-                                                            <Baby className="w-2.5 h-2.5 md:w-3 md:h-3 text-yellow-600" />
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        <div className="w-6 h-6 rounded-xl bg-phase-ovulatory/10 flex items-center justify-center">
+                                                            <Baby className="w-3.5 h-3.5 text-phase-ovulatory" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-yellow-700/80">Ovulation</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-ovulatory/80">Ovulation</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-yellow-700">{formatDate(ovulationDate)}</p>
-                                                    <p className="text-[9px] md:text-[10px] text-yellow-600/70 mt-0.5 group-hover:text-yellow-700 transition-colors min-h-[14px]">Peak fertility</p>
+                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">{formatDate(ovulationDate)}</p>
+                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-ovulatory/80 transition-colors">Peak fertility</p>
                                                 </motion.div>
                                             </Link>
 
-                                            {/* Fertile Window Card - Sage/Olive */}
+                                            {/* Fertile Window Card - Sage Dew (Follicular) */}
                                             <Link href="/cycle-sync/tracker">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-gradient-to-br from-lime-50 to-green-50/70 rounded-2xl p-3 md:p-4 border border-lime-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                                    className="h-full bg-phase-follicular/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-follicular/15 hover:bg-phase-follicular/[0.06] hover:border-phase-follicular/30 transition-all cursor-pointer group shadow-sm"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-lime-500/15 flex items-center justify-center">
-                                                            <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 text-lime-600" />
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        <div className="w-6 h-6 rounded-xl bg-phase-follicular/10 flex items-center justify-center">
+                                                            <Heart className="w-3.5 h-3.5 text-phase-follicular" />
                                                         </div>
-                                                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-wider text-lime-700/80">Fertile</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-follicular/80">Fertile</span>
                                                     </div>
-                                                    <p className="text-sm sm:text-base md:text-xl font-bold text-lime-700">
+                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">
                                                         {fertileStart && fertileEnd ? `${fertileStart.toLocaleDateString('en-US', { month: 'short' })} ${fertileStart.getDate()}-${fertileEnd.getDate()}` : '--'}
                                                     </p>
-                                                    <p className="text-[9px] md:text-[10px] text-lime-600/70 mt-0.5 group-hover:text-lime-700 transition-colors min-h-[14px]">6-day window</p>
+                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-follicular/80 transition-colors">6-day window</p>
                                                 </motion.div>
                                             </Link>
                                         </>
@@ -684,12 +701,12 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("hormones")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Hormones</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-rove-red">
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-phase-menstrual">
                                         <HormoneWave />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
@@ -704,7 +721,7 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("mind")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Mind</span>
@@ -724,7 +741,7 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("body")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Body</span>
@@ -744,7 +761,7 @@ export default function CycleSyncDashboard() {
                                     onClick={() => setSelectedSnapshot("glow")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
                                 >
                                     <div className="absolute top-4 left-4 z-20">
                                         <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Glow</span>

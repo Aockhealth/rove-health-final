@@ -8,21 +8,12 @@ export default function ResetPasswordPage() {
     const [status, setStatus] = useState("Verifying reset session...");
     const [newPassword, setNewPassword] = useState("");
     const [done, setDone] = useState(false);
-    const [debug, setDebug] = useState<string[]>([]);
     const router = useRouter();
 
     // Use the SSR-compatible browser client (cookie-based)
     const supabase = createClient();
 
-    const log = (msg: string, data?: any) => {
-        const line =
-            new Date().toISOString() +
-            " :: " +
-            msg +
-            (data ? " - " + JSON.stringify(data) : "");
-        console.log(line);
-        setDebug((prev) => [...prev, line]);
-    };
+
 
     // Extract token from URL hash
     const getHashParams = () => {
@@ -37,23 +28,16 @@ export default function ResetPasswordPage() {
 
     // On mount: handle the password reset token from URL
     useEffect(() => {
-        log("---- Reset Password Page Loaded ----");
-        log("Current URL:", window.location.href);
-
         const handleResetSession = async () => {
             try {
                 // Check if we're coming from a reset email (has hash parameters - implicit flow)
                 const hashParams = getHashParams();
-                log("Hash params:", hashParams);
 
                 // Check for code in query parameters (PKCE flow)
                 const searchParams = new URLSearchParams(window.location.search);
                 const code = searchParams.get('code');
-                log("Code from query params:", code);
 
                 if (hashParams.type === "recovery" && hashParams.access_token) {
-                    log("Recovery token found in URL hash (implicit flow)");
-
                     // Exchange the recovery token for a session
                     const { data, error } = await supabase.auth.setSession({
                         access_token: hashParams.access_token,
@@ -61,29 +45,22 @@ export default function ResetPasswordPage() {
                     });
 
                     if (error) {
-                        log("Error setting session from hash:", error);
                         setStatus("Invalid or expired reset link.");
                         return;
                     }
 
-                    log("Session set successfully from hash");
                     setStatus("Reset link verified. Enter your new password.");
                     return;
                 }
 
                 if (code) {
-                    log("Code found - exchanging for session (PKCE flow)");
-
                     // Exchange the PKCE code for a session using the browser client
                     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
                     if (error) {
-                        log("Error exchanging code:", error);
                         setStatus("Invalid or expired reset link. Please request a new one.");
                         return;
                     }
-
-                    log("Code exchanged successfully:", data);
 
                     // Clean up the URL (remove the code parameter)
                     window.history.replaceState({}, '', '/reset-password');
@@ -97,8 +74,6 @@ export default function ResetPasswordPage() {
                     data: { session },
                 } = await supabase.auth.getSession();
 
-                log("Current session:", session);
-
                 if (!session) {
                     setStatus(
                         "No valid reset session found. Please request a new reset link."
@@ -108,7 +83,6 @@ export default function ResetPasswordPage() {
 
                 setStatus("Reset link verified. Enter your new password.");
             } catch (err) {
-                log("Unexpected error:", err);
                 setStatus("An error occurred. Please try again.");
             }
         };
@@ -130,12 +104,10 @@ export default function ResetPasswordPage() {
         });
 
         if (error) {
-            log("Password update failed", error);
             setStatus("Failed to update password. Try again.");
             return;
         }
 
-        log("Password update success", data);
         setDone(true);
         setStatus("Password reset successful! Redirecting...");
 
@@ -189,14 +161,7 @@ export default function ResetPasswordPage() {
                 </ul>
             </div>
 
-            <details className="mt-6">
-                <summary className="cursor-pointer text-sm text-gray-400">
-                    Debug Info
-                </summary>
-                <pre className="text-xs bg-black text-green-400 p-3 rounded mt-2 max-h-64 overflow-auto">
-                    {debug.join("\n")}
-                </pre>
-            </details>
+
         </div>
     );
 }

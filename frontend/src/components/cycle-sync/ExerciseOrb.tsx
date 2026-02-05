@@ -3,15 +3,54 @@
 import { motion } from "framer-motion";
 import { Dumbbell } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface ExerciseOrbProps {
     phase: string;
     data: any;
-    theme: any;
+    theme?: any;
 }
 
 export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
     if (!data) return null;
+
+    // Organic Chromatics Styling
+    const themeMap: Record<string, any> = {
+        "Menstrual": {
+            border: "border-phase-menstrual/20",
+            bg: "bg-phase-menstrual",
+            blob: "bg-phase-menstrual",
+            color: "text-phase-menstrual",
+            primaryHex: "#AF6B6B", // Terra Rose
+            secondaryHex: "#D6A6A6" // Lighter Terra
+        },
+        "Follicular": {
+            border: "border-phase-follicular/20",
+            bg: "bg-phase-follicular",
+            blob: "bg-phase-follicular",
+            color: "text-phase-follicular",
+            primaryHex: "#8DAA9D", // Sage Dew
+            secondaryHex: "#B4CCC3" // Lighter Sage
+        },
+        "Ovulatory": {
+            border: "border-phase-ovulatory/20",
+            bg: "bg-phase-ovulatory",
+            blob: "bg-phase-ovulatory",
+            color: "text-phase-ovulatory",
+            primaryHex: "#D4A25F", // Soleil Ochre
+            secondaryHex: "#EBC695" // Lighter Ochre
+        },
+        "Luteal": {
+            border: "border-phase-luteal/20",
+            bg: "bg-phase-luteal",
+            blob: "bg-phase-luteal",
+            color: "text-phase-luteal",
+            primaryHex: "#7B82A8", // Dusk Slate
+            secondaryHex: "#A5ABC9" // Lighter Slate
+        }
+    };
+
+    const currentTheme = themeMap[phase] || themeMap["Menstrual"];
 
     // Map Phase to Metrics
     const metrics: Record<string, any> = {
@@ -26,14 +65,14 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
     return (
         <section className="relative flex flex-col items-center mb-10">
             {/* Ambient Back Glow */}
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[200px] ${theme.blob || 'bg-rove-peach/20'} opacity-40 blur-[80px] -z-10`} />
+            <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[200px] opacity-40 blur-[80px] -z-10", currentTheme.blob)} />
 
             {/* MAIN ORB CONTAINER - Smaller like Diet */}
             <div className="relative w-44 h-44 md:w-52 md:h-52 flex items-center justify-center mb-6">
 
                 {/* Layer 1: Outer Soft Glow */}
                 <motion.div
-                    className={`absolute inset-[-12px] rounded-full blur-[50px] opacity-30 ${theme.bg || 'bg-amber-200'}`}
+                    className={cn("absolute inset-[-12px] rounded-full blur-[50px] opacity-30", currentTheme.bg)}
                     animate={{ scale: [1, 1.03, 1], opacity: [0.25, 0.4, 0.25] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 />
@@ -42,7 +81,7 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
                 <div
                     className="absolute inset-0 rounded-full"
                     style={{
-                        background: `conic-gradient(from 0deg, ${theme.primary || '#F59E0B'}, ${theme.secondary || '#FBBF24'}, ${theme.primary || '#F59E0B'})`,
+                        background: `conic-gradient(from 0deg, ${currentTheme.primaryHex}, ${currentTheme.secondaryHex}, ${currentTheme.primaryHex})`,
                         padding: '8px',
                     }}
                 >
@@ -55,33 +94,33 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
 
                 {/* Layer 4: Inner Content Glass */}
                 <div className="absolute inset-[16px] rounded-full bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center text-center z-10">
-                    <p className="text-[9px] font-bold tracking-[0.2em] text-rove-stone/70 uppercase mb-1">
+                    <p className="text-[9px] font-bold tracking-[0.2em] text-gray-500 uppercase mb-1">
                         Movement
                     </p>
-                    <h2 className={`text-3xl font-heading ${theme.color || 'text-amber-500'} mb-0.5 leading-none`}>
+                    <h2 className={cn("text-3xl font-heading mb-0.5 leading-none", currentTheme.color)}>
                         {current.time}
                     </h2>
-                    <span className="text-[10px] font-medium text-rove-charcoal/40 uppercase tracking-widest">
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
                         {current.unit}
                     </span>
                 </div>
 
-                {/* BUTTON: "AI Coach" */}
+                {/* BUTTON: "AI Coach" Button */}
                 <div className="absolute -bottom-2 -right-4 flex flex-col items-center gap-1.5 z-20">
                     <button
                         onClick={() => document.getElementById('ai-exercise-builder')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20 hover:shadow-xl transition-all duration-300 ring-4 ring-white/80 group transform hover:-translate-y-1 hover:scale-105"
+                        className={cn("w-12 h-12 md:w-14 md:h-14 rounded-full text-white flex items-center justify-center shadow-lg transition-all duration-300 ring-4 ring-white/80 group transform hover:-translate-y-1 hover:scale-105", currentTheme.bg, "hover:opacity-90")}
                     >
                         <Dumbbell className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform" />
                     </button>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-rove-charcoal/80">AI Coach</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-600">Rove Coach</span>
                 </div>
             </div>
 
             {/* ANIMATED EXERCISE FACTS */}
-            <ExerciseFactsCarousel phase={phase} current={current} theme={theme} />
+            <ExerciseFactsCarousel phase={phase} theme={currentTheme} />
 
-            <p className="text-center text-rove-charcoal/60 text-xs italic mt-6 max-w-xs mx-auto leading-relaxed">
+            <p className="text-center text-gray-500/80 text-xs italic mt-6 max-w-xs mx-auto leading-relaxed">
                 "{data.summary}"
             </p>
         </section>
@@ -89,7 +128,7 @@ export function ExerciseOrb({ phase, data, theme }: ExerciseOrbProps) {
 }
 
 // Animated Exercise Facts Component
-function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; current: any; theme: any }) {
+function ExerciseFactsCarousel({ phase, theme }: { phase: string; theme: any }) {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Phase-specific exercise guidance
@@ -140,18 +179,21 @@ function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; curre
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4 }}
-                className="relative bg-white/60 backdrop-blur-xl rounded-2xl p-5 border border-white/50 shadow-sm"
+                className={cn(
+                    "relative bg-white/60 backdrop-blur-xl rounded-2xl p-5 border shadow-sm transition-all",
+                    theme.border
+                )}
             >
                 <div className="flex items-center gap-4">
                     <div className="text-3xl">{currentFact.icon}</div>
                     <div className="flex-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70 mb-0.5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-0.5">
                             {currentFact.title}
                         </p>
-                        <p className={`text-lg font-heading ${theme.color || 'text-amber-500'} leading-tight`}>
+                        <p className={cn("text-lg font-heading leading-tight", theme.color)}>
                             {currentFact.tip}
                         </p>
-                        <p className="text-xs text-rove-stone/80 mt-1">{currentFact.desc}</p>
+                        <p className="text-xs text-gray-500/80 mt-1">{currentFact.desc}</p>
                     </div>
                 </div>
 
@@ -161,10 +203,10 @@ function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; curre
                         <button
                             key={idx}
                             onClick={() => setCurrentIndex(idx)}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentIndex
-                                ? 'bg-rove-charcoal w-4'
-                                : 'bg-rove-stone/30 hover:bg-rove-stone/50'
-                                }`}
+                            className={cn(
+                                "w-2 h-2 rounded-full transition-all duration-300",
+                                idx === currentIndex ? cn("w-4", theme.bg) : "bg-gray-200 hover:bg-gray-300"
+                            )}
                         />
                     ))}
                 </div>
@@ -172,4 +214,3 @@ function ExerciseFactsCarousel({ phase, current, theme }: { phase: string; curre
         </div>
     );
 }
-

@@ -4,20 +4,30 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Rove Health Brand Colors */
-  --color-rove-red: #DC4C3E;
-  /* Updated to the brighter red used in designs */
-  --color-rove-white: #F5F5F0;
-  --color-rove-green: #8FBC8F;
+  /* Rove Health Brand Colors - Organic Chromatics */
+  --color-phase-menstrual: #AF6B6B;
+  /* Terra Rose */
+  --color-phase-follicular: #8DAA9D;
+  /* Sage Dew */
+  --color-phase-ovulatory: #D4A25F;
+  /* Soleil Ochre */
+  --color-phase-luteal: #7B82A8;
+  /* Dusk Slate */
+
+  --color-white-bone: #FDFCFB;
+  --color-obsidian: #1A1A1A;
+  --color-paper: #FAF9F6;
+
+  /* Legacy aliases to maintain compatibility during migration, can be refactored later */
+  --color-rove-red: #AF6B6B;
+  --color-rove-green: #8DAA9D;
   --color-rove-cream: #F9F9F5;
   --color-rove-stone: #A8A29E;
   --color-rove-charcoal: #2D2420;
-
-  /* Helper Colors */
   --color-rove-peach: #F4DCD6;
 
   --font-sans: var(--font-inter);
-  --font-heading: var(--font-outfit);
+  --font-heading: var(--font-serif);
   --font-serif: var(--font-serif);
 }
 
@@ -27,22 +37,40 @@
   --safe-area-left: env(safe-area-inset-left);
   --safe-area-right: env(safe-area-inset-right);
 
-  --background: #F9F9F5;
-  /* rove-cream */
+  --background: #FAF9F6;
+  /* Warm Paper */
   --foreground: #2D2420;
-  /* rove-charcoal */
 
-  /* ✅ ADDED: RGB Values required for the opacity in blobs to work */
-  --rove-red-rgb: 220, 76, 62;
-  /* #DC4C3E */
+  /* RGB Values for Opacity Maps */
+  --phase-menstrual-rgb: 175, 107, 107;
+  --phase-follicular-rgb: 141, 170, 157;
+  --phase-ovulatory-rgb: 212, 162, 95;
+  --phase-luteal-rgb: 123, 130, 168;
+
+  /* Legacy RGB aliases for blob animations */
+  --rove-red-rgb: 175, 107, 107;
   --rove-peach-rgb: 244, 220, 214;
-  /* #F4DCD6 */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Grain Overlay */
+.grain-overlay::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
 /* --- 🌸 Organic Blob Glows --- */

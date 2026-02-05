@@ -34,25 +34,59 @@ export default function SexualWellnessCard({
         }
     };
 
-    const getPhaseColor = (p: string | null | undefined) => {
-        switch (p) {
-            case "Menstrual": return "rose";
-            case "Follicular": return "teal";
-            case "Ovulatory": return "amber";
-            case "Luteal": return "indigo";
-            default: return "rose";
+    // Organic Chromatics Styling
+    const phase = currentPhase || "Menstrual";
+
+    const themes: Record<string, any> = {
+        "Menstrual": {
+            border: "border-phase-menstrual/20",
+            shadow: "shadow-phase-menstrual/5",
+            iconBg: "bg-phase-menstrual/10",
+            iconColor: "text-phase-menstrual",
+            active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
+            inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5",
+            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
+            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
+        },
+        "Follicular": {
+            border: "border-phase-follicular/20",
+            shadow: "shadow-phase-follicular/5",
+            iconBg: "bg-phase-follicular/10",
+            iconColor: "text-phase-follicular",
+            active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
+            inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5",
+            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
+            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
+        },
+        "Ovulatory": {
+            border: "border-phase-ovulatory/20",
+            shadow: "shadow-phase-ovulatory/5",
+            iconBg: "bg-phase-ovulatory/10",
+            iconColor: "text-phase-ovulatory",
+            active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
+            inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5",
+            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
+            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
+        },
+        "Luteal": {
+            border: "border-phase-luteal/20",
+            shadow: "shadow-phase-luteal/5",
+            iconBg: "bg-phase-luteal/10",
+            iconColor: "text-phase-luteal",
+            active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
+            inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5",
+            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
+            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
         }
     };
 
-    const phaseColor = getPhaseColor(currentPhase);
+    const theme = themes[phase] || themes["Menstrual"];
 
     return (
         <div className={cn(
-            "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl border-2 transition-all space-y-8",
-            phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-                phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-                    phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-                        "border-indigo-100 shadow-indigo-100/20"
+            "bg-white/60 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl transition-all space-y-8",
+            theme.border,
+            theme.shadow
         )}>
             {/* Header */}
             <div className="flex items-center gap-3">
@@ -63,19 +97,10 @@ export default function SexualWellnessCard({
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        phaseColor === "rose" ? "bg-rose-100" :
-                            phaseColor === "teal" ? "bg-teal-100" :
-                                phaseColor === "amber" ? "bg-amber-100" :
-                                    "bg-indigo-100"
+                        theme.iconBg
                     )}
                 >
-                    <Flame className={cn(
-                        "w-5 h-5 fill-current",
-                        phaseColor === "rose" ? "text-rose-500" :
-                            phaseColor === "teal" ? "text-teal-500" :
-                                phaseColor === "amber" ? "text-amber-500" :
-                                    "text-indigo-500"
-                    )} />
+                    <Flame className={cn("w-5 h-5 fill-current", theme.iconColor)} />
                 </motion.div>
                 <div>
                     <h3 className="text-base font-heading font-semibold text-gray-900">Sexual Wellness</h3>
@@ -86,36 +111,24 @@ export default function SexualWellnessCard({
             {/* 1. Sexual Activity */}
             <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-1">
-                    <Heart className={cn(
-                        "w-3.5 h-3.5",
-                        phaseColor === "rose" ? "text-rose-400" :
-                            phaseColor === "teal" ? "text-teal-400" :
-                                phaseColor === "amber" ? "text-amber-400" :
-                                    "text-indigo-400"
-                    )} />
+                    <Heart className={cn("w-3.5 h-3.5", theme.iconColor)} />
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Sexual Activity</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {SEX_ACTIVITY_OPTIONS.map((m) => {
                         const isActive = selectedSexActivity.includes(m.label);
                         let activeClass = "";
-                        let inactiveClass = cn(
-                            "bg-white text-gray-600 ring-1 ring-gray-100 hover:bg-gray-50/30",
-                            phaseColor === "rose" ? "border-rose-50" :
-                                phaseColor === "teal" ? "border-teal-50" :
-                                    phaseColor === "amber" ? "border-amber-50" :
-                                        "border-indigo-50"
-                        );
 
+                        // Use consistent phase color unless negative type
                         switch (m.type) {
                             case "positive":
-                                activeClass = "bg-rose-100 text-rose-800 border-rose-300 shadow-sm";
+                                activeClass = theme.active; // Use themed active color
                                 break;
                             case "negative":
-                                activeClass = "bg-red-100 text-red-800 border-red-300 shadow-sm";
+                                activeClass = theme.activeNegative;
                                 break;
                             default:
-                                activeClass = "bg-blue-100 text-blue-800 border-blue-300 shadow-sm";
+                                activeClass = theme.activeBlue;
                         }
 
                         return (
@@ -123,8 +136,8 @@ export default function SexualWellnessCard({
                                 key={m.label}
                                 onClick={() => toggleActivity(m.label)}
                                 className={cn(
-                                    "px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 border-2",
-                                    isActive ? activeClass : inactiveClass
+                                    "px-4 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 border",
+                                    isActive ? activeClass : theme.inactive
                                 )}
                             >
                                 {isActive && <Check className="w-3 h-3" />}
@@ -138,13 +151,7 @@ export default function SexualWellnessCard({
             {/* 2. Contraception */}
             <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-1">
-                    <Shield className={cn(
-                        "w-3.5 h-3.5",
-                        phaseColor === "rose" ? "text-rose-400" :
-                            phaseColor === "teal" ? "text-teal-400" :
-                                phaseColor === "amber" ? "text-amber-400" :
-                                    "text-blue-400"
-                    )} />
+                    <Shield className={cn("w-3.5 h-3.5", theme.iconColor)} />
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Contraception & Protection</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -155,13 +162,8 @@ export default function SexualWellnessCard({
                                 key={label}
                                 onClick={() => toggleContraception(label)}
                                 className={cn(
-                                    "px-3 py-1.5 rounded-xl text-xs font-medium transition-all border-2",
-                                    isActive
-                                        ? phaseColor === "rose" ? "bg-rose-500 text-white border-rose-600 shadow-md" :
-                                            phaseColor === "teal" ? "bg-teal-500 text-white border-teal-600 shadow-md" :
-                                                phaseColor === "amber" ? "bg-amber-500 text-white border-amber-600 shadow-md" :
-                                                    "bg-indigo-500 text-white border-indigo-600 shadow-md"
-                                        : "bg-white border-gray-100 text-gray-500 hover:border-gray-200"
+                                    "px-3 py-1.5 rounded-xl text-xs font-medium transition-all border",
+                                    isActive ? theme.active : theme.inactive
                                 )}
                             >
                                 {label}

@@ -9,25 +9,47 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps) {
-  const getPhaseColor = (p: string | null | undefined) => {
-    switch (p) {
-      case "Menstrual": return "rose";
-      case "Follicular": return "teal";
-      case "Ovulatory": return "amber";
-      case "Luteal": return "indigo";
-      default: return "rose";
+  // Organic Chromatics Styling
+  const phase = currentPhase || "Menstrual";
+
+  const themes: Record<string, any> = {
+    "Menstrual": {
+      border: "border-phase-menstrual/20",
+      shadow: "shadow-phase-menstrual/5",
+      iconBg: "bg-phase-menstrual/10",
+      iconColor: "text-phase-menstrual",
+      inputBorder: "border-phase-menstrual/20 focus:ring-phase-menstrual/30"
+    },
+    "Follicular": {
+      border: "border-phase-follicular/20",
+      shadow: "shadow-phase-follicular/5",
+      iconBg: "bg-phase-follicular/10",
+      iconColor: "text-phase-follicular",
+      inputBorder: "border-phase-follicular/20 focus:ring-phase-follicular/30"
+    },
+    "Ovulatory": {
+      border: "border-phase-ovulatory/20",
+      shadow: "shadow-phase-ovulatory/5",
+      iconBg: "bg-phase-ovulatory/10",
+      iconColor: "text-phase-ovulatory",
+      inputBorder: "border-phase-ovulatory/20 focus:ring-phase-ovulatory/30"
+    },
+    "Luteal": {
+      border: "border-phase-luteal/20",
+      shadow: "shadow-phase-luteal/5",
+      iconBg: "bg-phase-luteal/10",
+      iconColor: "text-phase-luteal",
+      inputBorder: "border-phase-luteal/20 focus:ring-phase-luteal/30"
     }
   };
 
-  const phaseColor = getPhaseColor(currentPhase);
+  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
-      "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 transition-all",
-      phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-        phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-          phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-            "border-indigo-100 shadow-indigo-100/20"
+      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      theme.border,
+      theme.shadow
     )}>
       <div className="flex items-center gap-3 mb-4">
         <motion.div
@@ -38,19 +60,10 @@ export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps)
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
-            phaseColor === "rose" ? "bg-rose-100" :
-              phaseColor === "teal" ? "bg-teal-100" :
-                phaseColor === "amber" ? "bg-amber-100" :
-                  "bg-indigo-100"
+            theme.iconBg
           )}
         >
-          <PenLine className={cn(
-            "w-4 h-4",
-            phaseColor === "rose" ? "text-rose-500" :
-              phaseColor === "teal" ? "text-teal-500" :
-                phaseColor === "amber" ? "text-amber-500" :
-                  "text-indigo-500"
-          )} />
+          <PenLine className={cn("w-4 h-4", theme.iconColor)} />
         </motion.div>
         <h3 className="text-base font-heading font-semibold text-gray-900">Note</h3>
       </div>
@@ -60,10 +73,7 @@ export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps)
         placeholder="How are you feeling today?"
         className={cn(
           "w-full bg-white/50 border rounded-2xl p-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all resize-none h-32",
-          phaseColor === "rose" ? "border-rose-100 focus:ring-rose-200" :
-            phaseColor === "teal" ? "border-teal-100 focus:ring-teal-200" :
-              phaseColor === "amber" ? "border-amber-100 focus:ring-amber-200" :
-                "border-indigo-100 focus:ring-indigo-200"
+          theme.inputBorder
         )}
       />
       <div className="mt-2 text-xs text-gray-400 text-right">{note.length} characters</div>

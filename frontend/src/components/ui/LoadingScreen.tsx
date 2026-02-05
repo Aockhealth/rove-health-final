@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 const THOUGHT_FACTS = [
     "Did you know? Your intuition peaks during your menstrual phase.",
@@ -20,9 +21,7 @@ export default function LoadingScreen() {
     const [fact, setFact] = useState("");
 
     useEffect(() => {
-        // Pick a random fact on mount
-        const randomFact = THOUGHT_FACTS[Math.floor(Math.random() * THOUGHT_FACTS.length)];
-        setFact(randomFact);
+        setFact(THOUGHT_FACTS[Math.floor(Math.random() * THOUGHT_FACTS.length)]);
     }, []);
 
     return (
@@ -53,12 +52,13 @@ export default function LoadingScreen() {
                     <motion.div
                         animate={{ scale: [1, 1.05, 1] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-full h-full"
+                        className="w-full h-full relative"
                     >
-                        <img
+                        <Image
                             src="/assets/rove-logo.jpg"
                             alt="Rove Health"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                         />
                     </motion.div>
                 </motion.div>

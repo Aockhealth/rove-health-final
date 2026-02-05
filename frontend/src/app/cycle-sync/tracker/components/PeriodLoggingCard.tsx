@@ -73,15 +73,15 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
     const [isPending] = useTransition();
     const [showTutorial, setShowTutorial] = useState(false);
 
-    // Color Palette
+    // Color Palette - Visual Identity 2.0
     const colors = {
-        menstrual: "#fb7185",
-        follicular: "#2dd4bf",
-        ovulatory: "#fbbf24",
-        luteal: "#818cf8",
+        menstrual: "#AF6B6B", // Terra Rose
+        follicular: "#8DAA9D", // Sage Dew
+        ovulatory: "#D4A25F", // Soleil Ochre
+        luteal: "#7B82A8", // Dusk Slate
         today: "#1C1C1E",
-        text: "#6B7280",
-        neutralGray: "#4B5563",
+        text: "#4B5563",
+        neutralGray: "#9CA3AF",
         shadow: "rgba(0,0,0,0.06)",
     };
 
@@ -98,8 +98,6 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
             let first = startStr;
 
             // Look backwards for contiguous period days
-            // We can optimize this by checking map directly without loop limit if needed,
-            // but for now, just iterating back is safe enough given the data size.
             while (true) {
                 cur.setDate(cur.getDate() - 1);
                 const prevStr = formatDate(cur);
@@ -211,7 +209,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
         };
     }, [getDayInCycle, cycleSettings.cycle_length_days]);
 
-    // Pre-compute phases for all calendar days (prevents redundant calculations)
+    // Pre-compute phases for all calendar days
     const phaseMap = useMemo(() => {
         const map: Record<string, Phase | null> = {};
         calendarDays.forEach(dayItem => {
@@ -256,25 +254,14 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
         else onSelectDate(date);
     };
 
-    const getPhaseTheme = (p: string | null | undefined) => {
-        switch (p) {
-            case "Menstrual":
-                return "border-[#fb7185]/40 shadow-xl shadow-[#fb7185]/10";
-            case "Follicular":
-                return "border-[#2dd4bf]/40 shadow-xl shadow-[#2dd4bf]/10";
-            case "Ovulatory":
-                return "border-[#fbbf24]/40 shadow-xl shadow-[#fbbf24]/10";
-            case "Luteal":
-                return "border-[#818cf8]/40 shadow-xl shadow-[#818cf8]/10";
-            default:
-                return "border-gray-100 shadow-sm";
-        }
-    };
-
     return (
         <div className={cn(
-            "bg-white rounded-[2.5rem] p-8 border transition-all duration-500 mb-6",
-            getPhaseTheme(currentPhase)
+            "bg-white/60 backdrop-blur-xl rounded-[2.5rem] p-8 border border-white/40 shadow-xl shadow-stone-200/40 transition-all duration-500 mb-6",
+            // Dynamic glow based on phase
+            currentPhase === "Menstrual" && "shadow-[0_20px_40px_rgba(175,107,107,0.1)]",
+            currentPhase === "Follicular" && "shadow-[0_20px_40px_rgba(141,170,157,0.1)]",
+            currentPhase === "Ovulatory" && "shadow-[0_20px_40px_rgba(212,162,95,0.1)]",
+            currentPhase === "Luteal" && "shadow-[0_20px_40px_rgba(123,130,168,0.1)]"
         )}>
             {/* Top info card (sleeker version) */}
             {!isPeriodLoggingMode && (
@@ -304,21 +291,21 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
 
             {/* Logging mode banner */}
             {isPeriodLoggingMode && (
-                <div className="mb-8 p-6 bg-rose-50/50 rounded-3xl border border-rose-100 flex items-center justify-between flex-wrap gap-4">
+                <div className="mb-8 p-6 bg-phase-menstrual/5 rounded-3xl border border-phase-menstrual/10 flex items-center justify-between flex-wrap gap-4">
                     <div>
-                        <h3 className="text-sm font-heading font-semibold text-rose-900">Select period dates</h3>
-                        <p className="text-xs text-rose-600 mt-0.5">Tap days to mark/unmark bleeding</p>
+                        <h3 className="text-sm font-heading font-semibold text-phase-menstrual">Select period dates</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Tap days to mark/unmark bleeding</p>
                     </div>
                     <div className="flex gap-2">
                         <button
                             onClick={onEndPeriod}
-                            className="px-4 py-2 bg-white text-rose-500 border border-rose-200 hover:bg-rose-50 text-xs font-semibold rounded-full transition-colors"
+                            className="px-4 py-2 bg-white text-phase-menstrual border border-phase-menstrual/20 hover:bg-rose-50 text-xs font-semibold rounded-full transition-colors"
                         >
                             End Period Here
                         </button>
                         <button
                             onClick={onExitPeriodLogging}
-                            className="px-6 py-2 bg-[#fb7185] hover:bg-[#fb7185]/90 text-white text-sm font-medium rounded-full transition-colors shadow-lg shadow-rose-200"
+                            className="px-6 py-2 bg-phase-menstrual hover:bg-phase-menstrual/90 text-white text-sm font-medium rounded-full transition-colors shadow-lg shadow-phase-menstrual/20"
                         >
                             Done
                         </button>
@@ -334,17 +321,17 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                     </h3>
                     <button
                         onClick={() => setShowTutorial(true)}
-                        className="p-1 hover:text-rose-500 transition-colors"
+                        className="p-1 hover:text-phase-menstrual transition-colors"
                         title="How to use"
                     >
-                        <HelpCircle className="w-4 h-4 text-gray-400 hover:text-rose-500" />
+                        <HelpCircle className="w-4 h-4 text-gray-400 hover:text-phase-menstrual" />
                     </button>
                 </div>
                 <div className="flex gap-4">
-                    <button onClick={onPrevMonth} className="p-1 hover:text-rose-500 transition-colors">
+                    <button onClick={onPrevMonth} className="p-1 hover:text-phase-menstrual transition-colors">
                         <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <button onClick={onNextMonth} className="p-1 hover:text-rose-500 transition-colors">
+                    <button onClick={onNextMonth} className="p-1 hover:text-phase-menstrual transition-colors">
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
@@ -383,37 +370,23 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             const phase = phaseMap[dateStr] ?? null;
                             const fertile = isFertileDay(date);
 
-                            // Styling Logic based on rules
-                            let bgColor = "transparent";
-                            let textColor = colors.neutralGray;
-                            let shadow = "none";
-                            let ring = "none";
+                            // Base colors
+                            let textColor = colors.text;
+                            if (disabled) textColor = "#D1D5DB"; // gray-300
 
-                            if (disabled) textColor = "#D1D5DB";
+                            // Phase Colors for Indicators
+                            let phaseColor = "transparent";
+                            if (loggedPeriod) phaseColor = colors.menstrual;
+                            else if (phase === "Menstrual") phaseColor = colors.menstrual;
+                            else if (phase === "Ovulatory") phaseColor = colors.ovulatory;
+                            else if (phase === "Follicular") phaseColor = colors.follicular;
+                            else if (phase === "Luteal") phaseColor = colors.luteal;
 
-                            if (isPeriodLoggingMode && loggedPeriod) {
-                                bgColor = colors.menstrual;
-                                textColor = "white";
-                            } else if (loggedPeriod || phase === "Menstrual") {
-                                bgColor = "rgba(251, 113, 133, 0.2)"; // rose-400 @ 20%
-                            } else if (phase === "Ovulatory") {
-                                bgColor = "rgba(251, 191, 36, 0.2)"; // amber-400 @ 20%
-                            } else if (phase === "Follicular") {
-                                bgColor = "rgba(45, 212, 191, 0.2)"; // teal-400 @ 20%
-                            } else if (phase === "Luteal") {
-                                bgColor = "rgba(129, 140, 248, 0.2)"; // indigo-400 @ 20%
-                            } else if (fertile) {
-                                bgColor = "rgba(242, 169, 0, 0.1)"; // subtler for fertile if not in phase
-                            }
+                            // Background Logic via classes or inline
+                            // We want "Orb" logic at 20% scale for active/selected
+                            // And "Solid Blocks" replaced by Vertical Bars for period
 
-                            if (selected) {
-                                shadow = "0 4px 10px rgba(0,0,0,0.06)";
-                                bgColor = bgColor === "transparent" ? "rgba(249, 250, 251, 1)" : bgColor;
-                            }
-
-                            if (today) {
-                                ring = `inset 0 0 0 2px ${colors.today}`;
-                            }
+                            const isPhaseIndicated = !loggedPeriod && phase && !isPeriodLoggingMode;
 
                             return (
                                 <button
@@ -424,35 +397,65 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                                     style={{ minWidth: '44px', minHeight: '44px' }}
                                 >
                                     <motion.div
-                                        className="w-full h-full rounded-2xl flex flex-col items-center justify-center relative transition-all duration-200"
+                                        className={cn(
+                                            "w-full h-full rounded-2xl flex flex-col items-center justify-center relative transition-all duration-300",
+                                            selected ? "shadow-lg scale-100" : "scale-[0.95]"
+                                        )}
                                         style={{
-                                            backgroundColor: bgColor,
-                                            boxShadow: `${shadow}, ${ring}`,
+                                            // Orb logic for selected: glass + gradient
+                                            background: selected
+                                                ? `linear-gradient(135deg, white, #FAF9F6)`
+                                                : isPhaseIndicated
+                                                    ? `${phaseColor}15` // 10% opacity hex
+                                                    : "transparent",
+                                            boxShadow: selected
+                                                ? "0 8px 16px -4px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.8)"
+                                                : isPhaseIndicated
+                                                    ? `inset 0 2px 6px ${phaseColor}20` // Inner glow sphere effect
+                                                    : "none",
+                                            border: today ? `2px solid ${colors.today}` : "1px solid transparent"
                                         }}
                                     >
+
+                                        {/* Number */}
                                         <span
                                             className={cn(
-                                                "text-sm font-semibold",
-                                                loggedPeriod && isPeriodLoggingMode ? "text-white" : ""
+                                                "text-sm font-semibold relative z-10",
+                                                loggedPeriod ? "font-bold text-gray-900" : ""
                                             )}
-                                            style={{ color: (loggedPeriod && isPeriodLoggingMode) ? "white" : textColor }}
+                                            style={{ color: loggedPeriod ? colors.menstrual : textColor }}
                                         >
                                             {date.getDate()}
                                         </span>
 
-                                        {/* Indicators: Meaning -> background or underline/dot */}
-                                        {(loggedPeriod || phase === "Menstrual") && !isPeriodLoggingMode && (
+                                        {/* Bleed Day: Vertical Bar */}
+                                        {loggedPeriod && (
                                             <div
-                                                className="absolute bottom-1.5 w-1 h-1 rounded-full"
+                                                className="absolute z-0 w-1 h-5 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20"
                                                 style={{ backgroundColor: colors.menstrual }}
                                             />
                                         )}
+                                        {loggedPeriod && (
+                                            <div className="absolute -bottom-1 w-1 h-3 rounded-full bg-phase-menstrual" />
+                                        )}
+
+                                        {/* Phase Indicator Dot (for predicted days) */}
+                                        {isPhaseIndicated && (
+                                            <div
+                                                className="absolute bottom-1.5 w-1 h-1 rounded-full opacity-60"
+                                                style={{ backgroundColor: phaseColor }}
+                                            />
+                                        )}
+
+                                        {/* Fertile Dot (if not period) */}
                                         {fertile && !loggedPeriod && phase !== "Menstrual" && (
                                             <div
-                                                className="absolute bottom-1.5 w-1 h-1 rounded-full"
+                                                className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full"
                                                 style={{ backgroundColor: colors.ovulatory }}
                                             />
                                         )}
+
+                                        {/* Selected State Overlay/Ring handled by parent div styles */}
                                     </motion.div>
                                 </button>
                             );
@@ -471,7 +474,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                 ].map((phase) => (
                     <div key={phase.label} className="flex items-center gap-2">
                         <div
-                            className="w-2 h-2 rounded-full"
+                            className="w-2 h-2 rounded-full shadow-sm"
                             style={{ backgroundColor: phase.color }}
                         />
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
@@ -479,6 +482,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                         </span>
                     </div>
                 ))}
+
                 <div className="flex items-center gap-3 border-l border-gray-100 pl-6 ml-2">
                     <div className="flex flex-col items-center justify-center">
                         <span className="text-[10px] text-gray-400 font-bold mb-0.5">14</span>
@@ -603,7 +607,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 });
 

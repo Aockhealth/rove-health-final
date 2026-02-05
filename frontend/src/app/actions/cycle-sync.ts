@@ -84,7 +84,9 @@ Your goal is to help the user understand how their cycle phase explains their sp
 ### HOW TO WRITE
 • Explain *why* they feel this way based on ${phase} hormones.
 • Use warm, reassuring language.
-• Avoid medical jargon.
+• Avoid medical jargon where possible.
+• You may use the "Inner Seasons" metaphor gently as an analogy (e.g., "Menstrual Phase is like your 'Inner Winter' - a time to rest and reset").
+• Do NOT use the season name as the primary label; always link it back to the cycle phase.
 
 ### OUTPUT FORMAT (JSON)
 {

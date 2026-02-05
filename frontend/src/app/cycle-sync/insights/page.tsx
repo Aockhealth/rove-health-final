@@ -23,24 +23,24 @@ import LoadingScreen from "@/components/ui/LoadingScreen";
 // --- PHASE THEMES ---
 const phaseThemes: Record<string, any> = {
   Menstrual: {
-    color: "text-rose-600",
-    pageGradient: "from-rose-50/50 via-white to-white",
-    blob: "bg-rose-300",
+    color: "text-phase-menstrual",
+    pageGradient: "from-phase-menstrual/5 via-white to-white",
+    blob: "bg-phase-menstrual/20",
   },
   Follicular: {
-    color: "text-teal-600",
-    pageGradient: "from-teal-50/50 via-white to-white",
-    blob: "bg-teal-300",
+    color: "text-phase-follicular",
+    pageGradient: "from-phase-follicular/5 via-white to-white",
+    blob: "bg-phase-follicular/20",
   },
   Ovulatory: {
-    color: "text-amber-600",
-    pageGradient: "from-amber-50/50 via-white to-white",
-    blob: "bg-amber-300",
+    color: "text-phase-ovulatory",
+    pageGradient: "from-phase-ovulatory/5 via-white to-white",
+    blob: "bg-phase-ovulatory/20",
   },
   Luteal: {
-    color: "text-indigo-600",
-    pageGradient: "from-indigo-50/50 via-white to-white",
-    blob: "bg-indigo-300",
+    color: "text-phase-luteal",
+    pageGradient: "from-phase-luteal/5 via-white to-white",
+    blob: "bg-phase-luteal/20",
   },
 };
 

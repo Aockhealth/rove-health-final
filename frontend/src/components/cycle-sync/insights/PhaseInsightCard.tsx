@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Sparkles, Flame, Moon, Brain, Leaf, Sun } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface PhaseInsightCardProps {
   phase: "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
@@ -89,30 +89,41 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
 
         {/* Floating particles effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className={cn("absolute w-1 h-1 rounded-full", theme.blob.replace("bg-", "bg-opacity-40 bg-"))}
-              initial={{
-                x: Math.random() * 100 + "%",
-                y: "100%",
-              }}
-              animate={{
-                y: "-20%",
-                x: [
-                  `${Math.random() * 100}%`,
-                  `${Math.random() * 100}%`,
-                  `${Math.random() * 100}%`,
-                ],
-              }}
-              transition={{
-                duration: Math.random() * 10 + 15,
-                repeat: Infinity,
-                ease: "linear",
-                delay: i * 0.5,
-              }}
-            />
-          ))}
+          {useMemo(() => [...Array(6)].map((_, i) => {
+            // These will still cause hydration warnings if x/y differ between server/client
+            // But since they are inside a motion.div that animates on mount, we can often ignore
+            // or use a mounting guard.
+            const randomX = Math.random() * 100;
+            const randomX1 = Math.random() * 100;
+            const randomX2 = Math.random() * 100;
+            const randomX3 = Math.random() * 100;
+            const duration = Math.random() * 10 + 15;
+
+            return (
+              <motion.div
+                key={i}
+                className={cn("absolute w-1 h-1 rounded-full", theme.blob.replace("bg-", "bg-opacity-40 bg-"))}
+                initial={{
+                  x: randomX + "%",
+                  y: "100%",
+                }}
+                animate={{
+                  y: "-20%",
+                  x: [
+                    `${randomX1}%`,
+                    `${randomX2}%`,
+                    `${randomX3}%`,
+                  ],
+                }}
+                transition={{
+                  duration: duration,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: i * 0.5,
+                }}
+              />
+            );
+          }), [theme.blob])}
         </div>
 
         <div className="relative z-10 flex flex-col gap-5 h-full">

@@ -201,7 +201,7 @@ function calculateExerciseCalories(exercise: { type: string; duration: number; i
     return (met * weight * exercise.duration) / 60;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: CORS_HEADERS });
     }
@@ -273,7 +273,7 @@ serve(async (req) => {
         const macroRatios = PHASE_MACROS[phase] || PHASE_MACROS['Follicular'];
 
         // Adjust for goal
-        let adjustedRatios = { ...macroRatios };
+        const adjustedRatios = { ...macroRatios };
         if (goal === 'muscle_gain') {
             adjustedRatios.protein = Math.min(0.35, adjustedRatios.protein + 0.05);
             adjustedRatios.carbs = adjustedRatios.carbs - 0.05;
@@ -366,10 +366,10 @@ serve(async (req) => {
             }
         );
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error in diet-plan-generator:', error);
         return new Response(
-            JSON.stringify({ error: 'Internal server error' }),
+            JSON.stringify({ error: error.message || 'Internal server error' }),
             { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
         );
     }

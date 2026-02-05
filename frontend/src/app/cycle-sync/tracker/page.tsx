@@ -732,13 +732,13 @@ export default function TrackerPageRedesigned() {
     const getPhaseDot = (p: Phase) => {
         switch (p) {
             case "Menstrual":
-                return "bg-[#fb7185]";
+                return "bg-phase-menstrual shadow-[0_0_10px_rgba(175,107,107,0.4)]";
             case "Follicular":
-                return "bg-[#2dd4bf]";
+                return "bg-phase-follicular shadow-[0_0_10px_rgba(141,170,157,0.4)]";
             case "Ovulatory":
-                return "bg-[#fbbf24]";
+                return "bg-phase-ovulatory shadow-[0_0_10px_rgba(212,162,95,0.4)]";
             case "Luteal":
-                return "bg-[#818cf8]";
+                return "bg-phase-luteal shadow-[0_0_10px_rgba(123,130,168,0.4)]";
             default:
                 return "bg-gray-400";
         }
@@ -747,13 +747,13 @@ export default function TrackerPageRedesigned() {
     const phasePill = (p: Phase) => {
         switch (p) {
             case "Menstrual":
-                return "bg-[#fb7185]/10 text-[#fb7185] border-[#fb7185]/20";
+                return "bg-phase-menstrual/10 text-phase-menstrual border-phase-menstrual/20";
             case "Follicular":
-                return "bg-[#2dd4bf]/10 text-[#2dd4bf] border-[#2dd4bf]/20";
+                return "bg-phase-follicular/10 text-phase-follicular border-phase-follicular/20";
             case "Ovulatory":
-                return "bg-[#fbbf24]/10 text-[#fbbf24] border-[#fbbf24]/20";
+                return "bg-phase-ovulatory/10 text-phase-ovulatory border-phase-ovulatory/20";
             case "Luteal":
-                return "bg-[#818cf8]/10 text-[#818cf8] border-[#818cf8]/20";
+                return "bg-phase-luteal/10 text-phase-luteal border-phase-luteal/20";
             default:
                 return "bg-gray-50 text-gray-700 border-gray-100";
         }
@@ -762,13 +762,13 @@ export default function TrackerPageRedesigned() {
     const getPhaseTheme = (p: Phase) => {
         switch (p) {
             case "Menstrual":
-                return "border-[#fb7185]/30 shadow-lg shadow-[#fb7185]/10";
+                return "border-phase-menstrual/30 shadow-lg shadow-phase-menstrual/10";
             case "Follicular":
-                return "border-[#2dd4bf]/30 shadow-lg shadow-[#2dd4bf]/10";
+                return "border-phase-follicular/30 shadow-lg shadow-phase-follicular/10";
             case "Ovulatory":
-                return "border-[#fbbf24]/30 shadow-lg shadow-[#fbbf24]/10";
+                return "border-phase-ovulatory/30 shadow-lg shadow-phase-ovulatory/10";
             case "Luteal":
-                return "border-[#818cf8]/30 shadow-lg shadow-[#818cf8]/10";
+                return "border-phase-luteal/30 shadow-lg shadow-phase-luteal/10";
             default:
                 return "border-gray-100 shadow-sm";
         }
@@ -782,7 +782,7 @@ export default function TrackerPageRedesigned() {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-rose-50/30 via-white to-orange-50/20">
+        <div className="min-h-screen bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
             <Toaster position="top-center" richColors />
 
             {/* Header */}
@@ -932,7 +932,7 @@ export default function TrackerPageRedesigned() {
                         <button
                             onClick={handleSave}
                             disabled={isPending || isFutureDate(selectedDate)}
-                            className="w-full py-4 bg-[#fb7185] hover:bg-[#fb7185]/90 text-white text-base font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-rose-200/50 flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-phase-menstrual hover:bg-phase-menstrual/90 text-white text-base font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-phase-menstrual/30 flex items-center justify-center gap-2"
                         >
                             {isPending ? (
                                 <>

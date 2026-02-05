@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -43,8 +42,23 @@ const DAILY_FLOW_CONTENT = {
     "Luteal": { fuel: [{ label: "Complex Carbs", icon: "cookie" }], move: [{ label: "Pilates", icon: "layout" }], rituals: [{ label: "Organize", icon: "list" }] }
 };
 
+// --- FETCH HELPER ---
+async function fetchCategory(supabase: any, currentPhase: string, category: string, userTags: string[] = []) {
+    let query = supabase
+        .from("content_library")
+        .select("label:title, icon, tags")
+        .eq("category", category)
+        .eq("phase", currentPhase);
 
-serve(async (req) => {
+    if (userTags && userTags.length > 0) {
+        query = query.overlaps("tags", userTags);
+    }
+
+    const { data } = await query.limit(15);
+    return data || [];
+}
+
+serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
@@ -54,9 +68,14 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
-        const { user_id, weight_kg, height_cm, activity_level, fitness_goal } = await req.json();
+        const { weight_kg, height_cm, activity_level, fitness_goal } = await req.json();
 
-        if (!user_id) throw new Error("Missing user_id");
+        // Get user from auth context (verify JWT)
+        const authHeader = req.headers.get('Authorization')!;
+        const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+
+        if (authError || !user) throw new Error("Unauthorized");
+        const user_id = user.id;
 
         // 1. Calculate Cycle Phase 
         const { data: cycleData, error: cycleError } = await supabase.functions.invoke('cycle-intelligence', {
@@ -88,33 +107,20 @@ serve(async (req) => {
             .eq("user_id", user_id)
             .maybeSingle();
 
-        // 3. FETCH DYNAMIC CONTENT 
-        async function fetchCategory(category: string, userTags: string[] = []) {
-            let query = supabase
-                .from("content_library")
-                .select("label:title, icon, tags")
-                .eq("category", category)
-                .eq("phase", currentPhase);
-
-            if (userTags && userTags.length > 0) {
-                query = query.overlaps("tags", userTags);
-            }
-
-            const { data } = await query.limit(15);
-            return data || [];
-        }
-
         const [fuelDocs, moveDocs, ritualDocs] = await Promise.all([
-            fetchCategory("fuel", [] as string[]),
-            fetchCategory("move", [] as string[]),
-            fetchCategory("ritual", [] as string[])
+            fetchCategory(supabase, currentPhase, "fuel", [] as string[]),
+            fetchCategory(supabase, currentPhase, "move", [] as string[]),
+            fetchCategory(supabase, currentPhase, "ritual", [] as string[])
         ]);
+
+        const PHASE_KEY = currentPhase as keyof typeof PHASE_SNAPSHOTS;
+        const FLOW_KEY = currentPhase as keyof typeof DAILY_FLOW_CONTENT;
 
         // Fallback to static
         const dailyFlow = {
-            fuel: fuelDocs.length > 0 ? fuelDocs : DAILY_FLOW_CONTENT[currentPhase]?.fuel || [],
-            move: moveDocs.length > 0 ? moveDocs : DAILY_FLOW_CONTENT[currentPhase]?.move || [],
-            rituals: ritualDocs.length > 0 ? ritualDocs : DAILY_FLOW_CONTENT[currentPhase]?.rituals || []
+            fuel: fuelDocs.length > 0 ? fuelDocs : DAILY_FLOW_CONTENT[FLOW_KEY]?.fuel || [],
+            move: moveDocs.length > 0 ? moveDocs : DAILY_FLOW_CONTENT[FLOW_KEY]?.move || [],
+            rituals: ritualDocs.length > 0 ? ritualDocs : DAILY_FLOW_CONTENT[FLOW_KEY]?.rituals || []
         };
 
         // --- SMART CALORIE & MACRO CALCULATION ---
@@ -133,7 +139,7 @@ serve(async (req) => {
                 ? (new Date().getFullYear() - new Date(profile.birth_date).getFullYear())
                 : 30;
 
-            let bmr = (10 * userWeight) + (6.25 * userHeight) - (5 * age) - 161;
+            const bmr = (10 * userWeight) + (6.25 * userHeight) - (5 * age) - 161;
 
             // B. TDEE (Activity Multiplier)
             const activityMultipliers: Record<string, number> = {
@@ -210,7 +216,7 @@ serve(async (req) => {
         const dashboardResponse = {
             cycle: cycleData,
             phaseContent: {
-                snapshots: PHASE_SNAPSHOTS[currentPhase],
+                snapshots: PHASE_SNAPSHOTS[PHASE_KEY],
                 dailyFlow: dailyFlow,
                 theme: {
                     phase: currentPhase
@@ -224,7 +230,7 @@ serve(async (req) => {
                     macros: macros, // Keep percentages for backwards compat?
                     macros_grams: macroGrams,
                     ideal_weight: idealWeight,
-                    phaseNutritionFocus: PHASE_SNAPSHOTS[currentPhase]?.hormones?.desc || "Balanced nutrition"
+                    phaseNutritionFocus: PHASE_SNAPSHOTS[PHASE_KEY]?.hormones?.desc || "Balanced nutrition"
                 },
                 workout: { status: "generated", summary: "Restorative yoga recommended." }
             }
@@ -234,7 +240,7 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
+    } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

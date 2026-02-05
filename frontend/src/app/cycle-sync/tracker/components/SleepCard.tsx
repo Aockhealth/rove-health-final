@@ -32,25 +32,63 @@ export default function SleepCard({
     }
   };
 
-  const getPhaseColor = (p: string | null | undefined) => {
-    switch (p) {
-      case "Menstrual": return "rose";
-      case "Follicular": return "teal";
-      case "Ovulatory": return "amber";
-      case "Luteal": return "indigo";
-      default: return "rose";
+  // Organic Chromatics Styling
+  const phase = currentPhase || "Menstrual";
+
+  const themes: Record<string, any> = {
+    "Menstrual": {
+      border: "border-phase-menstrual/20",
+      shadow: "shadow-phase-menstrual/5",
+      iconBg: "bg-phase-menstrual/10",
+      iconColor: "text-phase-menstrual",
+      active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
+      inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5",
+      inputBorder: "border-phase-menstrual/30",
+      pillText: "text-phase-menstrual",
+      pillBorder: "border-phase-menstrual/20"
+    },
+    "Follicular": {
+      border: "border-phase-follicular/20",
+      shadow: "shadow-phase-follicular/5",
+      iconBg: "bg-phase-follicular/10",
+      iconColor: "text-phase-follicular",
+      active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
+      inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5",
+      inputBorder: "border-phase-follicular/30",
+      pillText: "text-phase-follicular",
+      pillBorder: "border-phase-follicular/20"
+    },
+    "Ovulatory": {
+      border: "border-phase-ovulatory/20",
+      shadow: "shadow-phase-ovulatory/5",
+      iconBg: "bg-phase-ovulatory/10",
+      iconColor: "text-phase-ovulatory",
+      active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
+      inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5",
+      inputBorder: "border-phase-ovulatory/30",
+      pillText: "text-phase-ovulatory",
+      pillBorder: "border-phase-ovulatory/20"
+    },
+    "Luteal": {
+      border: "border-phase-luteal/20",
+      shadow: "shadow-phase-luteal/5",
+      iconBg: "bg-phase-luteal/10",
+      iconColor: "text-phase-luteal",
+      active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
+      inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5",
+      inputBorder: "border-phase-luteal/30",
+      pillText: "text-phase-luteal",
+      pillBorder: "border-phase-luteal/20"
     }
   };
 
-  const phaseColor = getPhaseColor(currentPhase);
+  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
-      "bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 transition-all",
-      phaseColor === "rose" ? "border-rose-100 shadow-rose-100/20" :
-        phaseColor === "teal" ? "border-teal-100 shadow-teal-100/20" :
-          phaseColor === "amber" ? "border-amber-100 shadow-amber-100/20" :
-            "border-indigo-100 shadow-indigo-100/20"
+      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      theme.border,
+      theme.shadow
     )}>
       <div className="flex items-center gap-3 mb-4">
         <motion.div
@@ -61,19 +99,10 @@ export default function SleepCard({
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center",
-            phaseColor === "rose" ? "bg-rose-100" :
-              phaseColor === "teal" ? "bg-teal-100" :
-                phaseColor === "amber" ? "bg-amber-100" :
-                  "bg-indigo-100"
+            theme.iconBg
           )}
         >
-          <Moon className={cn(
-            "w-4 h-4 fill-current",
-            phaseColor === "rose" ? "text-rose-500" :
-              phaseColor === "teal" ? "text-teal-500" :
-                phaseColor === "amber" ? "text-amber-500" :
-                  "text-indigo-500"
-          )} />
+          <Moon className={cn("w-4 h-4 fill-current", theme.iconColor)} />
         </motion.div>
         <div className="flex items-center gap-2 relative">
           <h3 className="text-base font-heading font-semibold text-gray-900">Sleep Log</h3>
@@ -116,17 +145,14 @@ export default function SleepCard({
                 key={m.label}
                 onClick={() => toggleItem(m.label)}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all border-2",
+                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all border",
                   isActive
                     ? m.type === "positive"
-                      ? "bg-green-100 text-green-800 border-green-300"
+                      ? "bg-green-100 text-green-800 border-green-300 shadow-sm"
                       : m.type === "negative"
-                        ? "bg-red-100 text-red-800 border-red-300"
-                        : "bg-orange-100 text-orange-800 border-orange-300"
-                    : phaseColor === "rose" ? "bg-white border-rose-100/50 text-gray-600 hover:border-rose-200" :
-                      phaseColor === "teal" ? "bg-white border-teal-100/50 text-gray-600 hover:border-teal-200" :
-                        phaseColor === "amber" ? "bg-white border-amber-100/50 text-gray-600 hover:border-amber-200" :
-                          "bg-white border-indigo-100/50 text-gray-600 hover:border-indigo-200"
+                        ? "bg-red-100 text-red-800 border-red-300 shadow-sm"
+                        : "bg-orange-100 text-orange-800 border-orange-300 shadow-sm"
+                    : theme.inactive
                 )}
               >
                 {isActive && <Check className="w-3 h-3 inline mr-1" />}
@@ -137,19 +163,10 @@ export default function SleepCard({
         </div>
 
         <div className={cn(
-          "flex items-center gap-4 bg-white/60 p-4 rounded-2xl border",
-          phaseColor === "rose" ? "border-rose-100/50" :
-            phaseColor === "teal" ? "border-teal-100/50" :
-              phaseColor === "amber" ? "border-amber-100/50" :
-                "border-indigo-100/50"
+          "flex items-center gap-4 bg-white/40 p-4 rounded-2xl border",
+          theme.inputBorder
         )}>
-          <Clock className={cn(
-            "w-5 h-5",
-            phaseColor === "rose" ? "text-rose-400" :
-              phaseColor === "teal" ? "text-teal-400" :
-                phaseColor === "amber" ? "text-amber-400" :
-                  "text-indigo-400"
-          )} />
+          <Clock className={cn("w-5 h-5", theme.iconColor)} />
           <div className="flex items-center gap-2">
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-bold text-gray-400">Hours</span>
@@ -174,11 +191,9 @@ export default function SleepCard({
             </div>
           </div>
           <div className={cn(
-            "ml-auto text-xs font-medium bg-white/50 px-2 py-1 rounded-lg border",
-            phaseColor === "rose" ? "text-rose-400 border-rose-100" :
-              phaseColor === "teal" ? "text-teal-400 border-teal-100" :
-                phaseColor === "amber" ? "text-amber-400 border-amber-100" :
-                  "text-indigo-400 border-indigo-100"
+            "ml-auto text-xs font-bold bg-white/50 px-2.5 py-1.5 rounded-xl border",
+            theme.pillText,
+            theme.pillBorder
           )}>
             TOTAL DURATION
           </div>
