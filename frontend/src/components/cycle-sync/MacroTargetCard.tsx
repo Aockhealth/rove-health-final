@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, Beef, Droplets, Wheat } from "lucide-react";
+import { Flame, Drumstick, Droplets, Wheat } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MacroBreakdown {
@@ -32,7 +32,7 @@ export default function MacroTargetCard({
             ...macros.protein,
             color: 'from-blue-400 to-indigo-500',
             bg: 'bg-blue-50',
-            icon: Beef,
+            icon: Drumstick,
             textColor: 'text-blue-600'
         },
         {

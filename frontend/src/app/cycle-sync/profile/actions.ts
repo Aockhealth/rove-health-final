@@ -103,15 +103,68 @@ export async function updateUserProfile(data: {
             activity_level: data.activity_level,
             diet_preference: data.diet_preference,
             updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
 
     if (obError) console.error("Error updating onboarding:", obError);
     if (lsError) console.error("Error updating lifestyle:", lsError);
 
     if (obError || lsError) {
-        return { error: "Failed to save some profile settings." };
+        return { error: `Failed to save: ${obError?.message || ''} ${lsError?.message || ''}` };
     }
 
     revalidatePath("/cycle-sync/profile");
+    revalidatePath("/cycle-sync"); // Revalidate dashboard
+    revalidatePath("/cycle-sync/plan"); // Revalidate plan page
+    return { success: true };
+}
+
+export async function updateWeightGoals(weightData: {
+    current_weight_kg: number;
+    target_weight_kg: number;
+    start_weight_kg?: number;
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Unauthorized" };
+
+    const updateData: any = {
+        current_weight_kg: weightData.current_weight_kg,
+        target_weight_kg: weightData.target_weight_kg,
+        updated_at: new Date().toISOString()
+    };
+
+    if (weightData.start_weight_kg) {
+        updateData.start_weight_kg = weightData.start_weight_kg;
+    }
+
+    // Update Weight Goals table
+    const { error: wgError } = await supabase
+        .from("user_weight_goals")
+        .update(updateData)
+        .eq("user_id", user.id);
+
+    // Also sync current weight to lifestyle table for consistency
+    const { error: lsError } = await supabase
+        .from("user_lifestyle")
+        .update({
+            weight_kg: weightData.current_weight_kg,
+            updated_at: new Date().toISOString()
+        })
+        .eq("user_id", user.id);
+
+    if (wgError) {
+        console.error("Error updating weight goals:", wgError);
+        return { error: "Failed to update weight goals" };
+    }
+
+    if (lsError) {
+        console.error("Error syncing lifestyle weight:", lsError);
+    }
+
+    revalidatePath("/cycle-sync/plan");
+    revalidatePath("/cycle-sync/profile");
+    revalidatePath("/cycle-sync");
+
     return { success: true };
 }

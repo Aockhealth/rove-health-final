@@ -226,12 +226,13 @@ export async function fetchDashboardData() {
     }
 
     // ⚡ MEGA PARALLEL: Fetch ALL dashboard data in one trip
-    const [profileResult, onboardingResult, settingsResult, logsResult, contentResult] = await Promise.all([
+    const [profileResult, onboardingResult, settingsResult, logsResult, contentResult, lifestyleResult] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user.id).single(),
         supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single(),
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
-        supabase.from("phase_content").select("*")
+        supabase.from("phase_content").select("*"),
+        supabase.from("user_lifestyle").select("diet_preference").eq("user_id", user.id).maybeSingle()
     ]);
 
     const profile = profileResult.data;
@@ -239,6 +240,7 @@ export async function fetchDashboardData() {
     const settings = settingsResult.data;
     const logs = logsResult.data || [];
     const allContent = contentResult.data || [];
+    const lifestyle = lifestyleResult.data;
 
     if (!settings) return null;
 
@@ -292,7 +294,9 @@ export async function fetchDashboardData() {
         move: getRandomItems(content.move, 2),
         rituals: getRandomItems(content.rituals, 2),
         snapshot: getRandomItems(content.snapshot, 1)[0],
-        tracker_mode: onboarding?.tracker_mode || "menstruation"
+        tracker_mode: onboarding?.tracker_mode || "menstruation",
+        onboarding: onboarding,
+        lifestyle: lifestyle ? { diet_preference: lifestyle.diet_preference } : null // Added for active diet check
     };
 }
 
@@ -684,20 +688,25 @@ export async function fetchPlanPageDataFast() {
         logsResult,
         lifestyleResult,
         weightGoalResult,
+        onboardingResult,
         contentResult
     ] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
         supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_onboarding").select("dietary_preferences").eq("user_id", user.id).maybeSingle(),
         supabase.from("phase_content").select("*")
     ]);
 
     const settings = settingsResult.data;
     const lifestyle = lifestyleResult.data;
     const weightGoal = weightGoalResult.data;
+    const onboarding = onboardingResult.data;
     const logs = logsResult.data || [];
     const allContent = contentResult.data || [];
+
+
 
     if (!settings) return null;
 
@@ -734,7 +743,13 @@ export async function fetchPlanPageDataFast() {
             weight_kg: lifestyle.weight_kg,
             height_cm: lifestyle.height_cm,
             activity_level: lifestyle.activity_level,
+            diet_preference: lifestyle.diet_preference,
             fitness_goal: lifestyle.fitness_goal
+        } : null,
+
+        // Onboarding (Diet)
+        onboarding: onboarding ? {
+            dietary_preferences: onboarding.dietary_preferences
         } : null,
 
         // Weight goal data

@@ -100,9 +100,9 @@ export const DIET_RECOMMENDATIONS = {
                         icon: "Soup"
                     },
                     {
-                        title: "Red Meat / Liver",
+                        title: "Mutton / Liver",
                         description: "Heme Iron for fastest absorption",
-                        icon: "Beef"
+                        icon: "Drumstick"
                     },
                     {
                         title: "Rawas / Salmon",
@@ -395,9 +395,9 @@ export const DIET_RECOMMENDATIONS = {
                         icon: "Egg"
                     },
                     {
-                        title: "Red Meat",
+                        title: "Mutton",
                         description: "Iron top-up before cycle begins",
-                        icon: "Beef"
+                        icon: "Drumstick"
                     },
                     {
                         title: "Banana",

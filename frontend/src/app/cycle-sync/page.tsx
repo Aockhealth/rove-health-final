@@ -28,10 +28,44 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
             // Use theme colors
             color: theme.iconColor,
             bg: theme.iconBg
+
         }));
 
-    const nutrients = mapItems(data?.nutrients);
-    const phaseFocus = mapItems(data?.phaseFocus);
+    const dietPref = (data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "").toLowerCase();
+    const isVeg = dietPref.includes("veg") && !dietPref.includes("non");
+
+    const sanitize = (text: string) => {
+        if (!isVeg || !text) return text;
+        const nonVegWords = ["mutton", "chicken", "fish", "salmon", "tuna", "oysters", "beef", "meat", "liver", "prawns"];
+
+        // Handle "Sources: ..."
+        if (text.includes("Sources:")) {
+            const [desc, sourcePart] = text.split("Sources:");
+            const sources = sourcePart.split(",").map(s => s.trim());
+            const safeSources = sources.filter(s => !nonVegWords.some(nv => s.toLowerCase().includes(nv)));
+            if (safeSources.length === 0) return desc.trim(); // No safe sources left
+            return `${desc}Sources: ${safeSources.join(", ")}`;
+        }
+
+        // General text check (simpler)
+        if (nonVegWords.some(nv => text.toLowerCase().includes(nv))) {
+            return text; // Hard to rewrite sentences automatically, leave as is or hide?
+            // For now, only reliable replacement is in lists. 
+            // Most sensitive text is in "Sources".
+        }
+        return text;
+    };
+
+    const filterItems = (items: any[]) => {
+        if (!items) return [];
+        return items.map(item => ({
+            ...item,
+            detail: sanitize(item.detail)
+        }));
+    };
+
+    const nutrients = mapItems(filterItems(data?.nutrients));
+    const phaseFocus = mapItems(filterItems(data?.phaseFocus));
 
     if (!data || (!nutrients.length && !phaseFocus.length)) return (
         <div className="p-8 text-center border-2 border-dashed border-rove-stone/10 rounded-3xl bg-white/30">
@@ -111,7 +145,7 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
 
                             <div className="space-y-6">
                                 <p className="text-base text-gray-800 leading-relaxed font-sans font-medium">
-                                    {expandedCard.detail}
+                                    {expandedCard.detail.split("Sources:")[0]}
                                 </p>
 
                                 {expandedCard.detail.includes("Sources:") && (
@@ -147,36 +181,36 @@ const phaseThemes: Record<string, any> = {
     },
     "Follicular": {
         color: "text-phase-follicular",
-        blob: "bg-phase-follicular/10",
-        orbRing: "from-phase-follicular/40 via-white to-phase-follicular/20",
-        glow: "shadow-[0_20px_50px_rgba(141,170,157,0.12)]", // Sage Dew Aura
-        badge: "bg-transparent text-phase-follicular border border-phase-follicular/20",
-        iconBg: "bg-phase-follicular/10",
+        blob: "bg-phase-follicular/30",
+        orbRing: "from-phase-follicular/60 via-white to-phase-follicular/30",
+        glow: "shadow-[0_20px_50px_rgba(141,170,157,0.25)]", // Sage Dew Aura
+        badge: "bg-transparent text-phase-follicular border border-phase-follicular/30",
+        iconBg: "bg-phase-follicular/20",
         iconColor: "text-phase-follicular",
-        gradient: "from-phase-follicular/5 to-white/0",
-        borderColor: "border-phase-follicular/20"
+        gradient: "from-phase-follicular/20 to-white/0",
+        borderColor: "border-phase-follicular/30"
     },
     "Ovulatory": {
         color: "text-phase-ovulatory",
-        blob: "bg-phase-ovulatory/10",
-        orbRing: "from-phase-ovulatory/40 via-white to-phase-ovulatory/20",
-        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.15)]", // Soleil Ochre Aura (slightly stronger)
-        badge: "bg-transparent text-phase-ovulatory border border-phase-ovulatory/20",
-        iconBg: "bg-phase-ovulatory/10",
+        blob: "bg-phase-ovulatory/30",
+        orbRing: "from-phase-ovulatory/60 via-white to-phase-ovulatory/30",
+        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.3)]", // Soleil Ochre Aura
+        badge: "bg-transparent text-phase-ovulatory border border-phase-ovulatory/30",
+        iconBg: "bg-phase-ovulatory/20",
         iconColor: "text-phase-ovulatory",
-        gradient: "from-phase-ovulatory/5 to-white/0",
-        borderColor: "border-phase-ovulatory/20"
+        gradient: "from-phase-ovulatory/20 to-white/0",
+        borderColor: "border-phase-ovulatory/30"
     },
     "Luteal": {
         color: "text-phase-luteal",
-        blob: "bg-phase-luteal/10",
-        orbRing: "from-phase-luteal/40 via-white to-phase-luteal/20",
-        glow: "shadow-[0_20px_50px_rgba(123,130,168,0.12)]", // Dusk Slate Aura
-        badge: "bg-transparent text-phase-luteal border border-phase-luteal/20",
-        iconBg: "bg-phase-luteal/10",
+        blob: "bg-phase-luteal/30",
+        orbRing: "from-phase-luteal/60 via-white to-phase-luteal/40",
+        glow: "shadow-[0_20px_50px_rgba(123,130,168,0.25)]", // Dusk Slate Aura
+        badge: "bg-transparent text-phase-luteal border border-phase-luteal/30",
+        iconBg: "bg-phase-luteal/20",
         iconColor: "text-phase-luteal",
-        gradient: "from-phase-luteal/5 to-white/0",
-        borderColor: "border-phase-luteal/20"
+        gradient: "from-phase-luteal/20 to-white/0",
+        borderColor: "border-phase-luteal/30"
     }
 };
 
@@ -602,8 +636,8 @@ export default function CycleSyncDashboard() {
                                 <div className="hidden md:block w-24"></div>
                             </div>
 
-                            {/* CYCLE STATS CARDS */}
-                            <div className="mt-6 md:mt-8 grid grid-cols-3 gap-2 md:gap-4 px-2">
+                            {/* CYCLE STATS CARDS - Mobile Scroll / Desktop Grid */}
+                            <div className="mt-6 md:mt-8 grid grid-cols-3 gap-2 md:gap-4 px-0 md:px-2">
                                 {(() => {
                                     // Calculate dates
                                     const nextPeriod = currentPhase.nextPeriodDate ? new Date(currentPhase.nextPeriodDate) : null;
@@ -617,60 +651,72 @@ export default function CycleSyncDashboard() {
                                     return (
                                         <>
                                             {/* Next Period Card - Terra Rose (Menstrual) */}
-                                            <Link href="/cycle-sync/tracker">
+                                            <Link href="/cycle-sync/tracker" className="flex-1">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-phase-menstrual/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-menstrual/15 hover:bg-phase-menstrual/[0.06] hover:border-phase-menstrual/30 transition-all cursor-pointer group shadow-sm"
+                                                    className="h-full bg-gradient-to-br from-phase-menstrual/40 to-phase-menstrual/10 backdrop-blur-md rounded-2xl md:rounded-3xl px-3 py-4 md:p-4 border border-phase-menstrual/30 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        <div className="w-6 h-6 rounded-xl bg-phase-menstrual/10 flex items-center justify-center">
-                                                            <Droplets className="w-3.5 h-3.5 text-phase-menstrual" />
+                                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none" />
+
+                                                    <div className="flex flex-col md:flex-row md:items-center gap-1.5 mb-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/40 flex items-center justify-center shrink-0">
+                                                                <Droplets className="w-3 h-3 md:w-3.5 md:h-3.5 text-phase-menstrual" />
+                                                            </div>
+                                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-phase-menstrual/90">Period</span>
                                                         </div>
-                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-menstrual/80">Period</span>
                                                     </div>
-                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">{formatDate(nextPeriod)}</p>
-                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-menstrual/80 transition-colors">
+                                                    <p className="text-lg md:text-xl font-heading font-semibold text-rove-charcoal leading-none mb-1">{formatDate(nextPeriod)}</p>
+                                                    <p className="text-[9px] text-rove-stone/80 font-medium whitespace-nowrap">
                                                         {nextPeriod ? `in ${Math.ceil((nextPeriod.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days` : 'Next cycle'}
                                                     </p>
                                                 </motion.div>
                                             </Link>
 
                                             {/* Ovulation Card - Soleil Ochre (Ovulatory) */}
-                                            <Link href="/cycle-sync/tracker">
+                                            <Link href="/cycle-sync/tracker" className="flex-1">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-phase-ovulatory/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-ovulatory/15 hover:bg-phase-ovulatory/[0.06] hover:border-phase-ovulatory/30 transition-all cursor-pointer group shadow-sm"
+                                                    className="h-full bg-gradient-to-br from-phase-ovulatory/40 to-phase-ovulatory/10 backdrop-blur-md rounded-2xl md:rounded-3xl px-3 py-4 md:p-4 border border-phase-ovulatory/30 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        <div className="w-6 h-6 rounded-xl bg-phase-ovulatory/10 flex items-center justify-center">
-                                                            <Baby className="w-3.5 h-3.5 text-phase-ovulatory" />
+                                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none" />
+
+                                                    <div className="flex flex-col md:flex-row md:items-center gap-1.5 mb-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/40 flex items-center justify-center shrink-0">
+                                                                <Baby className="w-3 h-3 md:w-3.5 md:h-3.5 text-phase-ovulatory" />
+                                                            </div>
+                                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-phase-ovulatory/90">Ovulation</span>
                                                         </div>
-                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-ovulatory/80">Ovulation</span>
                                                     </div>
-                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">{formatDate(ovulationDate)}</p>
-                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-ovulatory/80 transition-colors">Peak fertility</p>
+                                                    <p className="text-lg md:text-xl font-heading font-bold text-rove-charcoal leading-none mb-1">{formatDate(ovulationDate)}</p>
+                                                    <p className="text-[9px] text-rove-stone/80 font-medium whitespace-nowrap">Peak fertility</p>
                                                 </motion.div>
                                             </Link>
 
                                             {/* Fertile Window Card - Sage Dew (Follicular) */}
-                                            <Link href="/cycle-sync/tracker">
+                                            <Link href="/cycle-sync/tracker" className="flex-1">
                                                 <motion.div
                                                     whileHover={{ scale: 1.03, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className="h-full bg-phase-follicular/[0.03] backdrop-blur-sm rounded-3xl p-4 border border-phase-follicular/15 hover:bg-phase-follicular/[0.06] hover:border-phase-follicular/30 transition-all cursor-pointer group shadow-sm"
+                                                    className="h-full bg-gradient-to-br from-phase-follicular/40 to-phase-follicular/10 backdrop-blur-md rounded-2xl md:rounded-3xl px-3 py-4 md:p-4 border border-phase-follicular/30 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden flex flex-col justify-between"
                                                 >
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        <div className="w-6 h-6 rounded-xl bg-phase-follicular/10 flex items-center justify-center">
-                                                            <Heart className="w-3.5 h-3.5 text-phase-follicular" />
+                                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none" />
+
+                                                    <div className="flex flex-col md:flex-row md:items-center gap-1.5 mb-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-white/40 flex items-center justify-center shrink-0">
+                                                                <Heart className="w-3 h-3 md:w-3.5 md:h-3.5 text-phase-follicular" />
+                                                            </div>
+                                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-phase-follicular/90">Fertile</span>
                                                         </div>
-                                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-follicular/80">Fertile</span>
                                                     </div>
-                                                    <p className="text-xl font-heading font-medium text-rove-charcoal">
-                                                        {fertileStart && fertileEnd ? `${fertileStart.toLocaleDateString('en-US', { month: 'short' })} ${fertileStart.getDate()}-${fertileEnd.getDate()}` : '--'}
+                                                    <p className="text-lg md:text-xl font-heading font-semibold text-rove-charcoal leading-none mb-1">
+                                                        {fertileStart && fertileEnd ? `${formatDate(fertileStart)} - ${formatDate(fertileEnd)}` : '--'}
                                                     </p>
-                                                    <p className="text-[10px] text-rove-stone/70 mt-1 font-medium group-hover:text-phase-follicular/80 transition-colors">6-day window</p>
+                                                    <p className="text-[9px] text-rove-stone/80 font-medium whitespace-nowrap">6-day window</p>
                                                 </motion.div>
                                             </Link>
                                         </>

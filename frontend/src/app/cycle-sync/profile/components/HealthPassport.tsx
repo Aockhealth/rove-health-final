@@ -95,10 +95,10 @@ export function HealthPassport({ formData, setFormData, onSave, isPending, theme
                             value={formData.diet_preference}
                             onChange={(val) => setFormData({ ...formData, diet_preference: val })}
                             options={[
-                                { value: "veg", label: "Vegetarian" },
+                                { value: "vegetarian", label: "Vegetarian" },
                                 { value: "non_veg", label: "Non-Vegetarian" },
                                 { value: "vegan", label: "Vegan" },
-                                { value: "keto", label: "Keto" }
+                                { value: "jain", label: "Jain" }
                             ]}
                             tooltip="Adjusts iron & protein recommendations for your phase."
                         />

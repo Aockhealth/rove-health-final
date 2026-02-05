@@ -246,7 +246,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Vitamin B12",
                 desc: "Red Blood Cells",
                 icon: "Zap",
-                detail: "Vital for red blood cell formation and neurological function. Combats brain fog and fatigue. Sources: nutritional yeast, eggs, salmon, beef."
+                detail: "Vital for red blood cell formation and neurological function. Combats brain fog and fatigue. Sources: nutritional yeast, eggs, salmon, mutton."
             },
             {
                 title: "Protein",
@@ -639,7 +639,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Zinc",
                 desc: "Ovulation Support",
                 icon: "Target",
-                detail: "Critical for egg maturation and ovulation. Supports immune health and hormonal signaling. Sources: oysters, pumpkin seeds, beef, lentils."
+                detail: "Critical for egg maturation and ovulation. Supports immune health and hormonal signaling. Sources: oysters, pumpkin seeds, mutton, lentils."
             },
             {
                 title: "Folic Acid",
@@ -651,7 +651,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Protein",
                 desc: "Peak Energy",
                 icon: "Utensils",
-                detail: "Sustains peak energy and stabilizes blood sugar. Vital for muscle repair after high activity. Sources: tuna, quinoa, eggs, lean beef."
+                detail: "Sustains peak energy and stabilizes blood sugar. Vital for muscle repair after high activity. Sources: tuna, quinoa, eggs, lean chicken."
             },
             {
                 title: "Selenium",

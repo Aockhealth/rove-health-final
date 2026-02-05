@@ -17,10 +17,11 @@ import {
     Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2
+    Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2, Pencil, X
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import { updateWeightGoals } from "../profile/actions";
 
 // --- Custom Components ---
 import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
@@ -615,6 +616,8 @@ export default function DetailedPlanPage() {
     const [hasPlanSetup, setHasPlanSetup] = useState(false);
     const [setupLoading, setSetupLoading] = useState(true);
     const [setupStep, setSetupStep] = useState(1);
+
+
     const [isPending, startTransition] = useTransition();
 
     const [height, setHeight] = useState("");
@@ -628,6 +631,45 @@ export default function DetailedPlanPage() {
     const [data, setData] = useState<any>(null);
     const [unifiedData, setUnifiedData] = useState<UnifiedCycleData | null>(null); // NEW
     const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
+
+    // Goal Edit State
+    const [isEditingGoal, setIsEditingGoal] = useState(false);
+    const [isSavingGoal, setIsSavingGoal] = useState(false);
+    const [tempGoalData, setTempGoalData] = useState({ current: 0, target: 0, start: 0 });
+
+    useEffect(() => {
+        if (data?.weightGoal) {
+            setTempGoalData({
+                current: data.weightGoal.currentWeight,
+                target: data.weightGoal.targetWeight,
+                start: data.weightGoal.startWeight
+            });
+        }
+    }, [data?.weightGoal]);
+
+    const handleSaveGoal = async () => {
+        setIsSavingGoal(true);
+        const res = await updateWeightGoals({
+            current_weight_kg: tempGoalData.current,
+            target_weight_kg: tempGoalData.target,
+            start_weight_kg: tempGoalData.start
+        });
+
+        if (res.success) {
+            setIsEditingGoal(false);
+            // Optimistic update
+            setData((prev: any) => ({
+                ...prev,
+                weightGoal: {
+                    ...prev.weightGoal,
+                    currentWeight: tempGoalData.current,
+                    targetWeight: tempGoalData.target,
+                    startWeight: tempGoalData.start
+                }
+            }));
+        }
+        setIsSavingGoal(false);
+    };
 
     // ✅ CLIENT-SIDE RECALCULATION (Unified Smart Logic)
     const [clientDay, setClientDay] = useState<number | null>(null);
@@ -671,7 +713,9 @@ export default function DetailedPlanPage() {
                         blueprint: fastData.blueprint,
                         biometrics: fastData.biometrics,
                         weightGoal: fastData.weightGoal,
-                        settings: fastData.settings
+                        settings: fastData.settings,
+                        onboarding: fastData.onboarding,
+                        lifestyle: fastData.lifestyle // Added for active diet check
                     });
                 } else {
                     setHasPlanSetup(false);
@@ -1335,49 +1379,100 @@ export default function DetailedPlanPage() {
                                                 </div>
                                                 <span className="text-rove-charcoal text-sm font-heading font-bold">Your Goal</span>
                                             </div>
-                                            <span className={cn("px-2 py-0.5 rounded-full text-white text-[10px] font-bold uppercase", theme.accent)}>
-                                                {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
-                                            </span>
-                                        </div>
-
-
-
-                                        {/* Main Dashboard (Weight Goal + Diet + Activity) */}
-                                        <div className={cn("flex items-center justify-between rounded-xl p-3 mb-3", theme.softBg)}>
-                                            <div className="text-center flex-1">
-                                                <p className="text-lg font-heading font-bold text-rove-charcoal/70">{data.weightGoal.startWeight}<span className="text-xs text-rove-stone">kg</span></p>
-                                                <p className="text-[8px] uppercase text-rove-stone">Start</p>
-                                            </div>
-                                            <div className="text-rove-stone/40 text-lg">→</div>
-                                            <div className={cn("text-center flex-1 px-2 py-1 rounded-lg", theme.iconContainer)}>
-                                                <p className={cn("text-lg font-heading font-bold", theme.color)}>{data.weightGoal.currentWeight}<span className="text-xs opacity-60">kg</span></p>
-                                                <p className="text-[8px] uppercase opacity-70">Now</p>
-                                            </div>
-                                            <div className="text-rove-stone/40 text-lg">→</div>
-                                            <div className="text-center flex-1">
-                                                <p className="text-lg font-heading font-bold text-rove-charcoal">{data.weightGoal.targetWeight}<span className="text-xs text-rove-stone">kg</span></p>
-                                                <p className="text-[8px] uppercase text-rove-stone">Goal</p>
+                                            <div className="flex items-center gap-2">
+                                                {!isEditingGoal && (
+                                                    <button onClick={() => setIsEditingGoal(true)} className="p-1 rounded-full hover:bg-black/5 transition-colors">
+                                                        <Pencil className="w-3 h-3 text-rove-stone" />
+                                                    </button>
+                                                )}
+                                                <span className={cn("px-2 py-0.5 rounded-full text-white text-[10px] font-bold uppercase", theme.accent)}>
+                                                    {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        {/* Progress Bar */}
-                                        <div className="h-1.5 bg-rove-stone/10 rounded-full overflow-hidden">
-                                            <div
-                                                className={cn("h-full rounded-full", theme.accent)}
-                                                style={{
-                                                    width: `${Math.min(100, Math.max(5,
-                                                        ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
-                                                            (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
-                                                    ))}%`
-                                                }}
-                                            />
-                                        </div>
-                                        <p className="text-center text-rove-stone text-[10px] mt-1.5">
-                                            {data.weightGoal.currentWeight <= data.weightGoal.startWeight
-                                                ? `${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)}kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to go`
-                                                : `${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to lose`
-                                            }
-                                        </p>
+
+
+                                        {isEditingGoal ? (
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Start</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.start}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, start: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Now</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.current}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, current: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Goal</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.target}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, target: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end gap-2">
+                                                    <button onClick={() => setIsEditingGoal(false)} className="text-[10px] font-bold text-rove-stone">
+                                                        Cancel
+                                                    </button>
+                                                    <button onClick={handleSaveGoal} disabled={isSavingGoal} className={cn("text-[10px] font-bold text-white px-3 py-1 rounded-full", theme.accent)}>
+                                                        {isSavingGoal ? "..." : "Save"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {/* Main Dashboard (Weight Goal + Diet + Activity) */}
+                                                <div className={cn("flex items-center justify-between rounded-xl p-3 mb-3", theme.softBg)}>
+                                                    <div className="text-center flex-1">
+                                                        <p className="text-lg font-heading font-bold text-rove-charcoal/70">{data.weightGoal.startWeight}<span className="text-xs text-rove-stone">kg</span></p>
+                                                        <p className="text-[8px] uppercase text-rove-stone">Start</p>
+                                                    </div>
+                                                    <div className="text-rove-stone/40 text-lg">→</div>
+                                                    <div className={cn("text-center flex-1 px-2 py-1 rounded-lg", theme.iconContainer)}>
+                                                        <p className={cn("text-lg font-heading font-bold", theme.color)}>{data.weightGoal.currentWeight}<span className="text-xs opacity-60">kg</span></p>
+                                                        <p className="text-[8px] uppercase opacity-70">Now</p>
+                                                    </div>
+                                                    <div className="text-rove-stone/40 text-lg">→</div>
+                                                    <div className="text-center flex-1">
+                                                        <p className="text-lg font-heading font-bold text-rove-charcoal">{data.weightGoal.targetWeight}<span className="text-xs text-rove-stone">kg</span></p>
+                                                        <p className="text-[8px] uppercase text-rove-stone">Goal</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress Bar */}
+                                                <div className="h-1.5 bg-rove-stone/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={cn("h-full rounded-full", theme.accent)}
+                                                        style={{
+                                                            width: `${Math.min(100, Math.max(5,
+                                                                ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
+                                                                    (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
+                                                            ))}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p className="text-center text-rove-stone text-[10px] mt-1.5">
+                                                    {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                        ? `${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)}kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to go`
+                                                        : `${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to lose`
+                                                    }
+                                                </p>
+                                            </>
+                                        )}
                                     </div>
 
                                     {/* Desktop Version - Full Card - Matches App Theme */}
@@ -1393,72 +1488,112 @@ export default function DetailedPlanPage() {
                                                     <h2 className="text-rove-charcoal text-xl font-heading font-bold">Your Goals</h2>
                                                 </div>
                                             </div>
-                                            <span className={cn("px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-wide", theme.accent)}>
-                                                {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
-                                            </span>
-                                        </div>
-
-                                        {/* Weight Journey */}
-                                        <div className="grid grid-cols-3 gap-4 mb-6">
-                                            <div className={cn("text-center p-4 rounded-2xl", theme.softBg)}>
-                                                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-rove-stone/20 flex items-center justify-center">
-                                                    <span className="text-lg">🏁</span>
-                                                </div>
-                                                <p className="text-2xl font-heading font-bold text-rove-charcoal/70">
-                                                    {data.weightGoal.startWeight}<span className="text-sm text-rove-stone ml-0.5">kg</span>
-                                                </p>
-                                                <p className="text-[10px] uppercase tracking-wider text-rove-stone mt-1">Started at</p>
-                                            </div>
-                                            <div className={cn("text-center p-4 rounded-2xl border-2", theme.iconContainer, theme.border)}>
-                                                <div className={cn("w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center", theme.accent)}>
-                                                    <span className="text-lg">💪</span>
-                                                </div>
-                                                <p className={cn("text-2xl font-heading font-bold", theme.color)}>
-                                                    {data.weightGoal.currentWeight}<span className="text-sm opacity-60 ml-0.5">kg</span>
-                                                </p>
-                                                <p className="text-[10px] uppercase tracking-wider opacity-70 mt-1">You Now</p>
-                                            </div>
-                                            <div className={cn("text-center p-4 rounded-2xl", theme.softBg)}>
-                                                <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-rove-stone/20 flex items-center justify-center">
-                                                    <span className="text-lg">🎯</span>
-                                                </div>
-                                                <p className="text-2xl font-heading font-bold text-rove-charcoal">
-                                                    {data.weightGoal.targetWeight}<span className="text-sm text-rove-stone ml-0.5">kg</span>
-                                                </p>
-                                                <p className="text-[10px] uppercase tracking-wider text-rove-stone mt-1">Dream Goal</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Progress Bar */}
-                                        <div className="mb-6">
-                                            <div className="flex items-center justify-between text-[10px] text-rove-stone mb-2">
-                                                <span>Progress</span>
-                                                <span className={cn("font-bold", theme.color)}>
-                                                    {Math.round(Math.max(0, Math.min(100,
-                                                        ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
-                                                            (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
-                                                    )))}% Complete
+                                            <div className="flex items-center gap-2">
+                                                {!isEditingGoal && (
+                                                    <button onClick={() => setIsEditingGoal(true)} className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                                                        <Pencil className="w-4 h-4 text-rove-stone" />
+                                                    </button>
+                                                )}
+                                                <span className={cn("px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-wide", theme.accent)}>
+                                                    {data.weightGoal.fitnessGoal?.replace('_', ' ') || 'Weight Loss'}
                                                 </span>
                                             </div>
-                                            <div className="h-2 bg-rove-stone/10 rounded-full overflow-hidden">
-                                                <div
-                                                    className={cn("h-full rounded-full transition-all duration-1000", theme.accent)}
-                                                    style={{
-                                                        width: `${Math.min(100, Math.max(5,
-                                                            ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
-                                                                (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
-                                                        ))}%`
-                                                    }}
-                                                />
-                                            </div>
-                                            <p className="text-center text-rove-stone text-xs mt-2">
-                                                {data.weightGoal.currentWeight <= data.weightGoal.startWeight
-                                                    ? `🔥 ${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)} kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)} kg to go`
-                                                    : `🎯 ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)} kg to lose`
-                                                }
-                                            </p>
                                         </div>
 
+                                        {isEditingGoal ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex-1">
+                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Start (kg)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.start}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, start: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Now (kg)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.current}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, current: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Goal (kg)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={tempGoalData.target}
+                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, target: parseFloat(e.target.value) })}
+                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end gap-2 mt-4">
+                                                    <Button variant="ghost" size="sm" onClick={() => setIsEditingGoal(false)}>
+                                                        Cancel
+                                                    </Button>
+                                                    <Button size="sm" onClick={handleSaveGoal} disabled={isSavingGoal}>
+                                                        {isSavingGoal ? "Saving..." : "Save Changes"}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {/* Main Dashboard (Weight Goal + Diet + Activity) */}
+                                                <div className={cn("flex items-center justify-between rounded-2xl p-6 mb-6", theme.softBg)}>
+                                                    <div className="text-center flex-1 border-r border-black/5 last:border-0 relative">
+                                                        <div className="absolute top-1/2 -translate-y-1/2 right-0 w-8 h-8 flex items-center justify-center text-rove-stone/20">
+                                                            <ArrowRight className="w-5 h-5" />
+                                                        </div>
+                                                        <p className="text-3xl font-heading font-bold text-rove-charcoal/70">{data.weightGoal.startWeight}<span className="text-sm text-rove-stone ml-1">kg</span></p>
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">Start</p>
+                                                    </div>
+                                                    <div className="text-center flex-1 border-r border-black/5 last:border-0 relative bg-white/50 rounded-xl py-2 mx-4 shadow-sm">
+                                                        <div className="absolute top-1/2 -translate-y-1/2 right-[-2.5rem] w-8 h-8 flex items-center justify-center text-rove-stone/20">
+                                                            <Target className="w-5 h-5" />
+                                                        </div>
+                                                        <p className={cn("text-4xl font-heading font-bold", theme.color)}>{data.weightGoal.currentWeight}<span className="text-lg opacity-60 ml-1">kg</span></p>
+                                                        <p className={cn("text-xs font-bold uppercase tracking-widest mt-1 opacity-70")}>Now</p>
+                                                    </div>
+                                                    <div className="text-center flex-1 border-r border-black/5 last:border-0">
+                                                        <p className="text-3xl font-heading font-bold text-rove-charcoal">{data.weightGoal.targetWeight}<span className="text-sm text-rove-stone ml-1">kg</span></p>
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">Goal</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress Bar */}
+                                                <div className="relative pt-2">
+                                                    <div className="flex justify-between text-xs font-medium text-rove-stone mb-2">
+                                                        <span>Progress</span>
+                                                        <span>
+                                                            {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                                ? `${Math.round(((data.weightGoal.startWeight - data.weightGoal.currentWeight) / (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100)}% Complete`
+                                                                : 'On Track'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2.5 bg-rove-stone/10 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={cn("h-full rounded-full transition-all duration-1000 ease-out", theme.accent)}
+                                                            style={{
+                                                                width: `${Math.min(100, Math.max(5,
+                                                                    ((data.weightGoal.startWeight - data.weightGoal.currentWeight) /
+                                                                        (data.weightGoal.startWeight - data.weightGoal.targetWeight)) * 100
+                                                                ))}%`
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-center text-rove-stone text-xs mt-3">
+                                                        {data.weightGoal.currentWeight <= data.weightGoal.startWeight
+                                                            ? `${(data.weightGoal.startWeight - data.weightGoal.currentWeight).toFixed(1)}kg lost • ${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to go`
+                                                            : `${(data.weightGoal.currentWeight - data.weightGoal.targetWeight).toFixed(1)}kg to lose`
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
                                         {/* Feature Cards */}
                                         <div className="border-t border-rove-stone/10 pt-5">
                                             <p className="text-rove-stone text-[10px] uppercase tracking-[0.12em] font-bold mb-3">✦ Your Plan Includes</p>
@@ -1532,9 +1667,15 @@ export default function DetailedPlanPage() {
                                 <SectionHeader title="Recommended Fuel" icon={Utensils} />
                                 <div className="space-y-3 mt-4">
                                     {(() => {
-                                        // 1. Determine User Preference (Simulated - in real app, comes from user profile)
+                                        // 1. Determine User Preference (Real Data)
                                         // Hierarchy: non_veg > vegetarian > vegan > jain
-                                        const userDietPref: DietType = 'non_veg';
+                                        const rawDiet = (data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "").toLowerCase();
+                                        let userDietPref: DietType = 'non_veg'; // Default
+
+                                        if (rawDiet.includes("veg") && !rawDiet.includes("non")) userDietPref = 'vegetarian';
+                                        if (rawDiet.includes("vegan")) userDietPref = 'vegan';
+                                        if (rawDiet.includes("jain")) userDietPref = 'jain';
+                                        if (rawDiet.includes("non")) userDietPref = 'non_veg';
 
                                         // 2. Aggregate Data based on hierarchy
                                         const phaseMap: Record<string, keyof typeof DIET_RECOMMENDATIONS.phases> = {
@@ -1572,9 +1713,9 @@ export default function DetailedPlanPage() {
 
                                         return (
                                             <>
-                                                <RiverTrack label="Core Nutrients" items={row1} speed={80} cardClass={cn(theme.cardBg, theme.border)} />
-                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={95} cardClass={cn(theme.cardBg, theme.border)} />
-                                                <RiverTrack label="Replenishing" items={row3} speed={90} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Core Nutrients" items={row1} speed={180} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={210} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Replenishing" items={row3} speed={200} cardClass={cn(theme.cardBg, theme.border)} />
                                             </>
                                         )
                                     })()}
