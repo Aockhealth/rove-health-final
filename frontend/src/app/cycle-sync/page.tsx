@@ -235,7 +235,7 @@ const PHASE_SNAPSHOTS: any = {
             detail: "Your body is working hard to release. High intensity will backfire by spiking cortisol when resilience is low.",
             protocol: "Focus on Yin Yoga or a slow 20-minute walk. Keep your lower back and feet warm to support circulation."
         },
-        glow: {
+        skin: {
             title: "Hydration Barrier",
             desc: "Skin is driest now.",
             detail: "Low estrogen means less natural oil and moisture retention. Your skin barrier is more permeable and sensitive.",
@@ -261,7 +261,7 @@ const PHASE_SNAPSHOTS: any = {
             detail: "Your body is ready to burn carbs for fuel and build muscle. Recovery time is faster now than at any other time.",
             protocol: "Increase cardio intensity or heavy lifting. Your body can handle the stress and bounce back stronger."
         },
-        glow: {
+        skin: {
             title: "Collagen Bloom",
             desc: "Natural plumpness returns.",
             detail: "Rising estrogen boosts collagen and hyaluronic acid production. Your skin is naturally more resilient and glowing.",
@@ -287,7 +287,7 @@ const PHASE_SNAPSHOTS: any = {
             detail: "Testosterone adds a strength boost. You are at your strongest, but your ligaments are also looser (higher injury risk).",
             protocol: "Go for a PR in the gym, but watch your form. High-intensity interval training (HIIT) is highly effective now."
         },
-        glow: {
+        skin: {
             title: "Radiant but Oily",
             desc: "The 'glow' is real.",
             detail: "Sebum production increases slightly. You look vibrant, but pores may be more visible due to the surge.",
@@ -313,7 +313,7 @@ const PHASE_SNAPSHOTS: any = {
             detail: "Your metabolism speeds up (burning ~100-300 more calories), but endurance drops. Heat tolerance is lower.",
             protocol: "Switch to strength training with longer rests. Honor your hunger with complex carbs to boost serotonin."
         },
-        glow: {
+        skin: {
             title: "Congestion Alert",
             desc: "Pores are prone to clogging.",
             detail: "Progesterone stimulates oil production while pores tighten, leading to trapped bacteria and breakouts.",
@@ -327,6 +327,13 @@ const PHASE_KEYWORDS: Record<string, string> = {
     "Follicular": "Spring • Energy Rising",
     "Ovulatory": "Performer • Peak Confidence",
     "Luteal": "Reflective Phase"
+};
+
+const PHASE_EXPLAINERS: Record<string, string> = {
+    "Menstrual": "Why Red? 🌹 Honoring your body's sacred reset.",
+    "Follicular": "Why Green? 🌱 Just like spring, your energy is blooming!",
+    "Ovulatory": "Why Gold? ✨ You're glowing with peak summer vibes!",
+    "Luteal": "Why Indigo? 🌙 Deep colors for deep thoughts & nesting."
 };
 
 // --- 3. Animated Components ---
@@ -377,74 +384,76 @@ function GlowHalo({ color = "#f59e0b" }: { color?: string }) {
 // --- 4. Seasonal Background Component ---
 // --- 4. Seasonal Background Component ---
 // --- 4. Seasonal Background Component (Premium Atmosphere) ---
+// --- 4. Seasonal Background Component (Premium Atmosphere) ---
+// --- 4. Seasonal Background Component (Premium Atmosphere) ---
 function SeasonalBackground({ phase }: { phase: string }) {
     // Shared transition for smooth mood shifts
     const fluidTransition = { duration: 8, repeat: Infinity, repeatType: "mirror" as const, ease: "easeInOut" as any };
 
     if (phase === "Menstrual") {
         return (
-            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60">
-                {/* Winter: Icy Rose/Blue Sheen */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-50"> {/* Reduced opacity */}
+                {/* Winter: Soft Rose Glow */}
                 <motion.div
-                    className="absolute w-[120%] h-[120%] bg-gradient-to-tr from-rose-100/40 via-indigo-50/30 to-rose-100/40 rounded-full blur-3xl"
+                    className="absolute w-[140%] h-[140%] bg-gradient-to-tr from-phase-menstrual/30 via-white/5 to-transparent rounded-full blur-3xl"
                     animate={{ scale: [1, 1.1, 1], rotate: [0, 10, 0] }}
                     transition={fluidTransition}
                 />
                 <motion.div
-                    className="absolute w-[80%] h-[80%] bg-blue-100/30 rounded-full blur-2xl"
-                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ ...fluidTransition, duration: 5 }}
+                    className="absolute w-[90%] h-[90%] bg-phase-menstrual/10 rounded-full blur-2xl"
+                    animate={{ opacity: [0.3, 0.5, 0.3], scale: [0.95, 1.05, 0.95] }}
+                    transition={{ ...fluidTransition, duration: 6 }}
                 />
             </div>
         );
     }
     if (phase === "Follicular") {
         return (
-            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70">
-                {/* Spring: Fresh Teal/Pink Bloom */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60"> {/* Soft & Airy */}
+                {/* Spring: Sage Mist */}
                 <motion.div
-                    className="absolute w-[130%] h-[130%] bg-gradient-to-br from-teal-100/50 via-emerald-50/30 to-rose-100/50 rounded-full blur-3xl"
-                    animate={{ rotate: [0, -20, 0], scale: [1, 1.05, 1] }}
+                    className="absolute w-[150%] h-[150%] bg-gradient-to-br from-phase-follicular/30 via-white/10 to-transparent rounded-full blur-3xl"
+                    animate={{ rotate: [0, -20, 0], scale: [1, 1.15, 1] }}
                     transition={fluidTransition}
                 />
                 <motion.div
-                    className="absolute w-full h-full bg-teal-50/40 blur-2xl rounded-full"
-                    animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.5, 0.8, 0.5] }}
-                    transition={{ ...fluidTransition, duration: 6 }}
+                    className="absolute w-[110%] h-[110%] bg-phase-follicular/20 blur-2xl rounded-full"
+                    animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.4, 0.6, 0.4] }}
+                    transition={{ ...fluidTransition, duration: 5 }}
                 />
             </div>
         );
     }
     if (phase === "Ovulatory") {
         return (
-            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80">
-                {/* Summer: Radiant Golden Aura */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60">
+                {/* Summer: Golden Haze */}
                 <motion.div
-                    className="absolute w-[140%] h-[140%] bg-gradient-to-t from-amber-100/60 via-orange-50/40 to-yellow-100/60 rounded-full blur-3xl"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute w-[150%] h-[150%] bg-gradient-to-t from-phase-ovulatory/30 via-white/10 to-transparent rounded-full blur-3xl"
+                    animate={{ rotate: 180, scale: [1, 1.05, 1] }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
                 />
                 <motion.div
-                    className="absolute w-[90%] h-[90%] bg-amber-200/20 rounded-full blur-2xl"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute w-[100%] h-[100%] bg-phase-ovulatory/20 rounded-full blur-2xl"
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 />
             </div>
         );
     }
     if (phase === "Luteal") {
         return (
-            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70">
-                {/* Autumn: Warm Indigo/Rust Dusk */}
+            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-50">
+                {/* Autumn: Slate Dusk */}
                 <motion.div
-                    className="absolute w-[120%] h-[120%] bg-gradient-to-bl from-indigo-100/50 via-purple-50/30 to-amber-100/40 rounded-full blur-3xl"
-                    animate={{ scale: [1.05, 1, 1.05], rotate: [0, 15, 0] }}
+                    className="absolute w-[140%] h-[140%] bg-gradient-to-bl from-phase-luteal/30 via-white/5 to-transparent rounded-full blur-3xl"
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 15, 0] }}
                     transition={fluidTransition}
                 />
                 <motion.div
-                    className="absolute w-[100%] h-[100%] bg-gradient-to-tr from-indigo-200/20 to-transparent blur-2xl rounded-full"
-                    animate={{ x: [-10, 10, -10], y: [-10, 10, -10] }}
-                    transition={{ ...fluidTransition, duration: 10 }}
+                    className="absolute w-[110%] h-[110%] bg-gradient-to-tr from-phase-luteal/20 to-transparent blur-2xl rounded-full"
+                    animate={{ x: [-15, 15, -15], y: [-15, 15, -15], scale: [1, 1.05, 1] }}
+                    transition={{ ...fluidTransition, duration: 9 }}
                 />
             </div>
         );
@@ -556,80 +565,90 @@ export default function CycleSyncDashboard() {
                                 <div className="hidden md:block w-24"></div>
 
                                 {/* CENTER: The Phase Orb with diagonal button */}
-                                <div className="relative">
-                                    {/* Atmospheric Background */}
-                                    <div className="absolute inset-[-50px] z-0 rounded-full overflow-hidden opacity-60 pointer-events-none">
-                                        <SeasonalBackground phase={currentPhase.name} />
-                                    </div>
+                                <div className="flex flex-col items-center gap-6">
+                                    <div className="relative">
+                                        {/* Atmospheric Background */}
+                                        <div className="absolute inset-[-50px] z-0 rounded-full overflow-hidden opacity-60 pointer-events-none">
+                                            <SeasonalBackground phase={currentPhase.name} />
+                                        </div>
 
-                                    {/* Outer Glow - Enhanced with pulsing */}
-                                    <motion.div
-                                        className={`absolute inset-[-20px] rounded-full ${theme.blob} blur-3xl pointer-events-none`}
-                                        animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
-                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                    />
-
-                                    <Link href="/cycle-sync/tracker">
+                                        {/* Outer Glow - Enhanced with pulsing */}
                                         <motion.div
-                                            className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group"
-                                            whileHover={{ scale: 1.02 }}
-                                            transition={{ duration: 0.3, ease: "easeOut" }}
-                                        >
-                                            {/* Rotating Gradient Ring - Enhanced visibility */}
-                                            <motion.div
-                                                className={`absolute inset-0 rounded-full border-[4px] sm:border-[5px] md:border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
-                                                animate={{ rotate: 360 }}
-                                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                            />
-                                            {/* Second rotating ring for more prominent effect */}
-                                            <motion.div
-                                                className={`absolute inset-[-4px] sm:inset-[-5px] md:inset-[-6px] rounded-full border-[2px] sm:border-[3px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] opacity-50`}
-                                                animate={{ rotate: -360 }}
-                                                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                                            />
+                                            className={`absolute inset-[-20px] rounded-full ${theme.blob} blur-3xl pointer-events-none`}
+                                            animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
+                                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                        />
 
-                                            {/* Inner Glass */}
-                                            <div className={`absolute inset-2 rounded-full bg-white/70 backdrop-blur-xl ${theme.glow}`} />
-
-                                            {/* ORB CONTENT */}
-                                            <div className="relative text-center z-10 px-4">
-                                                <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.2em] text-rove-stone/80 uppercase mb-1">
-                                                    Current Phase
-                                                </p>
-                                                <h2 className={`text-2xl sm:text-3xl md:text-4xl font-heading ${theme.color} mb-0.5 sm:mb-1`}>
-                                                    {currentPhase.name}
-                                                </h2>
-
-                                                {/* Keyword Subtitle */}
-                                                <p className="text-[9px] sm:text-[10px] md:text-xs font-medium text-rove-charcoal/60 mb-1 sm:mb-2 tracking-wide opacity-90">
-                                                    {PHASE_KEYWORDS[currentPhase.name]}
-                                                </p>
-
-                                                <Badge variant="secondary" className={`${theme.badge} px-2 sm:px-3 py-0.5 text-[8px] sm:text-[9px] md:text-[10px] tracking-wider border`}>
-                                                    {currentPhase.superpower}
-                                                </Badge>
-                                            </div>
-
-                                            {/* Day Indicator (Top) */}
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-full shadow-md border border-rove-stone/10">
-                                                <span className="text-xs font-bold text-rove-charcoal">Day {currentPhase.day}</span>
-                                            </div>
-                                        </motion.div>
-                                    </Link>
-
-                                    {/* DIAGONAL Log Data Button - Bottom Right */}
-                                    <div className="absolute -bottom-2 -right-2 sm:bottom-0 sm:right-0 md:bottom-2 md:right-[-60px] flex flex-col items-center gap-1.5 z-20">
                                         <Link href="/cycle-sync/tracker">
-                                            <motion.button
-                                                whileHover={{ scale: 1.1, y: -2 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20 hover:shadow-xl transition-all duration-300 ring-4 ring-white/80"
+                                            <motion.div
+                                                className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group"
+                                                whileHover={{ scale: 1.02 }}
+                                                transition={{ duration: 0.3, ease: "easeOut" }}
                                             >
-                                                <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                                            </motion.button>
+                                                {/* Rotating Gradient Ring - Enhanced visibility */}
+                                                <motion.div
+                                                    className={`absolute inset-0 rounded-full border-[4px] sm:border-[5px] md:border-[6px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)]`}
+                                                    animate={{ rotate: 360 }}
+                                                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                                />
+                                                {/* Second rotating ring for more prominent effect */}
+                                                <motion.div
+                                                    className={`absolute inset-[-4px] sm:inset-[-5px] md:inset-[-6px] rounded-full border-[2px] sm:border-[3px] border-transparent bg-gradient-to-r ${theme.orbRing} bg-clip-border [mask:linear-gradient(#fff_0_0)_padding-box,linear-gradient(#fff_0_0)] opacity-50`}
+                                                    animate={{ rotate: -360 }}
+                                                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                                                />
+
+                                                {/* Inner Glass */}
+                                                <div className={`absolute inset-2 rounded-full bg-white/70 backdrop-blur-xl ${theme.glow}`} />
+
+                                                {/* ORB CONTENT */}
+                                                <div className="relative text-center z-10 px-4">
+                                                    <p className="text-[8px] sm:text-[9px] md:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.2em] text-rove-stone/80 uppercase mb-1">
+                                                        Current Phase
+                                                    </p>
+                                                    <h2 className={`text-2xl sm:text-3xl md:text-4xl font-heading ${theme.color} mb-0.5 sm:mb-1`}>
+                                                        {currentPhase.name}
+                                                    </h2>
+
+                                                    {/* Keyword Subtitle */}
+                                                    <p className="text-[9px] sm:text-[10px] md:text-xs font-medium text-rove-charcoal/60 mb-1 sm:mb-2 tracking-wide opacity-90">
+                                                        {PHASE_KEYWORDS[currentPhase.name]}
+                                                    </p>
+
+                                                    <Badge variant="secondary" className={`${theme.badge} px-2 sm:px-3 py-0.5 text-[8px] sm:text-[9px] md:text-[10px] tracking-wider border`}>
+                                                        {currentPhase.superpower}
+                                                    </Badge>
+
+                                                    {/* Cutesy Explainer */}
+
+                                                </div>
+
+                                                {/* Day Indicator (Top) */}
+                                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-full shadow-md border border-rove-stone/10">
+                                                    <span className="text-xs font-bold text-rove-charcoal">Day {currentPhase.day}</span>
+                                                </div>
+                                            </motion.div>
                                         </Link>
-                                        <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-rove-charcoal/80">Log</span>
+
+                                        {/* DIAGONAL Log Data Button - Bottom Right */}
+                                        <div className="absolute -bottom-2 -right-2 sm:bottom-0 sm:right-0 md:bottom-2 md:right-[-60px] flex flex-col items-center gap-1.5 z-20">
+                                            <Link href="/cycle-sync/tracker">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1, y: -2 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-rove-charcoal to-rove-charcoal/80 text-white flex items-center justify-center shadow-lg shadow-rove-charcoal/20 hover:shadow-xl transition-all duration-300 ring-4 ring-white/80"
+                                                >
+                                                    <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                                                </motion.button>
+                                            </Link>
+                                            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-rove-charcoal/80">Log</span>
+                                        </div>
                                     </div>
+
+                                    {/* Cutesy Explainer (Outside Orb) */}
+                                    <p className="text-[10px] sm:text-xs text-rove-stone/80 font-medium italic text-center max-w-[200px] leading-relaxed">
+                                        {PHASE_EXPLAINERS[currentPhase.name]}
+                                    </p>
                                 </div>
 
                                 {/* Spacer for balance on desktop */}
@@ -743,81 +762,77 @@ export default function CycleSyncDashboard() {
                             <div className="grid grid-cols-2 gap-3 relative z-30">
                                 {/* Hormones */}
                                 <motion.div
-                                    layoutId="hormones"
                                     onClick={() => setSelectedSnapshot("hormones")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className={`relative overflow-hidden rounded-[1.5rem] ${theme.blob.replace('bg-', 'bg-').replace('/30', '/5')} backdrop-blur-md border border-white/40 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer`}
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Hormones</span>
+                                        <span className={`text-xs font-extrabold uppercase tracking-[0.2em] ${theme.color}`}>Hormones</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none text-phase-menstrual">
-                                        <HormoneWave />
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-80 transition-opacity group-hover:opacity-100 pointer-events-none">
+                                        <HormoneWave color="#FB7185" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading font-bold text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.title}</h4>
                                         <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.hormones.desc}</p>
                                     </div>
                                 </motion.div>
 
                                 {/* Mind */}
                                 <motion.div
-                                    layoutId="mind"
                                     onClick={() => setSelectedSnapshot("mind")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className={`relative overflow-hidden rounded-[1.5rem] ${theme.blob.replace('bg-', 'bg-').replace('/30', '/5')} backdrop-blur-md border border-white/40 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer`}
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Mind</span>
+                                        <span className={`text-xs font-extrabold uppercase tracking-[0.2em] ${theme.color}`}>Mind</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
-                                        <MindSynapse color="#374151" />
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-80 transition-opacity group-hover:opacity-100 pointer-events-none">
+                                        <MindSynapse color="#64748B" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading font-bold text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.title}</h4>
                                         <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.mind.desc}</p>
                                     </div>
                                 </motion.div>
 
                                 {/* Body */}
                                 <motion.div
-                                    layoutId="body"
                                     onClick={() => setSelectedSnapshot("body")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className={`relative overflow-hidden rounded-[1.5rem] ${theme.blob.replace('bg-', 'bg-').replace('/30', '/5')} backdrop-blur-md border border-white/40 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer`}
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Body</span>
+                                        <span className={`text-xs font-extrabold uppercase tracking-[0.2em] ${theme.color}`}>Body</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
-                                        <BodyDNA color="#22c55e" />
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-80 transition-opacity group-hover:opacity-100 pointer-events-none">
+                                        <BodyDNA color="#10B981" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading font-bold text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.body.title}</h4>
                                         <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.body.desc}</p>
                                     </div>
                                 </motion.div>
 
-                                {/* Glow */}
+                                {/* Skin (fka Glow) */}
                                 <motion.div
-                                    layoutId="glow"
-                                    onClick={() => setSelectedSnapshot("glow")}
+                                    onClick={() => setSelectedSnapshot("skin")}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="relative overflow-hidden rounded-[1.5rem] bg-white/40 backdrop-blur-md border border-rove-stone/10 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer"
+                                    className={`relative overflow-hidden rounded-[1.5rem] ${theme.blob.replace('bg-', 'bg-').replace('/30', '/5')} backdrop-blur-md border border-white/40 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer`}
                                 >
                                     <div className="absolute top-4 left-4 z-20">
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500">Glow</span>
+                                        <span className={`text-xs font-extrabold uppercase tracking-[0.2em] ${theme.color}`}>Skin</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-40 transition-opacity group-hover:opacity-50 pointer-events-none">
-                                        <GlowHalo color="#f59e0b" />
+                                    <div className="absolute -top-3 -right-3 w-[45%] h-[45%] opacity-80 transition-opacity group-hover:opacity-100 pointer-events-none">
+                                        <GlowHalo color="#F59E0B" />
                                     </div>
                                     <div className="absolute bottom-4 left-4 right-4 z-10">
-                                        <h4 className="text-base sm:text-lg md:text-xl font-heading text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.title}</h4>
-                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.glow.desc}</p>
+                                        <h4 className="text-base sm:text-lg md:text-xl font-heading font-bold text-rove-charcoal leading-tight mb-0.5 sm:mb-1">{PHASE_SNAPSHOTS[currentPhase.name]?.skin.title}</h4>
+                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">{PHASE_SNAPSHOTS[currentPhase.name]?.skin.desc}</p>
                                     </div>
                                 </motion.div>
                             </div>
@@ -873,94 +888,78 @@ export default function CycleSyncDashboard() {
                 }
             </div >
 
-            {/* EXPANDED MODAL OVERLAY (SCIENTIFIC / CLEAN) */}
+            {/* EXPANDED MODAL OVERLAY (PREMIUM / CLEAN) */}
             <AnimatePresence>
                 {
                     selectedSnapshot && (
                         <motion.div
-                            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm"
+                            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSelectedSnapshot(null)}
                         >
                             <motion.div
-                                className="bg-white/95 backdrop-blur-xl rounded-[1rem] w-full max-w-sm shadow-2xl relative border border-white/50 overflow-hidden ring-1 ring-black/5"
-                                initial={{ scale: 0.95, y: 10, opacity: 0 }}
-                                animate={{ scale: 1, y: 0, opacity: 1 }}
-                                exit={{ scale: 0.95, y: 10, opacity: 0 }}
-                                transition={{ type: "spring", bounce: 0.3, duration: 0.5 }}
+                                className="bg-white/95 backdrop-blur-2xl rounded-[1.5rem] w-full max-w-sm shadow-2xl relative border border-white/50 overflow-hidden ring-1 ring-black/5"
+                                initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                transition={{ type: "spring", bounce: 0.3, duration: 0.4 }}
                                 onClick={(e) => e.stopPropagation()}
-                                layoutId={selectedSnapshot}
                             >
-                                {/* Decorative Top Bar */}
-                                <div className="h-1.5 w-full bg-gradient-to-r from-rove-stone/20 via-rove-charcoal/20 to-rove-stone/20" />
-
-                                {/* Header Section */}
-                                <div className="px-6 pt-6 pb-2 flex justify-between items-start">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-rove-charcoal animate-pulse" />
-                                            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-rove-stone/80">
-                                                {selectedSnapshot} // METRICS
-                                            </span>
-                                        </div>
-                                        <h3 className="text-3xl font-heading text-rove-charcoal tracking-tight">
-                                            {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].title}
-                                        </h3>
+                                {/* Header Section with Phase Color Tint */}
+                                <div className={`px-6 py-6 pb-4 relative ${theme.blob.replace('bg-', 'bg-').replace('/30', '/10')}`}>
+                                    {/* Ambient Background Graphic for Texture */}
+                                    <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none">
+                                        {selectedSnapshot === "hormones" && <HormoneWave color="#FB7185" />}
+                                        {selectedSnapshot === "mind" && <MindSynapse color="#64748B" />}
+                                        {selectedSnapshot === "body" && <BodyDNA color="#10B981" />}
+                                        {selectedSnapshot === "skin" && <GlowHalo color="#F59E0B" />}
                                     </div>
-                                    <button
-                                        onClick={() => setSelectedSnapshot(null)}
-                                        className="p-2 -mr-2 -mt-2 hover:bg-gray-100 rounded-full transition-colors group"
-                                    >
-                                        <div className="relative w-6 h-6 flex items-center justify-center">
-                                            <span className="absolute w-4 h-[1.5px] bg-gray-400 rotate-45 group-hover:bg-gray-600 transition-colors" />
-                                            <span className="absolute w-4 h-[1.5px] bg-gray-400 -rotate-45 group-hover:bg-gray-600 transition-colors" />
-                                        </div>
-                                    </button>
-                                </div>
 
-                                {/* Divider with ID */}
-                                <div className="w-full h-px bg-gray-100 my-2 flex items-center justify-end px-6">
-                                    <span className="text-[8px] font-mono text-gray-300">ID: {currentPhase.name.substring(0, 3).toUpperCase()}-001</span>
+                                    <div className="relative z-10 flex justify-between items-start">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${theme.blob.replace('bg-', 'bg-').replace('/30', '')}`} />
+                                                <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${theme.color}`}>
+                                                    {selectedSnapshot === "skin" ? "Skin" : selectedSnapshot}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-3xl font-heading text-rove-charcoal tracking-tight leading-tight">
+                                                {/* @ts-ignore */}
+                                                {PHASE_SNAPSHOTS[currentPhase.name]?.[selectedSnapshot]?.title}
+                                            </h3>
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedSnapshot(null)}
+                                            className="p-2 -mr-2 -mt-2 bg-white/50 hover:bg-white rounded-full transition-all group shadow-sm"
+                                        >
+                                            <div className="relative w-5 h-5 flex items-center justify-center text-rove-charcoal/60 group-hover:text-rove-charcoal">
+                                                <Plus className="w-5 h-5 rotate-45" />
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Content Body */}
-                                <div className="px-6 py-4 relative">
-                                    {/* Ambient Background Graphic */}
-                                    <div className="absolute top-0 right-0 w-40 h-40 opacity-[0.08] pointer-events-none translate-x-10 -translate-y-10">
-                                        {selectedSnapshot === "hormones" && <HormoneWave />}
-                                        {selectedSnapshot === "mind" && <MindSynapse color="#000" />}
-                                        {selectedSnapshot === "body" && <BodyDNA color="#000" />}
-                                        {selectedSnapshot === "glow" && <GlowHalo color="#000" />}
-                                    </div>
+                                <div className="px-6 py-5 space-y-6">
+                                    {/* Insight Description */}
+                                    <p className="text-lg text-rove-charcoal/90 leading-relaxed font-heading">
+                                        {/* @ts-ignore */}
+                                        {PHASE_SNAPSHOTS[currentPhase.name]?.[selectedSnapshot]?.detail}
+                                    </p>
 
-                                    <div className="space-y-6 relative z-10">
-                                        {/* Observation */}
-                                        <div>
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Scientific Observation</span>
-                                            <p className="text-rove-charcoal/90 text-[15px] leading-relaxed font-sans border-l-2 border-rove-charcoal/10 pl-3">
-                                                {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].detail}
-                                            </p>
+                                    {/* Action/Protocol */}
+                                    <div className={`rounded-xl p-5 border ${theme.borderColor} ${theme.blob.replace('bg-', 'bg-').replace('/30', '/5')}`}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Lightbulb className={`w-4 h-4 ${theme.color}`} />
+                                            <span className={`text-[10px] font-bold uppercase tracking-widest ${theme.color}`}>Protocol</span>
                                         </div>
-
-                                        {/* Action/Protocol */}
-                                        <div className="bg-rove-cream/40 rounded-lg p-4 border border-rove-stone/10">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Lightbulb className="w-3.5 h-3.5 text-rove-charcoal" />
-                                                <span className="text-[9px] font-bold text-rove-charcoal uppercase tracking-widest">Recommended Protocol</span>
-                                            </div>
-                                            <p className="text-rove-stone text-xs leading-relaxed font-medium">
-                                                {PHASE_SNAPSHOTS[currentPhase.name][selectedSnapshot].protocol}
-                                            </p>
-                                        </div>
+                                        <p className="text-rove-stone text-sm leading-relaxed font-medium">
+                                            {/* @ts-ignore */}
+                                            {PHASE_SNAPSHOTS[currentPhase.name]?.[selectedSnapshot]?.protocol}
+                                        </p>
                                     </div>
-                                </div>
-
-                                {/* Footer Status */}
-                                <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-mono text-gray-400">
-                                    <span>STATUS: ACTIVE</span>
-                                    <span>UPDATED: TODAY</span>
                                 </div>
                             </motion.div>
                         </motion.div>

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "prebuild": "cd ../backend && npm i",
     "build": "next build",
     "start": "next start",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@elevenlabs/client": "^0.12.2",
     "@google/generative-ai": "^0.24.1",
     "@nivo/pie": "^0.99.0",

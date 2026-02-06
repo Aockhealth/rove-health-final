@@ -55,15 +55,15 @@ export default function CalendarCard({
     const getPhaseColor = (p: Phase) => {
         switch (p) {
             case "Menstrual":
-                return "bg-rose-200/40 text-gray-900 hover:bg-rose-200/60";
+                return "bg-rose-100 border border-rose-200 text-rose-900 hover:bg-rose-200";
             case "Follicular":
-                return "bg-teal-200/40 text-gray-900 hover:bg-teal-200/60";
+                return "bg-teal-100 border border-teal-200 text-teal-900 hover:bg-teal-200";
             case "Ovulatory":
-                return "bg-amber-200/40 text-gray-900 hover:bg-amber-200/60";
+                return "bg-amber-100 border border-amber-200 text-amber-900 hover:bg-amber-200";
             case "Luteal":
-                return "bg-indigo-200/40 text-gray-900 hover:bg-indigo-200/60";
+                return "bg-indigo-100 border border-indigo-200 text-indigo-900 hover:bg-indigo-200";
             default:
-                return "bg-transparent text-gray-900 hover:bg-gray-50/50";
+                return "bg-transparent text-gray-900 hover:bg-gray-50 border border-transparent";
         }
     };
 
