@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { parseLocalDate } from "@shared/cycle/phase";
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
@@ -72,7 +73,7 @@ export default function CalendarCard({
         if (!cycleSettings.last_period_start) return new Set();
 
         const predicted = new Set<string>();
-        const lastPeriodStart = new Date(cycleSettings.last_period_start);
+        const lastPeriodStart = parseLocalDate(cycleSettings.last_period_start);
         const cycleLength = cycleSettings.cycle_length_days || 28;
         const periodLength = cycleSettings.period_length_days || 5;
 

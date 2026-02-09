@@ -702,7 +702,7 @@ export default function DetailedPlanPage() {
                     setUnifiedData({
                         settings: fastData.settings,
                         monthLogs: fastData.monthLogs,
-                        smartPhase: { phase: fastData.phase, day: fastData.day },
+                        smartPhase: calculatePhase(new Date(), fastData.settings, fastData.monthLogs),
                         userId: ""
                     });
 

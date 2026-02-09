@@ -1,3 +1,4 @@
+import { calculatePhase, getRelevantPeriodStart as getRelevantPeriodStartCanonical, type DailyLog } from "@shared/cycle/phase";
 import type { Phase, CycleSettings, CalendarDay, Consistency, Appearance, Sensation } from './type';
 
 // Date Formatting
@@ -76,102 +77,12 @@ export const getRelevantPeriodStart = (
   cycleSettings: CycleSettings,
   monthLogs: Record<string, any>
 ): string | null => {
-  const dateStr = formatDate(targetDate);
-
-  const safeGlobalStart = (() => {
-    if (!cycleSettings.last_period_start) return null;
-
-    const last = new Date(cycleSettings.last_period_start);
-    last.setHours(0, 0, 0, 0);
-
-    const check = new Date(targetDate);
-    check.setHours(0, 0, 0, 0);
-
-    return last <= check ? cycleSettings.last_period_start : null;
-  })();
-
-  // PAST DATES
-  if (isPastDate(targetDate)) {
-    if (monthLogs[dateStr]?.is_period) {
-      let current = new Date(targetDate);
-      let firstDay = dateStr;
-
-      while (true) {
-        current.setDate(current.getDate() - 1);
-        const prevStr = formatDate(current);
-        if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
-        else break;
-      }
-      return firstDay;
-    }
-
-    const logDates = Object.keys(monthLogs).sort().reverse();
-    for (const d of logDates) {
-      if (d < dateStr && monthLogs[d]?.is_period) {
-        let current = new Date(d);
-        let firstDay = d;
-
-        while (true) {
-          current.setDate(current.getDate() - 1);
-          const prevStr = formatDate(current);
-          if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
-          else break;
-        }
-        return firstDay;
-      }
-    }
-
-    // Backcasting from global start
-    if (cycleSettings.last_period_start) {
-      const globalStart = new Date(cycleSettings.last_period_start);
-      globalStart.setHours(0, 0, 0, 0);
-      const cycleLen = cycleSettings.cycle_length_days || 28;
-
-      if (targetDate < globalStart) {
-        const diffTime = globalStart.getTime() - targetDate.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const cyclesBack = Math.ceil(diffDays / cycleLen);
-
-        const simulatedStart = new Date(globalStart);
-        simulatedStart.setDate(globalStart.getDate() - (cyclesBack * cycleLen));
-        return formatDate(simulatedStart);
-      }
-    }
-
-    return null;
-  }
-
-  // TODAY / FUTURE
-  if (monthLogs[dateStr]?.is_period) {
-    let current = new Date(targetDate);
-    let firstDay = dateStr;
-
-    while (true) {
-      current.setDate(current.getDate() - 1);
-      const prevStr = formatDate(current);
-      if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
-      else break;
-    }
-    return firstDay;
-  }
-
-  const logDates = Object.keys(monthLogs).sort().reverse();
-  for (const d of logDates) {
-    if (d < dateStr && monthLogs[d]?.is_period) {
-      let current = new Date(d);
-      let firstDay = d;
-
-      while (true) {
-        current.setDate(current.getDate() - 1);
-        const prevStr = formatDate(current);
-        if (monthLogs[prevStr]?.is_period) firstDay = prevStr;
-        else break;
-      }
-      return firstDay;
-    }
-  }
-
-  return safeGlobalStart;
+  const result = getRelevantPeriodStartCanonical(
+    targetDate,
+    cycleSettings,
+    monthLogs as Record<string, DailyLog>
+  );
+  return result.start;
 };
 
 // Current Day Calculation
@@ -180,24 +91,8 @@ export const getCurrentDay = (
   cycleSettings: CycleSettings,
   monthLogs: Record<string, any>
 ): number => {
-  const startStr = getRelevantPeriodStart(date, cycleSettings, monthLogs);
-  if (!startStr) return 1;
-
-  const start = new Date(startStr);
-  start.setHours(0, 0, 0, 0);
-  const checkDate = new Date(date);
-  checkDate.setHours(0, 0, 0, 0);
-  const diffTime = checkDate.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  if (isPastDate(date)) {
-    return diffDays + 1;
-  }
-
-  const cycleLength = cycleSettings.cycle_length_days || 28;
-  let dayInCycle = (diffDays % cycleLength) + 1;
-  if (dayInCycle <= 0) dayInCycle += cycleLength;
-  return dayInCycle;
+  const result = calculatePhase(date, cycleSettings, monthLogs as Record<string, DailyLog>);
+  return result.day || 0;
 };
 
 // Phase Calculation
@@ -206,53 +101,8 @@ export const getPhaseForDate = (
   cycleSettings: CycleSettings,
   monthLogs: Record<string, any>
 ): Phase => {
-  const dateStr = formatDate(date);
-  const log = monthLogs[dateStr];
-  if (log?.is_period) return "Menstrual";
-
-  const startStr = getRelevantPeriodStart(date, cycleSettings, monthLogs);
-  if (!startStr) return "Follicular";
-
-  const start = new Date(startStr);
-  start.setHours(0, 0, 0, 0);
-  const checkDate = new Date(date);
-  checkDate.setHours(0, 0, 0, 0);
-
-  const diffTime = checkDate.getTime() - start.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  const cycleLength = cycleSettings.cycle_length_days || 28;
-
-  // 🔹 LATE PERIOD FIX:
-  // If we are past the cycle length (diffDays >= cycleLength)
-  // AND the user hasn't logged a period (checked above at line 211)
-  // Then they are "Late" -> Return Luteal instead of wrapping to Menstrual.
-  // We only wrap if it's a future prediction (not today/late).
-  // But strictly, if they haven't logged it, we should probably show Luteal?
-  // Or at least for Today/Past.
-
-  if (diffDays >= cycleLength) {
-    // If today or past, show Luteal.
-    // If strict future date, we can show prediction (Menstrual).
-    // But let's check if the date is <= Today.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (checkDate <= today) {
-      return "Luteal";
-    }
-  }
-
-  let dayInCycle = (diffDays % cycleLength) + 1;
-  if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-  const periodLength = cycleSettings.period_length_days || 5;
-  const ovulationDay = cycleLength - 14;
-
-  if (dayInCycle <= periodLength) return "Menstrual";
-  if (dayInCycle >= ovulationDay - 1 && dayInCycle <= ovulationDay + 1) return "Ovulatory";
-  if (dayInCycle > ovulationDay + 1) return "Luteal";
-
-  return "Follicular";
+  const result = calculatePhase(date, cycleSettings, monthLogs as Record<string, DailyLog>);
+  return result.phase;
 };
 
 // MPIQ Derived Discharge

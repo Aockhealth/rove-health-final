@@ -85,6 +85,7 @@ import {
     formatDate,
     getOvulationDay,
     isInFertileWindow,
+    parseLocalDate,
     type CycleSettings,
     type DailyLog
 } from "@shared/cycle/phase";
@@ -137,7 +138,7 @@ export async function getCyclePhase(): Promise<CyclePhaseResponse | null> {
 
     // 4. Calculate Extras (Fertile Window, Next Period, Hormone State)
     const cycleLength = cycleSettings.cycle_length_days;
-    const nextPeriodDate = new Date(settingsData.last_period_start);
+    const nextPeriodDate = parseLocalDate(settingsData.last_period_start);
     // Simple projection for next period based on last known start
     // Note: detailed next period projection is complex, simple addition for now
     // Ideally we'd project from the *current* cycle start found by calculatePhase

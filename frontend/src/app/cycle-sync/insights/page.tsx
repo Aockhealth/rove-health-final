@@ -108,8 +108,42 @@ export default function InsightsPage() {
 
   // ✅ FIX 3: Guard render until we have a phase
   // ✅ FIX 3: Guard render until we have a phase
-  if (loading || !selectedPhase) {
+  if (loading) {
     return <LoadingScreen />;
+  }
+
+  if (!selectedPhase) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-rove-cream/20 via-white to-white">
+        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b">
+          <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+            <Link href="/cycle-sync">
+              <ChevronLeft className="w-5 h-5 text-gray-500" />
+            </Link>
+            <div className="text-center">
+              <h1 className="text-lg font-heading text-rove-charcoal">Insights</h1>
+              <span className="text-[10px] uppercase tracking-wider text-gray-400">No Data Yet</span>
+            </div>
+            <ProfileAvatar />
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-10 max-w-3xl">
+          <div className="max-w-lg mx-auto bg-white/80 border border-rove-stone/10 rounded-3xl p-6 shadow-sm text-center">
+            <h2 className="font-heading text-xl text-rove-charcoal mb-2">Log your first period</h2>
+            <p className="text-sm text-rove-stone mb-4">
+              Once you log a period start, phase‑based insights and patterns will appear here.
+            </p>
+            <Link
+              href="/cycle-sync/tracker"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rove-charcoal text-white text-sm font-semibold hover:bg-black transition"
+            >
+              Go to Tracker
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const currentPhase = stats?.phase?.name || "Luteal";

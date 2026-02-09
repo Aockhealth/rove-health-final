@@ -1,13 +1,13 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { calculateSmartPhase, CycleSettings, DailyLog } from "@shared/cycle/smart-phase";
+import { calculatePhase, type CycleSettings, type DailyLog, type PhaseResult } from "@shared/cycle/phase";
 
 // Types
 export interface UnifiedCycleData {
     settings: CycleSettings;
     monthLogs: Record<string, DailyLog>; // Sparse map: "YYYY-MM-DD" -> Log
-    smartPhase: { phase: string; day: number };
+    smartPhase: PhaseResult;
     userId: string;
 }
 
@@ -58,7 +58,7 @@ export async function fetchUnifiedCycleData(): Promise<UnifiedCycleData | null> 
     // 3. Calculate Smart Phase (Server Side Draft)
     // Note: Client should re-run this with local time for precision, 
     // but this gives us a good SSR state.
-    const smartPhase = calculateSmartPhase(new Date(), settings, monthLogs);
+    const smartPhase = calculatePhase(new Date(), settings, monthLogs);
 
     return {
         settings: {

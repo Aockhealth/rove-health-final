@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
 import {
-    calculateSmartPhase,
+    calculatePhase,
     getRelevantPeriodStart,
     parseLocalDate,
     formatDate
@@ -74,21 +74,21 @@ export async function fetchInsightsData() {
         if (noteLog) mostRecentNote = noteLog.notes;
 
         logs.forEach((log: any) => {
-            // ✅ FIXED: Using calculateSmartPhase to respect manual period logs
-            const { phase } = calculateSmartPhase(new Date(log.date), settings, logMap);
+            // ✅ FIXED: Using canonical calculatePhase to respect manual period logs + no-data
+            const phaseResult = calculatePhase(parseLocalDate(log.date), settings, logMap);
+            const phase = phaseResult.phase;
 
-            if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
+            if (phase && phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 
-            // Group symptoms by phase
+            // Always collect aggregated tags
             log.symptoms?.forEach((s: string) => {
                 allSymptoms.add(s);
-                symptomsByPhase[phase][s] = (symptomsByPhase[phase][s] || 0) + 1;
+                if (phase) symptomsByPhase[phase][s] = (symptomsByPhase[phase][s] || 0) + 1;
             });
 
-            // Group moods by phase
             log.moods?.forEach((m: string) => {
                 allMoods.add(m);
-                moodsByPhase[phase][m] = (moodsByPhase[phase][m] || 0) + 1;
+                if (phase) moodsByPhase[phase][m] = (moodsByPhase[phase][m] || 0) + 1;
             });
 
             // Collect all tags found in logs
@@ -98,7 +98,7 @@ export async function fetchInsightsData() {
         });
     }
 
-    const currentStatus = calculateSmartPhase(new Date(), {
+    const currentStatus = calculatePhase(new Date(), {
         last_period_start: cycleSettings.last_period_start,
         cycle_length_days: cycleSettings.cycle_length_days,
         period_length_days: cycleSettings.period_length_days
@@ -155,7 +155,13 @@ export async function fetchInsightsData() {
     });
 
     return {
-        phase: { name: currentStatus.phase, day: currentStatus.day },
+        phase: currentStatus.phase ? {
+            name: currentStatus.phase,
+            day: currentStatus.day,
+            latePeriod: currentStatus.latePeriod,
+            confidence: currentStatus.confidence,
+            dataSource: currentStatus.dataSource
+        } : null,
         averages: {
             cycle: cycleSettings.cycle_length_days,
             period: cycleSettings.period_length_days,

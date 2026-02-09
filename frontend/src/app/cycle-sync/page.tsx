@@ -494,7 +494,7 @@ export default function CycleSyncDashboard() {
                         setUnifiedData({
                             settings: dashboardData.settings,
                             monthLogs: dashboardData.monthLogs,
-                            smartPhase: { phase: dashboardData.phase.name, day: dashboardData.phase.day },
+                            smartPhase: calculatePhase(new Date(), dashboardData.settings, dashboardData.monthLogs),
                             userId: ""
                         });
                     }

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Shield, HelpCircle, X, Calendar, Edit3, Activity, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { calculatePhase, daysBetween, getRelevantPeriodStart, isInFertileWindow, parseLocalDate, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
 
@@ -85,161 +86,71 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
         shadow: "rgba(0,0,0,0.06)",
     };
 
-    // ---- logs-first anchor: use latest logged period start if present, else settings ----
-    // Optimization: Memoize sorted keys once to avoid re-sorting inside the loop for every day
-    const sortedLogDates = useMemo(() => {
-        return Object.keys(monthLogs).sort().reverse();
+    const phaseSettings: CycleSettings = useMemo(() => ({
+        last_period_start: cycleSettings.last_period_start || "",
+        cycle_length_days: cycleSettings.cycle_length_days || 28,
+        period_length_days: cycleSettings.period_length_days || 5
+    }), [cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days]);
+
+    const normalizedLogs: Record<string, DailyLog> = useMemo(() => {
+        const logs: Record<string, DailyLog> = {};
+        Object.entries(monthLogs).forEach(([date, log]) => {
+            logs[date] = { date, is_period: log?.is_period };
+        });
+        return logs;
     }, [monthLogs]);
 
-    const getRelevantPeriodStart = useMemo(() => {
-        const findStreakStart = (startStr: string) => {
-            let cur = new Date(startStr);
-            cur.setHours(0, 0, 0, 0);
-            let first = startStr;
+    const todayResult = useMemo(
+        () => calculatePhase(new Date(), phaseSettings, normalizedLogs),
+        [phaseSettings, normalizedLogs]
+    );
 
-            // Look backwards for contiguous period days
-            while (true) {
-                cur.setDate(cur.getDate() - 1);
-                const prevStr = formatDate(cur);
-                if (monthLogs[prevStr]?.is_period) first = prevStr;
-                else break;
-            }
-            return first;
-        };
+    const selectedResult = useMemo(
+        () => calculatePhase(selectedDate, phaseSettings, normalizedLogs),
+        [selectedDate, phaseSettings, normalizedLogs]
+    );
 
-        return (targetDate: Date): string | null => {
-            const dateStr = formatDate(targetDate);
-
-            // if the day itself is logged as period, find streak start
-            if (monthLogs[dateStr]?.is_period) return findStreakStart(dateStr);
-
-            // otherwise find most recent logged period day before target
-            // Usage of pre-sorted dates prevents O(N^2) sorting in the render loop
-            for (const d of sortedLogDates) {
-                if (d < dateStr && monthLogs[d]?.is_period) return findStreakStart(d);
-            }
-
-            // fallback: use cycleSettings.last_period_start
-            if (cycleSettings.last_period_start) {
-                const globalStart = new Date(cycleSettings.last_period_start);
-                globalStart.setHours(0, 0, 0, 0);
-                const check = new Date(targetDate);
-                check.setHours(0, 0, 0, 0);
-
-                // Enforce minimum cycle length
-                const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
-
-                if (check >= globalStart) {
-                    // Forward projection - use last_period_start directly
-                    return cycleSettings.last_period_start;
-                } else {
-                    // Backcast: calculate which previous cycle this date falls into
-                    const diffTime = globalStart.getTime() - check.getTime();
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    const cyclesBack = Math.ceil(diffDays / cycleLength);
-
-                    const simulatedStart = new Date(globalStart);
-                    simulatedStart.setDate(globalStart.getDate() - (cyclesBack * cycleLength));
-                    return formatDate(simulatedStart);
-                }
-            }
-
-            return null;
-        };
-    }, [monthLogs, sortedLogDates, cycleSettings.last_period_start, formatDate, cycleSettings.cycle_length_days]);
-
-    const getDayInCycle = useMemo(() => {
-        return (date: Date): number | null => {
-            const startStr = getRelevantPeriodStart(date);
-            if (!startStr) return null;
-
-            const start = new Date(startStr);
-            start.setHours(0, 0, 0, 0);
-
-            const check = new Date(date);
-            check.setHours(0, 0, 0, 0);
-
-            const diffDays = Math.floor((check.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays < 0) return null;
-
-            // Enforce minimum 21-day cycle (handle bad data)
-            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
-            let dayInCycle = (diffDays % cycleLength) + 1;
-            if (dayInCycle <= 0) dayInCycle += cycleLength;
-            return dayInCycle;
-        };
-    }, [getRelevantPeriodStart, cycleSettings.cycle_length_days]);
-
-    const getPredictedPhase = useMemo(() => {
-        return (date: Date): Phase | null => {
-            const day = getDayInCycle(date);
-            if (!day) return null;
-
-            // Enforce minimum reasonable values (cycle can't be less than 21 days)
-            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
-            const periodLength = Math.max(Math.min(cycleSettings.period_length_days || 5, 10), 3);
-            const ovulationDay = Math.max(cycleLength - 14, periodLength + 1);
-
-            // Look up log for this specific date
-            const dateStr = formatDate(date);
-            const isExplicitlyNotPeriod = monthLogs[dateStr] && monthLogs[dateStr]?.is_period === false;
-
-            // Day 1-periodLength = Menstrual (works for all cycles via modulo)
-            if (day <= periodLength && !isExplicitlyNotPeriod) return "Menstrual";
-
-            // Ovulatory window (around day 14 in a 28-day cycle)
-            if (day >= ovulationDay - 1 && day <= ovulationDay + 1) return "Ovulatory";
-
-            // After ovulation = Luteal
-            if (day > ovulationDay + 1) return "Luteal";
-
-            // Between period and ovulation = Follicular
-            return "Follicular";
-        };
-    }, [getDayInCycle, cycleSettings.cycle_length_days, cycleSettings.period_length_days]);
-
-    const isFertileDay = useMemo(() => {
-        return (date: Date): boolean => {
-            const day = getDayInCycle(date);
-            if (!day) return false;
-
-            const cycleLength = Math.max(cycleSettings.cycle_length_days || 28, 21);
-            const ovulationDay = Math.max(cycleLength - 14, 7);
-            return day >= ovulationDay - 5 && day <= ovulationDay + 2;
-        };
-    }, [getDayInCycle, cycleSettings.cycle_length_days]);
-
-    // Pre-compute phases for all calendar days
-    const phaseMap = useMemo(() => {
-        const map: Record<string, Phase | null> = {};
+    const dayMeta = useMemo(() => {
+        const map: Record<string, { phase: Phase | null; fertile: boolean; day: number; late: boolean }> = {};
         calendarDays.forEach(dayItem => {
             if (!dayItem.isPadding) {
                 const dateStr = formatDate(dayItem.date);
-                map[dateStr] = getPredictedPhase(dayItem.date);
+                const result = calculatePhase(dayItem.date, phaseSettings, normalizedLogs);
+                map[dateStr] = {
+                    phase: result.phase,
+                    day: result.day,
+                    late: result.latePeriod,
+                    fertile: result.phase
+                        ? isInFertileWindow(
+                            result.day,
+                            phaseSettings.cycle_length_days || 28,
+                            phaseSettings.luteal_length_days
+                        )
+                        : false
+                };
             }
         });
         return map;
-    }, [calendarDays, getPredictedPhase, formatDate]);
+    }, [calendarDays, formatDate, phaseSettings, normalizedLogs]);
 
     // Days until next period
     const daysUntilPeriod = useMemo(() => {
-        const cycleLength = cycleSettings.cycle_length_days || 28;
-        if (!cycleSettings.last_period_start && Object.keys(monthLogs).length === 0) return 0;
+        const cycleLength = phaseSettings.cycle_length_days || 28;
+        if (!phaseSettings.last_period_start && Object.keys(normalizedLogs).length === 0) return 0;
+        if (todayResult.phase === null || todayResult.latePeriod) return 0;
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const anchor = getRelevantPeriodStart(new Date(), phaseSettings, normalizedLogs);
+        if (!anchor.start) return 0;
 
-        const anchor = getRelevantPeriodStart(today);
-        if (!anchor) return 0;
+        const anchorDate = parseLocalDate(anchor.start);
+        const nextStart = new Date(anchorDate);
+        nextStart.setDate(anchorDate.getDate() + cycleLength);
+        return Math.max(0, daysBetween(new Date(), nextStart));
+    }, [phaseSettings, normalizedLogs, todayResult]);
 
-        const anchorDate = new Date(anchor);
-        anchorDate.setHours(0, 0, 0, 0);
-        if (anchorDate > today) return 0;
-
-        const daysSinceAnchor = Math.floor((today.getTime() - anchorDate.getTime()) / (1000 * 60 * 60 * 24));
-        const offset = daysSinceAnchor % cycleLength;
-        return (cycleLength - offset) % cycleLength;
-    }, [cycleSettings.cycle_length_days, cycleSettings.last_period_start, monthLogs, getRelevantPeriodStart]);
+    const lateByDays = todayResult.latePeriod
+        ? Math.max(1, (todayResult.day || 0) - (phaseSettings.cycle_length_days || 28))
+        : 0;
 
     const isToday = (date: Date) => {
         const today = new Date();
@@ -272,9 +183,13 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                 >
                     <div>
                         <h2 className="text-xl font-heading font-semibold text-gray-900 leading-tight">
-                            {currentPhase === "Menstrual"
-                                ? "Period Day " + (getDayInCycle(selectedDate) || 1)
-                                : (daysUntilPeriod === 0 ? "Period starts today" : `Period in ${daysUntilPeriod} days`)
+                            {todayResult.phase === null
+                                ? "Log your first period"
+                                : currentPhase === "Menstrual"
+                                    ? `Period Day ${Math.max(1, selectedResult.day || 1)}`
+                                    : todayResult.latePeriod
+                                        ? `Late by ${lateByDays} day${lateByDays === 1 ? "" : "s"}`
+                                        : (daysUntilPeriod === 0 ? "Period starts today" : `Period in ${daysUntilPeriod} days`)
                             }
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">Tap a date to log symptoms</p>
@@ -367,8 +282,9 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             const selected = !isPeriodLoggingMode && date.toDateString() === selectedDate.toDateString();
                             const loggedPeriod = monthLogs[dateStr]?.is_period === true;
 
-                            const phase = phaseMap[dateStr] ?? null;
-                            const fertile = isFertileDay(date);
+                            const dayInfo = dayMeta[dateStr];
+                            const phase = dayInfo?.phase ?? null;
+                            const fertile = dayInfo?.fertile ?? false;
 
                             // Base colors
                             let textColor = colors.text;

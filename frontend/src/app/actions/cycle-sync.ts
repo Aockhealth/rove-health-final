@@ -10,7 +10,7 @@ import {
     type MoodInsight,
     type SymptomTips
 } from "./ai-actions";
-import { calculatePhase as calculatePhaseCanonical, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+import { calculatePhase as calculatePhaseCanonical, parseLocalDate, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 
 export interface AIContext {
     symptoms: string[];
@@ -84,8 +84,8 @@ async function syncPeriodStartFromLog(
             if (log.date === logDate) continue; // Skip the current log
             if (log.date < logDate) {
                 // Check if this is a consecutive day
-                const prevDate = new Date(log.date);
-                const currDate = new Date(streakStart);
+                const prevDate = parseLocalDate(log.date);
+                const currDate = parseLocalDate(streakStart);
                 const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
 
                 if (diffDays === 1 && log.is_period) {
@@ -982,7 +982,7 @@ export async function fetchInsightsData() {
         if (noteLog) mostRecentNote = noteLog.notes;
 
         logs.forEach((log) => {
-            const phaseResult = calculatePhaseCanonical(new Date(log.date), phaseSettings, monthLogs);
+            const phaseResult = calculatePhaseCanonical(parseLocalDate(log.date), phaseSettings, monthLogs);
             const phase = phaseResult.phase || "Menstrual";
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 

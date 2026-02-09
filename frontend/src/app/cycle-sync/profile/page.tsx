@@ -44,7 +44,7 @@ export default function ProfilePage() {
     });
 
     // Unified Data for correct Phase Calculation
-    const [unifiedPhase, setUnifiedPhase] = useState<string>("Menstrual");
+    const [unifiedPhase, setUnifiedPhase] = useState<string | null>("Menstrual");
     const [isEditingCycle, setIsEditingCycle] = useState(false);
 
     useEffect(() => {
@@ -180,7 +180,7 @@ export default function ProfilePage() {
                     cycleLength={cycleData.cycle_length_days}
                     periodLength={cycleData.period_length_days}
                     isIrregular={formData.is_irregular}
-                    phaseName={unifiedPhase}
+                    phaseName={unifiedPhase || "Menstrual"}
                     theme={theme}
                 />
 
