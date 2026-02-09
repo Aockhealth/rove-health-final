@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/Button";
 import { Send, User, Bot, Phone, PhoneOff, Mic, ThumbsUp, ThumbsDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+
+const LOG_WINDOW_DAYS = 90;
 
 interface Message {
     id: string;
@@ -114,37 +117,37 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
 
             if (planError) console.error("Daily plan error:", planError);
 
+            const pastDate = new Date();
+            pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
             const { data: dailyLogs, error: logsError } = await supabase
                 .from("daily_logs")
                 .select("*")
                 .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .limit(7);
+                .gte("date", pastDate.toISOString().split("T")[0])
+                .order("date", { ascending: false });
 
             if (logsError) console.error("Daily logs error:", logsError);
 
-            const lastPeriodStart = new Date(
-                cycleSettings?.last_period_start || userData?.date_of_birth || new Date()
-            );
-            const todayDate = new Date();
-            const daysSinceLastPeriod = Math.floor(
-                (todayDate.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24)
-            );
-
             const cycleLength = cycleSettings?.cycle_length_days || 28;
             const periodLength = cycleSettings?.period_length_days || 5;
-            const currentDay = (daysSinceLastPeriod % cycleLength) + 1;
 
-            let phase = "Unknown";
-            if (currentDay >= 1 && currentDay <= periodLength) phase = "Menstrual";
-            else if (currentDay > periodLength && currentDay <= Math.floor(cycleLength * 0.45))
-                phase = "Follicular";
-            else if (
-                currentDay > Math.floor(cycleLength * 0.45) &&
-                currentDay <= Math.floor(cycleLength * 0.55)
-            )
-                phase = "Ovulatory";
-            else phase = "Luteal";
+            const settings: CycleSettings = {
+                last_period_start: cycleSettings?.last_period_start || "",
+                cycle_length_days: cycleLength,
+                period_length_days: periodLength
+            };
+
+            const monthLogs: Record<string, DailyLog> = {};
+            (dailyLogs || []).forEach((log: any) => {
+                if (log?.date) {
+                    monthLogs[log.date] = { date: log.date, is_period: log.is_period };
+                }
+            });
+
+            const phaseResult = calculatePhase(new Date(), settings, monthLogs);
+            const phase = phaseResult.phase || "Menstrual";
+            const currentDay = phaseResult.day || 1;
 
             const cycleData = {
                 phase,

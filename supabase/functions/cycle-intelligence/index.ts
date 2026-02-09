@@ -71,13 +71,13 @@ serve(async (req) => {
 
         const { data: settings } = await supabase
             .from("user_cycle_settings")
-            .select("cycle_length, period_length")
+            .select("cycle_length_days, period_length_days")
             .eq("user_id", user_id)
             .single();
 
         // 2. DETERMINE CYCLE PARAMETERS
         // Use historical average if available (>2 cycles), else settings, else default
-        let avgCycleLength = settings?.cycle_length || 28;
+        let avgCycleLength = settings?.cycle_length_days || 28;
         if (events && events.length >= 2) {
             // Simple average of last few cycles
             let totalDays = 0;
@@ -113,7 +113,7 @@ serve(async (req) => {
 
         // Determine Phase
         let phaseName: "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
-        const periodLength = settings?.period_length || 5;
+        const periodLength = settings?.period_length_days || 5;
 
         if (dayOfCycle <= periodLength) {
             phaseName = "Menstrual";

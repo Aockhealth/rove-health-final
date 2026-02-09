@@ -71,13 +71,13 @@ serve(async (req) => {
 
         const { data: settings } = await supabase
             .from("user_cycle_settings")
-            .select("cycle_length, period_length")
+            .select("cycle_length_days, period_length_days")
             .eq("user_id", user_id)
             .single();
 
         // 2. DETERMINE CYCLE PARAMETERS
         // Use historical average if available (>2 cycles), else settings, else default
-        let avgCycleLength = settings?.cycle_length || 28;
+        let avgCycleLength = settings?.cycle_length_days || 28;
         if (events && events.length >= 2) {
             // Simple average of last few cycles
             let totalDays = 0;
@@ -94,12 +94,24 @@ serve(async (req) => {
             if (count > 0) avgCycleLength = Math.round(totalDays / count);
         }
 
-        const lastPeriodStart = new Date(events?.[0]?.period_start_date || new Date());
+        const parseLocalDate = (dateStr: string) => {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d, 0, 0, 0, 0);
+        };
+
+        const lastPeriodStart = events?.[0]?.period_start_date
+            ? parseLocalDate(events[0].period_start_date)
+            : new Date();
         const today = new Date();
 
+        // Normalize to local midnight to avoid partial-day drift
+        lastPeriodStart.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
         // Day of Cycle (1-indexed)
-        const diffTime = Math.abs(today.getTime() - lastPeriodStart.getTime());
-        const dayOfCycle = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+        const diffTime = today.getTime() - lastPeriodStart.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const dayOfCycle = Math.max(1, diffDays + 1);
 
         // 3. LUTEAL-ANCHORED CALCULATION
         // Ovulation is calculated BACKWARDS from next expected period
@@ -113,7 +125,7 @@ serve(async (req) => {
 
         // Determine Phase
         let phaseName: "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
-        const periodLength = settings?.period_length || 5;
+        const periodLength = settings?.period_length_days || 5;
 
         if (dayOfCycle <= periodLength) {
             phaseName = "Menstrual";

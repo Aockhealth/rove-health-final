@@ -2,7 +2,14 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { PHASE_CONTENT } from "@/data/phase-content";
-import { calculateSmartPhase } from "../../../../../shared/cycle/smart-phase";
+import {
+    calculateSmartPhase,
+    getRelevantPeriodStart,
+    parseLocalDate,
+    formatDate
+} from "../../../../../shared/cycle/smart-phase";
+
+const LOG_WINDOW_DAYS = 90;
 
 // ==========================================================
 // FETCH INSIGHTS DATA (Main Function)
@@ -12,12 +19,16 @@ export async function fetchInsightsData() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
     // ✅ OPTIMIZED: Parallel fetch of cycleSettings and logs
     const [cycleSettingsResult, logsResult] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs")
             .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
             .eq("user_id", user.id)
+            .gte("date", pastDate.toISOString().split('T')[0])
             .order('date', { ascending: false })
     ]);
 
@@ -93,6 +104,25 @@ export async function fetchInsightsData() {
         period_length_days: cycleSettings.period_length_days
     }, logMap);
 
+    const relevant = getRelevantPeriodStart(
+        new Date(),
+        {
+            last_period_start: cycleSettings.last_period_start,
+            cycle_length_days: cycleSettings.cycle_length_days,
+            period_length_days: cycleSettings.period_length_days
+        },
+        logMap
+    );
+
+    const nextPeriodDate = relevant.start
+        ? (() => {
+            const start = parseLocalDate(relevant.start);
+            const cycleLen = cycleSettings.cycle_length_days || 28;
+            start.setDate(start.getDate() + cycleLen);
+            return formatDate(start);
+        })()
+        : null;
+
     // Generate tips from PHASE_CONTENT
     const tipsByPhase: Record<string, string[]> = {};
     phases.forEach(p => {
@@ -130,6 +160,7 @@ export async function fetchInsightsData() {
             cycle: cycleSettings.cycle_length_days,
             period: cycleSettings.period_length_days,
             lastPeriodStart: cycleSettings.last_period_start,
+            nextPeriodDate,
             isIrregular: cycleSettings.is_irregular
         },
         phaseCounts,

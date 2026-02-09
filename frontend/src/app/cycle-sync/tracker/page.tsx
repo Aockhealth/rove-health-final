@@ -13,6 +13,7 @@ import {
     updateLastPeriodDate,
     fetchMonthLogs,
 } from "@/app/actions/cycle-sync";
+import { calculatePhase as sharedCalculatePhase, isInFertileWindow, type CycleSettings, type DailyLog as SharedDailyLog } from "@shared/cycle/phase";
 import confetti from "canvas-confetti";
 import { toast, Toaster } from "sonner";
 
@@ -632,101 +633,34 @@ export default function TrackerPageRedesigned() {
         });
     };
 
-    // ---------- Phase prediction for the badge (same model as calendar) ----------
-    const getRelevantPeriodStart = useMemo(() => {
-        const findStreakStart = (startStr: string) => {
-            let cur = new Date(startStr);
-            cur.setHours(0, 0, 0, 0);
-            let first = startStr;
+    // ---------- Phase prediction for the badge (canonical shared logic) ----------
+    const phaseSettings: CycleSettings = useMemo(() => ({
+        last_period_start: cycleSettings.last_period_start || "",
+        cycle_length_days: cycleSettings.cycle_length_days || 28,
+        period_length_days: cycleSettings.period_length_days || 5
+    }), [cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days]);
 
-            while (true) {
-                cur.setDate(cur.getDate() - 1);
-                const prevStr = formatDate(cur);
-                if (monthLogs[prevStr]?.is_period) first = prevStr;
-                else break;
-            }
-            return first;
-        };
+    const sharedLogs: Record<string, SharedDailyLog> = useMemo(() => {
+        const logs: Record<string, SharedDailyLog> = {};
+        for (const [dateStr, log] of Object.entries(monthLogs)) {
+            logs[dateStr] = { date: dateStr, is_period: log.is_period };
+        }
+        return logs;
+    }, [monthLogs]);
 
-        return (targetDate: Date): string | null => {
-            const dateStr = formatDate(targetDate);
-
-            if (monthLogs[dateStr]?.is_period) return findStreakStart(dateStr);
-
-            const datesDesc = Object.keys(monthLogs).sort().reverse();
-            for (const d of datesDesc) {
-                if (d < dateStr && monthLogs[d]?.is_period) return findStreakStart(d);
-            }
-
-            if (cycleSettings.last_period_start) {
-                const globalStart = new Date(cycleSettings.last_period_start);
-                globalStart.setHours(0, 0, 0, 0);
-                const check = new Date(targetDate);
-                check.setHours(0, 0, 0, 0);
-                if (check >= globalStart) return cycleSettings.last_period_start;
-            }
-
-            return null;
-        };
-    }, [monthLogs, cycleSettings.last_period_start]); // uses formatDate closure
-
-    const getDayInCycle = (date: Date): number | null => {
-        const startStr = getRelevantPeriodStart(date);
-        if (!startStr) return null;
-
-        const start = new Date(startStr);
-        start.setHours(0, 0, 0, 0);
-
-        const check = new Date(date);
-        check.setHours(0, 0, 0, 0);
-
-        const diffDays = Math.floor((check.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays < 0) return null;
-
-        const cycleLength = cycleSettings.cycle_length_days || 28;
-        let dayInCycle = (diffDays % cycleLength) + 1;
-        if (dayInCycle <= 0) dayInCycle += cycleLength;
-        return dayInCycle;
-    };
-
-    const getPhaseForDate = (date: Date): Phase => {
-        const dateStr = formatDate(date);
-
-        // If explicitly logged as period day, always show Menstrual
-        if (monthLogs[dateStr]?.is_period === true) return "Menstrual";
-
-        // CRITICAL FIX: If explicitly logged as NOT period (and we have a log entry), 
-        // respect that instead of forcing Menstrual based on day count.
-        // This allows "End Period" to work.
-        const isExplicitlyNotPeriod = monthLogs[dateStr] && monthLogs[dateStr].is_period === false;
-
-        const day = getDayInCycle(date);
-        if (!day) return null;
-
-        const cycleLength = cycleSettings.cycle_length_days || 28;
-        const periodLength = cycleSettings.period_length_days || 5;
-        const ovulationDay = cycleLength - 14;
-
-        // Day 1-periodLength = Menstrual (unless explicitly ended)
-        if (day <= periodLength && !isExplicitlyNotPeriod) return "Menstrual";
-
-        // Ovulatory window (around day 14 in a 28-day cycle)
-        if (day >= ovulationDay - 1 && day <= ovulationDay + 1) return "Ovulatory";
-
-        // After ovulation = Luteal
-        if (day > ovulationDay + 1) return "Luteal";
-
-        // Between period and ovulation = Follicular
-        return "Follicular";
-    };
-
-    const currentPhase = getPhaseForDate(selectedDate);
-    const dayInCycle = getDayInCycle(selectedDate);
+    const phaseResult = sharedCalculatePhase(selectedDate, phaseSettings, sharedLogs);
+    const currentPhase = phaseResult.phase as Phase;
+    const dayInCycle = phaseResult.day > 0 ? phaseResult.day : null;
+    const hasPhaseData = phaseResult.phase !== null;
+    const phaseLabel = hasPhaseData ? currentPhase : "Add Period Start";
+    const lateByDays = phaseResult.latePeriod
+        ? Math.max(1, (phaseResult.day || 0) - (phaseSettings.cycle_length_days || 28))
+        : 0;
 
     const isFertile = (() => {
         if (!dayInCycle) return false;
-        const ovulationDay = (cycleSettings.cycle_length_days || 28) - 14;
-        return dayInCycle >= ovulationDay - 5 && dayInCycle <= ovulationDay + 2;
+        if (phaseResult.latePeriod) return false;
+        return isInFertileWindow(dayInCycle, phaseSettings.cycle_length_days || 28, phaseSettings.luteal_length_days);
     })();
 
     const getPhaseDot = (p: Phase) => {
@@ -817,7 +751,7 @@ export default function TrackerPageRedesigned() {
                                         phasePill(currentPhase)
                                     )}
                                 >
-                                    {currentPhase || "Phase Unknown"}
+                                    {phaseLabel || "Phase Unknown"}
                                     {isFertile && <span className="text-[11px] font-medium opacity-80">• Fertile</span>}
                                 </div>
                             </div>
@@ -829,8 +763,18 @@ export default function TrackerPageRedesigned() {
                                 {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </p>
                             <p className="text-[11px] text-gray-500">{dayInCycle ? `Day ${dayInCycle}` : "—"}</p>
+                            {hasPhaseData && phaseResult.latePeriod && (
+                                <p className="text-[11px] text-rose-500">
+                                    Late by {lateByDays} day{lateByDays === 1 ? "" : "s"}
+                                </p>
+                            )}
                         </div>
                     </div>
+                    {!hasPhaseData && (
+                        <div className="mt-3 rounded-2xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-600">
+                            Log your first period to unlock phase tracking and fertile window predictions.
+                        </div>
+                    )}
                 </div>
 
                 {/* The ONLY calendar */}

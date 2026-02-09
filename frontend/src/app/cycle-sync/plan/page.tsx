@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useTransition } from "react";
 import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
-import { calculateSmartPhase } from "@shared/cycle/smart-phase";
+import { calculatePhase } from "@shared/cycle/phase";
 import { savePlanSettings, fetchPlanSettings } from "./actions";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
@@ -678,8 +678,8 @@ export default function DetailedPlanPage() {
     useEffect(() => {
         if (unifiedData) {
             // Run the EXACT same logic as Tracker, but on Client (Local Time)
-            const result = calculateSmartPhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
-            setClientDay(result.day);
+            const result = calculatePhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
+            setClientDay(result.day > 0 ? result.day : null);
             setClientPhaseName(result.phase);
         }
     }, [unifiedData]);
@@ -1224,6 +1224,43 @@ export default function DetailedPlanPage() {
             <div className="animate-spin w-8 h-8 rounded-full border-2 border-rove-charcoal border-t-transparent" />
         </div>
     );
+
+    const hasCycleData =
+        !!unifiedData?.settings?.last_period_start ||
+        Object.values(unifiedData?.monthLogs || {}).some((log: any) => log?.is_period);
+
+    if (!hasCycleData) {
+        return (
+            <div className="min-h-screen bg-rove-cream/20 flex flex-col">
+                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b">
+                    <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+                        <Link href="/cycle-sync">
+                            <ChevronLeft className="w-5 h-5 text-gray-500" />
+                        </Link>
+                        <div className="text-center">
+                            <h1 className="text-lg font-heading text-rove-charcoal">Plan</h1>
+                            <span className="text-[10px] uppercase tracking-wider text-gray-400">Personalized</span>
+                        </div>
+                        <ProfileAvatar />
+                    </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-6">
+                    <div className="max-w-lg w-full bg-white/80 border border-rove-stone/10 rounded-3xl p-6 shadow-sm text-center">
+                        <h2 className="font-heading text-xl text-rove-charcoal mb-2">Log your first period</h2>
+                        <p className="text-sm text-rove-stone mb-4">
+                            We’ll generate a personalized plan after we have your first period start.
+                        </p>
+                        <Link
+                            href="/cycle-sync/tracker"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rove-charcoal text-white text-sm font-semibold hover:bg-black transition"
+                        >
+                            Go to Tracker
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const phaseName = clientPhaseName || data.phase || "Menstrual";
     const displayDay = clientDay || data.day;

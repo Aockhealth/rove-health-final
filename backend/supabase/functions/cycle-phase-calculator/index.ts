@@ -49,13 +49,18 @@ serve(async (req) => {
             );
         }
 
-        // Parse dates
-        const target = targetDate ? new Date(targetDate) : new Date();
-        const start = new Date(lastPeriodStart);
+        const parseLocalDate = (dateStr: string) => {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d, 0, 0, 0, 0);
+        };
 
-        // Normalize to midnight UTC
-        target.setUTCHours(0, 0, 0, 0);
-        start.setUTCHours(0, 0, 0, 0);
+        // Parse dates (local day semantics)
+        const target = targetDate ? parseLocalDate(targetDate) : new Date();
+        const start = parseLocalDate(lastPeriodStart);
+
+        // Normalize to local midnight
+        target.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
 
         // Calculate day in cycle
         const diffTime = target.getTime() - start.getTime();
@@ -92,10 +97,10 @@ serve(async (req) => {
         const nextPeriod = new Date(target);
         nextPeriod.setDate(nextPeriod.getDate() + daysUntilNextPeriod);
 
-        // Fertile window (5 days before ovulation to 1 day after)
+        // Fertile window (5 days before ovulation to 2 days after)
         const fertileWindow = {
             start: Math.max(1, ovulationDay - 5),
-            end: Math.min(cycleLength, ovulationDay + 1)
+            end: Math.min(cycleLength, ovulationDay + 2)
         };
 
         const response: CyclePhaseResponse = {

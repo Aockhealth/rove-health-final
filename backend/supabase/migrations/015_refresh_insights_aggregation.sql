@@ -1,4 +1,4 @@
--- backend/supabase/migrations/011_insights_aggregation.sql
+-- Refresh insights aggregation function to match canonical phase logic
 
 CREATE OR REPLACE FUNCTION get_insights_aggregated(
     user_id_param UUID

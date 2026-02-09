@@ -36,7 +36,7 @@ create table user_onboarding (
 -- ==========================================
 create table user_cycle_settings (
   user_id uuid references public.profiles(id) on delete cascade not null primary key,
-  last_period_start date not null,
+  last_period_start date,
   cycle_length_days int default 28,
   period_length_days int default 5,
   is_irregular boolean default false,

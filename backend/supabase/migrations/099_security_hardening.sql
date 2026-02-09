@@ -91,7 +91,7 @@ BEGIN
     END IF;
     
     -- Aggregate all insights in one query
-    WITH phase_calculations AS (
+    WITH logs AS (
         SELECT 
             date,
             symptoms,
@@ -100,25 +100,69 @@ BEGIN
             disruptors,
             exercise_types,
             notes,
-            -- Calculate phase for each log
-            CASE 
-                WHEN ((date - cycle_settings.last_period_start::date) % COALESCE(cycle_settings.cycle_length_days, 28)) + 1 
-                     <= COALESCE(cycle_settings.period_length_days, 5) THEN 'Menstrual'
-                WHEN ((date - cycle_settings.last_period_start::date) % COALESCE(cycle_settings.cycle_length_days, 28)) + 1 
-                     < COALESCE(cycle_settings.cycle_length_days, 28) - 15 THEN 'Follicular'
-                WHEN ((date - cycle_settings.last_period_start::date) % COALESCE(cycle_settings.cycle_length_days, 28)) + 1 
-                     <= COALESCE(cycle_settings.cycle_length_days, 28) - 13 THEN 'Ovulatory'
-                ELSE 'Luteal'
-            END AS phase
+            is_period
         FROM daily_logs
         WHERE user_id = user_id_param
           AND date >= CURRENT_DATE - INTERVAL '90 days'
+    ),
+    period_streaks AS (
+        SELECT
+            date,
+            CASE
+                WHEN lag(date) OVER (ORDER BY date) = date - INTERVAL '1 day' THEN NULL
+                ELSE date
+            END AS streak_start
+        FROM logs
+        WHERE is_period IS TRUE
+    ),
+    logs_with_start AS (
+        SELECT
+            l.*,
+            MAX(ps.streak_start) OVER (ORDER BY l.date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS latest_streak_start
+        FROM logs l
+        LEFT JOIN period_streaks ps ON ps.date = l.date
+    ),
+    calc_base AS (
+        SELECT
+            lws.*,
+            COALESCE(
+                lws.latest_streak_start,
+                CASE WHEN cycle_settings.last_period_start <= lws.date THEN cycle_settings.last_period_start ELSE NULL END
+            ) AS effective_start,
+            COALESCE(cycle_settings.cycle_length_days, 28) AS cycle_len,
+            COALESCE(cycle_settings.period_length_days, 5) AS period_len
+        FROM logs_with_start lws
+    ),
+    phase_calculations AS (
+        SELECT 
+            date,
+            symptoms,
+            moods,
+            sleep_quality,
+            disruptors,
+            exercise_types,
+            notes,
+            is_period,
+            CASE WHEN effective_start IS NULL THEN NULL ELSE (date - effective_start) END AS diff_days,
+            CASE WHEN effective_start IS NULL THEN NULL ELSE ((date - effective_start) % cycle_len) + 1 END AS cycle_day,
+            CASE 
+                WHEN is_period IS TRUE THEN 'Menstrual'
+                WHEN effective_start IS NULL THEN NULL
+                WHEN date <= CURRENT_DATE AND (date - effective_start) >= cycle_len THEN 'Luteal'
+                WHEN ((date - effective_start) % cycle_len) + 1 <= period_len
+                     AND is_period IS DISTINCT FROM FALSE THEN 'Menstrual'
+                WHEN ((date - effective_start) % cycle_len) + 1 < cycle_len - 15 THEN 'Follicular'
+                WHEN ((date - effective_start) % cycle_len) + 1 <= cycle_len - 13 THEN 'Ovulatory'
+                ELSE 'Luteal'
+            END AS phase
+        FROM calc_base
     ),
     phase_counts AS (
         SELECT 
             phase,
             COUNT(*) as count
         FROM phase_calculations
+        WHERE phase IS NOT NULL
         GROUP BY phase
     ),
     symptom_aggregation AS (
@@ -134,7 +178,8 @@ BEGIN
                 unnest(symptoms) as symptom,
                 COUNT(*) as symptom_count
             FROM phase_calculations
-            WHERE symptoms IS NOT NULL AND array_length(symptoms, 1) > 0
+            WHERE phase IS NOT NULL
+              AND symptoms IS NOT NULL AND array_length(symptoms, 1) > 0
             GROUP BY phase, symptom
         ) s
         GROUP BY phase
@@ -152,7 +197,8 @@ BEGIN
                 unnest(moods) as mood,
                 COUNT(*) as mood_count
             FROM phase_calculations
-            WHERE moods IS NOT NULL AND array_length(moods, 1) > 0
+            WHERE phase IS NOT NULL
+              AND moods IS NOT NULL AND array_length(moods, 1) > 0
             GROUP BY phase, mood
         ) m
         GROUP BY phase

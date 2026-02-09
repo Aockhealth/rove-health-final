@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync"; // Still needed for content
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
-import { calculateSmartPhase } from "@shared/cycle/smart-phase";
+import { calculatePhase } from "@shared/cycle/phase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "@/components/ui/LoadingScreen";
@@ -475,8 +475,8 @@ export default function CycleSyncDashboard() {
 
     useEffect(() => {
         if (unifiedData) {
-            const result = calculateSmartPhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
-            setClientDay(result.day);
+            const result = calculatePhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
+            setClientDay(result.day > 0 ? result.day : null);
             setClientPhaseName(result.phase);
         }
     }, [unifiedData]);
@@ -511,6 +511,10 @@ export default function CycleSyncDashboard() {
     if (!data) return <LoadingScreen />;
 
 
+    const hasCycleData =
+        !!data?.settings?.last_period_start ||
+        Object.values(data?.monthLogs || {}).some((log: any) => log?.is_period);
+
     // ✅ OVERRIDE PHASE DATA
     const { user, phase: serverPhase } = data;
     const currentPhase = {
@@ -521,6 +525,36 @@ export default function CycleSyncDashboard() {
 
     const theme = phaseThemes[currentPhase.name] || phaseThemes["Follicular"];
     const trackerMode = data.tracker_mode || "menstruation";
+
+    if (!hasCycleData) {
+        return (
+            <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20 grain-overlay">
+                <div className="relative z-10 p-4 md:p-8 space-y-6 md:space-y-8 pb-4 md:pb-32">
+                    <div className="flex items-center justify-between mb-8 px-2">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/50 mb-0.5">ROVE</span>
+                            <span className="font-heading text-2xl text-rove-charcoal">Hey, {user?.name?.split(" ")[0] || "Love"}</span>
+                            <span className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <ProfileAvatar />
+                    </div>
+
+                    <div className="max-w-xl mx-auto bg-white/80 border border-rove-stone/10 rounded-3xl p-6 shadow-sm">
+                        <h2 className="font-heading text-xl text-rove-charcoal mb-2">Log your first period</h2>
+                        <p className="text-sm text-rove-stone mb-4">
+                            Once you log a period start, your phase, fertile window, and insights will appear here.
+                        </p>
+                        <Link
+                            href="/cycle-sync/tracker"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rove-charcoal text-white text-sm font-semibold hover:bg-black transition"
+                        >
+                            Go to Tracker
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20 grain-overlay">

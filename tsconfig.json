@@ -25,7 +25,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./src/*"
+        "./frontend/src/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
       ]
     }
   },

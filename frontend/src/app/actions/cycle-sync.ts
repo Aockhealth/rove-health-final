@@ -10,6 +10,7 @@ import {
     type MoodInsight,
     type SymptomTips
 } from "./ai-actions";
+import { calculatePhase as calculatePhaseCanonical, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 
 export interface AIContext {
     symptoms: string[];
@@ -49,6 +50,76 @@ function getRandomItems<T>(items: T[], count: number): T[] {
     return shuffled.slice(0, count);
 }
 
+const LOG_WINDOW_DAYS = 90;
+
+
+// --- AUTO-SYNC HELPERS ---
+
+/**
+ * Syncs the period start date to user_cycle_settings when a period is logged.
+ * Walks backwards to find the streak start and updates settings if this is a newer period.
+ */
+async function syncPeriodStartFromLog(
+    supabase: Awaited<ReturnType<typeof createClient>>,
+    userId: string,
+    logDate: string
+): Promise<void> {
+    try {
+        // 1. Fetch recent logs to find streak start
+        const { data: recentLogs } = await supabase
+            .from("daily_logs")
+            .select("date, is_period")
+            .eq("user_id", userId)
+            .lte("date", logDate)
+            .order("date", { ascending: false })
+            .limit(45);
+
+        if (!recentLogs || recentLogs.length === 0) return;
+
+        // 2. Walk backwards to find streak start
+        let streakStart = logDate;
+        const sortedLogs = recentLogs.sort((a, b) => b.date.localeCompare(a.date));
+
+        for (const log of sortedLogs) {
+            if (log.date === logDate) continue; // Skip the current log
+            if (log.date < logDate) {
+                // Check if this is a consecutive day
+                const prevDate = new Date(log.date);
+                const currDate = new Date(streakStart);
+                const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1 && log.is_period) {
+                    streakStart = log.date;
+                } else {
+                    break; // Gap found, stop walking
+                }
+            }
+        }
+
+        // 3. Check current settings
+        const { data: currentSettings } = await supabase
+            .from("user_cycle_settings")
+            .select("last_period_start")
+            .eq("user_id", userId)
+            .single();
+
+        // 4. Update if this is a newer period start
+        if (!currentSettings?.last_period_start || streakStart > currentSettings.last_period_start) {
+            await supabase
+                .from("user_cycle_settings")
+                .update({
+                    last_period_start: streakStart,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("user_id", userId);
+
+            console.log(`[Auto-Sync] Updated last_period_start to ${streakStart}`);
+        }
+    } catch (error) {
+        // Don't fail the main log operation if sync fails
+        console.error("[Auto-Sync] Failed to sync period start:", error);
+    }
+}
 
 
 
@@ -172,12 +243,14 @@ export async function fetchDashboardData() {
     if (!user) {
         const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 };
 
-        const { phase, day } = calculatePhase(
-            new Date(),
-            mockCycleSettings.last_period_start,
-            mockCycleSettings.cycle_length_days,
-            mockCycleSettings.period_length_days
-        );
+        const mockSettings: CycleSettings = {
+            last_period_start: mockCycleSettings.last_period_start,
+            cycle_length_days: mockCycleSettings.cycle_length_days,
+            period_length_days: mockCycleSettings.period_length_days
+        };
+        const mockPhaseResult = calculatePhaseCanonical(new Date(), mockSettings, {});
+        const phase = mockPhaseResult.phase || "Menstrual";
+        const day = mockPhaseResult.day || 1;
 
         const content = PHASE_CONTENT["Follicular"];
 
@@ -225,12 +298,15 @@ export async function fetchDashboardData() {
         };
     }
 
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
     // ⚡ MEGA PARALLEL: Fetch ALL dashboard data in one trip
     const [profileResult, onboardingResult, settingsResult, logsResult, contentResult, lifestyleResult] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user.id).single(),
         supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single(),
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
+        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
         supabase.from("phase_content").select("*"),
         supabase.from("user_lifestyle").select("diet_preference").eq("user_id", user.id).maybeSingle()
     ]);
@@ -245,28 +321,31 @@ export async function fetchDashboardData() {
     if (!settings) return null;
 
     // Build log map for smart phase
-    const monthLogs: Record<string, any> = {};
+    const monthLogs: Record<string, DailyLog> = {};
     logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
 
-    // Calculate phase locally (no additional DB call)
-    const { phase, day } = calculatePhase(
-        new Date(),
-        settings.last_period_start,
-        settings.cycle_length_days || 28,
-        settings.period_length_days || 5
-    );
+    const phaseSettings: CycleSettings = {
+        last_period_start: settings.last_period_start || "",
+        cycle_length_days: settings.cycle_length_days || 28,
+        period_length_days: settings.period_length_days || 5
+    };
+
+    // Calculate phase using canonical shared logic (respects logs + late period)
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, monthLogs);
+    const phase = phaseResult.phase || "Menstrual";
+    const day = phaseResult.day || 1;
 
     const cycleLength = settings.cycle_length_days || 28;
-    const nextPeriodDate = (() => {
+    const nextPeriodDate = settings.last_period_start ? (() => {
         const [py, pm, pd] = settings.last_period_start.split('-').map(Number);
         const next = new Date(py, pm - 1, pd);
         next.setDate(next.getDate() + cycleLength);
         return formatDate(next);
-    })();
+    })() : null;
 
     // Get content for current phase
     const phaseRow = allContent.find((c: any) => c.phase_name === phase);
-    const content = phaseRow?.content_json || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    const content = phaseRow?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems((content as any).river, 1)[0] || "Rest • Restore • Reload";
 
     return {
@@ -280,11 +359,7 @@ export async function fetchDashboardData() {
             symptomFocus: "Energy rising? Time to create.",
         },
         // Unified data for client-side smart phase recalculation
-        settings: {
-            last_period_start: settings.last_period_start,
-            cycle_length_days: settings.cycle_length_days || 28,
-            period_length_days: settings.period_length_days || 5
-        },
+        settings: phaseSettings,
         monthLogs,
         // New educational data for Daily Flow
         nutrients: content.nutrients || [],
@@ -437,12 +512,14 @@ export async function fetchCycleIntelligence() {
     if (!cycleSettings) return null;
 
     // 2. Calculate Phase
-    const { phase, day } = calculatePhase(
-        new Date(),
-        cycleSettings.last_period_start,
-        cycleSettings.cycle_length_days,
-        cycleSettings.period_length_days
-    );
+    const phaseSettings: CycleSettings = {
+        last_period_start: cycleSettings.last_period_start,
+        cycle_length_days: cycleSettings.cycle_length_days || 28,
+        period_length_days: cycleSettings.period_length_days || 5
+    };
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
+    const phase = phaseResult.phase || "Menstrual";
+    const day = phaseResult.day || 1;
 
     const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
 
@@ -683,6 +760,9 @@ export async function fetchPlanPageDataFast() {
     if (!user) return null;
 
     // ⚡ MEGA PARALLEL: Fetch ALL data in ONE trip
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
     const [
         settingsResult,
         logsResult,
@@ -692,7 +772,7 @@ export async function fetchPlanPageDataFast() {
         contentResult
     ] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).order("date", { ascending: false }).limit(60),
+        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
         supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("user_onboarding").select("dietary_preferences").eq("user_id", user.id).maybeSingle(),
@@ -711,31 +791,30 @@ export async function fetchPlanPageDataFast() {
     if (!settings) return null;
 
     // Build log map for smart phase
-    const monthLogs: Record<string, any> = {};
-    logs.forEach((l: any) => { monthLogs[l.date] = l; });
+    const monthLogs: Record<string, DailyLog> = {};
+    logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
 
-    // Calculate phase locally (no DB call)
-    const { phase, day } = calculatePhase(
-        new Date(),
-        settings.last_period_start,
-        settings.cycle_length_days || 28,
-        settings.period_length_days || 5
-    );
+    const phaseSettings: CycleSettings = {
+        last_period_start: settings.last_period_start,
+        cycle_length_days: settings.cycle_length_days || 28,
+        period_length_days: settings.period_length_days || 5
+    };
+
+    // Calculate phase using canonical shared logic (respects logs + late period)
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, monthLogs);
+    const phase = phaseResult.phase || "Menstrual";
+    const day = phaseResult.day || 1;
 
     // Get content for current phase
     const phaseRow = allContent.find((c: any) => c.phase_name === phase);
-    const content = phaseRow?.content_json || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    const content = phaseRow?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
 
     // Build unified response
     return {
         // Cycle data
         phase,
         day,
-        settings: {
-            last_period_start: settings.last_period_start,
-            cycle_length_days: settings.cycle_length_days || 28,
-            period_length_days: settings.period_length_days || 5
-        },
+        settings: phaseSettings,
         monthLogs,
 
         // Lifestyle data
@@ -811,7 +890,7 @@ export async function fetchTrackerPageDataFast(selectedDateStr?: string) {
     // Get 90 days of logs (covers prev/current/next months + history for streak)
     const today = new Date();
     const pastDate = new Date();
-    pastDate.setDate(today.getDate() - 90);
+    pastDate.setDate(today.getDate() - LOG_WINDOW_DAYS);
 
     // ⚡ MEGA PARALLEL: Fetch ALL tracker data in one trip
     const [settingsResult, logsResult, todayLogResult] = await Promise.all([
@@ -857,10 +936,14 @@ export async function fetchInsightsData() {
     if (!cycleSettings) return null;
 
     // ✅ UPDATE: Select ALL relevant columns
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
     const { data: logs } = await supabase
         .from("daily_logs")
-        .select("date, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+        .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
         .eq("user_id", user.id)
+        .gte("date", formatDate(pastDate))
         .order('date', { ascending: false }); // Get newest first for "Recent Note"
 
     const phases = ["Menstrual", "Follicular", "Ovulatory", "Luteal"];
@@ -880,13 +963,27 @@ export async function fetchInsightsData() {
     const allExercise = new Set<string>();
     let mostRecentNote = "";
 
+    const phaseSettings: CycleSettings = {
+        last_period_start: cycleSettings.last_period_start,
+        cycle_length_days: cycleSettings.cycle_length_days || 28,
+        period_length_days: cycleSettings.period_length_days || 5
+    };
+
+    const monthLogs: Record<string, DailyLog> = {};
+    if (logs) {
+        logs.forEach((log: any) => {
+            monthLogs[log.date] = { date: log.date, is_period: log.is_period };
+        });
+    }
+
     if (logs) {
         // Grab the most recent non-empty note
         const noteLog = logs.find(l => l.notes && l.notes.length > 0);
         if (noteLog) mostRecentNote = noteLog.notes;
 
         logs.forEach((log) => {
-            const { phase } = calculatePhase(new Date(log.date), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+            const phaseResult = calculatePhaseCanonical(new Date(log.date), phaseSettings, monthLogs);
+            const phase = phaseResult.phase || "Menstrual";
             if (phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
 
             // Group symptoms by phase
@@ -908,7 +1005,11 @@ export async function fetchInsightsData() {
         });
     }
 
-    const currentStatus = calculatePhase(new Date(), cycleSettings.last_period_start, cycleSettings.cycle_length_days, cycleSettings.period_length_days);
+    const currentStatusResult = calculatePhaseCanonical(new Date(), phaseSettings, monthLogs);
+    const currentStatus = {
+        phase: currentStatusResult.phase || "Menstrual",
+        day: currentStatusResult.day || 1
+    };
 
     // Generate tips from PHASE_CONTENT
     const tipsByPhase: Record<string, string[]> = {};
@@ -1026,6 +1127,12 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
         }).select().single();
 
         if (error) return { success: false, error: error.message };
+
+        // Auto-sync period start when period is logged
+        if (safeData.isPeriod) {
+            await syncPeriodStartFromLog(supabase, user.id, safeData.date);
+        }
+
         return { success: true, data };
     } catch (err) {
         return { success: false, error: (err as Error).message };
@@ -1075,12 +1182,14 @@ export async function getDailyLog(date: string) {
     if (!user) {
         const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 }; // Result: Day 12 (Follicular)
 
-        const { phase, day } = calculatePhase(
-            new Date(),
-            mockCycleSettings.last_period_start,
-            mockCycleSettings.cycle_length_days,
-            mockCycleSettings.period_length_days
-        );
+        const mockSettings: CycleSettings = {
+            last_period_start: mockCycleSettings.last_period_start,
+            cycle_length_days: mockCycleSettings.cycle_length_days,
+            period_length_days: mockCycleSettings.period_length_days
+        };
+        const mockPhaseResult = calculatePhaseCanonical(new Date(), mockSettings, {});
+        const phase = mockPhaseResult.phase || "Menstrual";
+        const day = mockPhaseResult.day || 1;
 
         const content = PHASE_CONTENT["Follicular"];
 
@@ -1255,13 +1364,16 @@ export async function fetchInsightsDataOptimized() {
         return null;
     }
 
-    // Calculate current phase using your existing function
-    const currentStatus = calculatePhase(
-        new Date(),
-        data.cycleSettings.last_period_start,
-        data.cycleSettings.cycle_length_days,
-        data.cycleSettings.period_length_days
-    );
+    const phaseSettings: CycleSettings = {
+        last_period_start: data.cycleSettings.last_period_start,
+        cycle_length_days: data.cycleSettings.cycle_length_days || 28,
+        period_length_days: data.cycleSettings.period_length_days || 5
+    };
+    const currentStatusResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
+    const currentStatus = {
+        phase: currentStatusResult.phase || "Menstrual",
+        day: currentStatusResult.day || 1
+    };
 
     return {
         phase: {
@@ -1323,38 +1435,6 @@ async function getPhaseContentFromDB(phase: string): Promise<any> {
     })(); // End of IIFE
 
     return staticContent;
-}
-
-// ✅ ROBUST LOCAL DATE PARSING
-function calculatePhase(
-    targetDate: Date,
-    lastPeriodStart: string,
-    cycleLength: number = 28,
-    periodLength: number = 5
-) {
-    // Parse "YYYY-MM-DD" explicitly as local time components
-    const [y, m, d_str] = lastPeriodStart.split('-').map(Number);
-    const start = new Date(y, m - 1, d_str); // Local midnight
-
-    // Normalize target date to local midnight
-    const d = new Date(targetDate);
-    d.setHours(0, 0, 0, 0);
-
-    // Safety: also zero out start just in case
-    start.setHours(0, 0, 0, 0);
-
-    const diffTime = d.getTime() - start.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let dayInCycle = (diffDays % cycleLength) + 1;
-    if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-    const estimatedOvulationDay = cycleLength - 14;
-
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
-    return { phase: "Luteal", day: dayInCycle };
 }
 
 // ✅ UNIFIED CYCLE STATE: The Single Source of Truth
@@ -1433,25 +1513,27 @@ export async function getCanonicalCycleState(userId: string) {
     }
 
     // 4. Calculate Phase
-    const phaseResult = calculatePhase(
-        new Date(),
-        lastPeriodStart,
-        cycleLength,
-        periodLength
-    );
+    const phaseSettings: CycleSettings = {
+        last_period_start: lastPeriodStart || "",
+        cycle_length_days: cycleLength,
+        period_length_days: periodLength
+    };
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
 
 
 
     // 5. Calculate Next Period
     // Use the same robust parsing for next period calculation
-    const [py, pm, pd] = lastPeriodStart.split('-').map(Number);
-    const nextPeriodDateFallback = new Date(py, pm - 1, pd);
-    nextPeriodDateFallback.setDate(nextPeriodDateFallback.getDate() + cycleLength);
-    const nextPeriodDateStr = formatDate(nextPeriodDateFallback);
+    const nextPeriodDateStr = lastPeriodStart ? (() => {
+        const [py, pm, pd] = lastPeriodStart.split('-').map(Number);
+        const nextPeriodDateFallback = new Date(py, pm - 1, pd);
+        nextPeriodDateFallback.setDate(nextPeriodDateFallback.getDate() + cycleLength);
+        return formatDate(nextPeriodDateFallback);
+    })() : null;
 
     return {
-        phase: phaseResult.phase,
-        day: phaseResult.day,
+        phase: phaseResult.phase || "Menstrual",
+        day: phaseResult.day || 1,
         lastPeriodStart,
         nextPeriodDate: nextPeriodDateStr,
         cycleLength,

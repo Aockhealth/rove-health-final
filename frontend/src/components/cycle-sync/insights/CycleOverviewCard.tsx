@@ -20,7 +20,7 @@ export function CycleOverviewCard({
   cycleLength: number;
   periodLength: number;
   isRegular: boolean;
-  nextPeriodDate: string; // 🔹 REQUIRED NOW
+  nextPeriodDate?: string | null;
   phase?: string;
   theme: any;
 }) {
@@ -32,17 +32,22 @@ export function CycleOverviewCard({
   };
 
   // --- Prediction Logic ---
-  const target = new Date(nextPeriodDate);
   const today = new Date();
-  target.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
-  const diffTime = target.getTime() - today.getTime();
-  const daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  const target = nextPeriodDate ? new Date(nextPeriodDate) : null;
+  if (target) target.setHours(0, 0, 0, 0);
 
-  const status = getPredictionStatus(daysLeft);
+  const diffTime = target ? target.getTime() - today.getTime() : null;
+  const rawDays = diffTime !== null ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : null;
+  const lateBy = rawDays !== null && rawDays < 0 ? Math.abs(rawDays) : null;
+  const daysLeft = rawDays !== null && rawDays >= 0 ? rawDays : null;
 
-  const likelyWindow = `${target.toLocaleDateString("en-US", {
+  const status = lateBy !== null
+    ? { label: "Late", color: "text-phase-menstrual" }
+    : (daysLeft !== null ? getPredictionStatus(daysLeft) : { label: "Unknown", color: "text-rove-stone" });
+
+  const likelyWindow = target && lateBy === null ? `${target.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   })} - ${new Date(
@@ -50,7 +55,7 @@ export function CycleOverviewCard({
   ).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-  })}`;
+  })}` : "—";
 
   return (
     <div className="relative overflow-hidden rounded-[2rem] border shadow-sm p-7 h-full flex flex-col bg-white/40 backdrop-blur-xl border-white/40">
@@ -117,7 +122,7 @@ export function CycleOverviewCard({
               Starts In
             </span>
             <span className="font-heading text-lg text-rove-charcoal">
-              {daysLeft} days
+              {lateBy !== null ? `Late by ${lateBy} day${lateBy === 1 ? "" : "s"}` : (daysLeft !== null ? `${daysLeft} days` : "—")}
             </span>
           </div>
 

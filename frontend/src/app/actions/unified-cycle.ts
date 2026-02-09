@@ -11,6 +11,8 @@ export interface UnifiedCycleData {
     userId: string;
 }
 
+const LOG_WINDOW_DAYS = 90;
+
 /**
  * FETCH UNIFIED CYCLE DATA
  * Single source of truth for Home, Plan, and Tracker.
@@ -34,10 +36,10 @@ export async function fetchUnifiedCycleData(): Promise<UnifiedCycleData | null> 
 
     if (!settings) return null;
 
-    // 2. Fetch Recent Logs (last 60 days to be safe for streak calculation)
+    // 2. Fetch Recent Logs (last 90 days to cover current + previous cycles)
     const today = new Date();
     const pastDate = new Date();
-    pastDate.setDate(today.getDate() - 60);
+    pastDate.setDate(today.getDate() - LOG_WINDOW_DAYS);
 
     const { data: rawLogs } = await supabase
         .from("daily_logs")
@@ -60,7 +62,7 @@ export async function fetchUnifiedCycleData(): Promise<UnifiedCycleData | null> 
 
     return {
         settings: {
-            last_period_start: settings.last_period_start,
+            last_period_start: settings.last_period_start || "",
             cycle_length_days: settings.cycle_length_days || 28,
             period_length_days: settings.period_length_days || 5,
         },

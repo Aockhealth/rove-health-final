@@ -6,6 +6,7 @@ import { z } from "zod";
 // If using aliases: import { PHASE_CONTENT } from "@/data/phase-content";
 import { PHASE_CONTENT } from "@/data/phase-content";
 import { getCyclePhase, type CyclePhaseResponse } from "../ai-actions/ai-actions";
+import { calculatePhase as calculatePhaseCanonical, type CycleSettings } from "../../../../shared/cycle/phase";
 
 // ============================================
 // TYPES & SCHEMAS
@@ -35,7 +36,7 @@ const DailyLogSchema = z.object({
     isPeriod: z.boolean(),
     flowIntensity: z.string().optional().nullable(),
     moods: z.array(z.string()).optional().default([]),
-    notes: z.string().max(2000, "Notes cannot exceed 2000 characters").optional().default(""), 
+    notes: z.string().max(2000, "Notes cannot exceed 2000 characters").optional().default(""),
     cervicalDischarge: z.string().optional().nullable(),
     exerciseTypes: z.array(z.string()).optional().default([]),
     exerciseMinutes: z.number().min(0).max(1440, "Exercise cannot exceed 24 hours").optional().nullable(),
@@ -50,32 +51,6 @@ const DailyLogSchema = z.object({
 // ============================================
 // HELPERS
 // ============================================
-
-export function calculatePhase(
-    targetDate: Date,
-    lastPeriodStart: string,
-    cycleLength: number = 28,
-    periodLength: number = 5
-) {
-    const start = new Date(lastPeriodStart);
-    const d = new Date(targetDate);
-    const s = new Date(start);
-    d.setHours(0, 0, 0, 0);
-    s.setHours(0, 0, 0, 0);
-
-    const diffTime = d.getTime() - s.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let dayInCycle = (diffDays % cycleLength) + 1;
-    if (dayInCycle <= 0) dayInCycle += cycleLength;
-
-    const estimatedOvulationDay = cycleLength - 14;
-
-    if (dayInCycle <= periodLength) return { phase: "Menstrual", day: dayInCycle };
-    if (dayInCycle < (estimatedOvulationDay - 1)) return { phase: "Follicular", day: dayInCycle };
-    if (dayInCycle <= (estimatedOvulationDay + 1)) return { phase: "Ovulatory", day: dayInCycle };
-    return { phase: "Luteal", day: dayInCycle };
-}
 
 function getRandomItems<T>(items: T[], count: number): T[] {
     const shuffled = [...items].sort(() => 0.5 - Math.random());
@@ -95,12 +70,14 @@ export async function fetchDashboardData() {
         console.log("⚠️ Using Mock Data for Intelligence");
         const mockCycleSettings = { last_period_start: "2025-12-08", cycle_length_days: 28, period_length_days: 5 };
 
-        const { phase, day } = calculatePhase(
-            new Date(),
-            mockCycleSettings.last_period_start,
-            mockCycleSettings.cycle_length_days,
-            mockCycleSettings.period_length_days
-        );
+        const mockSettings: CycleSettings = {
+            last_period_start: mockCycleSettings.last_period_start,
+            cycle_length_days: mockCycleSettings.cycle_length_days,
+            period_length_days: mockCycleSettings.period_length_days
+        };
+        const mockPhaseResult = calculatePhaseCanonical(new Date(), mockSettings, {});
+        const phase = mockPhaseResult.phase || "Menstrual";
+        const day = mockPhaseResult.day || 1;
 
         const content = PHASE_CONTENT["Follicular"];
 
@@ -183,12 +160,16 @@ export async function fetchDashboardData() {
     }
 
     // Fallback to local if edge function fails
-    const phaseCalc = calculatePhase(
-        new Date(),
-        settings.last_period_start,
-        settings.cycle_length_days,
-        settings.period_length_days
-    );
+    const settingsForPhase: CycleSettings = {
+        last_period_start: settings.last_period_start,
+        cycle_length_days: settings.cycle_length_days,
+        period_length_days: settings.period_length_days
+    };
+    const phaseCalcResult = calculatePhaseCanonical(new Date(), settingsForPhase, {});
+    const phaseCalc = {
+        phase: phaseCalcResult.phase || "Menstrual",
+        day: phaseCalcResult.day || 1
+    };
 
     const phase = phaseData?.phase || phaseCalc.phase;
     const day = phaseData?.dayInCycle || phaseCalc.day;
@@ -272,7 +253,7 @@ export const logDailyLog = logDailySymptoms;
 export async function getDailyLog(date: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     // Fallback if no user
     if (!user) return null;
 
