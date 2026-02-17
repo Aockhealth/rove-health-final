@@ -77,7 +77,7 @@ export default function InsightsPage() {
 
           if (data.phase?.name) {
             // ✅ FIX 2: Only set phase if it hasn't been touched yet.
-            setSelectedPhase((prev) => prev || data.phase.name);
+            setSelectedPhase((prev) => prev || data.phase!.name);
 
             // Generate AI Insight for the *current real phase*
             const aiContext: AIContext = {

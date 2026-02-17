@@ -760,3 +760,95 @@ Return JSON ONLY with this exact structure:
         return null;
     }
 }
+
+// ============================================
+// ROVE CHEF "TRIPLE THREAT" PROTOCOL
+// ============================================
+
+import { AIService } from "@/lib/ai/service";
+
+export interface RoveChefItem {
+    name: string;
+    description: string;
+    ingredients: string[];
+    why: string;
+}
+
+export interface RoveChefProtocol {
+    snack: RoveChefItem;
+    smoothie: RoveChefItem;
+    gut_sync: {
+        name: string;
+        description: string;
+        why: string;
+    };
+}
+
+export async function generateRoveChefProtocol(
+    phase: string,
+    dietary_preferences: string,
+    cuisine: string,
+    type?: 'snack' | 'smoothie' | 'gut_sync'
+): Promise<Partial<RoveChefProtocol> | null> {
+
+    // Default fallback if AI fails or key missing
+    const fallback: RoveChefProtocol = {
+        snack: {
+            name: "Energy Seed Bites",
+            description: "No-bake energy balls with phase-specific seeds.",
+            ingredients: ["Dates", "Seeds (Pumpkin/Flax)", "Coconut"],
+            why: "Supports hormone balance."
+        },
+        smoothie: {
+            name: "Hormone Harmony Blend",
+            description: "A nutrient-dense smoothie.",
+            ingredients: ["Fruit", "Liquid base", "Superfood"],
+            why: "Provides essential vitamins."
+        },
+        gut_sync: {
+            name: "Warm Water & Lemon",
+            description: "Drink warm water with lemon first thing in the morning.",
+            why: "Kickstarts digestion."
+        }
+    };
+
+    try {
+        // Granular Generation
+        if (type) {
+            const featureMap = {
+                'snack': 'chef_snack',
+                'smoothie': 'chef_smoothie',
+                'gut_sync': 'chef_gut'
+            };
+
+            const response = await AIService.generate<any>({
+                feature: featureMap[type] as any,
+                variables: { phase, dietary_preferences, cuisine }
+            });
+
+            if (response.error || !response.data) return { [type]: fallback[type] };
+
+            // Return just the requested key
+            return { [type]: response.data };
+        }
+
+        const response = await AIService.generate<RoveChefProtocol>({
+            feature: 'chef' as any,
+            variables: {
+                phase,
+                dietary_preferences,
+                cuisine
+            }
+        });
+
+        if (response.error || !response.data) {
+            console.error("Rove Chef AI Error:", response.error);
+            return fallback;
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error("Rove Chef Unexpected Error:", error);
+        return type ? { [type]: fallback[type] } : fallback;
+    }
+}

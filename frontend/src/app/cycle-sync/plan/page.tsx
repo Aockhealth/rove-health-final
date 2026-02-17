@@ -24,7 +24,7 @@ import LoadingScreen from "@/components/ui/LoadingScreen";
 import { updateWeightGoals } from "../profile/actions";
 
 // --- Custom Components ---
-import { PlateBuilder } from "@/components/cycle-sync/PlateBuilder";
+import { RoveChef } from "@/components/cycle-sync/RoveChef";
 import { RiverTrack } from "@/components/cycle-sync/RiverTrack";
 import { ExerciseBuilder } from "@/components/cycle-sync/ExerciseBuilder";
 import { SymptomDecoder } from "@/components/cycle-sync/diet/SymptomDecoder";
@@ -569,22 +569,21 @@ const phaseThemes: Record<string, any> = {
         glow: "shadow-[0_20px_50px_rgba(141,170,157,0.12)]" // Sage Dew Aura
     },
     "Ovulatory": {
-        // High-Performance / Deep Obsidian Mode
-        color: "text-phase-ovulatory", // Soleil Ochre
-        bannerBg: "bg-obsidian border-b border-phase-ovulatory/20",
-        cardBg: "bg-obsidian/60 backdrop-blur-xl border border-phase-ovulatory/10", // Dark Glass
-        border: "border-phase-ovulatory/30",
-        softBg: "bg-phase-ovulatory/5", // Very subtle gold tint on dark
-        pageGradient: "bg-obsidian via-neutral-900 to-obsidian", // Dark layout
-        iconContainer: "bg-phase-ovulatory/20 text-phase-ovulatory",
-        orbRing: "from-phase-ovulatory via-white/10 to-phase-ovulatory/50",
+        color: "text-phase-ovulatory",
+        bannerBg: "bg-gradient-to-r from-phase-ovulatory/90 to-phase-ovulatory/80", // Soleil Ochre
+        cardBg: "bg-white/60 backdrop-blur-md",
+        border: "border-phase-ovulatory/20",
+        softBg: "bg-phase-ovulatory/5",
+        pageGradient: "from-phase-ovulatory/5 via-white-bone to-white-bone",
+        iconContainer: "bg-phase-ovulatory/10 text-phase-ovulatory",
+        orbRing: "from-phase-ovulatory/40 via-white to-phase-ovulatory/20",
         accent: "bg-phase-ovulatory",
-        primaryGradient: "bg-gradient-to-r from-phase-ovulatory to-amber-400", // Gold gradients
+        primaryGradient: "bg-gradient-to-r from-phase-ovulatory to-phase-ovulatory/80",
         buttonShadow: "shadow-phase-ovulatory/20",
-        bannerTextColor: "text-phase-ovulatory",
-        textShadow: "shadow-[0_0_10px_rgba(212,162,95,0.5)]", // Gold Glow
-        blob: "bg-phase-ovulatory/20", // Warm Gold Blob
-        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.15)]" // Soleil Aura
+        bannerTextColor: "text-white",
+        textShadow: "drop-shadow-sm",
+        blob: "bg-phase-ovulatory/10",
+        glow: "shadow-[0_20px_50px_rgba(212,162,95,0.12)]" // Soleil Ochre Aura
     },
     "Luteal": {
         color: "text-phase-luteal",
@@ -1769,9 +1768,13 @@ export default function DetailedPlanPage() {
                                 <DietCheatSheet data={BP.nutrition_guide.cheat_sheet} theme={theme} phase={phaseName} />
                             )}
 
-                            {/* 5. The AI Chef (Plate Builder) */}
+                            {/* 5. The Rove Chef (Triple Threat Protocol) */}
                             <div id="ai-chef" className="scroll-mt-24">
-                                <PlateBuilder phase={phaseName} theme={theme} />
+                                <RoveChef
+                                    phase={phaseName}
+                                    theme={theme}
+                                    diet={data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "Veg"}
+                                />
                             </div>
                         </motion.div>
                     )}
