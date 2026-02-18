@@ -302,12 +302,11 @@ export async function fetchDashboardData() {
     pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
 
     // ⚡ MEGA PARALLEL: Fetch ALL dashboard data in one trip
-    const [profileResult, onboardingResult, settingsResult, logsResult, contentResult, lifestyleResult] = await Promise.all([
+    const [profileResult, onboardingResult, settingsResult, logsResult, lifestyleResult] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user.id).single(),
         supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single(),
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
-        supabase.from("phase_content").select("*"),
         supabase.from("user_lifestyle").select("diet_preference").eq("user_id", user.id).maybeSingle()
     ]);
 
@@ -315,7 +314,6 @@ export async function fetchDashboardData() {
     const onboarding = onboardingResult.data;
     const settings = settingsResult.data;
     const logs = logsResult.data || [];
-    const allContent = contentResult.data || [];
     const lifestyle = lifestyleResult.data;
 
     if (!settings) return null;
@@ -343,9 +341,14 @@ export async function fetchDashboardData() {
         return formatDate(next);
     })() : null;
 
-    // Get content for current phase
-    const phaseRow = allContent.find((c: any) => c.phase_name === phase);
-    const content = phaseRow?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    // Get content for current phase - Optimized Fetch
+    const { data: phaseContentData } = await supabase
+        .from("phase_content")
+        .select("content")
+        .eq("phase", phase)
+        .single();
+
+    const content = phaseContentData?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
     const riverStr = getRandomItems((content as any).river, 1)[0] || "Rest • Restore • Reload";
 
     return {
@@ -781,15 +784,13 @@ export async function fetchPlanPageDataFast() {
         logsResult,
         lifestyleResult,
         weightGoalResult,
-        onboardingResult,
-        contentResult
+        onboardingResult
     ] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
         supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("user_onboarding").select("dietary_preferences").eq("user_id", user.id).maybeSingle(),
-        supabase.from("phase_content").select("*")
+        supabase.from("user_onboarding").select("dietary_preferences").eq("user_id", user.id).maybeSingle()
     ]);
 
     const settings = settingsResult.data;
@@ -797,7 +798,6 @@ export async function fetchPlanPageDataFast() {
     const weightGoal = weightGoalResult.data;
     const onboarding = onboardingResult.data;
     const logs = logsResult.data || [];
-    const allContent = contentResult.data || [];
 
 
 
@@ -818,9 +818,14 @@ export async function fetchPlanPageDataFast() {
     const phase = phaseResult.phase || "Menstrual";
     const day = phaseResult.day || 1;
 
-    // Get content for current phase
-    const phaseRow = allContent.find((c: any) => c.phase_name === phase);
-    const content = phaseRow?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
+    // Get content for current phase - Optimized Fetch
+    const { data: phaseContentData } = await supabase
+        .from("phase_content")
+        .select("content")
+        .eq("phase", phase)
+        .single();
+
+    const content = phaseContentData?.content || PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
 
     // Build unified response
     return {
@@ -1400,6 +1405,16 @@ export async function getCanonicalCycleState(userId: string) {
     const settings = settingsResult.data;
     const recentLogs = logsResult.data;
 
+    // Convert logs to map for canonical calculation
+    const monthLogs: Record<string, DailyLog> = {};
+    if (recentLogs) {
+        recentLogs.forEach((l: any) => {
+            // We only fetched date from the query above, so is_period is implicitly true (based on filter) 
+            // BUT calculatePhaseCanonical expects { date, is_period }.
+            monthLogs[l.date] = { date: l.date, is_period: true };
+        });
+    }
+
     if (!settings) return null;
 
     let lastPeriodStart = settings.last_period_start;
@@ -1457,7 +1472,7 @@ export async function getCanonicalCycleState(userId: string) {
         cycle_length_days: cycleLength,
         period_length_days: periodLength
     };
-    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, monthLogs);
 
 
 

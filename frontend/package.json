@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev --webpack",
     "prebuild": "cd ../backend && npm i",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:simulation": "ts-node src/tests/comprehensive_cycle_logic_test.ts"
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
@@ -39,6 +39,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^20",
@@ -48,6 +49,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.5",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

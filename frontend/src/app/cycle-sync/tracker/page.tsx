@@ -404,15 +404,17 @@ export default function TrackerPageRedesigned() {
             ];
 
             const allLogs: any[] = [];
-            for (const monthDate of monthsToFetch) {
+            const promises = monthsToFetch.map(monthDate => {
                 const monthYear = monthDate.getFullYear();
                 const monthNum = String(monthDate.getMonth() + 1).padStart(2, "0");
-                const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
-                allLogs.push(...logs);
-            }
+                return fetchMonthLogs(`${monthYear}-${monthNum}`);
+            });
+
+            const results = await Promise.all(promises);
+            const allRefreshedLogs = results.flat();
 
             const logMap: Record<string, any> = {};
-            allLogs.forEach((l: any) => {
+            allRefreshedLogs.forEach((l: any) => {
                 logMap[l.date] = l;
             });
             setMonthLogs(logMap);
@@ -535,13 +537,14 @@ export default function TrackerPageRedesigned() {
                     new Date(year, month + 1, 1),
                 ];
 
-                const allLogs: any[] = [];
-                for (const monthDate of monthsToFetch) {
+                const promises = monthsToFetch.map(monthDate => {
                     const monthYear = monthDate.getFullYear();
                     const monthNum = String(monthDate.getMonth() + 1).padStart(2, "0");
-                    const logs = await fetchMonthLogs(`${monthYear}-${monthNum}`);
-                    allLogs.push(...logs);
-                }
+                    return fetchMonthLogs(`${monthYear}-${monthNum}`);
+                });
+
+                const results = await Promise.all(promises);
+                const allLogs = results.flat();
 
                 const logMap: Record<string, any> = {};
                 allLogs.forEach((l: any) => {
@@ -633,9 +636,33 @@ export default function TrackerPageRedesigned() {
                         })}`
                     );
                 }
-                window.location.reload();
+                // Refresh data without reload
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth();
+                const monthsToFetch = [
+                    new Date(year, month - 1, 1),
+                    new Date(year, month, 1),
+                    new Date(year, month + 1, 1),
+                ];
+
+                const promises = monthsToFetch.map(monthDate => {
+                    const monthYear = monthDate.getFullYear();
+                    const monthNum = String(monthDate.getMonth() + 1).padStart(2, "0");
+                    return fetchMonthLogs(`${monthYear}-${monthNum}`);
+                });
+
+                const results = await Promise.all(promises);
+                const allUpdatedLogs = results.flat();
+
+                const updatedLogMap: Record<string, any> = {};
+                allUpdatedLogs.forEach((l: any) => {
+                    updatedLogMap[l.date] = l;
+                });
+                setMonthLogs(updatedLogMap);
+
+                toast.success("Cycle Updated!", { duration: 3000 });
             } else {
-                alert("Failed to update cycle: " + result.error);
+                toast.error("Failed to update cycle: " + result.error, { duration: 5000 });
             }
         });
     };
