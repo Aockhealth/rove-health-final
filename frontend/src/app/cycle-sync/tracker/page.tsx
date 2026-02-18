@@ -346,7 +346,14 @@ export default function TrackerPageRedesigned() {
 
     const handleSave = () => {
         startTransition(async () => {
+            const dateStr = formatDate(selectedDate);
             const isPeriodMode = trackMode === "period";
+
+            // BUG FIX: If we are in "discharge" mode, we should NOT overwrite an existing is_period=true
+            // unless the user explicitly turned it off (which they can only do in period mode).
+            // So if trackMode is "discharge" (isPeriodMode=false), we default to whatever is already logged.
+            const existingIsPeriod = monthLogs[dateStr]?.is_period === true;
+            const finalIsPeriod = isPeriodMode ? true : existingIsPeriod;
 
             let finalCervicalDischarge = !isPeriodMode ? cervicalDischarge || null : null;
             let finalNotes = note;
@@ -357,7 +364,7 @@ export default function TrackerPageRedesigned() {
             }
 
             const payload = {
-                date: formatDate(selectedDate),
+                date: dateStr,
                 symptoms: selectedSymptoms,
                 moods: selectedMoods,
                 exerciseTypes: selectedExercise,
@@ -372,8 +379,8 @@ export default function TrackerPageRedesigned() {
                 disruptors: selectedDisruptors,
                 sexActivity: selectedSexActivity,
                 contraception: selectedContraception,
-                isPeriod: isPeriodMode,
-                flowIntensity: isPeriodMode ? flowIntensity || "Normal" : undefined,
+                isPeriod: finalIsPeriod,
+                flowIntensity: finalIsPeriod ? (isPeriodMode ? flowIntensity || "Normal" : monthLogs[dateStr]?.flow_intensity || "Normal") : undefined,
                 cervicalDischarge: finalCervicalDischarge || undefined,
                 notes: finalNotes,
             };

@@ -511,13 +511,26 @@ export async function fetchCycleIntelligence() {
 
     if (!cycleSettings) return null;
 
-    // 2. Calculate Phase
+    // 2. Fetch recent logs for accurate phase calculation (BUG FIX)
+    const { data: recentLogs } = await supabase
+        .from("daily_logs")
+        .select("date, is_period")
+        .eq("user_id", user.id)
+        .gte("date", new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // Last 45 days
+        .order("date", { ascending: false });
+
+    const relevantLogs: Record<string, DailyLog> = {};
+    if (recentLogs) {
+        recentLogs.forEach((l: any) => { relevantLogs[l.date] = { date: l.date, is_period: l.is_period }; });
+    }
+
+    // 3. Calculate Phase using REAL logs (fix for phase mismatch)
     const phaseSettings: CycleSettings = {
         last_period_start: cycleSettings.last_period_start,
         cycle_length_days: cycleSettings.cycle_length_days || 28,
         period_length_days: cycleSettings.period_length_days || 5
     };
-    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
+    const phaseResult = calculatePhaseCanonical(new Date(), phaseSettings, relevantLogs);
     const phase = phaseResult.phase || "Menstrual";
     const day = phaseResult.day || 1;
 
@@ -1314,82 +1327,9 @@ export async function fetchMonthLogs(monthStr: string) {
 
 
 // Add this new function at the end of your file
-export async function fetchMonthsLogsBulk(months: string[]) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
-
-    const { data, error } = await supabase.rpc('fetch_logs_bulk', {
-        user_id_param: user.id,
-        month_keys: months
-    });
-
-    if (error) {
-        return [];
-    }
-
-    return data || [];
-}
-
-// Add this function for cached phase calculation
-export async function getCycleIntelligenceCached(targetDate?: Date) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase.rpc('get_cycle_intelligence', {
-        user_id_param: user.id,
-        target_date: targetDate ? formatDate(targetDate) : undefined
-    });
-
-    if (error) {
-        return null;
-    }
-
-    return data;
-}
-
-// Add this for optimized insights
-// Add this for optimized insights
-export async function fetchInsightsDataOptimized() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase.rpc('get_insights_aggregated', {
-        user_id_param: user.id
-    });
-
-    if (error) {
-        return null;
-    }
-
-    const phaseSettings: CycleSettings = {
-        last_period_start: data.cycleSettings.last_period_start,
-        cycle_length_days: data.cycleSettings.cycle_length_days || 28,
-        period_length_days: data.cycleSettings.period_length_days || 5
-    };
-    const currentStatusResult = calculatePhaseCanonical(new Date(), phaseSettings, {});
-    const currentStatus = {
-        phase: currentStatusResult.phase || "Menstrual",
-        day: currentStatusResult.day || 1
-    };
-
-    return {
-        phase: {
-            name: currentStatus.phase,
-            day: currentStatus.day
-        },
-        averages: data.cycleSettings,
-        phaseCounts: data.phaseCounts,
-        symptomsByPhase: data.symptomsByPhase,
-        moodsByPhase: data.moodsByPhase,
-        tipsByPhase: {}, // Keep your existing PHASE_CONTENT logic
-        emotionalBaselines: {}, // Keep your existing logic
-        symptoms: [],
-        aggregatedData: data.aggregatedData
-    };
-}
+// DEAD CODE REMOVED: fetchMonthsLogsBulk, getCycleIntelligenceCached, fetchInsightsDataOptimized
+// These RPC wrappers were not used by the app and caused confusion. 
+// We use direct Supabase queries in fetchPlanPageDataFast / fetchTrackerPageDataFast instead.
 
 // Helper function for formatting date
 function formatDate(date: Date): string {
@@ -1504,11 +1444,10 @@ export async function getCanonicalCycleState(userId: string) {
         if (streakStart !== lastPeriodStart) {
             lastPeriodStart = streakStart;
 
-            // Background update
-            supabase.from("user_cycle_settings")
+            // Background update - AWAIT this to prevent race conditions (BUG FIX)
+            await supabase.from("user_cycle_settings")
                 .update({ last_period_start: lastPeriodStart, updated_at: new Date().toISOString() })
-                .eq("user_id", userId)
-                .then();
+                .eq("user_id", userId);
         }
     }
 
