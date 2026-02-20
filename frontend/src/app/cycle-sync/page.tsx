@@ -253,7 +253,7 @@ const PHASE_SNAPSHOTS: any = {
             title: "Active Recovery",
             desc: "Inflammation peaks slightly.",
             detail: "Your body is working hard to release. High intensity will backfire by spiking cortisol when resilience is low.",
-            protocol: "Focus on Yin Yoga or a slow 20-minute walk. Keep your lower back and feet warm to support circulation."
+            protocol: "Focus on Gentle Yoga or a slow 20-minute walk. Keep your lower back and feet warm to support circulation."
         },
         skin: {
             title: "Hydration Barrier",

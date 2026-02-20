@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChefHat, RefreshCw, Zap, Droplets, Activity, Cookie } from "lucide-react";
+import { Sparkles, ChefHat, RefreshCw, Droplets, Activity, Cookie } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateRoveChefProtocol, type RoveChefProtocol } from "@/app/actions/ai-actions";
 
@@ -91,10 +91,17 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
         { id: 'gut_sync', label: 'Gut Sync', icon: Activity },
     ];
 
+    const tabMeta: Record<TabType, { label: string; resultTitle: string }> = {
+        snack: { label: "Snack", resultTitle: "Cycle Snack" },
+        smoothie: { label: "Smoothie", resultTitle: "Hormone Smoothie" },
+        gut_sync: { label: "Gut Sync", resultTitle: "Gut Sync" }
+    };
+
+    const activeTabLabel = tabMeta[activeTab].label;
     const currentItem = results[activeTab];
 
     return (
-        <section className="mb-12 relative" id="ai-chef">
+        <section className="mb-12 relative" id="rove-chef-section">
             {/* Background Decor */}
             <div className={cn("absolute -top-20 -left-20 w-64 h-64 rounded-full blur-[80px] opacity-20 pointer-events-none mix-blend-multiply", theme.blob)} />
             <div className={cn("absolute -bottom-20 -right-20 w-80 h-80 rounded-full blur-[100px] opacity-15 pointer-events-none mix-blend-multiply", theme.blob)} />
@@ -111,7 +118,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                     Rove Chef
                 </h2>
                 <p className="text-sm text-gray-500 mt-1 max-w-sm">
-                    Generate your Triple Threat protocol: targeted fuel for your {phase} phase.
+                    Choose one protocol at a time for your {phase} phase.
                 </p>
             </div>
 
@@ -139,6 +146,9 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                         </button>
                     ))}
                 </div>
+                <p className="px-6 pt-1 text-xs text-gray-500">
+                    Pick what you want right now: Snack, Smoothie, or Gut Sync.
+                </p>
 
                 <div className="p-6 pt-2 relative z-10">
 
@@ -169,7 +179,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                         <RefreshCw className={cn("w-10 h-10 animate-spin relative z-10", theme.iconColor)} />
                                     </div>
                                     <p className="mt-4 text-xs font-bold uppercase tracking-widest text-gray-400 animate-pulse">
-                                        Chef is curating your {activeTab}...
+                                        Chef is curating your {activeTabLabel.toLowerCase()}...
                                     </p>
                                 </motion.div>
                             ) : currentItem ? (
@@ -183,8 +193,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                     className="h-full"
                                 >
                                     <ResultCard
-                                        title={activeTab === 'snack' ? "Cycle Snack" : activeTab === 'smoothie' ? "Hormone Smoothie" : "Gut Sync"}
-                                        icon={TABS.find(t => t.id === activeTab)?.icon}
+                                        title={tabMeta[activeTab].resultTitle}
                                         item={currentItem as any}
                                         theme={theme}
                                         isSimple={activeTab === 'gut_sync'}
@@ -196,7 +205,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                             onClick={handleGenerate}
                                             className={cn("text-xs font-bold flex items-center gap-2 px-5 py-2.5 rounded-full transition-all hover:scale-105 active:scale-95", theme.secondaryButton)}
                                         >
-                                            <RefreshCw className="w-3.5 h-3.5" /> Regenerate {activeTab}
+                                            <RefreshCw className="w-3.5 h-3.5" /> Regenerate {activeTabLabel}
                                         </button>
                                     </div>
                                 </motion.div>
@@ -232,7 +241,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                         <Sparkles className="w-4 h-4" />
-                                        <span className="relative">Generate Fresh {activeTab}</span>
+                                        <span className="relative">Generate {activeTabLabel}</span>
                                     </button>
                                 </motion.div>
                             )}
@@ -245,9 +254,10 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
     );
 }
 
-function ResultCard({ title, icon, item, theme, isSimple }: { title: string, icon: any, item: any, theme: any, isSimple?: boolean }) {
+function ResultCard({ title, item, theme, isSimple }: { title: string, item: any, theme: any, isSimple?: boolean }) {
+    const [activeView, setActiveView] = useState<'ingredients' | 'recipe'>('ingredients');
+
     if (!item) return null;
-    const Icon = icon;
 
     return (
         <div className="bg-white/60 border border-white/80 rounded-[2rem] p-8 flex flex-col h-full shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
@@ -264,25 +274,88 @@ function ResultCard({ title, icon, item, theme, isSimple }: { title: string, ico
                     {item.description}
                 </p>
 
-                {/* Ingredients (if not simple) */}
+                {/* Ingredients / Recipe Toggle (if not simple and has instructions) */}
                 {!isSimple && item.ingredients && (
-                    <div className="mb-8 p-6 bg-white/50 rounded-2xl border border-white/60">
-                        <p className="text-[10px] font-bold uppercase text-gray-400 mb-4 tracking-wide text-center">Ingredients</p>
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {item.ingredients.map((ing: string, i: number) => (
-                                <span key={i} className="text-xs bg-white px-4 py-2 rounded-xl border border-gray-100 text-gray-600 shadow-sm font-medium">
-                                    {ing}
-                                </span>
-                            ))}
+                    <div className="mb-6 flex justify-center">
+                        <div className="bg-white/50 backdrop-blur-sm p-1 rounded-full inline-flex border border-white/60 shadow-inner">
+                            <button
+                                onClick={() => setActiveView('ingredients')}
+                                className={cn(
+                                    "px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all",
+                                    activeView === 'ingredients'
+                                        ? cn(theme.blob, "text-white shadow-sm")
+                                        : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                Ingredients
+                            </button>
+                            {item.instructions && item.instructions.length > 0 && (
+                                <button
+                                    onClick={() => setActiveView('recipe')}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all",
+                                        activeView === 'recipe'
+                                            ? cn(theme.blob, "text-white shadow-sm")
+                                            : "text-gray-500 hover:text-gray-700"
+                                    )}
+                                >
+                                    Recipe
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
 
+                {/* Content Area Based on Toggle */}
+                <div className="mb-8 p-6 bg-white/50 rounded-2xl border border-white/60 min-h-[140px]">
+                    <AnimatePresence mode="wait">
+                        {activeView === 'ingredients' || isSimple || !item.ingredients ? (
+                            <motion.div
+                                key="ingredients"
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {item.ingredients ? (
+                                    <div className="flex flex-wrap justify-center gap-2">
+                                        {item.ingredients.map((ing: string, i: number) => (
+                                            <span key={i} className="text-sm bg-white px-4 py-2 rounded-xl border border-gray-100 text-gray-700 shadow-sm font-medium">
+                                                {ing}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-gray-500 text-sm italic">No specific ingredients needed.</p>
+                                )}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="recipe"
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-4"
+                            >
+                                {item.instructions?.map((step: string, i: number) => (
+                                    <div key={i} className="flex gap-4 items-start">
+                                        <div className={cn("w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-white", theme.blob)}>
+                                            {i + 1}
+                                        </div>
+                                        <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
                 {/* Why */}
                 <div className="mt-auto">
                     <div className="flex items-center gap-2 mb-2 justify-center">
-                        <Sparkles className={cn("w-4 h-4", theme.accentText)} />
-                        <span className={cn("text-[10px] font-bold uppercase", theme.accentText)}>Why This Works</span>
+                        <Sparkles className={cn("w-4 h-4", theme.iconColor)} />
+                        <span className={cn("text-[10px] font-bold uppercase", theme.iconColor)}>Why This Works</span>
                     </div>
                     <p className="text-sm text-gray-500 italic leading-relaxed text-center px-4">
                         "{item.why}"
@@ -293,37 +366,37 @@ function ResultCard({ title, icon, item, theme, isSimple }: { title: string, ico
     );
 }
 
+const ANIMATED_EXAMPLES: Record<string, Record<string, string[]>> = {
+    Menstrual: {
+        snack: ["Warm Sesame Laddu...", "Iron-Rich Date Bites...", "Steamed Edamame..."],
+        smoothie: ["Warm Cacao Elixir...", "Beetroot Recovery Blend...", "Ginger Turmeric Smoothie..."],
+        gut_sync: ["Warm Ginger Tea...", "Bone Broth Cup...", "Cumin Water..."]
+    },
+    Follicular: {
+        snack: ["Sprouted Moong Salad...", "Fresh Berry Bowl...", "Fermented Yogurt Parfait..."],
+        smoothie: ["Green Goddess Blend...", "Matcha Energy Boost...", "Probiotic Berry Blast..."],
+        gut_sync: ["Sauerkraut Forkful...", "Kimchi Side...", "Apple Cider Vinegar Shot..."]
+    },
+    Ovulatory: {
+        snack: ["Raw Carrot Sticks...", "Fresh Fig & Honey...", "Cooling Cucumber Chat..."],
+        smoothie: ["Maca Libido Smoothie...", "Raw Cacao Shake...", "Strawberry Glow Blend..."],
+        gut_sync: ["Fiber-Rich Psyllium...", "Prebiotic Banana...", "Raw Garlic Honey..."]
+    },
+    Luteal: {
+        snack: ["Roasted Sweet Potato...", "Dark Chocolate Squares...", "Sunflower Seed Mix..."],
+        smoothie: ["Golden Milk Smoothie...", "Sweet Potato Pie Shake...", "Calming Chamomile Blend..."],
+        gut_sync: ["Roasted Root Veggies...", "Cooked Spinach...", "Warm Lemon Water..."]
+    }
+};
+
 // --- ANIMATED PLACEHOLDER COMPONENT ---
 function AnimatedPlaceholder({ phase, type }: { phase: string, type: string }) {
     const [text, setText] = useState("");
 
-    // Examples strictly for animation/preview only
-    const examples: Record<string, Record<string, string[]>> = {
-        Menstrual: {
-            snack: ["Warm Sesame Laddu...", "Iron-Rich Date Bites...", "Steamed Edamame..."],
-            smoothie: ["Warm Cacao Elixir...", "Beetroot Recovery Blend...", "Ginger Turmeric Smoothie..."],
-            gut_sync: ["Warm Ginger Tea...", "Bone Broth Cup...", "Cumin Water..."]
-        },
-        Follicular: {
-            snack: ["Sprouted Moong Salad...", "Fresh Berry Bowl...", "Fermented Yogurt Parfait..."],
-            smoothie: ["Green Goddess Blend...", "Matcha Energy Boost...", "Probiotic Berry Blast..."],
-            gut_sync: ["Sauerkraut Forkful...", "Kimchi Side...", "Apple Cider Vinegar Shot..."]
-        },
-        Ovulatory: {
-            snack: ["Raw Carrot Sticks...", "Fresh Fig & Honey...", "Cooling Cucumber Chat..."],
-            smoothie: ["Maca Libido Smoothie...", "Raw Cacao Shake...", "Strawberry Glow Blend..."],
-            gut_sync: ["Fiber-Rich Psyllium...", "Prebiotic Banana...", "Raw Garlic Honey..."]
-        },
-        Luteal: {
-            snack: ["Roasted Sweet Potato...", "Dark Chocolate Squares...", "Sunflower Seed Mix..."],
-            smoothie: ["Golden Milk Smoothie...", "Sweet Potato Pie Shake...", "Calming Chamomile Blend..."],
-            gut_sync: ["Roasted Root Veggies...", "Cooked Spinach...", "Warm Lemon Water..."]
-        }
-    };
 
     const currentPhase = phase || "Menstrual";
     // Fix: Ensure we access valid keys
-    const phaseData = examples[currentPhase] || examples["Menstrual"];
+    const phaseData = ANIMATED_EXAMPLES[currentPhase] || ANIMATED_EXAMPLES["Menstrual"];
     const phaseExamples = phaseData[type] || phaseData["snack"]; // Fallback to snack if type is weird
 
     useEffect(() => {

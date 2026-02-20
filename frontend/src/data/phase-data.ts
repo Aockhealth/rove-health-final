@@ -888,7 +888,7 @@ const lutealPhase: PhaseData = {
                 benefits: ["Mood boost", "Reduces PMS", "Fresh air"]
             },
             {
-                title: "Yin/Restorative Yoga",
+                title: "Gentle/Restorative Yoga",
                 description: "Especially in the last days of this phase",
                 duration: "20-30 mins",
                 intensity: "Low",

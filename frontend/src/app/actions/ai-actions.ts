@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { ChefItemSchema, ChefGutItemSchema, RoveChefProtocolSchema } from "@/lib/ai/schemas";
 
 // ============================================
 // EDGE FUNCTION TYPES
@@ -776,6 +777,7 @@ export interface RoveChefItem {
     name: string;
     description: string;
     ingredients: string[];
+    instructions?: string[];
     why: string;
 }
 
@@ -802,12 +804,22 @@ export async function generateRoveChefProtocol(
             name: "Energy Seed Bites",
             description: "No-bake energy balls with phase-specific seeds.",
             ingredients: ["Dates", "Seeds (Pumpkin/Flax)", "Coconut"],
+            instructions: [
+                "Blend dates until sticky.",
+                "Mix in seeds and coconut.",
+                "Roll into small balls and chill."
+            ],
             why: "Supports hormone balance."
         },
         smoothie: {
             name: "Hormone Harmony Blend",
             description: "A nutrient-dense smoothie.",
             ingredients: ["Fruit", "Liquid base", "Superfood"],
+            instructions: [
+                "Add all ingredients to a high-speed blender.",
+                "Blend on high until perfectly smooth.",
+                "Serve immediately."
+            ],
             why: "Provides essential vitamins."
         },
         gut_sync: {
@@ -833,8 +845,15 @@ export async function generateRoveChefProtocol(
 
             if (response.error || !response.data) return { [type]: fallback[type] };
 
-            // Return just the requested key
-            return { [type]: response.data };
+            const schema = type === 'gut_sync' ? ChefGutItemSchema : ChefItemSchema;
+            const parsed = schema.safeParse(response.data);
+
+            if (!parsed.success) {
+                console.error(`Rove Chef Validation Error (${type}):`, parsed.error);
+                return { [type]: fallback[type] };
+            }
+
+            return { [type]: parsed.data };
         }
 
         const response = await AIService.generate<RoveChefProtocol>({
@@ -851,9 +870,80 @@ export async function generateRoveChefProtocol(
             return fallback;
         }
 
-        return response.data;
+        const parsed = RoveChefProtocolSchema.safeParse(response.data);
+        if (!parsed.success) {
+            console.error("Rove Chef Protocol Validation Error:", parsed.error);
+            return fallback;
+        }
+
+        return parsed.data;
     } catch (error) {
         console.error("Rove Chef Unexpected Error:", error);
         return type ? { [type]: fallback[type] } : fallback;
+    }
+}
+
+// ============================================
+// ROVE COACH ACTIONS
+// ============================================
+
+export interface WorkoutSet {
+    name: string;
+    reps: string;
+    sets: string;
+    notes?: string;
+}
+
+export interface RoveCoachPlan {
+    title: string;
+    duration: string;
+    intensity: "Low" | "Moderate" | "High" | string;
+    warmup: string[];
+    main_set: WorkoutSet[];
+    cooldown: string[];
+    reasoning: string;
+}
+
+export async function generateRoveCoachPlan(
+    phase: string,
+    energyLevel: string,
+    goal: string,
+    equipment: string,
+    injuries: string
+): Promise<RoveCoachPlan | null> {
+    const fallback: RoveCoachPlan = {
+        title: "Balanced Flow",
+        duration: "30 mins",
+        intensity: "Moderate",
+        warmup: ["Arm circles", "High knees"],
+        main_set: [
+            { name: "Squats", reps: "12", sets: "3", notes: "Keep chest up" },
+            { name: "Pushups", reps: "10", sets: "3", notes: "Core tight" }
+        ],
+        cooldown: ["Child's pose", "Deep breathing"],
+        reasoning: "A balanced routine perfect for your current energy."
+    };
+
+    try {
+        const response = await AIService.generate<RoveCoachPlan>({
+            feature: 'coach',
+            variables: {
+                phase,
+                energy_level: energyLevel,
+                goal,
+                equipment,
+                injuries
+            }
+        });
+
+        if (response.error || !response.data) {
+            console.error("Rove Coach AI Error:", response.error);
+            return fallback;
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error("Rove Coach Unexpected Error:", error);
+        return fallback;
     }
 }

@@ -1,65 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, RefreshCw, RotateCcw, Home, Building2, Trophy, Medal, Star, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play } from "lucide-react";
+import { Dumbbell, RefreshCw, RotateCcw, Home, Building2, Trophy, Medal, Star, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play, CheckCircle2, Circle, Clock, Flame, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { generateRoveCoachPlan, RoveCoachPlan, WorkoutSet } from "@/app/actions/ai-actions";
 
 interface ExerciseBuilderProps {
     phase: string;
     theme?: any; // Made optional as we'll use internal theming
 }
 
-// --- AI LOGIC: DATA POOLS ---
-
-const EXERCISE_POOL: any = {
-    "Upper Body": {
-        "Home": ["Pushups", "Tricep Dips (Chair)", "Pike Pushups", "Doorframe Rows", "Shoulder Taps"],
-        "Gym": ["Bench Press", "Lat Pulldown", "Overhead Press", "Cable Rows", "Dumbbell Flys"]
-    },
-    "Lower Body": {
-        "Home": ["Bodyweight Squats", "Lunges", "Glute Bridges", "Calf Raises", "Wall Sit"],
-        "Gym": ["Barbell Squats", "Leg Press", "Romanian Deadlift", "Leg Extensions", "Calf Raise Machine"]
-    },
-    "Full Body": {
-        "Home": ["Burpees", "Mountain Climbers", "Squat to Press (Water bottles)", "Bear Crawls", "Jumping Jacks"],
-        "Gym": ["Clean and Jerk", "Thrusters", "Deadlift", "Kettlebell Swings", "Rowing Machine"]
-    },
-    "Cardio": {
-        "Home": ["High Knees", "Jump Rope", "Burpees", "Sprints in Place", "Skater Jumps"],
-        "Gym": ["Treadmill Sprints", "Stairmaster", "Assault Bike", "Rowing Intervals", "Elliptical"]
-    },
-    "Core": {
-        "Home": ["Plank", "Leg Raises", "Bicycle Crunches", "Dead Bug", "Russian Twists"],
-        "Gym": ["Cable Crunches", "Hanging Leg Raises", "Pallof Press", "Weighted Situps", "Ab Wheel"]
-    },
-    "Mobility": {
-        "Home": ["Cat-Cow", "World's Greatest Stretch", "90-90 Hip Switch", "Thoracic Rotation", "Deep Squat Hold"],
-        "Gym": ["Foam Rolling", "Band Dislocates", "Face Pulls", "Goblet Squat Hold", "Hanging Decompression"]
-    }
-};
-
-const PHASE_MODIFIERS: any = {
-    "Menstrual": { title: "Restorative", intensity: "Low", rest: "90s" },
-    "Follicular": { title: "Energizing", intensity: "Med-High", rest: "45s" },
-    "Ovulatory": { title: "Peak Power", intensity: "Max", rest: "60s" },
-    "Luteal": { title: "Stability", intensity: "Med", rest: "60s" }
-};
-
-const LEVEL_MODIFIERS: any = {
-    "Beginner": { sets: 2, reps: "8-10" },
-    "Intermediate": { sets: 3, reps: "10-12" },
-    "Pro": { sets: 4, reps: "12-15" }
-};
-
 export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
     const [setting, setSetting] = useState<"Home" | "Gym" | null>(null);
     const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Pro">("Intermediate");
     const [focus, setFocus] = useState<"Full Body" | "Upper Body" | "Lower Body" | "Cardio" | "Core" | "Mobility">("Full Body");
+    const [energy, setEnergy] = useState<"Low" | "Medium" | "High">("Medium");
+    const [time, setTime] = useState<"15m" | "30m" | "45m" | "60m">("30m");
+    const [symptoms, setSymptoms] = useState("");
 
     const [isGenerating, setIsGenerating] = useState(false);
-    const [result, setResult] = useState<any>(null);
+    const [result, setResult] = useState<RoveCoachPlan | null>(null);
+
+    // Session State
+    const [sessionMode, setSessionMode] = useState(false);
+    const [completedSets, setCompletedSets] = useState<Record<number, boolean>>({});
+    const [sessionTimer, setSessionTimer] = useState(0);
 
     // Organic Chromatics Styling
     const currentPhase = phase || "Menstrual";
@@ -70,7 +37,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
             iconBg: "bg-phase-menstrual/10",
             iconColor: "text-phase-menstrual",
             button: "bg-phase-menstrual shadow-phase-menstrual/20 hover:bg-phase-menstrual/90",
-            active: "bg-white shadow-md border-phase-menstrual/20 text-phase-menstrual",
+            active: "bg-white shadow-md border-phase-menstrual/30 text-phase-menstrual",
             badge: "bg-phase-menstrual/10 text-phase-menstrual border-phase-menstrual/20",
             header: "text-gray-800",
             blob: "bg-phase-menstrual"
@@ -81,7 +48,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
             iconBg: "bg-phase-follicular/10",
             iconColor: "text-phase-follicular",
             button: "bg-phase-follicular shadow-phase-follicular/20 hover:bg-phase-follicular/90",
-            active: "bg-white shadow-md border-phase-follicular/20 text-phase-follicular",
+            active: "bg-white shadow-md border-phase-follicular/30 text-phase-follicular",
             badge: "bg-phase-follicular/10 text-phase-follicular border-phase-follicular/20",
             header: "text-gray-800",
             blob: "bg-phase-follicular"
@@ -92,7 +59,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
             iconBg: "bg-phase-ovulatory/10",
             iconColor: "text-phase-ovulatory",
             button: "bg-phase-ovulatory shadow-phase-ovulatory/20 hover:bg-phase-ovulatory/90",
-            active: "bg-white shadow-md border-phase-ovulatory/20 text-phase-ovulatory",
+            active: "bg-white shadow-md border-phase-ovulatory/30 text-phase-ovulatory",
             badge: "bg-phase-ovulatory/10 text-phase-ovulatory border-phase-ovulatory/20",
             header: "text-gray-800",
             blob: "bg-phase-ovulatory"
@@ -103,7 +70,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
             iconBg: "bg-phase-luteal/10",
             iconColor: "text-phase-luteal",
             button: "bg-phase-luteal shadow-phase-luteal/20 hover:bg-phase-luteal/90",
-            active: "bg-white shadow-md border-phase-luteal/20 text-phase-luteal",
+            active: "bg-white shadow-md border-phase-luteal/30 text-phase-luteal",
             badge: "bg-phase-luteal/10 text-phase-luteal border-phase-luteal/20",
             header: "text-gray-800",
             blob: "bg-phase-luteal"
@@ -112,37 +79,65 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
 
     const theme = themes[currentPhase] || themes["Menstrual"];
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (!setting) return;
         setIsGenerating(true);
         setResult(null);
 
-        // Simulate AI "Construction"
-        setTimeout(() => {
-            const phaseKey = Object.keys(PHASE_MODIFIERS).find(k => k.toLowerCase() === phase.toLowerCase()) || "Menstrual";
-            const phaseMod = PHASE_MODIFIERS[phaseKey];
-            const levelMod = LEVEL_MODIFIERS[level];
-            const pool = EXERCISE_POOL[focus][setting];
-
-            // Pick 3-4 random exercises from pool
-            const shuffled = [...pool].sort(() => 0.5 - Math.random());
-            const selectedExercises = shuffled.slice(0, 3).map((ex: string) => `${ex} (${levelMod.sets}x${levelMod.reps})`);
-
-            setResult({
-                title: `${phaseMod.title} ${focus}`,
-                exercises: selectedExercises,
-                focus: focus,
-                setting: setting,
-                level: level,
-                rest: phaseMod.rest
-            });
+        try {
+            const plan = await generateRoveCoachPlan(
+                phase,
+                energy,
+                `${time} ${focus} workout`, // Goal
+                setting === "Home" ? "Bodyweight / Mat" : "Full Gym", // Equipment
+                symptoms // Injuries/Limitations
+            );
+            setResult(plan);
+        } catch (e) {
+            console.error(e);
+        } finally {
             setIsGenerating(false);
-        }, 1500);
+        }
     };
 
     const reset = () => {
         setResult(null);
-        setSetting(null);
+        setSessionMode(false);
+        setSessionTimer(0);
+        setCompletedSets({});
+    };
+
+    // Session Timer Logic
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (sessionMode) {
+            interval = setInterval(() => {
+                setSessionTimer(t => t + 1);
+            }, 1000);
+        } else {
+            setSessionTimer(0);
+        }
+        return () => clearInterval(interval);
+    }, [sessionMode]);
+
+    const formatTime = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    const toggleSession = () => {
+        if (!sessionMode) {
+            setSessionMode(true);
+            setCompletedSets({});
+        } else {
+            // Ending the session
+            setSessionMode(false);
+        }
+    };
+
+    const toggleSet = (index: number) => {
+        setCompletedSets(prev => ({ ...prev, [index]: !prev[index] }));
     };
 
     return (
@@ -159,105 +154,201 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                         <div className={cn("p-1.5 rounded-lg border border-white/60", theme.iconBg, theme.iconColor)}>
                             <Dumbbell className="w-4 h-4" />
                         </div>
-                        <h3 className={cn("font-heading text-lg", theme.header)}>AI Trainer</h3>
+                        <h3 className={cn("font-heading text-lg", theme.header)}>Workout Coach</h3>
                     </div>
-                    {result && !isGenerating && (
-                        <button onClick={reset} className="text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1">
-                            <RotateCcw className="w-3 h-3" /> Reset
+                    {((result && !isGenerating) || sessionMode) && (
+                        <button onClick={reset} className="text-[11px] font-bold uppercase tracking-wider text-gray-400 hover:text-gray-800 transition-colors flex items-center gap-1 bg-white/50 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/80">
+                            <RotateCcw className="w-3 h-3" /> Start Over
                         </button>
                     )}
                 </header>
 
                 <AnimatePresence mode="wait">
-                    {!result && !isGenerating ? (
-                        <motion.div
-                            key="input"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="space-y-6"
-                        >
-                            {/* 1. Setting Selector */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500/80">Where?</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => setSetting("Home")} className={cn("p-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2", setting === "Home" ? theme.active : "bg-white/30 border-white/40 text-gray-500 hover:bg-white/50")}>
-                                        <Home className="w-4 h-4" /> Home
-                                    </button>
-                                    <button onClick={() => setSetting("Gym")} className={cn("p-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2", setting === "Gym" ? theme.active : "bg-white/30 border-white/40 text-gray-500 hover:bg-white/50")}>
-                                        <Building2 className="w-4 h-4" /> Gym
-                                    </button>
+                    {sessionMode && result ? (
+                        <motion.div key="session" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+                            <div className="flex justify-between items-center bg-white/60 p-4 rounded-xl shadow-sm border border-white/60">
+                                <div>
+                                    <h4 className="font-heading text-lg font-bold text-gray-800">Session in Progress</h4>
+                                    <p className="text-xs text-gray-500 font-medium">Earn those endorphins!</p>
+                                </div>
+                                <div className={cn("px-4 py-2 rounded-lg font-mono font-bold text-lg text-white shadow-sm flex items-center gap-2", theme.blob)}>
+                                    <Clock className="w-4 h-4 opacity-80" /> {formatTime(sessionTimer)}
                                 </div>
                             </div>
 
-                            {/* 2. Level Selector */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500/80">Experience?</label>
-                                <div className="flex bg-white/30 p-1 rounded-xl border border-white/40">
-                                    {(["Beginner", "Intermediate", "Pro"] as const).map((lvl) => (
-                                        <button key={lvl} onClick={() => setLevel(lvl)} className={cn("flex-1 py-1.5 rounded-lg text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-1", level === lvl ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700")}>
-                                            {lvl === "Beginner" && <Star className="w-3 h-3" />}
-                                            {lvl === "Intermediate" && <Medal className="w-3 h-3" />}
-                                            {lvl === "Pro" && <Trophy className="w-3 h-3" />}
-                                            {lvl}
-                                        </button>
+                            <div className="space-y-5 max-h-[50vh] overflow-y-auto pr-1 pb-4">
+                                {/* Warmup */}
+                                {result.warmup && result.warmup.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Warmup</h5>
+                                        {result.warmup.map((item, i) => (
+                                            <div key={`w-${i}`} className="p-3 bg-white/40 rounded-xl border border-white flex items-start gap-3">
+                                                <div className={cn("w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold text-white", theme.blob)}>{i + 1}</div>
+                                                <span className="text-sm font-medium text-gray-800 leading-snug">{item}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Main Set */}
+                                <div className="space-y-2">
+                                    <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Main Set</h5>
+                                    {result.main_set?.map((item, i) => (
+                                        <div key={`m-${i}`}
+                                            onClick={() => toggleSet(i)}
+                                            className={cn(
+                                                "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-2",
+                                                completedSets[i] ? "bg-green-50/80 border-green-200 shadow-inner" : "bg-white/70 border-white shadow-sm hover:bg-white"
+                                            )}>
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <span className={cn("font-bold text-md", completedSets[i] ? "text-green-800 line-through opacity-60" : "text-gray-800")}>{item.name}</span>
+                                                    <div className="flex gap-2 text-[11px] text-gray-500 font-bold mt-1.5 uppercase tracking-wide">
+                                                        <span className="bg-gray-100/80 px-2 py-1 rounded-md text-gray-600">{item.sets} Sets</span>
+                                                        <span className="bg-gray-100/80 px-2 py-1 rounded-md text-gray-600">{item.reps} Reps</span>
+                                                    </div>
+                                                </div>
+                                                {completedSets[i] ? <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 mt-1 drop-shadow-sm" /> : <Circle className="w-6 h-6 text-gray-300 shrink-0 mt-1" />}
+                                            </div>
+                                            {item.notes && !completedSets[i] && (
+                                                <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100/50 p-2.5 rounded-lg inline-flex items-start gap-1.5 mt-2 font-medium">
+                                                    <Info className="w-4 h-4 shrink-0 mt-0.5 opacity-80" /> {item.notes}
+                                                </p>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
+
+                                {/* Cooldown */}
+                                {result.cooldown && result.cooldown.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Cooldown</h5>
+                                        {result.cooldown.map((item, i) => (
+                                            <div key={`c-${i}`} className="p-3 bg-white/40 rounded-xl border border-white flex items-start gap-3">
+                                                <div className={cn("w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold text-white opacity-60", theme.blob)}>{i + 1}</div>
+                                                <span className="text-sm font-medium text-gray-800 leading-snug">{item}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
-                            {/* 3. Focus Selector (New) */}
+                            <button onClick={toggleSession} className="w-full py-3.5 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 text-gray-800 text-sm font-bold flex items-center justify-center transition-all shadow-sm group">
+                                <CheckCircle2 className="w-4 h-4 mr-2 group-hover:text-green-500 transition-colors" /> End Session & Save
+                            </button>
+                        </motion.div>
+                    ) : !result && !isGenerating ? (
+                        <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                            {/* 1. Setting / Equipment */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500/80">Focus Area?</label>
+                                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Home className="w-3.5 h-3.5" /> Where?</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setSetting("Home")} className={cn("p-2.5 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2", setting === "Home" ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
+                                        <Home className="w-4 h-4 opacity-70" /> Home
+                                    </button>
+                                    <button onClick={() => setSetting("Gym")} className={cn("p-2.5 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2", setting === "Gym" ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
+                                        <Building2 className="w-4 h-4 opacity-70" /> Gym
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Energy */}
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Energy</label>
+                                    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner">
+                                        {(["Low", "Medium", "High"] as const).map((lvl) => (
+                                            <button key={lvl} onClick={() => setEnergy(lvl)} className={cn("flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center", energy === lvl ? cn("text-white shadow-sm", theme.blob) : "text-gray-500 hover:text-gray-700")}>
+                                                {lvl}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Time */}
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Time</label>
+                                    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner grid grid-cols-4">
+                                        {(["15m", "30m", "45m", "60m"] as const).map((t) => (
+                                            <button key={t} onClick={() => setTime(t)} className={cn("py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center", time === t ? cn("text-white shadow-sm", theme.blob) : "text-gray-500 hover:text-gray-700")}>
+                                                {t.replace('m', '')}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Focus Area */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Focus Area</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
-                                        { id: "Full Body", icon: Activity },
-                                        { id: "Upper Body", icon: BicepsFlexed },
-                                        { id: "Lower Body", icon: Footprints },
-                                        { id: "Cardio", icon: HeartPulse },
-                                        { id: "Core", icon: Zap },
-                                        { id: "Mobility", icon: Brain }
+                                        { id: "Full Body", name: "Full Body", icon: Activity },
+                                        { id: "Upper Body", name: "Upper", icon: BicepsFlexed },
+                                        { id: "Lower Body", name: "Lower", icon: Footprints },
+                                        { id: "Cardio", name: "Cardio", icon: HeartPulse },
+                                        { id: "Core", name: "Core", icon: Zap },
+                                        { id: "Mobility", name: "Mobility", icon: Brain }
                                     ].map((item) => (
-                                        <button key={item.id} onClick={() => setFocus(item.id as any)} className={cn("p-2 rounded-xl border text-[10px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 h-16", focus === item.id ? theme.active : "bg-white/30 border-white/40 text-gray-500 hover:bg-white/50")}>
-                                            <item.icon className="w-4 h-4 opacity-70" />
-                                            {item.id}
+                                        <button key={item.id} onClick={() => setFocus(item.id as any)} className={cn("py-2.5 px-1 rounded-xl border text-[10px] md:text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1.5", focus === item.id ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
+                                            <item.icon className={cn("w-4 h-4", focus === item.id ? theme.iconColor : "opacity-60")} />
+                                            {item.name}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            <button onClick={handleGenerate} disabled={!setting} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all mt-2", setting ? theme.button : "bg-gray-300 cursor-not-allowed")}>
-                                Build Workout
+                            {/* Symptoms / Limitations */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Anything to keep in mind?</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Cramps, sore knees, skip jumps..."
+                                    value={symptoms}
+                                    onChange={(e) => setSymptoms(e.target.value)}
+                                    className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-all font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                                />
+                            </div>
+
+                            <button onClick={handleGenerate} disabled={!setting} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all hover:shadow-lg mt-2", setting ? theme.button : "bg-gray-300 text-white cursor-not-allowed border outline-none")}>
+                                <Flame className="w-4 h-4" /> Generate AI Plan
                             </button>
                         </motion.div>
                     ) : isGenerating ? (
-                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 flex flex-col items-center justify-center text-center">
-                            <RefreshCw className="w-8 h-8 text-gray-300 animate-spin mb-3" />
-                            <p className="text-xs font-bold uppercase tracking-widest text-gray-500/60 animate-pulse">Designing {focus} Plan...</p>
+                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-16 flex flex-col items-center justify-center text-center">
+                            <RefreshCw className={cn("w-10 h-10 animate-spin mb-4", theme.iconColor)} />
+                            <p className="text-sm font-bold tracking-wide text-gray-600 animate-pulse">Designing your {phase} workout...</p>
                         </motion.div>
                     ) : (
-                        <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                            <div className="p-4 bg-white/60 rounded-xl border border-white/60 shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-heading text-xl text-gray-800">{result.title}</h4>
-                                    <div className="flex gap-1">
-                                        <Badge className={cn("bg-white text-gray-700", theme.border)}>{result.setting}</Badge>
-                                        <Badge variant="outline" className="bg-white/50">{result.level}</Badge>
+                        <motion.div key="result" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+                            <div className="p-5 bg-white/70 rounded-2xl border border-white shadow-sm">
+                                <div className="flex justify-between items-start mb-3">
+                                    <h4 className="font-heading text-[1.35rem] leading-tight text-gray-800 pr-4">{result?.title}</h4>
+                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                        <Badge className={cn("bg-white text-gray-700 shadow-sm border border-gray-100 font-bold", theme.iconColor)}>{result?.intensity} Intensity</Badge>
+                                        <Badge variant="outline" className="bg-white/50 text-gray-600 border-none px-2 shadow-sm font-bold flex gap-1 items-center"><Clock className="w-3 h-3" /> {result?.duration}</Badge>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-500 font-medium mb-4">
-                                    <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> {result.focus}</span>
-                                    <span className="flex items-center gap-1"><Activity className="w-3 h-3" /> Rest: {result.rest}</span>
-                                </div>
 
-                                <div className="space-y-2">
-                                    {result.exercises.map((ex: string, i: number) => (
-                                        <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-white/40 border border-white/40">
-                                            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-gray-500">{i + 1}</div>
-                                            <span className="text-sm text-gray-800/90">{ex}</span>
+                                {result?.reasoning && (
+                                    <div className="mt-4 mb-5 text-sm text-gray-600 bg-white/60 p-3.5 rounded-xl border border-white leading-relaxed italic relative">
+                                        <div className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-xl opacity-40", theme.blob)} />
+                                        "{result.reasoning}"
+                                    </div>
+                                )}
+
+                                <div className="mt-4 space-y-2.5">
+                                    <h5 className="text-[11px] uppercase font-bold text-gray-400 tracking-widest pl-1 mb-1.5">Main Routine Preview</h5>
+                                    {result?.main_set?.map((ex: WorkoutSet, i: number) => (
+                                        <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-50 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                                            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0", theme.blob)}>{i + 1}</div>
+                                            <span className="text-sm text-gray-800 font-bold">{ex.name}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <button className="w-full py-3 rounded-xl border border-gray-100 bg-white/40 text-gray-800 text-sm font-bold flex items-center justify-center gap-2 hover:bg-white/60 transition-all">
-                                <Play className="w-4 h-4" /> Start Session
+                            <button onClick={toggleSession} className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]", theme.blob, theme.button)}>
+                                <Play className="w-5 h-5 fill-white" /> Start Guided Session
                             </button>
                         </motion.div>
                     )}

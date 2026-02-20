@@ -6,10 +6,13 @@ import { MessageCircle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatInterface } from "./ChatInterface";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [isDocked, setIsDocked] = useState(false);
+    const pathname = usePathname();
+    const isTrackerPage = pathname?.includes("/tracker");
 
     return (
         <>
@@ -18,7 +21,10 @@ export function ChatWidget() {
                 {!isDocked ? (
                     <motion.div
                         key="active-widget"
-                        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 z-[75]"
+                        className={cn(
+                            "fixed right-5 md:bottom-8 md:right-8 z-[75] transition-all duration-300",
+                            isTrackerPage ? "bottom-[130px] md:bottom-8" : "bottom-28"
+                        )}
                         initial={{ scale: 0, x: 100 }}
                         animate={{ scale: 1, x: 0 }}
                         exit={{ scale: 0, x: 100 }}
@@ -58,7 +64,10 @@ export function ChatWidget() {
                 ) : (
                     <motion.div
                         key="docked-handle"
-                        className="fixed bottom-28 -right-2 md:bottom-8 md:-right-2 z-[75] cursor-pointer group"
+                        className={cn(
+                            "fixed -right-2 md:bottom-8 md:-right-2 z-[75] cursor-pointer group transition-all duration-300",
+                            isTrackerPage ? "bottom-[130px] md:bottom-8" : "bottom-28"
+                        )}
                         initial={{ x: 50 }}
                         animate={{ x: 0 }}
                         exit={{ x: 50 }}

@@ -186,7 +186,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Warming Foods", desc: "Circulation", icon: "Soup", scientific_benefit: "Improves pelvic blood flow and prevents stagnation-related clotting and pain." }
         ],
         move: [
-            { title: "Yin Yoga", desc: "Stretch", icon: "Moon" },
+            { title: "Gentle Yoga", desc: "Stretch", icon: "Moon" },
             { title: "Walking", desc: "Light", icon: "Footprints" },
             { title: "Rest Day", desc: "Recovery", icon: "Bed" },
             { title: "Stretching", desc: "Gentle", icon: "Activity" },
@@ -266,7 +266,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Gentle Stretching",
                 desc: "Light Movement",
                 icon: "Waves",
-                detail: "Avoid HIIT. Opt for Yin Yoga or gentle stretching to open the hips and release lower back tension."
+                detail: "Avoid HIIT. Opt for Gentle/Hatha Yoga or home stretching to open the hips and release lower back tension."
             },
             {
                 title: "Journaling",

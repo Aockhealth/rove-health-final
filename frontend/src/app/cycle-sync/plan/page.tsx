@@ -327,7 +327,7 @@ const BLUEPRINTS: any = {
                 { title: "Pilates", desc: "Core control, stability", time: "30-40 mins" },
                 { title: "Strength", desc: "Moderate weights, lower reps", time: "30 mins" },
                 { title: "Hiking/Walking", desc: "Nature, steady pace", time: "45 mins" },
-                { title: "Yin/Restorative", desc: "Late luteal phase", time: "20 mins" }
+                { title: "Gentle/Restorative", desc: "Late luteal phase", time: "20 mins" }
             ],
             avoid: ["Heavy HIIT (late phase)", "Jumping/Plyometrics", "Overexertion"]
         },
@@ -1691,7 +1691,7 @@ export default function DetailedPlanPage() {
                         <motion.div
                             key="diet"
                             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                            className="space-y-10 md:space-y-14 pb-24"
+                            className="space-y-10 md:space-y-14 pb-6 md:pb-24"
                         >
                             {/* 1. The Macro Fuel Gauge (Visual Top) */}
                             {BP.nutrition_guide?.macro_fuel && (

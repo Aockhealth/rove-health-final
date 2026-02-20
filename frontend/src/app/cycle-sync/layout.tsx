@@ -23,37 +23,40 @@ export default function CycleSyncLayout({
     ];
 
     return (
-        <div className="min-h-screen bg-rove-cream/20 pb-32 md:pb-0">
+        <div className="min-h-screen bg-rove-cream/20 pb-safe-nav md:pb-0">
             {/* Main Content */}
             <main className="container mx-auto max-w-md md:max-w-4xl min-h-screen bg-white shadow-2xl shadow-rove-stone/5 md:my-8 md:rounded-[3rem] overflow-hidden relative">
                 {children}
             </main>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-rove-stone/10 px-6 py-4 md:hidden z-50">
-                <div className="flex justify-between items-center max-w-md mx-auto">
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-rove-stone/10 px-6 pt-3 safe-bottom-padding md:hidden z-50">
+                <div className="flex justify-between items-center max-w-md mx-auto relative group">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = item.href === '/cycle-sync'
+                            ? pathname === item.href
+                            : pathname.startsWith(item.href);
+
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                aria-current={isActive ? "page" : undefined}
+                                aria-label={item.label}
                                 className={cn(
-                                    "flex flex-col items-center gap-1 transition-all duration-300",
-                                    isActive ? "text-gray-900 font-semibold scale-105" : "text-gray-500 hover:text-gray-900"
+                                    "flex flex-col items-center gap-1 transition-all duration-200 w-16",
+                                    isActive ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
                                 )}
                             >
                                 <div className={cn(
-                                    "p-2 rounded-xl transition-all duration-300",
-                                    isActive
-                                        ? "bg-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] border border-gray-100 -translate-y-2 text-rose-500"
-                                        : "transparent text-gray-400"
+                                    "p-1.5 rounded-full transition-all duration-300",
+                                    isActive ? "bg-rose-50 text-rose-500" : "bg-transparent text-gray-400"
                                 )}>
-                                    <item.icon className={cn("w-6 h-6", isActive && "fill-current stroke-[2.5px]")} />
+                                    <item.icon className={cn("w-6 h-6", isActive && "fill-rose-500/20 stroke-[2.5px]")} />
                                 </div>
                                 <span className={cn(
-                                    "text-[10px] uppercase tracking-wider transition-all",
-                                    isActive ? "opacity-100 translate-y-0" : "opacity-80"
+                                    "text-[11px] font-semibold transition-all",
+                                    isActive ? "opacity-100 text-gray-900" : "opacity-80 text-gray-500"
                                 )}>{item.label}</span>
                             </Link>
                         );

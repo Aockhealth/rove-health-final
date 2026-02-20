@@ -144,7 +144,7 @@ export default function PhaseDetailPage() {
     const getDietIcon = (iconName: string) => iconMap[iconName] || Zap;
 
     return (
-        <div className="min-h-screen bg-rove-cream/20 pt-20 pb-32 px-4 md:px-8">
+        <div className="min-h-screen bg-rove-cream/20 pt-20 pb-4 md:pb-32 px-4 md:px-8">
             <div className="max-w-2xl mx-auto space-y-5">
 
                 {/* Back Button */}

@@ -767,7 +767,7 @@ export default function TrackerPageRedesigned() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 py-6 space-y-4 pb-24">
+            <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
                 {/* Phase + Selected badge (updates when you click a date) */}
                 <div className={cn(
@@ -924,7 +924,7 @@ export default function TrackerPageRedesigned() {
 
                 {/* Extra spacing for sticky bottom button */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <div className="h-48" />
+                    <div className="h-32" />
                 )}
             </div>
         </div>

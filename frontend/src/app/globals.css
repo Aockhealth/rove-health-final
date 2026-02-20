@@ -59,6 +59,15 @@ body {
   overflow-x: hidden;
 }
 
+/* --- 📱 Mobile Safe Area Utilities --- */
+.pb-safe-nav {
+  padding-bottom: calc(70px + var(--safe-area-bottom, 20px));
+}
+
+.safe-bottom-padding {
+  padding-bottom: calc(1rem + var(--safe-area-bottom, 20px));
+}
+
 /* Grain Overlay */
 .grain-overlay::before {
   content: "";

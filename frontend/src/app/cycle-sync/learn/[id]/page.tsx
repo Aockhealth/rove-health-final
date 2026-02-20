@@ -43,7 +43,7 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-4">
       {/* --- HERO SECTION --- */}
       <div className="relative h-[50vh] w-full bg-neutral-100">
         {imageUrl ? (

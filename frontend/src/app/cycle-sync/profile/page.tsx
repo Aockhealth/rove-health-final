@@ -134,7 +134,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className={cn("min-h-screen pb-32 transition-colors duration-700", theme.bg)}>
+        <div className={cn("min-h-screen pb-4 md:pb-32 transition-colors duration-700", theme.bg)}>
             {/* 1. Header with Glass Nav */}
             <div className="sticky top-0 z-30 px-6 py-4 flex items-center justify-between bg-white/60 backdrop-blur-xl border-b border-white/40 support-[backdrop-filter]:bg-white/40">
                 <button onClick={() => router.back()} className="p-2 -ml-2 text-stone-400 hover:text-stone-800 transition-colors">
