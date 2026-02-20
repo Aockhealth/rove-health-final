@@ -1,4 +1,4 @@
-import { Sparkles, Check, Info } from "lucide-react";
+import { Check, Info, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -88,7 +88,7 @@ export default function SelfLoveCard({
             theme.iconBg
           )}
         >
-          <Sparkles className={cn("w-4 h-4 fill-current", theme.iconColor)} />
+          <Heart className={cn("w-4 h-4 fill-current", theme.iconColor)} />
         </motion.div>
         <div className="flex items-center gap-2 relative">
           <h3 className="text-base font-heading font-semibold text-gray-900">Self Love Log</h3>

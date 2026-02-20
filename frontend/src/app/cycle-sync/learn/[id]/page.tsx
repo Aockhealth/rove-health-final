@@ -1,6 +1,6 @@
 import { fetchArticleById } from "@backend/actions/cycle-sync/learn/learn-actions";
 import { getStorageUrl } from "@/lib/utils";
-import { ChevronLeft, Calendar, Clock, User, Share2, Bookmark, Sparkles } from "lucide-react";
+import { ChevronLeft, Calendar, Clock, User, Share2, Bookmark } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";

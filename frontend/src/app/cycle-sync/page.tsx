@@ -149,11 +149,31 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
                                 </p>
 
                                 {expandedCard.detail.includes("Sources:") && (
-                                    <div className="pt-4 border-t border-black/10">
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-2">Food Sources</p>
-                                        <p className="text-[13px] text-gray-700 leading-relaxed italic">
-                                            {expandedCard.detail.split("Sources:")[1]}
-                                        </p>
+                                    <div className={cn(
+                                        "p-5 rounded-2xl border",
+                                        theme.iconBg,
+                                        theme.borderColor
+                                    )}>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Utensils className={cn("w-4 h-4", theme.iconColor)} />
+                                            <h4 className={cn("text-xs font-bold uppercase tracking-[0.2em]", theme.iconColor)}>
+                                                Food Sources
+                                            </h4>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {expandedCard.detail.split("Sources:")[1].split(",").map((source, idx) => {
+                                                const cleanSource = source.trim().replace(/\.$/, "");
+                                                if (!cleanSource) return null;
+                                                return (
+                                                    <span
+                                                        key={idx}
+                                                        className="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-xl text-[14px] font-semibold text-gray-800 shadow-sm border border-white/50 capitalize"
+                                                    >
+                                                        {cleanSource}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>

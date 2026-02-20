@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { SegmentedDoughnut } from "@/components/ui/SegmentedDoughnut";
-import { Sparkles, Leaf, Heart, Coffee } from "lucide-react";
+import { Leaf, Heart, Coffee, Sun } from "lucide-react";
 
 // --- CONFIGURATION ---
 const PHASE_GUIDANCE: Record<string, {
@@ -40,7 +40,7 @@ const PHASE_GUIDANCE: Record<string, {
     color: "text-amber-600",
     bg: "bg-amber-50",
     blob: "bg-amber-400",
-    icon: Sparkles,
+    icon: Sun,
     tips: [
       "High energy: Schedule social events.",
       "Strength training hits harder now.",
@@ -99,7 +99,9 @@ export function AiAnalysisCard({
 
       {/* HEADER */}
       <div className="flex items-center gap-2 mb-6 relative z-10">
-        <div className="text-amber-500 text-lg">✨</div>
+        <div className="text-amber-500 text-lg">
+          <Sun className="w-5 h-5" />
+        </div>
         <h3 className="text-lg font-heading text-rove-charcoal">
           Pattern Analysis
         </h3>
@@ -177,7 +179,7 @@ export function AiAnalysisCard({
               className="flex flex-col items-center justify-center h-full py-6 text-center"
             >
               <div className="w-14 h-14 rounded-full bg-stone-50 flex items-center justify-center mb-2">
-                <span className="text-2xl">✨</span>
+                <span className="text-2xl">📝</span>
               </div>
               <p className="text-sm text-rove-stone">
                 No symptoms logged yet.

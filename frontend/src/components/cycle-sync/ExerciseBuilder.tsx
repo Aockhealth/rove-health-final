@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Dumbbell, RefreshCw, RotateCcw, Home, Building2, Trophy, Medal, Star, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play } from "lucide-react";
+import { Dumbbell, RefreshCw, RotateCcw, Home, Building2, Trophy, Medal, Star, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 
@@ -224,7 +224,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                             </div>
 
                             <button onClick={handleGenerate} disabled={!setting} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all mt-2", setting ? theme.button : "bg-gray-300 cursor-not-allowed")}>
-                                <Sparkles className="w-4 h-4" /> Build Workout
+                                Build Workout
                             </button>
                         </motion.div>
                     ) : isGenerating ? (

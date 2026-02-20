@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
+import { Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type MoodInsight = {
@@ -117,7 +117,7 @@ export function EmotionalBaselineCard({
       <div className="relative z-10 mb-6">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shadow-sm">
-            <Sparkles className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
+            <Activity className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
           </div>
           <h3 className="text-base font-heading font-bold text-gray-800 tracking-tight">
             Emotional Baseline

@@ -126,7 +126,7 @@ const menstrualPhase: PhaseData = {
         ],
         coreNeeds: [
             { id: "iron", title: "Iron-Rich Foods", description: "Restore blood loss", icon: "Droplets" },
-            { id: "magnesium", title: "Magnesium", description: "Reduce cramps & pain", icon: "Sparkles" },
+            { id: "magnesium", title: "Magnesium", description: "Reduce cramps & pain", icon: "Star" },
             { id: "omega3", title: "Omega-3 Fats", description: "Anti-inflammatory", icon: "Fish" },
             { id: "warmfoods", title: "Warm Foods", description: "Support digestion", icon: "Soup" }
         ],
@@ -534,7 +534,7 @@ const ovulatoryPhase: PhaseData = {
         color: "bg-amber-500",
         badgeColor: "bg-amber-50 text-amber-600 border-amber-100",
         season: "Inner Summer",
-        icon: "Sparkles"
+        icon: "Sun"
     },
     hormones: {
         title: "Peak Hormones",
@@ -762,7 +762,7 @@ const lutealPhase: PhaseData = {
         coreNeeds: [
             { id: "carbs", title: "Complex Carbs", description: "Stabilize mood & blood sugar", icon: "Wheat" },
             { id: "b6", title: "Vitamin B6", description: "Reduce PMS symptoms", icon: "Pill" },
-            { id: "magnesium", title: "Magnesium", description: "Relaxation & cramp prevention", icon: "Sparkles" },
+            { id: "magnesium", title: "Magnesium", description: "Relaxation & cramp prevention", icon: "Star" },
             { id: "fiber", title: "Fiber", description: "Prevent constipation & bloating", icon: "Leaf" }
         ],
         meals: [

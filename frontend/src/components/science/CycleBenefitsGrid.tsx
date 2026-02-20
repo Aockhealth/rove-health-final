@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, Brain, Sun, HeartPulse, ArrowUpRight, Sparkles } from "lucide-react";
+import { Zap, Brain, Sun, HeartPulse, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CycleBenefitsGrid() {

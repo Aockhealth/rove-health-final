@@ -14,7 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
     Activity, ArrowRight, Battery, Brain, CheckCircle2,
-    Flame, Info, Leaf, Pill, Sparkles, Utensils, Waves, Beaker,
+    Flame, Info, Leaf, Pill, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
     Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2, Pencil, X
@@ -1743,9 +1743,15 @@ export default function DetailedPlanPage() {
                                         const isLarge = uniqueItems.length > 6;
                                         const chunk = Math.ceil(uniqueItems.length / 3);
 
-                                        const row1 = uniqueItems.slice(0, chunk);
-                                        const row2 = uniqueItems.slice(chunk, chunk * 2);
-                                        const row3 = uniqueItems.slice(chunk * 2);
+                                        const styledItems = uniqueItems.map(item => ({
+                                            ...item,
+                                            bg: theme.iconContainer,
+                                            color: "" // text color is included in bg (iconContainer)
+                                        }));
+
+                                        const row1 = styledItems.slice(0, chunk);
+                                        const row2 = styledItems.slice(chunk, chunk * 2);
+                                        const row3 = styledItems.slice(chunk * 2);
 
                                         return (
                                             <>

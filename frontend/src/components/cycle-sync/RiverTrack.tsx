@@ -11,20 +11,21 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
-    Moon, Sparkles, Brain, Utensils, Activity, Droplets, Dumbbell,
+    Moon, Brain, Utensils, Activity, Droplets, Dumbbell,
     Zap, Sun, TrendingUp, Heart, Wind, Coffee, Soup, Fish,
     Carrot, Wheat, Drumstick, Shield, Pill, Home, FileText,
-    Users, Mic, Image, Lightbulb, Star, Music, Bike, Waves, Book, BookOpen, Smartphone, Clock, Beaker, Circle, Leaf
+    Users, Mic, Image, Lightbulb, Star, Music, Bike, Waves, Book, BookOpen, Smartphone, Clock, Beaker, Circle, Leaf,
+    Sprout, CircleDot, Cookie, Nut, CupSoda, TreeDeciduous, Cherry, Milk, Bean, Egg, Anchor, Palmtree, Smile, Banana
 } from "lucide-react";
 
 // Icon mapping helper - Expanded for Diet Tab needs
 export const iconMap: Record<string, any> = {
     "Moon": Moon,
-    "Sparkles": Sparkles,
+    "Sparkles": Star, // Map Sparkles string to Star to avoid using the Sparkle icon
     "Brain": Brain,
     "Utensils": Utensils,
     "Activity": Activity,
-    "Leaf": Droplets, // Fallback or specific
+    "Leaf": Leaf,
     "Droplets": Droplets,
     "Dumbbell": Dumbbell,
     "Zap": Zap,
@@ -56,8 +57,24 @@ export const iconMap: Record<string, any> = {
     "Clock": Clock,
     "Beaker": Beaker,
     "Circle": Circle,
-    "Bean": Utensils, // Fallback
-    "Sunrise": Sun
+    "Bean": Bean,
+    "Sunrise": Sun,
+    "Sprout": Sprout,
+    "CircleDot": CircleDot,
+    "Cookie": Cookie,
+    "Nut": Nut,
+    "CupSoda": CupSoda,
+    "TreeDeciduous": TreeDeciduous,
+    "Cherry": Cherry,
+    "Milk": Milk,
+    "Jar": Beaker, // Fallback for Jar
+    "Cheese": Circle, // Fallback for Cheese
+    "Egg": Egg,
+    "Corn": Wheat, // Fallback for Corn
+    "Anchor": Anchor,
+    "Palmtree": Palmtree,
+    "Smile": Smile,
+    "Banana": Banana
 };
 
 interface RiverTrackProps {
@@ -138,7 +155,7 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
                     onTouchEnd={() => setIsPaused(false)}
                 >
                     {riverItems.map((item, i) => {
-                        const Icon = item.icon && typeof item.icon !== 'string' ? item.icon : (iconMap[item.icon as string] || Sparkles);
+                        const Icon = item.icon && typeof item.icon !== 'string' ? item.icon : (iconMap[item.icon as string] || Circle);
                         const isClickable = !!onCardClick && item.detail;
 
                         return (

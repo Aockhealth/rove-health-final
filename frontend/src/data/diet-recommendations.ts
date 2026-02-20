@@ -346,7 +346,7 @@ export const DIET_RECOMMENDATIONS = {
                     {
                         title: "Makhana",
                         description: "Low calorie Magnesium snack",
-                        icon: "Sparkles"
+                        icon: "Star"
                     }
                 ],
                 vegan: [

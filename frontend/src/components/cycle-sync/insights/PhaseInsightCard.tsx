@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Sparkles, Flame, Moon, Brain, Leaf, Sun } from "lucide-react";
+import { Flame, Moon, Brain, Leaf, Sun } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 
@@ -263,7 +263,7 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
               animate={{ rotate: 360 }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             >
-              <Sparkles className="w-3 h-3" />
+              <Brain className="w-3 h-3" />
             </motion.div>
             <span>Powered by Llama 3.3 70B</span>
           </motion.div>

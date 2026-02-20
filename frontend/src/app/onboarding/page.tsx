@@ -8,7 +8,6 @@ import {
   ArrowRight,
   RotateCcw,
   Plus,
-  Sparkles,
   Calendar,
   BarChart3,
   HeartPulse,
@@ -20,7 +19,8 @@ import {
   Thermometer,
   Flower2,
   Scale,
-  BookOpen
+  BookOpen,
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { submitOnboarding } from "./actions";
@@ -376,7 +376,6 @@ export default function OnboardingWizard() {
               <p className="text-rove-stone mb-8 md:mb-10 text-base md:text-lg">First things first, what should we call you?</p>
               <div className="relative">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Name" className="w-full text-3xl md:text-4xl font-heading font-medium border-b-2 border-gray-200 py-3 bg-transparent outline-none focus:border-rove-red transition-colors placeholder:text-rove-stone/40 text-rove-charcoal" autoFocus />
-                {name && <Sparkles className="absolute right-0 top-1/2 -translate-y-1/2 text-rove-red w-6 h-6 animate-pulse" />}
               </div>
             </div>
           )}
@@ -524,7 +523,7 @@ export default function OnboardingWizard() {
           {step === 6 && (
             <div className="animate-in slide-in-from-right-8 fade-in duration-300">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-rove-red/10 rounded-full text-rove-red"><Sparkles className="w-6 h-6" /></div>
+                <div className="p-2 bg-rove-red/10 rounded-full text-rove-red"><Target className="w-6 h-6" /></div>
                 <h2 className="text-2xl md:text-3xl font-heading font-semibold text-rove-charcoal">Your Goals</h2>
               </div>
               <p className="text-rove-stone mb-6 md:mb-8 text-sm md:text-base">Finally, what brings you to Rove?</p>

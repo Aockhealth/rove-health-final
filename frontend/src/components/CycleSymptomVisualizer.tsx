@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Zap, Droplets, Moon, Sun, Brain, Activity, Battery, Sparkles, TrendingUp, Heart, ArrowRight, ChevronRight, BarChart3 } from "lucide-react";
+import { Zap, Droplets, Moon, Sun, Brain, Activity, Battery, TrendingUp, Heart, ArrowRight, ChevronRight, BarChart3 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 
@@ -150,7 +150,6 @@ export function CycleSymptomVisualizer() {
                                 </span>
                                 <span className="h-px w-12 bg-rove-stone/20" />
                                 <span className="text-rove-stone text-sm font-medium flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" />
                                     Superpower: {activePhase.superpower}
                                 </span>
                             </div>

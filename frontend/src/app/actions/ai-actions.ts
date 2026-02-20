@@ -653,14 +653,16 @@ export async function getFullPersonalizedPlan(
 // AI RECIPE GENERATOR (AI Chef)
 // ============================================
 
-export type RecipeType = "smoothie" | "dish" | "meal_prep";
+export type RecipeType = "smoothie" | "salad" | "snack";
 export type DietPreference = "Veg" | "Non-Veg" | "Vegan" | "Jain";
 
 export interface AIRecipe {
     name: string;
     ingredients: string;
     why: string;
-    instructions?: string;
+    instructions: string[]; // Changed to array for step-by-step
+    calories: string;       // Added calories
+    time: string;          // Added prep time
 }
 
 export interface GenerateRecipeInput {
@@ -680,9 +682,9 @@ export async function generateAIRecipe(input: GenerateRecipeInput): Promise<AIRe
 
     // Build the prompt
     const recipeTypeLabels: Record<RecipeType, string> = {
-        smoothie: "a gut-healthy smoothie",
-        dish: "a complete meal/dish",
-        meal_prep: "a batch-cook meal prep idea (serves 4-6)"
+        smoothie: "a hormone-balancing smoothie",
+        salad: "a nutrient-dense salad",
+        snack: "a quick, healthy snack"
     };
 
     const phaseNutrition: Record<string, string> = {
@@ -710,7 +712,7 @@ ${input.restrictions.length > 0 ? `Additional restrictions: ${input.restrictions
 
 ${input.customInstruction ? `USER'S SPECIAL REQUEST: "${input.customInstruction}"` : ""}
 
-Create a delicious, practical recipe they can actually make at home. Use common Indian + international ingredients available in typical kitchens.`;
+Create a delicious, practical recipe they can actually make at home. Use common ingredients.`;
 
     try {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -723,7 +725,7 @@ Create a delicious, practical recipe they can actually make at home. Use common 
                 model: "llama-3.3-70b-versatile",
                 response_format: { type: "json_object" },
                 temperature: 0.7, // Higher for creativity
-                max_tokens: 500,
+                max_tokens: 650,
                 messages: [
                     {
                         role: "system",
@@ -736,8 +738,11 @@ Create recipes that are:
 Return JSON ONLY with this exact structure:
 {
     "name": "Creative recipe name (3-5 words)",
-    "ingredients": "Comma-separated list of main ingredients (6-10 items)",
-    "why": "One sentence explaining why this recipe is perfect for this phase (mention specific nutrients/benefits)"
+    "ingredients": "Comma-separated list of main ingredients with quantities (e.g., '1 cup Spinach, 1/2 Banana')",
+    "why": "One sentence explaining why this recipe is perfect for this phase (mention specific nutrients/benefits)",
+    "instructions": ["Step 1...", "Step 2...", "Step 3..."],
+    "calories": "Approx calories (e.g., '350 kcal')",
+    "time": "Prep time (e.g., '10 mins')"
 }`
                     },
                     { role: "user", content: prompt }

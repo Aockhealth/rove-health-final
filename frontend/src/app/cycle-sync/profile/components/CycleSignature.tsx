@@ -1,4 +1,4 @@
-import { Zap, Clock, Shield, Activity, Sparkles } from "lucide-react";
+import { Zap, Clock, Shield, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CycleSignatureProps {
@@ -12,7 +12,7 @@ interface CycleSignatureProps {
 export function CycleSignature({ cycleLength, periodLength, isIrregular, phaseName, theme }: CycleSignatureProps) {
     // Determine "Signature" type based on stats (Simple logic for now)
     const getSignatureType = () => {
-        if (isIrregular) return { label: "Adaptive Flow", icon: Sparkles, desc: "Variable rhythm" };
+        if (isIrregular) return { label: "Adaptive Flow", icon: Activity, desc: "Variable rhythm" };
         if (cycleLength < 26) return { label: "Rapid Cycle", icon: Zap, desc: "Fast metabolism" };
         if (cycleLength > 32) return { label: "Extended Rhythm", icon: Clock, desc: "Slower pace" };
         return { label: "Classic Rhythm", icon: Activity, desc: "Steady balance" };

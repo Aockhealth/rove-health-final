@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { MessageCircle, X, Sparkles } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatInterface } from "./ChatInterface";
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
 
-import { calculatePhase, CycleSettings, DailyLog, formatDate } from "../../../shared/cycle/phase.ts";
+import { calculatePhase, CycleSettings, DailyLog, formatDate } from "@shared/cycle/phase";
 
 // ===================================
 // TEST UTILS

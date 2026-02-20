@@ -117,7 +117,7 @@ export function MacroFuelGauge({ data, theme, phase }: MacroFuelGaugeProps) {
                         Daily Fuel
                     </p>
                     <h2 className={cn("text-4xl font-heading mb-0.5 leading-none", currentTheme.color)}>
-                        {data.calories || "2000"}
+                        {data.calories ? Math.round(data.calories / 10) * 10 : "2000"}
                     </h2>
                     <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
                         kcal
