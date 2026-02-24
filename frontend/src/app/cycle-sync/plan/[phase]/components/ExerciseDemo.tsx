@@ -1,7 +1,7 @@
 "use client";
 
-import { lazy, Suspense, useReducedMotion } from "react";
-import { motion } from "framer-motion";
+import { lazy, Suspense } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type ExerciseId = "pushup" | "wallsit" | "reverselunge" | "squat" | "plank";

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+import { StructuredResponseRenderer } from "./StructuredResponseRenderer";
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -15,6 +16,7 @@ interface Message {
     feedback?: 1 | -1 | null; // 👍 = 1, 👎 = -1
     missingData?: string[];
     suggestions?: string[];
+    structuredPayload?: any;
 }
 
 const MISSING_DATA_LABELS: Record<string, string> = {
@@ -460,13 +462,18 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
 
             // Extract missing data prompts and suggestion chips from structured payload
             const payload = data?.ai?.structuredPayload;
-            const missingData = Array.isArray(payload?.missing_data) ? payload.missing_data : undefined;
-            const suggestions: string[] = [];
-            if (payload?.check_in_question) suggestions.push(payload.check_in_question);
-            if (payload?.modules_used?.includes("nutrition")) suggestions.push("Tell me more about this meal");
-            if (payload?.modules_used?.includes("movement")) suggestions.push("What exercise do you suggest?");
-            if (!payload?.modules_used?.includes("nutrition")) suggestions.push("What should I eat today?");
-            if (!payload?.modules_used?.includes("movement")) suggestions.push("Suggest a workout for me");
+            const missingData = payload?.missing_data || undefined;
+            let suggestions: string[] = [];
+
+            if (payload?.check_in_question) {
+                // If AI gave a specific question, show ONLY that as the follow-up
+                suggestions = [payload.check_in_question];
+            } else if (payload?.modules_used?.length) {
+                // Fallback to module-specific follow-ups
+                if (payload.modules_used.includes("nutrition")) suggestions.push("Tell me more about this meal");
+                if (payload.modules_used.includes("movement")) suggestions.push("How do I perform this?");
+                if (suggestions.length > 1) suggestions = [suggestions[0]]; // Still show only one
+            }
 
             setMessages((prev) => [
                 ...prev,
@@ -475,7 +482,8 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                     role: "assistant",
                     content: aiResponse,
                     missingData: missingData?.length ? missingData : undefined,
-                    suggestions: suggestions.length ? suggestions.slice(0, 3) : undefined
+                    suggestions: suggestions.length ? suggestions.slice(0, 3) : undefined,
+                    structuredPayload: payload
                 },
             ]);
         } catch (error) {
@@ -633,27 +641,34 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                             >
                                 {message.role === "assistant" ? (
                                     <div className="text-sm max-w-none">
-                                        <ReactMarkdown
-                                            components={{
-                                                h3: ({ node, ...props }) => <h3 className="font-serif text-base font-semibold mt-4 mb-2 first:mt-0 tracking-tight" style={{ color: '#2D2420' }} {...props} />,
-                                                p: ({ node, ...props }) => <p className="leading-relaxed mb-3 last:mb-0" style={{ color: '#2D2420' }} {...props} />,
-                                                ul: ({ node, ...props }) => <ul className="list-disc list-outside pl-4 space-y-1.5 mt-2 mb-3 last:mb-0" style={{ color: '#2D2420' }} {...props} />,
-                                                li: ({ node, ...props }) => <li className="pl-1" {...props} />,
-                                                strong: ({ node, ...props }) => <strong className="font-semibold" style={{ color: '#1A1A1A' }} {...props} />,
-                                                em: ({ node, ...props }) => <em className="italic text-[0.95em]" style={{ color: '#A8A29E' }} {...props} />,
-                                                hr: ({ node, ...props }) => <hr className="my-4" style={{ borderColor: 'rgba(45, 36, 32, 0.08)' }} {...props} />,
-                                                blockquote: ({ node, ...props }) => (
-                                                    <blockquote className="border-l-2 pl-3 my-3 py-1 text-[0.9em] italic rounded-r-lg"
-                                                        style={{
-                                                            borderColor: '#D4A25F',
-                                                            backgroundColor: 'rgba(212, 162, 95, 0.06)',
-                                                            color: '#7B82A8'
-                                                        }} {...props} />
-                                                )
-                                            }}
-                                        >
-                                            {message.content}
-                                        </ReactMarkdown>
+                                        {message.structuredPayload ? (
+                                            <StructuredResponseRenderer
+                                                payload={message.structuredPayload}
+                                                narrative={message.content}
+                                            />
+                                        ) : (
+                                            <ReactMarkdown
+                                                components={{
+                                                    h3: ({ node, ...props }) => <h3 className="font-serif text-base font-semibold mt-4 mb-2 first:mt-0 tracking-tight" style={{ color: '#2D2420' }} {...props} />,
+                                                    p: ({ node, ...props }) => <p className="leading-relaxed mb-3 last:mb-0" style={{ color: '#2D2420' }} {...props} />,
+                                                    ul: ({ node, ...props }) => <ul className="list-disc list-outside pl-4 space-y-1.5 mt-2 mb-3 last:mb-0" style={{ color: '#2D2420' }} {...props} />,
+                                                    li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                                                    strong: ({ node, ...props }) => <strong className="font-semibold" style={{ color: '#1A1A1A' }} {...props} />,
+                                                    em: ({ node, ...props }) => <em className="italic text-[0.95em]" style={{ color: '#A8A29E' }} {...props} />,
+                                                    hr: ({ node, ...props }) => <hr className="my-4" style={{ borderColor: 'rgba(45, 36, 32, 0.08)' }} {...props} />,
+                                                    blockquote: ({ node, ...props }) => (
+                                                        <blockquote className="border-l-2 pl-3 my-3 py-1 text-[0.9em] italic rounded-r-lg"
+                                                            style={{
+                                                                borderColor: '#D4A25F',
+                                                                backgroundColor: 'rgba(212, 162, 95, 0.06)',
+                                                                color: '#7B82A8'
+                                                            }} {...props} />
+                                                    )
+                                                }}
+                                            >
+                                                {message.content}
+                                            </ReactMarkdown>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-sm leading-relaxed">{message.content}</div>
