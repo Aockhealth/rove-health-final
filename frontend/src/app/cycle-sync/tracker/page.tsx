@@ -484,8 +484,6 @@ export default function TrackerPageRedesigned() {
                     .filter((d) => monthLogs[d]?.is_period === true)
                     .sort((a, b) => b.localeCompare(a)); // Descending order
 
-                console.log("🔍 DEBUG: All period dates:", allPeriodDates);
-
                 if (allPeriodDates.length > 0) {
                     // Find the start of the most recent period streak
                     // Start from the most recent period day and walk backwards
@@ -506,10 +504,7 @@ export default function TrackerPageRedesigned() {
                         }
                     }
 
-                    console.log("🔍 DEBUG: Setting last_period_start to:", streakStart);
-
                     const updateResult = await updateLastPeriodDate(streakStart);
-                    console.log("🔍 DEBUG: Update result:", updateResult);
 
                     if (!updateResult.success) {
                         console.error("❌ Failed to update last_period_start:", updateResult.error);
@@ -517,7 +512,6 @@ export default function TrackerPageRedesigned() {
                     }
 
                     const freshSettings = await fetchUserCycleSettings();
-                    console.log("🔍 DEBUG: Fresh settings:", freshSettings);
 
                     if (freshSettings) {
                         setCycleSettings({
