@@ -61,25 +61,36 @@ export function SegmentedDoughnut({
     <div className="relative flex items-center justify-center">
       <svg width={size} height={size}>
         <defs>
+          {/* ✅ UPDATED GRADIENTS: Using Rove Brand Colors from globals.css
+             Structure: Base Color -> Lighter Tint (Shine) -> Base Color
+          */}
+          
+          {/* Menstrual: #AF6B6B (Rose) */}
           <linearGradient id="grad-menstrual" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fda4af" />
-            <stop offset="50%" stopColor="#ffe4e6" />
-            <stop offset="100%" stopColor="#fb7185" />
+            <stop offset="0%" stopColor="#AF6B6B" /> 
+            <stop offset="50%" stopColor="#DDB4B4" /> {/* Light Rose */}
+            <stop offset="100%" stopColor="#AF6B6B" />
           </linearGradient>
+
+          {/* Follicular: #8DAA9D (Sage) */}
           <linearGradient id="grad-follicular" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#5eead4" />
-            <stop offset="50%" stopColor="#d1fae5" />
-            <stop offset="100%" stopColor="#2dd4bf" />
+            <stop offset="0%" stopColor="#8DAA9D" />
+            <stop offset="50%" stopColor="#B8D3C8" /> {/* Light Sage */}
+            <stop offset="100%" stopColor="#8DAA9D" />
           </linearGradient>
+
+          {/* Ovulatory: #D4A25F (Ochre) */}
           <linearGradient id="grad-ovulatory" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fcd34d" />
-            <stop offset="50%" stopColor="#fef9c3" />
-            <stop offset="100%" stopColor="#fbbf24" />
+            <stop offset="0%" stopColor="#D4A25F" />
+            <stop offset="50%" stopColor="#F0D6B5" /> {/* Light Ochre */}
+            <stop offset="100%" stopColor="#D4A25F" />
           </linearGradient>
+
+          {/* Luteal: #7B82A8 (Slate) */}
           <linearGradient id="grad-luteal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#a5b4fc" />
-            <stop offset="50%" stopColor="#dbeafe" />
-            <stop offset="100%" stopColor="#818cf8" />
+            <stop offset="0%" stopColor="#7B82A8" />
+            <stop offset="50%" stopColor="#A8AED0" /> {/* Light Slate */}
+            <stop offset="100%" stopColor="#7B82A8" />
           </linearGradient>
         </defs>
 
@@ -99,7 +110,6 @@ export function SegmentedDoughnut({
               key={phase}
               d={donutPath(cx, cy, outerRadius, innerRadius, start, end)}
               fill={`url(#${gradientId})`}
-              // ✅ FIX 1: Explicitly set initial values to prevent "undefined" errors
               initial={{
                 x: 0,
                 y: 0,
@@ -110,15 +120,15 @@ export function SegmentedDoughnut({
                 x: offset.x,
                 y: offset.y,
                 scale: isActive ? 1.06 : 1,
-                opacity: selectedPhase && !isActive ? 0.3 : 1, // Dim others
+                opacity: selectedPhase && !isActive ? 0.4 : 1, // Slight adjustment to opacity for better contrast
               }}
               transition={{ type: "spring", stiffness: 280, damping: 22 }}
               onClick={() => onPhaseSelect(phase)}
               className="cursor-pointer hover:opacity-100 transition-opacity"
               style={{
                 filter: isActive
-                  ? "drop-shadow(0 10px 20px rgba(0,0,0,0.18))"
-                  : "drop-shadow(0 4px 10px rgba(0,0,0,0.08))",
+                  ? "drop-shadow(0 10px 20px rgba(0,0,0,0.15))"
+                  : "drop-shadow(0 4px 10px rgba(0,0,0,0.05))",
               }}
             />
           );
@@ -127,7 +137,7 @@ export function SegmentedDoughnut({
 
       {/* CENTER TEXT */}
       <div className="absolute text-center pointer-events-none">
-        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">
+        <p className="text-[10px] uppercase tracking-widest text-rove-stone font-semibold mb-1">
           Phase
         </p>
         <p className="text-sm font-heading text-rove-charcoal font-bold">

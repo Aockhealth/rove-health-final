@@ -15,7 +15,7 @@ import {
 } from "@/app/actions/cycle-sync";
 // --- COMPONENTS ---
 import { AiAnalysisCard } from "@/components/cycle-sync/insights/AiAnalysisCard";
-import { EmotionalBaselineCard } from "@/components/cycle-sync/insights/EmotionalBaselineCard";
+import { MentalHealthCheckCard } from "@/components/cycle-sync/insights/MentalHealthCheckCard";
 import { CycleOverviewCard } from "@/components/cycle-sync/insights/CycleOverviewCard";
 import { HabitsOverviewCard } from "@/components/cycle-sync/insights/HabitsOverviewCard";
 import { PhaseInsightCard } from "@/components/cycle-sync/insights/PhaseInsightCard";
@@ -53,20 +53,6 @@ const phaseThemes: Record<string, any> = {
   },
 };
 
-// --- SCROLL REVEAL WRAPPER ---
-function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.8, ease: "easeOut", delay }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 export default function InsightsPage() {
   const [activeTab, setActiveTab] = useState<"cycle" | "symptoms" | "medical">("cycle");
   const [stats, setStats] = useState<any>(null);
@@ -84,7 +70,6 @@ export default function InsightsPage() {
           setStats(data);
 
           if (data.phase?.name) {
-            // ✅ FIX 2: Only set phase if it hasn't been touched yet.
             setSelectedPhase((prev) => prev || data.phase!.name);
           }
         }
@@ -124,8 +109,6 @@ export default function InsightsPage() {
     }
   }
 
-  // ✅ FIX 3: Guard render until we have a phase
-  // ✅ FIX 3: Guard render until we have a phase
   if (loading) {
     return <LoadingScreen />;
   }
@@ -171,8 +154,6 @@ export default function InsightsPage() {
 
   // Theme always follows the *Actual* phase for the page background
   const theme = phaseThemes[currentPhase];
-
-
 
   return (
     <div className="relative min-h-screen bg-rove-cream grain-overlay overflow-hidden">
@@ -242,59 +223,33 @@ export default function InsightsPage() {
               className="space-y-6"
             >
               {/* 1. Cycle Overview (Top) */}
-              <ScrollReveal>
-                <CycleOverviewCard
-                  cycleLength={avgCycle}
-                  periodLength={stats?.averages?.period || 5}
-                  isRegular={isRegular}
-                  nextPeriodDate={stats?.averages?.nextPeriodDate}
-                  phase={currentPhase}
-                  theme={theme}
-                />
-              </ScrollReveal>
+              <CycleOverviewCard
+                cycleLength={avgCycle}
+                periodLength={stats?.averages?.period || 5}
+                isRegular={isRegular}
+                nextPeriodDate={stats?.averages?.nextPeriodDate}
+                phase={currentPhase}
+                theme={theme}
+              />
 
               {/* 1.5. Habits Overview */}
-              <ScrollReveal delay={0.1}>
-                <HabitsOverviewCard
-                  moodsByPhase={stats?.moodsByPhase || {}}
-                  exerciseByPhase={stats?.exerciseByPhase || {}}
-                  hydrationByPhase={stats?.hydrationByPhase || {}}
-                  phase={currentPhase}
-                  theme={theme}
-                />
-              </ScrollReveal>
+              <HabitsOverviewCard
+                wellnessAverages={stats?.wellnessAverages}
+                theme={theme}
+              />
 
               {/* 2. Phase Insight (Below Overview) */}
-              <ScrollReveal delay={0.2}>
-                <PhaseInsightCard
-                  phase={currentPhase}
-                  day={currentDay}
-                  insight={aiInsight}
-                  theme={theme}
-                  isGenerating={isGeneratingInsight}
-                  onGenerateInsight={handleGenerateInsight}
-                />
-              </ScrollReveal>
+              <PhaseInsightCard
+                phase={currentPhase}
+                day={currentDay}
+                insight={aiInsight}
+                theme={theme}
+                isGenerating={isGeneratingInsight}
+                onGenerateInsight={handleGenerateInsight}
+              />
 
-              {/* 3. Symptoms Analysis (Interactive Phase) */}
-              <ScrollReveal delay={0.2}>
-                <AiAnalysisCard
-                  phaseCounts={stats?.phaseCounts}
-                  symptomsByPhase={stats?.symptomsByPhase}
-                  tipsByPhase={stats?.tipsByPhase}
-                  selectedPhase={selectedPhase}
-                  onPhaseSelect={setSelectedPhase}
-                  theme={theme}
-                />
-              </ScrollReveal>
-
-              {/* 4. Emotional Baseline (Interactive Phase) */}
-              <ScrollReveal delay={0.2}>
-                <EmotionalBaselineCard
-                  emotionalBaselines={stats?.emotionalBaselines}
-                  defaultPhase={selectedPhase}
-                />
-              </ScrollReveal>
+              {/* 3. Mental Health Check (Replaced Emotional Baseline) */}
+              <MentalHealthCheckCard theme={theme} />
             </motion.div>
           )}
 
@@ -305,13 +260,17 @@ export default function InsightsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="flex flex-col items-center justify-center p-12 text-center space-y-4"
+              className="space-y-6"
             >
-              <div className={cn("p-4 rounded-full bg-white/60 backdrop-blur-sm shadow-sm mb-2 border border-white/40", theme.color)}>
-                <Activity className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-heading text-rove-charcoal">Symptom Patterns</h3>
-              <p className="text-rove-stone max-w-sm">Keep logging daily to unlock detailed symptom correlation analysis.</p>
+              {/* 1. Symptoms Analysis (Interactive Phase Doughnut) */}
+              <AiAnalysisCard
+                phaseCounts={stats?.phaseCounts}
+                symptomsByPhase={stats?.symptomsByPhase}
+                tipsByPhase={stats?.tipsByPhase}
+                selectedPhase={selectedPhase}
+                onPhaseSelect={setSelectedPhase}
+                theme={theme}
+              />
             </motion.div>
           )}
 

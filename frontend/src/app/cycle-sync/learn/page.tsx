@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { cn, getStorageUrl } from "@/lib/utils";
-import { fetchLearnArticles, type LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
+import type { LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
@@ -70,7 +70,8 @@ export default function LearnPage() {
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const data = await fetchLearnArticles();
+            const res = await fetch('/api/learn')
+            const data = await res.json().catch(() => [])
             setArticles(data || []);
             setLoading(false);
         }
