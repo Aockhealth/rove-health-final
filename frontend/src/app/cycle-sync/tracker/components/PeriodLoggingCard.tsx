@@ -3,9 +3,120 @@
 import { useMemo, useTransition, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Shield, HelpCircle, X, Calendar, Edit3, Activity, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { calculatePhase, daysBetween, getRelevantPeriodStart, isInFertileWindow, parseLocalDate, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+
+// ─── Category color definitions ───────────────────────────────────────────────
+export const CATEGORY_COLORS: Record<string, string> = {
+    discharge: "#7CB9E8", // Soft Blue
+    bodySignals: "#E07B7B", // Warm Red
+    innerWeather: "#B07FC0", // Soft Purple
+    exerciseLog: "#E07B7B", // Warm Red (same as body signals – exercise)
+    hydration: "#4DB6AC", // Teal
+    sleepLog: "#7986CB", // Indigo
+    disruptors: "#D4A82A", // Warm Amber/Yellow
+    sexualWellness: "#E8924E", // Warm Orange
+};
+
+const CATEGORY_LEGEND = [
+    { key: "discharge", label: "Discharge", color: CATEGORY_COLORS.discharge },
+    { key: "bodySignals", label: "Body Signals", color: CATEGORY_COLORS.bodySignals },
+    { key: "innerWeather", label: "Inner Weather", color: CATEGORY_COLORS.innerWeather },
+    { key: "exerciseLog", label: "Exercise", color: CATEGORY_COLORS.exerciseLog },
+    { key: "hydration", label: "Hydration", color: CATEGORY_COLORS.hydration },
+    { key: "sleepLog", label: "Sleep", color: CATEGORY_COLORS.sleepLog },
+    { key: "disruptors", label: "Disruptors", color: CATEGORY_COLORS.disruptors },
+    { key: "sexualWellness", label: "Sexual Wellness", color: CATEGORY_COLORS.sexualWellness },
+];
+
+// Derive which categories are logged for a given day's log entry
+function getLoggedCategories(log: any): { key: string; label: string; color: string }[] {
+    if (!log) return [];
+    const categories: { key: string; label: string; color: string }[] = [];
+
+    if (log.cervical_discharge) {
+        categories.push({ key: "discharge", label: "Discharge", color: CATEGORY_COLORS.discharge });
+    }
+    if (Array.isArray(log.symptoms) && log.symptoms.length > 0) {
+        categories.push({ key: "bodySignals", label: "Body Signals", color: CATEGORY_COLORS.bodySignals });
+    }
+    if (Array.isArray(log.moods) && log.moods.length > 0) {
+        categories.push({ key: "innerWeather", label: "Inner Weather", color: CATEGORY_COLORS.innerWeather });
+    }
+    if ((Array.isArray(log.exercise_types) && log.exercise_types.length > 0) || log.exercise_minutes) {
+        categories.push({ key: "exerciseLog", label: "Exercise", color: CATEGORY_COLORS.exerciseLog });
+    }
+    if (log.water_intake && log.water_intake > 0) {
+        categories.push({ key: "hydration", label: "Hydration", color: CATEGORY_COLORS.hydration });
+    }
+    if ((Array.isArray(log.sleep_quality) && log.sleep_quality.length > 0) || log.sleep_minutes) {
+        categories.push({ key: "sleepLog", label: "Sleep", color: CATEGORY_COLORS.sleepLog });
+    }
+    if (Array.isArray(log.disruptors) && log.disruptors.length > 0) {
+        categories.push({ key: "disruptors", label: "Disruptors", color: CATEGORY_COLORS.disruptors });
+    }
+    if ((Array.isArray(log.sex_activity) && log.sex_activity.length > 0) || (Array.isArray(log.contraception) && log.contraception.length > 0)) {
+        categories.push({ key: "sexualWellness", label: "Sexual Wellness", color: CATEGORY_COLORS.sexualWellness });
+    }
+
+    return categories;
+}
+
+// ─── Tooltip component ────────────────────────────────────────────────────────
+function DayTooltip({ categories, children }: { categories: { label: string; color: string }[]; children: React.ReactNode }) {
+    const [visible, setVisible] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const show = () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        setVisible(true);
+    };
+    const hide = () => {
+        timerRef.current = setTimeout(() => setVisible(false), 80);
+    };
+
+    useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+    if (categories.length === 0) return <>{children}</>;
+
+    return (
+        <div
+            className="relative"
+            onMouseEnter={show}
+            onMouseLeave={hide}
+            onTouchStart={show}
+            onTouchEnd={hide}
+        >
+            {children}
+            <AnimatePresence>
+                {visible && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[200] pointer-events-none"
+                        style={{ minWidth: "9rem" }}
+                    >
+                        <div className="bg-gray-900/95 backdrop-blur-md text-white rounded-xl px-2.5 py-2 shadow-2xl">
+                            <div className="flex flex-col gap-1">
+                                {categories.map(c => (
+                                    <div key={c.label} className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                                        <span className="text-[10px] font-medium whitespace-nowrap">{c.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Arrow */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900/95" />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
 
 type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
 
@@ -167,7 +278,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
 
     return (
         <div className={cn(
-            "bg-white/60 backdrop-blur-xl rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-6 md:p-8 border shadow-xl transition-all duration-500 mb-4 sm:mb-6",
+            "bg-white/60 backdrop-blur-xl rounded-[2rem] sm:rounded-[2.53rem] p-4 sm:p-6 md:p-8 border shadow-xl transition-all duration-500 mb-4 sm:mb-6",
             // Phase-colored border (matching other tracker cards)
             currentPhase === "Menstrual" && "border-phase-menstrual/30 shadow-[0_20px_40px_rgba(175,107,107,0.1)]",
             currentPhase === "Follicular" && "border-phase-follicular/30 shadow-[0_20px_40px_rgba(141,170,157,0.1)]",
@@ -304,68 +415,107 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             // And "Solid Blocks" replaced by Vertical Bars for period
 
                             const isPhaseIndicated = !loggedPeriod && phase && !isPeriodLoggingMode;
+                            const logEntry = monthLogs[dateStr];
+                            const loggedCategories = !isPeriodLoggingMode && !disabled ? getLoggedCategories(logEntry) : [];
 
                             return (
-                                <button
-                                    key={i}
-                                    onClick={() => handleDayClick(date, dateStr, disabled)}
-                                    disabled={disabled}
-                                    className="relative aspect-square min-h-[2.15rem] sm:min-h-[2.75rem] flex flex-col items-center justify-center p-0.5 group"
-                                >
-                                    <motion.div
-                                        className={cn(
-                                            "w-full h-full rounded-xl sm:rounded-2xl flex flex-col items-center justify-center relative transition-all duration-300",
-                                            selected ? "shadow-lg scale-100" : "scale-[0.95]"
-                                        )}
-                                        style={{
-                                            // Make selected day stand out with a dark background instead of white
-                                            background: selected
-                                                ? colors.today
-                                                : isPhaseIndicated
-                                                    ? `${phaseColor}30` // Increased from 15 to 30 (18% opacity) for better contrast
-                                                    : "transparent",
-                                            boxShadow: selected
-                                                ? "0 4px 12px rgba(0,0,0,0.15)"
-                                                : isPhaseIndicated
-                                                    ? `inset 0 2px 6px ${phaseColor}20`
-                                                    : "none",
-                                            border: today && !selected ? `2px solid ${colors.today}` : "1px solid transparent"
-                                        }}
+                                <DayTooltip key={i} categories={loggedCategories}>
+                                    <button
+                                        onClick={() => handleDayClick(date, dateStr, disabled)}
+                                        disabled={disabled}
+                                        className="relative aspect-square min-h-[2.15rem] sm:min-h-[2.75rem] flex flex-col items-center justify-center p-0.5 group w-full"
                                     >
-
-                                        {/* Number */}
-                                        <span
+                                        <motion.div
                                             className={cn(
-                                                "text-xs sm:text-sm font-semibold relative z-10",
-                                                loggedPeriod && !selected ? "font-bold" : ""
+                                                "w-full h-full rounded-xl sm:rounded-2xl flex flex-col items-center justify-center relative transition-all duration-300",
+                                                selected ? "shadow-lg scale-100" : "scale-[0.95]"
                                             )}
-                                            style={{ color: selected ? "#FFFFFF" : loggedPeriod ? colors.menstrual : textColor }}
+                                            style={{
+                                                // Make selected day stand out with a dark background instead of white
+                                                background: selected
+                                                    ? colors.today
+                                                    : isPhaseIndicated
+                                                        ? `${phaseColor}30`
+                                                        : "transparent",
+                                                boxShadow: selected
+                                                    ? "0 4px 12px rgba(0,0,0,0.15)"
+                                                    : isPhaseIndicated
+                                                        ? `inset 0 2px 6px ${phaseColor}20`
+                                                        : "none",
+                                                border: today && !selected ? `2px solid ${colors.today}` : "1px solid transparent"
+                                            }}
                                         >
-                                            {date.getDate()}
-                                        </span>
 
-                                        {/* Bleed Day: Vertical Bar */}
-                                        {loggedPeriod && (
-                                            <div
-                                                className="absolute z-0 w-1 h-5 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20"
-                                                style={{ backgroundColor: colors.menstrual }}
-                                            />
-                                        )}
-                                        {loggedPeriod && (
-                                            <div className="absolute -bottom-1 w-1 h-3 rounded-full bg-phase-menstrual" />
-                                        )}
+                                            {/* Number */}
+                                            <span
+                                                className={cn(
+                                                    "text-xs sm:text-sm font-semibold relative z-10",
+                                                    loggedPeriod && !selected ? "font-bold" : ""
+                                                )}
+                                                style={{ color: selected ? "#FFFFFF" : loggedPeriod ? colors.menstrual : textColor }}
+                                            >
+                                                {date.getDate()}
+                                            </span>
 
-                                        {/* Fertile Dot (if not period) */}
-                                        {fertile && !loggedPeriod && phase !== "Menstrual" && (
-                                            <div
-                                                className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full"
-                                                style={{ backgroundColor: colors.ovulatory }}
-                                            />
-                                        )}
+                                            {/* Bleed Day: Vertical Bar */}
+                                            {loggedPeriod && (
+                                                <div
+                                                    className="absolute z-0 w-1 h-5 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20"
+                                                    style={{ backgroundColor: colors.menstrual }}
+                                                />
+                                            )}
+                                            {loggedPeriod && (
+                                                <div className="absolute -bottom-1 w-1 h-3 rounded-full bg-phase-menstrual" />
+                                            )}
 
-                                        {/* Selected State Overlay/Ring handled by parent div styles */}
-                                    </motion.div>
-                                </button>
+                                            {/* Fertile Dot (if not period) */}
+                                            {fertile && !loggedPeriod && phase !== "Menstrual" && (
+                                                <div
+                                                    className="absolute top-1.5 right-1.5 w-1 h-1 rounded-full"
+                                                    style={{ backgroundColor: colors.ovulatory }}
+                                                />
+                                            )}
+
+                                            {/* ─── Activity Bars ───────────────────────────────
+                                                Vertical bars anchored to top-left, like a tiny
+                                                bar chart. Each bar = one logged category color.
+                                                Max 5 bars shown; extras collapsed into one gray.
+                                            */}
+                                            {loggedCategories.length > 0 && (
+                                                <div
+                                                    className="absolute top-[3px] left-[3px] flex flex-row items-flex-start gap-[1.5px] z-20"
+                                                    style={{ pointerEvents: "none" }}
+                                                >
+                                                    {loggedCategories.slice(0, 5).map((cat) => (
+                                                        <div
+                                                            key={cat.key}
+                                                            className="rounded-full"
+                                                            style={{
+                                                                width: "4px",
+                                                                height: "10px",
+                                                                backgroundColor: selected ? "rgba(255,255,255,0.75)" : cat.color,
+                                                                opacity: selected ? 0.85 : 0.8,
+                                                            }}
+                                                        />
+                                                    ))}
+                                                    {loggedCategories.length > 5 && (
+                                                        <div
+                                                            className="rounded-full"
+                                                            style={{
+                                                                width: "2px",
+                                                                height: "10px",
+                                                                backgroundColor: selected ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                                                                opacity: 0.5,
+                                                            }}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Selected State Overlay/Ring handled by parent div styles */}
+                                        </motion.div>
+                                    </button>
+                                </DayTooltip>
                             );
                         })}
                     </div>
@@ -373,7 +523,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
             </AnimatePresence>
 
             {/* Phase Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3 mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-100">
                 {[
                     { label: "Menstrual", color: colors.menstrual },
                     { label: "Follicular", color: colors.follicular },
@@ -385,7 +535,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             className="w-2 h-2 rounded-full shadow-sm"
                             style={{ backgroundColor: phase.color }}
                         />
-                        <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                        <span className="text-[6px] sm:text-[6px] font-bold text-gray-400 uppercase tracking-widest">
                             {phase.label}
                         </span>
                     </div>
@@ -393,12 +543,32 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
 
                 <div className="flex items-center gap-3 sm:border-l border-gray-100 sm:pl-6 sm:ml-2">
                     <div className="flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-gray-400 font-bold mb-0.5">14</span>
+                        {/*  <span className="text-[6px] text-gray-400 font-bold mb-0.5">14</span> */}
                         <div className="w-1 h-1 rounded-full bg-[#fbbf24]" />
                     </div>
-                    <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                    <span className="text-[6px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                         Fertile Window
                     </span>
+                </div>
+            </div>
+
+            {/* ─── Data Category Legend ─────────────────────────────────────────
+                Maps the colored lines inside date cells to their categories.
+            */}
+            <div className="mt-4 pt-3 border-t border-gray-100/70">
+                <p className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest text-center mb-2.5">Logged data indicators</p>
+                <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-2">
+                    {CATEGORY_LEGEND.map((cat) => (
+                        <div key={cat.key} className="flex items-center gap-1.5">
+                            <div
+                                className="rounded-full"
+                                style={{ width: "2.5px", height: "12px", backgroundColor: cat.color, opacity: 0.85 }}
+                            />
+                            <span className="text-[8px] sm:text-[9px] font-medium text-gray-400 whitespace-nowrap">
+                                {cat.label}
+                            </span>
+                        </div>
+                    ))}
                 </div>
             </div>
 

@@ -34,53 +34,17 @@ export default function SexualWellnessCard({
         }
     };
 
-    // Organic Chromatics Styling
-    const phase = currentPhase || "Menstrual";
-
-    const themes: Record<string, any> = {
-        "Menstrual": {
-            border: "border-phase-menstrual/30",
-            shadow: "shadow-phase-menstrual/5",
-            iconBg: "bg-phase-menstrual/10",
-            iconColor: "text-phase-menstrual",
-            active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
-            inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5",
-            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
-            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
-        },
-        "Follicular": {
-            border: "border-phase-follicular/30",
-            shadow: "shadow-phase-follicular/5",
-            iconBg: "bg-phase-follicular/10",
-            iconColor: "text-phase-follicular",
-            active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
-            inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5",
-            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
-            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
-        },
-        "Ovulatory": {
-            border: "border-phase-ovulatory/30",
-            shadow: "shadow-phase-ovulatory/5",
-            iconBg: "bg-phase-ovulatory/10",
-            iconColor: "text-phase-ovulatory",
-            active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
-            inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5",
-            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
-            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
-        },
-        "Luteal": {
-            border: "border-phase-luteal/30",
-            shadow: "shadow-phase-luteal/5",
-            iconBg: "bg-phase-luteal/10",
-            iconColor: "text-phase-luteal",
-            active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
-            inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5",
-            activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
-            activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
-        }
+    // Category color: Sexual Wellness → Warm Orange
+    const theme = {
+        border: "border-[#E8924E]/30",
+        shadow: "shadow-[#E8924E]/5",
+        iconBg: "bg-[#E8924E]/10",
+        iconColor: "text-[#E8924E]",
+        active: "bg-[#E8924E] text-white border-[#E8924E] shadow-md",
+        inactive: "bg-white text-gray-600 border-[#E8924E]/20 hover:bg-[#E8924E]/5",
+        activeNegative: "bg-red-100 text-red-800 border-red-300 shadow-sm",
+        activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
     };
-
-    const theme = themes[phase] || themes["Menstrual"];
 
     return (
         <div className={cn(

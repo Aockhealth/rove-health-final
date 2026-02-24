@@ -32,49 +32,16 @@ export default function WaterIntakeCard({
     }
   }, [waterIntake]);
 
-  // Organic Chromatics Styling
-  const phase = currentPhase || "Menstrual";
-
-  const themes: Record<string, any> = {
-    "Menstrual": {
-      border: "border-phase-menstrual/30",
-      shadow: "shadow-phase-menstrual/5",
-      iconBg: "bg-phase-menstrual/10",
-      iconColor: "text-phase-menstrual",
-      btnPlus: "bg-phase-menstrual shadow-phase-menstrual/30 hover:bg-phase-menstrual/90",
-      btnMinus: "border-phase-menstrual/20 text-gray-400 hover:bg-phase-menstrual/5",
-      glassBorder: "border-phase-menstrual/30"
-    },
-    "Follicular": {
-      border: "border-phase-follicular/30",
-      shadow: "shadow-phase-follicular/5",
-      iconBg: "bg-phase-follicular/10",
-      iconColor: "text-phase-follicular",
-      btnPlus: "bg-phase-follicular shadow-phase-follicular/30 hover:bg-phase-follicular/90",
-      btnMinus: "border-phase-follicular/20 text-gray-400 hover:bg-phase-follicular/5",
-      glassBorder: "border-phase-follicular/30"
-    },
-    "Ovulatory": {
-      border: "border-phase-ovulatory/30",
-      shadow: "shadow-phase-ovulatory/5",
-      iconBg: "bg-phase-ovulatory/10",
-      iconColor: "text-phase-ovulatory",
-      btnPlus: "bg-phase-ovulatory shadow-phase-ovulatory/30 hover:bg-phase-ovulatory/90",
-      btnMinus: "border-phase-ovulatory/20 text-gray-400 hover:bg-phase-ovulatory/5",
-      glassBorder: "border-phase-ovulatory/30"
-    },
-    "Luteal": {
-      border: "border-phase-luteal/30",
-      shadow: "shadow-phase-luteal/5",
-      iconBg: "bg-phase-luteal/10",
-      iconColor: "text-phase-luteal",
-      btnPlus: "bg-phase-luteal shadow-phase-luteal/30 hover:bg-phase-luteal/90",
-      btnMinus: "border-phase-luteal/20 text-gray-400 hover:bg-phase-luteal/5",
-      glassBorder: "border-phase-luteal/30"
-    }
+  // Category color: Hydration → Teal
+  const theme = {
+    border: "border-[#4DB6AC]/30",
+    shadow: "shadow-[#4DB6AC]/5",
+    iconBg: "bg-[#4DB6AC]/10",
+    iconColor: "text-[#4DB6AC]",
+    btnPlus: "bg-[#4DB6AC] shadow-[#4DB6AC]/30 hover:bg-[#4DB6AC]/90",
+    btnMinus: "border-[#4DB6AC]/20 text-gray-400 hover:bg-[#4DB6AC]/5",
+    glassBorder: "border-[#4DB6AC]/30"
   };
-
-  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
@@ -185,28 +152,29 @@ export default function WaterIntakeCard({
         <div className="flex flex-col items-center gap-3">
           <div className="text-center h-16 flex flex-col justify-center">
             <AnimatePresence mode="wait">
-              {waterIntake >= 8 ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="w-40"
-                >
-                  <p className="text-[10px] uppercase tracking-wide text-green-500 font-bold mb-0.5">Woohoo!</p>
-                  <p className="text-xs text-green-600 font-medium leading-tight">You're taking care of yourself 💧</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="count"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                >
-                  <p className="text-3xl font-bold text-gray-900">{waterIntake * 250}<span className="text-sm font-medium text-gray-400 ml-1">ml</span></p>
-                  <p className="text-xs text-gray-500">{waterIntake} / 8 glasses</p>
-                </motion.div>
-              )}
+              <motion.div
+                key={waterIntake}
+                initial={{ opacity: 0, scale: 0.8, y: 5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: -5 }}
+                className="w-40"
+              >
+                {waterIntake >= 8 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-[10px] uppercase tracking-wide text-[#4DB6AC] font-bold mb-0.5"
+                  >
+                    Goal Reached! 💧
+                  </motion.p>
+                )}
+                <p className="text-3xl font-bold text-gray-900 leading-none">
+                  {waterIntake * 250}<span className="text-sm font-medium text-gray-400 ml-1">ml</span>
+                </p>
+                <p className="text-[10px] text-gray-500 mt-1.5 font-medium">
+                  {waterIntake} {waterIntake === 1 ? 'glass' : 'glasses'} {waterIntake >= 8 ? 'logged' : '/ 8 glasses'}
+                </p>
+              </motion.div>
             </AnimatePresence>
           </div>
 

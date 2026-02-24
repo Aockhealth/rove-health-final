@@ -32,57 +32,18 @@ export default function SleepCard({
     }
   };
 
-  // Organic Chromatics Styling
-  const phase = currentPhase || "Menstrual";
-
-  const themes: Record<string, any> = {
-    "Menstrual": {
-      border: "border-phase-menstrual/30",
-      shadow: "shadow-phase-menstrual/5",
-      iconBg: "bg-phase-menstrual/10",
-      iconColor: "text-phase-menstrual",
-      active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
-      inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5",
-      inputBorder: "border-phase-menstrual/30",
-      pillText: "text-phase-menstrual",
-      pillBorder: "border-phase-menstrual/20"
-    },
-    "Follicular": {
-      border: "border-phase-follicular/30",
-      shadow: "shadow-phase-follicular/5",
-      iconBg: "bg-phase-follicular/10",
-      iconColor: "text-phase-follicular",
-      active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
-      inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5",
-      inputBorder: "border-phase-follicular/30",
-      pillText: "text-phase-follicular",
-      pillBorder: "border-phase-follicular/20"
-    },
-    "Ovulatory": {
-      border: "border-phase-ovulatory/30",
-      shadow: "shadow-phase-ovulatory/5",
-      iconBg: "bg-phase-ovulatory/10",
-      iconColor: "text-phase-ovulatory",
-      active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
-      inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5",
-      inputBorder: "border-phase-ovulatory/30",
-      pillText: "text-phase-ovulatory",
-      pillBorder: "border-phase-ovulatory/20"
-    },
-    "Luteal": {
-      border: "border-phase-luteal/30",
-      shadow: "shadow-phase-luteal/5",
-      iconBg: "bg-phase-luteal/10",
-      iconColor: "text-phase-luteal",
-      active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
-      inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5",
-      inputBorder: "border-phase-luteal/30",
-      pillText: "text-phase-luteal",
-      pillBorder: "border-phase-luteal/20"
-    }
+  // Category color: Sleep Log → Soft Indigo
+  const theme = {
+    border: "border-[#7986CB]/30",
+    shadow: "shadow-[#7986CB]/5",
+    iconBg: "bg-[#7986CB]/10",
+    iconColor: "text-[#7986CB]",
+    active: "bg-[#7986CB] text-white border-[#7986CB] shadow-md",
+    inactive: "bg-white text-gray-600 border-[#7986CB]/20 hover:bg-[#7986CB]/5",
+    inputBorder: "border-[#7986CB]/30",
+    pillText: "text-[#7986CB]",
+    pillBorder: "border-[#7986CB]/20"
   };
-
-  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(

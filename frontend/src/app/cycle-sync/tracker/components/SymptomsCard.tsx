@@ -23,45 +23,16 @@ export default function SymptomsCard({
     }
   };
 
-  // Organic Chromatics Styling
-  const phase = currentPhase || "Menstrual";
-
-  const themes: Record<string, any> = {
-    "Menstrual": {
-      border: "border-phase-menstrual/30",
-      shadow: "shadow-phase-menstrual/5",
-      iconBg: "bg-phase-menstrual/10",
-      iconColor: "text-phase-menstrual",
-      active: "bg-phase-menstrual text-white border-phase-menstrual shadow-md shadow-phase-menstrual/20",
-      inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5"
-    },
-    "Follicular": {
-      border: "border-phase-follicular/30",
-      shadow: "shadow-phase-follicular/5",
-      iconBg: "bg-phase-follicular/10",
-      iconColor: "text-phase-follicular",
-      active: "bg-phase-follicular text-white border-phase-follicular shadow-md shadow-phase-follicular/20",
-      inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5"
-    },
-    "Ovulatory": {
-      border: "border-phase-ovulatory/30",
-      shadow: "shadow-phase-ovulatory/5",
-      iconBg: "bg-phase-ovulatory/10",
-      iconColor: "text-phase-ovulatory",
-      active: "bg-phase-ovulatory text-white border-phase-ovulatory shadow-md shadow-phase-ovulatory/20",
-      inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5"
-    },
-    "Luteal": {
-      border: "border-phase-luteal/30",
-      shadow: "shadow-phase-luteal/5",
-      iconBg: "bg-phase-luteal/10",
-      iconColor: "text-phase-luteal",
-      active: "bg-phase-luteal text-white border-phase-luteal shadow-md shadow-phase-luteal/20",
-      inactive: "bg-white text-gray-600 border-phase-luteal/20 hover:bg-phase-luteal/5"
-    }
+  // Category color: Body Signals → Warm Red
+  const CAT_COLOR = "#E07B7B";
+  const theme = {
+    border: "border-[#E07B7B]/30",
+    shadow: "shadow-[#E07B7B]/5",
+    iconBg: "bg-[#E07B7B]/10",
+    iconColor: "text-[#E07B7B]",
+    active: "bg-[#E07B7B] text-white border-[#E07B7B] shadow-md",
+    inactive: "bg-white text-gray-600 border-[#E07B7B]/20 hover:bg-[#E07B7B]/5"
   };
-
-  const theme = themes[phase] || themes["Menstrual"];
 
   return (
     <div className={cn(
