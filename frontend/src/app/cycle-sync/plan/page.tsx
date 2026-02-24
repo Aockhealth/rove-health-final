@@ -1367,7 +1367,7 @@ export default function DetailedPlanPage() {
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={cn(
                                         "relative z-10 flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs font-bold transition-all duration-300",
-                                        isActive ? cn(theme.bannerTextColor, theme.textShadow) : "text-rove-charcoal/50 hover:text-rove-charcoal/80"
+                                        isActive ? cn(theme.bannerTextColor, theme.textShadow) : "text-rove-charcoal/65 hover:text-rove-charcoal/80"
                                     )}
                                 >
                                     <tab.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isActive && theme.textShadow)} />
@@ -1705,7 +1705,7 @@ export default function DetailedPlanPage() {
                                     {(() => {
                                         // 1. Determine User Preference (Real Data)
                                         // Hierarchy: non_veg > vegetarian > vegan > jain
-                                        const rawDiet = (data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "").toLowerCase();
+                                        const rawDiet = (data?.lifestyle?.diet_preference || "").toLowerCase();
                                         let userDietPref: DietType = 'non_veg'; // Default
 
                                         if (rawDiet.includes("veg") && !rawDiet.includes("non")) userDietPref = 'vegetarian';
@@ -1739,9 +1739,8 @@ export default function DetailedPlanPage() {
                                             return true;
                                         });
 
-                                        // 4. Split for River Flow
-                                        const isLarge = uniqueItems.length > 6;
-                                        const chunk = Math.ceil(uniqueItems.length / 3);
+                                        // 4. Split for River Flow (2 rows)
+                                        const half = Math.ceil(uniqueItems.length / 2);
 
                                         const styledItems = uniqueItems.map(item => ({
                                             ...item,
@@ -1749,15 +1748,13 @@ export default function DetailedPlanPage() {
                                             color: "" // text color is included in bg (iconContainer)
                                         }));
 
-                                        const row1 = styledItems.slice(0, chunk);
-                                        const row2 = styledItems.slice(chunk, chunk * 2);
-                                        const row3 = styledItems.slice(chunk * 2);
+                                        const row1 = styledItems.slice(0, half);
+                                        const row2 = styledItems.slice(half);
 
                                         return (
                                             <>
-                                                <RiverTrack label="Core Nutrients" items={row1} speed={180} cardClass={cn(theme.cardBg, theme.border)} />
-                                                <RiverTrack label="Phase Superfoods" items={row2} direction="right" speed={210} cardClass={cn(theme.cardBg, theme.border)} />
-                                                <RiverTrack label="Replenishing" items={row3} speed={200} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Eat More" items={row1} speed={409} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Power Foods" items={row2} direction="right" speed={409} cardClass={cn(theme.cardBg, theme.border)} />
                                             </>
                                         )
                                     })()}
@@ -1779,7 +1776,7 @@ export default function DetailedPlanPage() {
                                 <RoveChef
                                     phase={phaseName}
                                     theme={theme}
-                                    diet={data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "Veg"}
+                                    diet={data?.lifestyle?.diet_preference || "Veg"}
                                 />
                             </div>
                         </motion.div>
@@ -1823,46 +1820,41 @@ export default function DetailedPlanPage() {
                                             };
 
                                             return (
-                                                <div
+                                                <button
                                                     key={i}
+                                                    onClick={() => {
+                                                        const el = document.getElementById('ai-exercise-builder');
+                                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }}
                                                     className={cn(
-                                                        "group relative p-4 rounded-2xl bg-gradient-to-br from-white via-white border border-white/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden",
+                                                        "relative overflow-hidden rounded-[1.5rem] backdrop-blur-md border border-white/40 shadow-sm hover:shadow-lg transition-all aspect-square group cursor-pointer text-left active:scale-[0.97]",
                                                         theme.softBg
                                                     )}
                                                 >
-                                                    {/* Background Number */}
-                                                    <div className={cn(
-                                                        "absolute -right-2 -top-2 text-7xl font-heading select-none opacity-10",
-                                                        theme.color
-                                                    )}>
-                                                        {i + 1}
+                                                    {/* Category Label - Top Left */}
+                                                    <div className="absolute top-4 left-4 z-20">
+                                                        <span className={cn("text-[10px] font-extrabold uppercase tracking-[0.2em]", theme.color)}>Exercise</span>
                                                     </div>
 
-                                                    {/* Content */}
-                                                    <div className="relative z-10">
-                                                        {/* Icon */}
-                                                        <div className="text-2xl mb-2">{getIcon(ex.title)}</div>
+                                                    {/* Emoji - Top Right */}
+                                                    <div className="absolute top-3 right-4 text-3xl opacity-70 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                        {getIcon(ex.title)}
+                                                    </div>
 
-                                                        {/* Title */}
-                                                        <h4 className={cn(
-                                                            "font-bold text-sm text-rove-charcoal mb-1 transition-colors",
-                                                            `group-hover:text-phase-${phaseName.toLowerCase()}`
-                                                        )}>
+                                                    {/* Title & Description - Bottom Left */}
+                                                    <div className="absolute bottom-4 left-4 right-4 z-10">
+                                                        <h4 className="text-base sm:text-lg font-heading font-bold text-rove-charcoal leading-tight mb-0.5">
                                                             {ex.title}
                                                         </h4>
-
-                                                        {/* Description */}
-                                                        <p className="text-[11px] text-rove-stone/80 leading-snug mb-3 line-clamp-2">
+                                                        <p className="text-[10px] sm:text-xs text-rove-stone font-medium leading-relaxed">
                                                             {ex.desc}
                                                         </p>
-
-                                                        {/* Time Badge */}
-                                                        <div className="flex items-center gap-1.5">
+                                                        <div className="flex items-center gap-1.5 mt-1.5">
                                                             <div className={cn("w-1.5 h-1.5 rounded-full", `bg-phase-${phaseName.toLowerCase()}`)}></div>
                                                             <span className={cn("text-[10px] font-semibold", `text-phase-${phaseName.toLowerCase()}`)}>{ex.time}</span>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </button>
                                             );
                                         })}
                                     </div>

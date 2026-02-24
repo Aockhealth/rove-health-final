@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { AIService } from "../../../../frontend/src/lib/ai/service";
 
 // ============================================
 // TYPES & INTERFACES
@@ -298,50 +299,21 @@ export async function generatePhaseReliefTips(
   }
 
   // 2️⃣ AI Generation
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return null;
-
   try {
-    const prompt = `
-User is currently in the ${phase} phase.
-This month they reported symptoms: ${symptoms.join(", ")}.
-
-Give 3 gentle, phase-appropriate suggestions that may help them feel better.
-Tips should be:
-- supportive (not medical)
-- short (max 12 words)
-- holistic (energy, food, rest, movement)
-`;
-
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          temperature: 0.35,
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              content: `You are a compassionate women's health guide.
-Return JSON ONLY:
-{ "tips": ["Tip 1", "Tip 2", "Tip 3"] }`
-            },
-            { role: "user", content: prompt }
-          ]
-        }),
+    const response = await AIService.generate<PhaseReliefTips>({
+      feature: "phase_relief_tips",
+      variables: {
+        phase,
+        symptoms: symptoms.join(", ")
       }
-    );
+    });
 
-    if (!response.ok) return null;
+    if (response.error || !response.data) {
+      console.error("[generatePhaseReliefTips] AIService Error:", response.error);
+      return null;
+    }
 
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    const result = response.data;
 
     // 3️⃣ Save to cache (expires next month)
     await supabase.from("ai_cache_keys").insert({

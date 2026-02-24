@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { IntroSequence } from "@/components/home/IntroSequence";
-import Header from "@/components/layout/Header";
 
 export default async function Home() {
   const supabase = await createClient();

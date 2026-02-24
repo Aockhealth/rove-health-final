@@ -35,9 +35,9 @@ export default function Header({ user }: { user: any }) {
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-rove-stone/10">
             <div className="container mx-auto px-6 h-16 flex items-center justify-between">
                 <Link href="/" className="font-heading text-lg font-bold text-rove-charcoal tracking-tight flex items-center gap-2">
-                    <div className="relative w-10 h-10 mix-blend-multiply">
+                    <div className="relative w-8 h-8">
                         <Image
-                            src="/images/rove_logo_updated.png"
+                            src="/images/rove_icon_transparent.png"
                             alt="Rove Health Logo"
                             fill
                             className="object-contain"

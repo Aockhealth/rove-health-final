@@ -33,7 +33,7 @@ export default function ExerciseCard({
 
   const themes: Record<string, any> = {
     "Menstrual": {
-      border: "border-phase-menstrual/20",
+      border: "border-phase-menstrual/30",
       shadow: "shadow-phase-menstrual/5",
       iconBg: "bg-phase-menstrual/10",
       iconColor: "text-phase-menstrual",
@@ -42,7 +42,7 @@ export default function ExerciseCard({
       inputBorder: "border-phase-menstrual/50"
     },
     "Follicular": {
-      border: "border-phase-follicular/20",
+      border: "border-phase-follicular/30",
       shadow: "shadow-phase-follicular/5",
       iconBg: "bg-phase-follicular/10",
       iconColor: "text-phase-follicular",
@@ -51,7 +51,7 @@ export default function ExerciseCard({
       inputBorder: "border-phase-follicular/50"
     },
     "Ovulatory": {
-      border: "border-phase-ovulatory/20",
+      border: "border-phase-ovulatory/30",
       shadow: "shadow-phase-ovulatory/5",
       iconBg: "bg-phase-ovulatory/10",
       iconColor: "text-phase-ovulatory",
@@ -60,7 +60,7 @@ export default function ExerciseCard({
       inputBorder: "border-phase-ovulatory/50"
     },
     "Luteal": {
-      border: "border-phase-luteal/20",
+      border: "border-phase-luteal/30",
       shadow: "shadow-phase-luteal/5",
       iconBg: "bg-phase-luteal/10",
       iconColor: "text-phase-luteal",
@@ -74,12 +74,12 @@ export default function ExerciseCard({
 
   return (
     <div className={cn(
-      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all",
       theme.border,
       theme.shadow
     )}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
           <motion.div
             animate={{
               rotate: [0, 45, 0],
@@ -92,7 +92,7 @@ export default function ExerciseCard({
           >
             <Dumbbell className={cn("w-4 h-4", theme.iconColor)} />
           </motion.div>
-          <div className="flex items-center gap-2 relative">
+          <div className="flex items-center gap-2 relative min-w-0">
             <h3 className="text-base font-heading font-semibold text-gray-900">Exercise Log</h3>
             <div
               className="relative"
@@ -113,7 +113,7 @@ export default function ExerciseCard({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-56 p-3 bg-gray-900 text-white text-[11px] rounded-xl z-[100] text-center shadow-2xl font-sans normal-case tracking-normal leading-relaxed"
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-56 max-w-[calc(100vw-2rem)] p-3 bg-gray-900 text-white text-[11px] rounded-xl z-[100] text-center shadow-2xl font-sans normal-case tracking-normal leading-relaxed"
                   >
                     Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health.
                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900" />
@@ -128,7 +128,7 @@ export default function ExerciseCard({
             setSelectedExercise([]);
             setExerciseMinutes("");
           }}
-          className="text-[10px] font-medium text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full bg-white border border-gray-100 hover:border-red-100"
+          className="w-full sm:w-auto text-[10px] font-medium text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full bg-white border border-gray-100 hover:border-red-100"
         >
           Didn't Exercise
         </button>

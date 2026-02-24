@@ -1,6 +1,7 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { fetchLifecycleProfile, resolveLifecycleRedirect } from '@/lib/auth/flow-guard'
 
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({
@@ -18,7 +19,7 @@ export async function updateSession(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
                     response = NextResponse.next({
                         request: {
                             headers: request.headers,
@@ -32,24 +33,31 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // ⚡ OPTIMIZATION: Only check auth on protected routes
-    // Public routes: /, /login, /signup, /auth/*, /about, /blog, etc.
-    // Protected routes: /cycle-sync, /onboarding, /api/protected
     const path = request.nextUrl.pathname;
-    const isProtectedRoute = path.startsWith('/cycle-sync') ||
-        path.startsWith('/onboarding') ||
-        path.startsWith('/api/protected');
+    const isNonProtectedApi = path.startsWith('/api') && !path.startsWith('/api/protected');
+    if (isNonProtectedApi) {
+        return response;
+    }
+    if (path.startsWith('/auth/callback')) {
+        return response;
+    }
 
-    if (isProtectedRoute) {
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-        if (!user) {
-            const url = request.nextUrl.clone()
-            url.pathname = '/login'
-            return NextResponse.redirect(url)
-        }
+    const profile = user ? await fetchLifecycleProfile(supabase, user.id) : null;
+    const redirectPath = resolveLifecycleRedirect({
+        pathname: path,
+        isAuthenticated: Boolean(user),
+        profile,
+        userId: user?.id ?? null
+    });
+
+    if (redirectPath && redirectPath !== path) {
+        const url = request.nextUrl.clone()
+        url.pathname = redirectPath
+        return NextResponse.redirect(url)
     }
 
     return response

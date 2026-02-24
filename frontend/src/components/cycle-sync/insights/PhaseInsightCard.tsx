@@ -1,15 +1,17 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Flame, Moon, Brain, Leaf, Sun } from "lucide-react";
+import { Calendar, Droplets, Sparkles, Moon, Flame, Brain, Activity } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 
 interface PhaseInsightCardProps {
-  phase: "Menstrual" | "Follicular" | "Ovulatory" | "Luteal";
-  day?: number;
-  insight?: any;
+  phase: string;
+  day: number;
+  insight: any;
   theme: any;
+  isGenerating?: boolean;
+  onGenerateInsight?: () => void;
 }
 
 function TypingText({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -52,16 +54,16 @@ function TypingText({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
-export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCardProps) {
+export function PhaseInsightCard({ phase, day, insight, theme, isGenerating, onGenerateInsight }: PhaseInsightCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Get phase icon
   const PhaseIcon = {
-    Menstrual: Moon,
-    Follicular: Leaf,
-    Ovulatory: Sun,
-    Luteal: Flame,
-  }[phase];
+    Menstrual: Droplets,
+    Follicular: Sparkles,
+    Ovulatory: Flame,
+    Luteal: Moon
+  }[phase] || Activity;
 
   return (
     <motion.div
@@ -75,7 +77,8 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
       {/* Container */}
       <motion.div
         className={cn(
-          "relative overflow-hidden rounded-[2rem] border border-stone-200 bg-white p-8 h-full flex flex-col shadow-sm transition-all duration-700",
+          "relative overflow-hidden bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-5 sm:p-8 h-full flex flex-col shadow-xl border transition-all duration-700",
+          theme.border || "border-rove-stone/10"
         )}
         whileHover={{ scale: 1.02, y: -4 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
@@ -90,14 +93,13 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
         {/* Floating particles effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {useMemo(() => [...Array(6)].map((_, i) => {
-            // These will still cause hydration warnings if x/y differ between server/client
-            // But since they are inside a motion.div that animates on mount, we can often ignore
-            // or use a mounting guard.
-            const randomX = Math.random() * 100;
-            const randomX1 = Math.random() * 100;
-            const randomX2 = Math.random() * 100;
-            const randomX3 = Math.random() * 100;
-            const duration = Math.random() * 10 + 15;
+            // Deterministic positions to avoid hydration mismatch
+            const seed = (i + 1) * 17;
+            const randomX = (seed * 13) % 100;
+            const randomX1 = (seed * 29) % 100;
+            const randomX2 = (seed * 43) % 100;
+            const randomX3 = (seed * 61) % 100;
+            const duration = 15 + (seed % 10);
 
             return (
               <motion.div
@@ -154,41 +156,65 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
               whileHover={{ rotate: 360, scale: 1.1 }}
-              className={cn("w-12 h-12 rounded-full flex items-center justify-center bg-stone-50 border border-stone-100")}
+              className={cn("w-12 h-12 rounded-full flex items-center justify-center bg-white/60 border border-white/40")}
             >
               <PhaseIcon className={cn("w-6 h-6", theme.color)} />
             </motion.div>
           </div>
 
-          {/* Insight text with TYPING animation */}
+          {/* Insight Content Area */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
             className="relative"
           >
-            <motion.div
-              className={cn(
-                "absolute -left-3 top-0 w-1 rounded-full",
-                theme.blob
-              )}
-              initial={{ height: 0 }}
-              animate={{ height: insight?.insight ? "100%" : "0%" }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            />
-            <p className="text-sm leading-relaxed max-w-[90%] text-rove-stone min-h-[3.5rem] pl-3">
+            {/* Left accent bar */}
+            {(insight?.insight || isGenerating) && (
+              <motion.div
+                className={cn(
+                  "absolute -left-3 top-0 w-1 rounded-full",
+                  theme.blob
+                )}
+                initial={{ height: 0 }}
+                animate={{ height: "100%" }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              />
+            )}
+
+            <div className="pl-3 min-h-[4rem]">
               {insight?.insight ? (
-                <TypingText text={insight.insight} delay={600} />
+                /* 1. We have an insight -> show it */
+                <p className="text-sm leading-relaxed max-w-[90%] text-rove-stone">
+                  <TypingText text={insight.insight} delay={300} />
+                </p>
+              ) : isGenerating ? (
+                /* 2. Generating Insight -> Show loading text */
+                <p className="text-sm leading-relaxed max-w-[90%] text-rove-stone">
+                  <motion.span
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="italic text-rove-stone/60"
+                  >
+                    Rove AI is analyzing your specific symptoms...
+                  </motion.span>
+                </p>
               ) : (
-                <motion.span
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="italic text-rove-stone/60"
-                >
-                  Groq AI is analyzing your specific symptoms...
-                </motion.span>
+                /* 3. Empty State -> Show Generate Button */
+                <div className="py-2">
+                  <p className="text-sm text-rove-stone/80 mb-4">
+                    Unlock a personalized breakdown of why you feel the way you do today based on your current cycle phase and logs.
+                  </p>
+                  <button
+                    onClick={onGenerateInsight}
+                    className="inline-flex flex-wrap items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-rove-charcoal text-rove-cream text-sm font-semibold hover:bg-rove-charcoal/90 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                  >
+                    <Brain className="w-4 h-4" />
+                    Generate Personalized Insight
+                  </button>
+                </div>
               )}
-            </p>
+            </div>
           </motion.div>
 
           <div className="mt-auto space-y-6">
@@ -208,7 +234,7 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
                     transition={{ delay: 0.7 + index * 0.1 }}
                     whileHover={{ scale: 1.05, y: -2 }}
                     className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold shadow-sm bg-white border border-stone-100 text-rove-charcoal"
+                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold shadow-sm bg-white/60 border border-white/40 text-rove-charcoal"
                     )}
                   >
                     <motion.span
@@ -241,7 +267,7 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.9 + index * 0.08 }}
                       whileHover={{ scale: 1.05, x: 2 }}
-                      className="px-3 py-1 rounded-full bg-stone-50 border border-stone-100 text-[11px] font-medium text-rove-charcoal"
+                      className="px-3 py-1 rounded-full bg-rove-cream/60 border border-white/40 text-[11px] font-medium text-rove-charcoal"
                     >
                       {f}
                     </motion.span>
@@ -257,7 +283,7 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 }}
-            className="pt-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-rove-stone/40 border-t border-stone-100 mt-2"
+            className="pt-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-rove-stone/60 border-t border-rove-stone/10 mt-2"
           >
             <motion.div
               animate={{ rotate: 360 }}
@@ -265,7 +291,7 @@ export function PhaseInsightCard({ phase, insight, day, theme }: PhaseInsightCar
             >
               <Brain className="w-3 h-3" />
             </motion.div>
-            <span>Powered by Llama 3.3 70B</span>
+            <span>Powered by Gemini 2.5 Flash</span>
           </motion.div>
         </div>
       </motion.div>

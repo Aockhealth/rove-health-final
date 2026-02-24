@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] px-4 py-8">
-            
+
             {/* Card */}
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
 
@@ -73,9 +73,9 @@ export default function ForgotPasswordPage() {
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-1">
                         {/* Matches Login/Signup Logo Style */}
-                        <div className="relative w-56 h-40 mix-blend-multiply">
-                            <Image 
-                                src="/assets/rove_logo.png" 
+                        <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 drop-shadow-sm">
+                            <Image
+                                src="/images/rove_icon_transparent.png"
                                 alt="Rove Logo"
                                 fill
                                 className="object-contain"
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
                 ) : (
                     /* Form */
                     <form onSubmit={onSubmit} className="space-y-5" noValidate>
-                        
+
                         {/* Email */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 block pl-1">Email</label>
@@ -124,14 +124,14 @@ export default function ForgotPasswordPage() {
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                     <Mail size={18} />
                                 </div>
-                                <input 
-                                    name="email" 
-                                    type="email" 
+                                <input
+                                    name="email"
+                                    type="email"
                                     placeholder="hello@rove.com"
                                     className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
                                         ${fieldErrors.email
-                                        ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                                        : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
+                                            ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                                            : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
                                         }`}
                                 />
                             </div>
@@ -148,8 +148,8 @@ export default function ForgotPasswordPage() {
                             </div>
                         )}
 
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             disabled={isPending}
                             className="w-full py-4 rounded-xl bg-gradient-to-r from-rose-300 via-rose-100 to-rose-400 text-gray-900 font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                         >
@@ -162,8 +162,8 @@ export default function ForgotPasswordPage() {
 
                         {/* Back to Login */}
                         <div className="text-center mt-6">
-                            <Link 
-                                href="/login" 
+                            <Link
+                                href="/login"
                                 className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors"
                             >
                                 <ArrowLeft size={16} />

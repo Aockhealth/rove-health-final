@@ -750,62 +750,65 @@ export default function TrackerPageRedesigned() {
 
 
     return (
-        <div className="min-h-screen bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
+        <div className="min-h-screen overflow-x-clip bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
             <Toaster position="top-center" richColors />
 
             {/* Header */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
                     <div className="w-10 h-10  rounded-full flex items-center justify-center">
                         <Calendar className="w-5 h-5 text-black" />
                     </div>
                     <div className="text-center">
-                        <h1 className="text-xl font-heading font-semibold text-gray-900">Rove Tracker</h1>
+                        <h1 className="text-lg sm:text-xl font-heading font-semibold text-gray-900">Rove Tracker</h1>
                         <p className="text-xs text-gray-500">Log your daily rhythm</p>
                     </div>
                     <ProfileAvatar /> {/* Spacer to balance the left icon for perfect centering */}
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* Phase + Selected badge (updates when you click a date) */}
                 <div className={cn(
-                    "bg-white rounded-3xl p-5 border transition-all duration-500",
+                    "bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 border transition-all duration-500",
                     getPhaseTheme(currentPhase)
                 )}>
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className={cn("w-3 h-3 rounded-full", getPhaseDot(currentPhase))} />
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Phase</p>
-                                <div
-                                    className={cn(
-                                        "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-heading font-semibold",
-                                        phasePill(currentPhase)
-                                    )}
-                                >
-                                    {phaseLabel || "Phase Unknown"}
-                                    {isFertile && <span className="text-[11px] font-medium opacity-80">• Fertile</span>}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="text-right">
-                            <p className="text-xs text-gray-500 mb-0.5">Selected</p>
-                            <p className="text-sm font-heading font-semibold text-gray-900">
+                    {/* Single row: Date | Phase Pill | Day */}
+                    <div className="flex items-center justify-between">
+                        {/* Left: Date */}
+                        <div className="flex flex-col">
+                            <p className="text-sm sm:text-base font-heading font-semibold text-gray-900">
                                 {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </p>
-                            <p className="text-[11px] text-gray-500">{dayInCycle ? `Day ${dayInCycle}` : "—"}</p>
                             {hasPhaseData && phaseResult.latePeriod && (
-                                <p className="text-[11px] text-rose-500">
-                                    Late by {lateByDays} day{lateByDays === 1 ? "" : "s"}
+                                <p className="text-[10px] text-rose-500 font-medium">
+                                    Late {lateByDays}d
                                 </p>
                             )}
                         </div>
+
+                        {/* Center: Phase Pill */}
+                        <div className="flex items-center gap-2">
+                            <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0", getPhaseDot(currentPhase))} />
+                            <div
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border text-sm sm:text-base font-heading font-semibold",
+                                    phasePill(currentPhase)
+                                )}
+                            >
+                                {phaseLabel || "Phase Unknown"}
+                                {isFertile && <span className="text-[9px] sm:text-[10px] font-medium opacity-80">• Fertile</span>}
+                            </div>
+                        </div>
+
+                        {/* Right: Day */}
+                        <p className="text-sm sm:text-base font-heading font-semibold text-gray-500">
+                            {dayInCycle ? `Day ${dayInCycle}` : "—"}
+                        </p>
                     </div>
                     {!hasPhaseData && (
-                        <div className="mt-3 rounded-2xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-600">
+                        <div className="mt-2 sm:mt-3 rounded-2xl bg-gray-50 border border-gray-100 p-2.5 sm:p-3 text-xs text-gray-600">
                             Log your first period to unlock phase tracking and fertile window predictions.
                         </div>
                     )}
@@ -906,11 +909,11 @@ export default function TrackerPageRedesigned() {
 
                 {/* Save button - Sticky/Fixed above bottom nav on mobile */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <div className="fixed bottom-[80px] md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl px-4 z-[60]">
+                    <div className="fixed bottom-[calc(84px+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2.5rem)] sm:w-[calc(100%-2rem)] max-w-md md:max-w-4xl px-0 sm:px-4 z-[60]">
                         <button
                             onClick={handleSave}
                             disabled={isPending || isFutureDate(selectedDate)}
-                            className="w-full py-4 bg-phase-menstrual hover:bg-phase-menstrual/90 text-white text-base font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-phase-menstrual/30 flex items-center justify-center gap-2"
+                            className="w-full py-3 sm:py-4 bg-phase-menstrual/95 hover:bg-phase-menstrual text-white text-base font-semibold rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-2xl shadow-phase-menstrual/30 flex items-center justify-center gap-2"
                         >
                             {isPending ? (
                                 <>
@@ -924,7 +927,7 @@ export default function TrackerPageRedesigned() {
 
                 {/* Extra spacing for sticky bottom button */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <div className="h-32" />
+                    <div className="h-40 sm:h-36" />
                 )}
             </div>
         </div>

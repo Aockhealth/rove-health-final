@@ -37,7 +37,7 @@ export default function WaterIntakeCard({
 
   const themes: Record<string, any> = {
     "Menstrual": {
-      border: "border-phase-menstrual/20",
+      border: "border-phase-menstrual/30",
       shadow: "shadow-phase-menstrual/5",
       iconBg: "bg-phase-menstrual/10",
       iconColor: "text-phase-menstrual",
@@ -46,7 +46,7 @@ export default function WaterIntakeCard({
       glassBorder: "border-phase-menstrual/30"
     },
     "Follicular": {
-      border: "border-phase-follicular/20",
+      border: "border-phase-follicular/30",
       shadow: "shadow-phase-follicular/5",
       iconBg: "bg-phase-follicular/10",
       iconColor: "text-phase-follicular",
@@ -55,7 +55,7 @@ export default function WaterIntakeCard({
       glassBorder: "border-phase-follicular/30"
     },
     "Ovulatory": {
-      border: "border-phase-ovulatory/20",
+      border: "border-phase-ovulatory/30",
       shadow: "shadow-phase-ovulatory/5",
       iconBg: "bg-phase-ovulatory/10",
       iconColor: "text-phase-ovulatory",
@@ -64,7 +64,7 @@ export default function WaterIntakeCard({
       glassBorder: "border-phase-ovulatory/30"
     },
     "Luteal": {
-      border: "border-phase-luteal/20",
+      border: "border-phase-luteal/30",
       shadow: "shadow-phase-luteal/5",
       iconBg: "bg-phase-luteal/10",
       iconColor: "text-phase-luteal",
@@ -78,7 +78,7 @@ export default function WaterIntakeCard({
 
   return (
     <div className={cn(
-      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all",
       theme.border,
       theme.shadow
     )}>
@@ -117,7 +117,7 @@ export default function WaterIntakeCard({
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-56 p-3 bg-gray-900 text-white text-[11px] rounded-xl z-[100] text-center shadow-2xl font-sans normal-case tracking-normal leading-relaxed"
+                  className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-56 max-w-[calc(100vw-2rem)] p-3 bg-gray-900 text-white text-[11px] rounded-xl z-[100] text-center shadow-2xl font-sans normal-case tracking-normal leading-relaxed"
                 >
                   Drink at least 2L of water (8 glasses) daily to stay hydrated, support detoxification, and maintain healthy cognitive function.
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900" />
@@ -128,10 +128,10 @@ export default function WaterIntakeCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-8 justify-center">
+      <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8 justify-center">
         {/* Glass Animation */}
         <div className={cn(
-          "relative w-24 h-32 border-4 border-t-0 rounded-b-3xl bg-white/10 backdrop-blur-sm overflow-hidden flex-shrink-0 shadow-inner",
+          "relative w-20 h-28 sm:w-24 sm:h-32 border-4 border-t-0 rounded-b-3xl bg-white/10 backdrop-blur-sm overflow-hidden flex-shrink-0 shadow-inner",
           theme.glassBorder
         )}>
           {/* Liquid */}

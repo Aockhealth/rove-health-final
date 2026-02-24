@@ -16,6 +16,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
     const [setting, setSetting] = useState<"Home" | "Gym" | null>(null);
     const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Pro">("Intermediate");
     const [focus, setFocus] = useState<"Full Body" | "Upper Body" | "Lower Body" | "Cardio" | "Core" | "Mobility">("Full Body");
+    const [progressionPreference, setProgressionPreference] = useState<"steady" | "push" | "deload">("steady");
     const [energy, setEnergy] = useState<"Low" | "Medium" | "High">("Medium");
     const [time, setTime] = useState<"15m" | "30m" | "45m" | "60m">("30m");
     const [symptoms, setSymptoms] = useState("");
@@ -90,7 +91,12 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                 energy,
                 `${time} ${focus} workout`, // Goal
                 setting === "Home" ? "Bodyweight / Mat" : "Full Gym", // Equipment
-                symptoms // Injuries/Limitations
+                symptoms, // Injuries/Limitations
+                level,
+                focus,
+                time,
+                progressionPreference,
+                `${focus} performance`
             );
             setResult(plan);
         } catch (e) {
@@ -293,6 +299,31 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                         <button key={item.id} onClick={() => setFocus(item.id as any)} className={cn("py-2.5 px-1 rounded-xl border text-[10px] md:text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-1.5", focus === item.id ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
                                             <item.icon className={cn("w-4 h-4", focus === item.id ? theme.iconColor : "opacity-60")} />
                                             {item.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Symptoms / Limitations */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Progression</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {([
+                                        { id: "steady", label: "Steady" },
+                                        { id: "push", label: "Push" },
+                                        { id: "deload", label: "Deload" }
+                                    ] as const).map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => setProgressionPreference(item.id)}
+                                            className={cn(
+                                                "py-2 rounded-xl border text-[11px] font-bold transition-all",
+                                                progressionPreference === item.id
+                                                    ? theme.active
+                                                    : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm"
+                                            )}
+                                        >
+                                            {item.label}
                                         </button>
                                     ))}
                                 </div>

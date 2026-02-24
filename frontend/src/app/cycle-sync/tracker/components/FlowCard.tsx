@@ -10,7 +10,7 @@ const flowOptions = ["Spotting", "Low", "Normal", "High", "Heavy"];
 
 export default function FlowCard({ flowIntensity, setFlowIntensity }: FlowCardProps) {
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-3xl p-6 shadow-xl border-2 border-rose-100 shadow-rose-100/20">
+    <div className="bg-gradient-to-br from-white to-gray-50/30 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border-2 border-rose-100 shadow-rose-100/20">
       <div className="flex items-center gap-2 mb-4">
         <Droplets className="w-5 h-5 text-rose-500" />
         <h3 className="text-base font-heading font-semibold text-gray-900">Flow</h3>

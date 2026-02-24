@@ -19,7 +19,7 @@ export function LuxurySelect({ value, options, onChange, icon: Icon, label, tool
     const selectedOption = options.find(o => o.value === value) || options[0];
 
     return (
-        <div className="relative z-20">
+        <div className={cn("relative", isOpen ? "z-50" : "z-20")}>
             <div className="flex items-center gap-1.5 mb-2">
                 <label className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                     {Icon && <Icon className="w-3 h-3" />} {label}
@@ -53,7 +53,7 @@ export function LuxurySelect({ value, options, onChange, icon: Icon, label, tool
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full bg-stone-50/50 border border-stone-100 hover:border-stone-300 rounded-xl px-4 py-3 flex items-center justify-between transition-all group"
+                    className="w-full bg-stone-50/50 border border-stone-100 hover:border-stone-300 rounded-xl px-4 py-3 flex items-center justify-between transition-all group relative z-10"
                 >
                     <span className="font-heading text-lg text-stone-700">{selectedOption.label}</span>
                     <ChevronDown className={cn("w-4 h-4 text-stone-400 transition-transform duration-300", isOpen && "rotate-180")} />
@@ -62,24 +62,25 @@ export function LuxurySelect({ value, options, onChange, icon: Icon, label, tool
                 <AnimatePresence>
                     {isOpen && (
                         <>
-                            <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+                            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                             <motion.div
                                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                className="absolute top-full mt-2 left-0 right-0 bg-white/90 backdrop-blur-xl border border-white/60 rounded-xl shadow-xl z-50 overflow-hidden py-1"
+                                transition={{ duration: 0.15 }}
+                                className="absolute top-full mt-2 left-0 right-0 bg-white/90 backdrop-blur-xl border border-white/60 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden py-1 min-w-[200px]"
                             >
                                 {options.map((option) => (
                                     <button
                                         key={option.value}
                                         onClick={() => { onChange(option.value); setIsOpen(false); }}
                                         className={cn(
-                                            "w-full px-4 py-2 text-left flex items-center justify-between text-sm hover:bg-stone-50 transition-colors",
-                                            option.value === value ? "font-bold text-stone-800" : "font-medium text-stone-500"
+                                            "w-full px-4 py-3 text-left flex items-center justify-between text-base hover:bg-stone-50 transition-colors",
+                                            option.value === value ? "font-bold text-stone-800 bg-stone-50/50" : "font-medium text-stone-500"
                                         )}
                                     >
                                         {option.label}
-                                        {option.value === value && <Check className="w-3 h-3 text-stone-800" />}
+                                        {option.value === value && <Check className="w-4 h-4 text-stone-800" />}
                                     </button>
                                 ))}
                             </motion.div>

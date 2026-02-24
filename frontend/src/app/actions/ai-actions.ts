@@ -1,7 +1,12 @@
 "use server";
+import { unstable_noStore as noStore } from 'next/cache';
 
 import { createClient } from "@/utils/supabase/server";
-import { ChefItemSchema, ChefGutItemSchema, RoveChefProtocolSchema } from "@/lib/ai/schemas";
+import { ChefItemSchema, ChefSaladItemSchema, RoveChefProtocolSchema, RoveCoachPlanSchema } from "@/lib/ai/schemas";
+import { AIService } from "@/lib/ai/service";
+import { executeUnifiedAI } from "../../../../backend/src/actions/ai-orchestrator/orchestrator";
+import { logAIGenerationEvent } from "../../../../backend/src/actions/ai-orchestrator/telemetry";
+import { UnifiedAIRequest, UnifiedAIResponse } from "@/lib/ai/unified-schemas";
 
 // ============================================
 // EDGE FUNCTION TYPES
@@ -216,13 +221,13 @@ export async function getDietPlan(input: DietPlanInput): Promise<DietPlanRespons
     const { data, error } = await supabase.functions.invoke('diet-plan-generator', {
         body: {
             phase: input.phase,
-            goal: lifestyle.fitness_goal || onboarding?.primary_goal || 'maintenance',
+            goal: lifestyle.fitness_goal || onboarding?.goals?.[0] || 'maintenance',
             dietType: lifestyle.diet_preference || 'vegetarian',
             activityLevel: lifestyle.activity_level || 'moderate',
             weight: lifestyle.weight_kg || 60,
             height: lifestyle.height_cm || 165,
             age,
-            metabolicConditions: onboarding?.metabolic_conditions || [],
+            metabolicConditions: onboarding?.conditions || [],
             symptoms: input.symptoms || [],
             todayExercise: input.todayExercise,
             weightLossTarget: weightGoal ? {
@@ -249,6 +254,8 @@ interface WorkoutPlanInput {
     energyLevel: 'low' | 'medium' | 'high';
     availableTime: number;
     symptoms?: string[];
+    focusArea?: string;
+    progressionPreference?: "steady" | "push" | "deload";
 }
 
 export async function getWorkoutPlan(input: WorkoutPlanInput): Promise<WorkoutPlanResponse | null> {
@@ -276,7 +283,9 @@ export async function getWorkoutPlan(input: WorkoutPlanInput): Promise<WorkoutPl
             availableTime: input.availableTime,
             equipment: fitness?.equipment_available || [],
             injuries: fitness?.injuries_limitations || [],
-            symptoms: input.symptoms || []
+            symptoms: input.symptoms || [],
+            focusArea: input.focusArea || "Full Body",
+            progressionPreference: input.progressionPreference || "steady"
         }
     });
 
@@ -357,52 +366,21 @@ export async function generateMoodInsight(
 
     if (!sortedMoods) return null; // No data, no insight
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-        console.error("Missing GROQ_API_KEY");
-        return null;
-    }
-
     try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                response_format: { type: "json_object" },
-                temperature: 0.3,
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an empathetic women's health analyst.
-            Analyze the user's mood log for the ${phase} phase.
-
-            INPUT: List of moods and frequency.
-            OUTPUT: JSON with:
-            - "title": 2-3 words, summarizing the vibe (e.g., "Inward & Reflective", "High Energy").
-            - "insight": 1-2 short, validating sentences. No advice. No medical claims. Just reflection.
-
-            Tone: Calm, observational, validating.
-            `
-                    },
-                    {
-                        role: "user",
-                        content: `Moods: ${sortedMoods}`
-                    }
-                ]
-            }),
+        const response = await AIService.generate<MoodInsight>({
+            feature: "insights_mood",
+            variables: {
+                phase,
+                mood_counts: sortedMoods
+            }
         });
 
-        if (!response.ok) {
-            console.error("Groq API error:", await response.text());
+        if (response.error || !response.data) {
+            console.error("[generateMoodInsight] AIService Error:", response.error);
             return null;
         }
 
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
+        const result = response.data;
 
         // 4. Save to Cache
         await supabase.from("ai_cache_keys").insert({
@@ -424,6 +402,7 @@ export async function generateMoodInsight(
         };
     }
 }
+
 
 
 export type SymptomTips = {
@@ -460,37 +439,21 @@ export async function generateSymptomTips(
     }
 
     // 3. AI Generation
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return null;
-
     try {
-        // Prompt is now strictly for relief since we blocked empty symptoms above
-        const prompt = `User is in ${phase} phase and reported: ${symptoms.join(", ")}. Give 3 short, specific actionable tips (max 10 words each) to relieve these.`;
-
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                response_format: { type: "json_object" },
-                temperature: 0.4,
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are a holistic women's health coach.
-            Output JSON: { "tips": ["Tip 1", "Tip 2", "Tip 3"] }`
-                    },
-                    { role: "user", content: prompt }
-                ]
-            }),
+        const response = await AIService.generate<SymptomTips>({
+            feature: "symptom_tips",
+            variables: {
+                phase,
+                symptoms: symptoms.join(", ")
+            }
         });
 
-        if (!response.ok) return null;
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
+        if (response.error || !response.data) {
+            console.error("[generateSymptomTips] AIService Error:", response.error);
+            return null;
+        }
+
+        const result = response.data;
 
         // 4. Save to Cache
         await supabase.from("ai_cache_keys").insert({
@@ -508,6 +471,7 @@ export async function generateSymptomTips(
         return null;
     }
 }
+
 
 
 
@@ -547,50 +511,21 @@ export async function generatePhaseReliefTips(
     }
 
     // 2️⃣ AI Generation
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return null;
-
     try {
-        const prompt = `
-User is currently in the ${phase} phase.
-This month they reported symptoms: ${symptoms.join(", ")}.
-
-Give 3 gentle, phase-appropriate suggestions that may help them feel better.
-Tips should be:
-- supportive (not medical)
-- short (max 12 words)
-- holistic (energy, food, rest, movement)
-`;
-
-        const response = await fetch(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    temperature: 0.35,
-                    response_format: { type: "json_object" },
-                    messages: [
-                        {
-                            role: "system",
-                            content: `You are a compassionate women's health guide.
-Return JSON ONLY:
-{ "tips": ["Tip 1", "Tip 2", "Tip 3"] }`
-                        },
-                        { role: "user", content: prompt }
-                    ]
-                }),
+        const response = await AIService.generate<PhaseReliefTips>({
+            feature: "phase_relief_tips",
+            variables: {
+                phase,
+                symptoms: symptoms.join(", ")
             }
-        );
+        });
 
-        if (!response.ok) return null;
+        if (response.error || !response.data) {
+            console.error("[generatePhaseReliefTips] AIService Error:", response.error);
+            return null;
+        }
 
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
+        const result = response.data;
 
         // 3️⃣ Save to cache (expires next month)
         await supabase.from("ai_cache_keys").insert({
@@ -612,6 +547,7 @@ Return JSON ONLY:
         return null;
     }
 }
+
 
 // ============================================
 
@@ -675,19 +611,6 @@ export interface GenerateRecipeInput {
 }
 
 export async function generateAIRecipe(input: GenerateRecipeInput): Promise<AIRecipe | null> {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-        console.error("Missing GROQ_API_KEY");
-        return null;
-    }
-
-    // Build the prompt
-    const recipeTypeLabels: Record<RecipeType, string> = {
-        smoothie: "a hormone-balancing smoothie",
-        salad: "a nutrient-dense salad",
-        snack: "a quick, healthy snack"
-    };
-
     const phaseNutrition: Record<string, string> = {
         Menstrual: "Focus on iron-rich ingredients (spinach, beets, lentils), warming spices (ginger, turmeric), and anti-inflammatory foods to support blood loss and ease cramps.",
         Follicular: "Focus on fresh, light foods, probiotics, and cruciferous vegetables to support rising estrogen and energy. Include fermented foods and lean proteins.",
@@ -702,64 +625,31 @@ export async function generateAIRecipe(input: GenerateRecipeInput): Promise<AIRe
         Jain: "Jain vegetarian - no onion, garlic, ginger, root vegetables, or anything grown underground. No eggs."
     };
 
-    const prompt = `Create ${recipeTypeLabels[input.recipeType]} recipe for someone in their ${input.phase} phase of the menstrual cycle.
-
-PHASE NUTRITION FOCUS:
-${phaseNutrition[input.phase] || phaseNutrition.Menstrual}
-
-DIETARY REQUIREMENT:
-${dietGuidelines[input.dietPreference]}
-${input.restrictions.length > 0 ? `Additional restrictions: ${input.restrictions.join(", ")}` : ""}
-
-${input.customInstruction ? `USER'S SPECIAL REQUEST: "${input.customInstruction}"` : ""}
-
-Create a delicious, practical recipe they can actually make at home. Use common ingredients.`;
+    const recipeTypeLabels: Record<RecipeType, string> = {
+        smoothie: "a hormone-balancing smoothie",
+        salad: "a nutrient-dense salad",
+        snack: "a quick, healthy snack"
+    };
 
     try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                response_format: { type: "json_object" },
-                temperature: 0.7, // Higher for creativity
-                max_tokens: 650,
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an expert nutritionist and chef specializing in cycle-syncing nutrition.
-Create recipes that are:
-- Delicious and practical
-- Phase-appropriate (support hormonal balance)
-- Easy to make with common ingredients
-
-Return JSON ONLY with this exact structure:
-{
-    "name": "Creative recipe name (3-5 words)",
-    "ingredients": "Comma-separated list of main ingredients with quantities (e.g., '1 cup Spinach, 1/2 Banana')",
-    "why": "One sentence explaining why this recipe is perfect for this phase (mention specific nutrients/benefits)",
-    "instructions": ["Step 1...", "Step 2...", "Step 3..."],
-    "calories": "Approx calories (e.g., '350 kcal')",
-    "time": "Prep time (e.g., '10 mins')"
-}`
-                    },
-                    { role: "user", content: prompt }
-                ]
-            }),
+        const response = await AIService.generate<AIRecipe>({
+            feature: "ai_recipe",
+            variables: {
+                recipe_type: recipeTypeLabels[input.recipeType],
+                phase: input.phase,
+                phase_nutrition: phaseNutrition[input.phase] || phaseNutrition.Menstrual,
+                diet_guidelines: dietGuidelines[input.dietPreference] || dietGuidelines.Veg,
+                restrictions: input.restrictions.length > 0 ? `Additional restrictions: ${input.restrictions.join(", ")}` : "",
+                custom_instruction: input.customInstruction ? `USER'S SPECIAL REQUEST: "${input.customInstruction}"` : ""
+            }
         });
 
-        if (!response.ok) {
-            console.error("Groq API error:", await response.text());
+        if (response.error || !response.data) {
+            console.error("[generateAIRecipe] AIService Error:", response.error);
             return null;
         }
 
-        const data = await response.json();
-        const result = JSON.parse(data.choices[0].message.content);
-
-        return result as AIRecipe;
+        return response.data;
 
     } catch (error) {
         console.error("AI Recipe Generation Error:", error);
@@ -770,8 +660,6 @@ Return JSON ONLY with this exact structure:
 // ============================================
 // ROVE CHEF "TRIPLE THREAT" PROTOCOL
 // ============================================
-
-import { AIService } from "@/lib/ai/service";
 
 export interface RoveChefItem {
     name: string;
@@ -784,19 +672,323 @@ export interface RoveChefItem {
 export interface RoveChefProtocol {
     snack: RoveChefItem;
     smoothie: RoveChefItem;
-    gut_sync: {
+    salad: {
         name: string;
         description: string;
+        ingredients: string[];
+        instructions?: string[];
         why: string;
     };
+}
+
+export interface RoveChefPersonalization {
+    goalFocus?: string;
+    currentSymptomsOrCraving?: string;
+    avoidIngredients?: string[];
+    recentOutputSignatures?: string[];
+}
+
+type GenerationQualityMetadata = {
+    quality_passed: boolean;
+    retry_count: number;
+    generic_score: number;
+    duplicate_detected: boolean;
+    phase_rule_passed: boolean;
+    reasons?: string[];
+};
+
+const GENERIC_PHRASES = [
+    "nutrient-dense",
+    "balanced routine",
+    "balanced flow",
+    "hormone harmony",
+    "supports hormone balance",
+    "essential vitamins",
+    "kickstarts digestion",
+    "full body routine"
+];
+
+function isFlagEnabled(name: string, defaultValue = true): boolean {
+    const raw = process.env[name];
+    if (raw === undefined) return defaultValue;
+    return raw.toLowerCase() === "true";
+}
+
+function normalizeList(input?: string[] | string): string[] {
+    if (!input) return [];
+    const values = Array.isArray(input) ? input : input.split(",");
+    return values
+        .map((value) => value.trim())
+        .filter(Boolean);
+}
+
+function sanitizeSignature(value: string): string {
+    return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+function computeGenericScore(chunks: string[]): number {
+    const text = chunks.join(" ").toLowerCase();
+    if (!text.trim()) return 1;
+    const hits = GENERIC_PHRASES.reduce((count, phrase) => count + (text.includes(phrase) ? 1 : 0), 0);
+    return Math.min(1, Number((hits / Math.max(3, chunks.length)).toFixed(3)));
+}
+
+function hasAny(text: string, needles: string[]): boolean {
+    return needles.some((needle) => text.includes(needle));
+}
+
+function evaluateChefPhaseRule(phase: string, text: string): boolean {
+    const normalizedPhase = phase.toLowerCase();
+    if (normalizedPhase === "menstrual") {
+        return !hasAny(text, ["raw", "cold", "iced", "ice"]) &&
+            hasAny(text, ["warm", "ginger", "iron", "cooked", "soup", "stew"]);
+    }
+    if (normalizedPhase === "follicular") {
+        return hasAny(text, ["fresh", "sprout", "ferment", "probiotic", "light"]);
+    }
+    if (normalizedPhase === "ovulatory") {
+        return hasAny(text, ["cool", "cooling", "fiber", "hydr", "cucumber", "berry", "raw"]);
+    }
+    return hasAny(text, ["warm", "ground", "complex carb", "oat", "sweet potato", "millet", "magnesium"]);
+}
+
+function evaluateChefQuality(
+    candidate: Partial<RoveChefProtocol>,
+    phase: string,
+    recentSignatures: string[],
+    retryCount: number
+): GenerationQualityMetadata {
+    const names = [candidate.snack?.name, candidate.smoothie?.name, candidate.salad?.name]
+        .filter((name): name is string => Boolean(name));
+    const nameSignatures = names.map(sanitizeSignature);
+    const recent = new Set(recentSignatures.map(sanitizeSignature));
+    const duplicateDetected = nameSignatures.some((name) => recent.has(name));
+
+    const textChunks: string[] = [];
+    const collectItem = (item?: RoveChefItem | { name: string; description: string; why: string }) => {
+        if (!item) return;
+        textChunks.push(item.name, item.description, item.why);
+        if ("ingredients" in item && Array.isArray(item.ingredients)) {
+            textChunks.push(...item.ingredients);
+        }
+        if ("instructions" in item && Array.isArray(item.instructions)) {
+            textChunks.push(...item.instructions);
+        }
+    };
+    collectItem(candidate.snack);
+    collectItem(candidate.smoothie);
+    collectItem(candidate.salad);
+
+    const genericScore = computeGenericScore(textChunks);
+    const phaseRulePassed = evaluateChefPhaseRule(phase, textChunks.join(" ").toLowerCase());
+    const qualityPassed = !duplicateDetected && phaseRulePassed && genericScore <= 0.24;
+
+    const reasons: string[] = [];
+    if (duplicateDetected) reasons.push("duplicate_signature_detected");
+    if (!phaseRulePassed) reasons.push("phase_rule_failed");
+    if (genericScore > 0.24) reasons.push("generic_score_too_high");
+
+    return {
+        quality_passed: qualityPassed,
+        retry_count: retryCount,
+        generic_score: genericScore,
+        duplicate_detected: duplicateDetected,
+        phase_rule_passed: phaseRulePassed,
+        reasons
+    };
+}
+
+function evaluateCoachQuality(
+    candidate: RoveCoachPlan,
+    phase: string,
+    requestedEnergy: "Low" | "Medium" | "High",
+    recentSignatures: string[],
+    retryCount: number
+): GenerationQualityMetadata {
+    const normalizedPhase = phase.toLowerCase();
+    const normalizedIntensity = candidate.intensity.toLowerCase();
+    const titleSignature = sanitizeSignature(candidate.title || "");
+    const duplicateDetected = recentSignatures.map(sanitizeSignature).includes(titleSignature);
+
+    let phaseRulePassed = true;
+    if (normalizedPhase === "menstrual" && normalizedIntensity === "high") {
+        phaseRulePassed = false;
+    }
+    if (requestedEnergy === "Low" && normalizedIntensity !== "low") {
+        phaseRulePassed = false;
+    }
+    if (requestedEnergy === "Medium" && normalizedIntensity === "high") {
+        phaseRulePassed = false;
+    }
+    if (normalizedPhase === "ovulatory") {
+        const notes = candidate.main_set.map((set) => (set.notes || "").toLowerCase()).join(" ");
+        if (!hasAny(notes, ["form", "joint", "alignment", "control", "stability"])) {
+            phaseRulePassed = false;
+        }
+    }
+    if (!Array.isArray(candidate.main_set) || candidate.main_set.length < 3) {
+        phaseRulePassed = false;
+    }
+
+    const textChunks = [
+        candidate.title,
+        candidate.reasoning,
+        ...(candidate.warmup || []),
+        ...(candidate.cooldown || []),
+        ...(candidate.main_set || []).flatMap((set) => [set.name, set.notes || ""])
+    ];
+
+    const genericScore = computeGenericScore(textChunks);
+    const qualityPassed = !duplicateDetected && phaseRulePassed && genericScore <= 0.24;
+
+    const reasons: string[] = [];
+    if (duplicateDetected) reasons.push("duplicate_signature_detected");
+    if (!phaseRulePassed) reasons.push("phase_rule_failed");
+    if (genericScore > 0.24) reasons.push("generic_score_too_high");
+
+    return {
+        quality_passed: qualityPassed,
+        retry_count: retryCount,
+        generic_score: genericScore,
+        duplicate_detected: duplicateDetected,
+        phase_rule_passed: phaseRulePassed,
+        reasons
+    };
+}
+
+function normalizeCuisineChoice(
+    requestedCuisine: string,
+    profileCuisine: string | undefined,
+    recentCuisines: string[]
+): string {
+    const requested = (requestedCuisine || "").trim();
+    const profile = (profileCuisine || "").trim();
+    const recentTop = recentCuisines.map((item) => item.trim()).filter(Boolean);
+    const fallbackPool = ["Indian", "Mediterranean", "Asian", "Global"];
+
+    // Precedence: request override > profile > fallback default.
+    const baseCuisine = requested || profile || "Global";
+    if (requested) return baseCuisine;
+
+    // Auto-rotation applies only when user did not explicitly request a cuisine.
+    // Avoid repeating the same style back-to-back when alternatives exist.
+    if (recentTop[0] && recentTop[0].toLowerCase() === baseCuisine.toLowerCase()) {
+        const rotationPool = Array.from(new Set([profile, ...fallbackPool].filter(Boolean)));
+        const rotated = rotationPool.find((option) => option.toLowerCase() !== baseCuisine.toLowerCase());
+        return rotated || baseCuisine;
+    }
+    return baseCuisine;
+}
+
+function extractSignatures(snapshot: unknown): string[] {
+    if (!isRecord(snapshot)) return [];
+    const signatures: string[] = [];
+    if (typeof snapshot.title === "string") signatures.push(snapshot.title);
+    if (typeof snapshot.name === "string") signatures.push(snapshot.name);
+
+    const snack = isRecord(snapshot.snack) ? snapshot.snack : null;
+    const smoothie = isRecord(snapshot.smoothie) ? snapshot.smoothie : null;
+    const salad = isRecord(snapshot.salad) ? snapshot.salad : null;
+    if (snack && typeof snack.name === "string") signatures.push(snack.name);
+    if (smoothie && typeof smoothie.name === "string") signatures.push(smoothie.name);
+    if (salad && typeof salad.name === "string") signatures.push(salad.name);
+
+    if (Array.isArray(snapshot.main_set)) {
+        snapshot.main_set.slice(0, 2).forEach((set) => {
+            if (isRecord(set) && typeof set.name === "string") signatures.push(set.name);
+        });
+    }
+    return signatures;
+}
+
+type TelemetryRow = {
+    response_snapshot?: unknown;
+    prompt_snapshot?: unknown;
+};
+
+async function getRecentOutputContext(
+    userId: string,
+    skills: string[],
+    options: { surface?: string; limit?: number } = {}
+): Promise<{ signatures: string[]; cuisines: string[] }> {
+    const limit = options.limit ?? 24;
+    const supabase = await createClient();
+    const { data } = await supabase
+        .from("ai_generation_events")
+        .select("response_snapshot,prompt_snapshot")
+        .eq("user_id", userId)
+        .in("skill", skills)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+    if (!data || data.length === 0) return { signatures: [], cuisines: [] };
+
+    const rows = (data as TelemetryRow[]).map((row) => ({
+        response_snapshot: row.response_snapshot,
+        prompt_snapshot: isRecord(row.prompt_snapshot) ? row.prompt_snapshot : {}
+    }));
+
+    const surfaceScoped = options.surface
+        ? rows.filter((row) => row.prompt_snapshot.clientSurface === options.surface)
+        : rows;
+    const scopedRows = surfaceScoped.length > 0 ? surfaceScoped : rows;
+
+    const signatures = Array.from(
+        new Set(
+            scopedRows
+                .flatMap((row) => extractSignatures(row.response_snapshot))
+                .map((value) => sanitizeSignature(value))
+        )
+    ).slice(0, 5);
+
+    const cuisines = Array.from(
+        new Set(
+            scopedRows
+                .map((row) => row.prompt_snapshot.cuisinePreference || row.prompt_snapshot.cuisine)
+                .filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
+        )
+    ).slice(0, 5);
+
+    return { signatures, cuisines };
+}
+
+async function logGenerationWithQuality(
+    userId: string | undefined,
+    request: UnifiedAIRequest,
+    response: UnifiedAIResponse,
+    quality: GenerationQualityMetadata
+) {
+    if (!userId) return;
+    const enrichedResponse: UnifiedAIResponse = {
+        ...response,
+        actions: [
+            ...(response.actions || []),
+            {
+                type: "quality_meta",
+                payload: quality
+            }
+        ]
+    };
+    const promptSnapshot = {
+        ...(request.contextHints || {}),
+        clientSurface: request.clientSurface || "unknown",
+        userIntent: request.userIntent || undefined
+    };
+    await logAIGenerationEvent(userId, request, enrichedResponse, promptSnapshot);
 }
 
 export async function generateRoveChefProtocol(
     phase: string,
     dietary_preferences: string,
     cuisine: string,
-    type?: 'snack' | 'smoothie' | 'gut_sync'
+    type?: 'snack' | 'smoothie' | 'salad',
+    personalization: RoveChefPersonalization = {}
 ): Promise<Partial<RoveChefProtocol> | null> {
+    noStore(); // Prevent Next.js from caching AI actions
 
     // Default fallback if AI fails or key missing
     const fallback: RoveChefProtocol = {
@@ -822,61 +1014,127 @@ export async function generateRoveChefProtocol(
             ],
             why: "Provides essential vitamins."
         },
-        gut_sync: {
-            name: "Warm Water & Lemon",
-            description: "Drink warm water with lemon first thing in the morning.",
-            why: "Kickstarts digestion."
+        salad: {
+            name: "Fresh Garden Salad",
+            description: "A light, nourishing salad with seasonal greens and seeds.",
+            ingredients: ["Mixed greens", "Cucumber", "Cherry tomatoes", "Pumpkin seeds", "Lemon dressing"],
+            instructions: [
+                "Wash and chop all vegetables.",
+                "Toss greens with cucumber and tomatoes.",
+                "Top with seeds and drizzle lemon dressing."
+            ],
+            why: "Light fiber supports digestion."
         }
     };
 
-    try {
-        // Granular Generation
+    const qualityGateEnabled = isFlagEnabled("AI_QUALITY_GATE_ENABLED", true);
+    const retryEnabled = isFlagEnabled("AI_QUALITY_RETRY_ENABLED", true);
+    const retryModelEnabled = isFlagEnabled("AI_RETRY_UPGRADE_MODEL", false);
+    const retryModel = process.env.AI_RETRY_UPGRADE_MODEL_NAME || "gemini-2.5-pro";
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const recentContext = user
+        ? await getRecentOutputContext(user.id, ["diet_coach", "chef"], { surface: "rove_chef_card" })
+        : { signatures: [], cuisines: [] };
+    const profileCuisine = recentContext.cuisines[0];
+    const resolvedCuisine = normalizeCuisineChoice(cuisine, profileCuisine, recentContext.cuisines);
+    const recentSignatures = personalization.recentOutputSignatures?.length
+        ? personalization.recentOutputSignatures
+        : recentContext.signatures;
+
+    let lastRequest: UnifiedAIRequest | null = null;
+    let lastResponse: UnifiedAIResponse | null = null;
+    let retryCount = 0;
+
+    const featureMap = {
+        snack: "chef_snack",
+        smoothie: "chef_smoothie",
+        salad: "chef_salad"
+    } as const;
+
+    const buildRequest = (qualityFeedback = "", isRetry = false): UnifiedAIRequest => ({
+        skill: "diet_coach",
+        userIntent: type ? featureMap[type] : undefined,
+        contextHints: {
+            phase,
+            dayInCycle: null,
+            dietaryPreferences: dietary_preferences,
+            cuisinePreference: resolvedCuisine,
+            goalFocus: personalization.goalFocus || "Hormone balance and cycle-aligned nourishment",
+            currentSymptomsOrCraving: personalization.currentSymptomsOrCraving || "",
+            avoidIngredients: normalizeList(personalization.avoidIngredients),
+            recentOutputSignatures: recentSignatures,
+            qualityFeedback
+        },
+        clientSurface: "rove_chef_card",
+        memoryMode: "isolated",
+        deferTelemetry: true,
+        overrideModel: isRetry && retryModelEnabled ? retryModel : undefined
+    });
+
+    const parseCandidate = (payload: unknown): Partial<RoveChefProtocol> | null => {
         if (type) {
-            const featureMap = {
-                'snack': 'chef_snack',
-                'smoothie': 'chef_smoothie',
-                'gut_sync': 'chef_gut'
-            };
-
-            const response = await AIService.generate<any>({
-                feature: featureMap[type] as any,
-                variables: { phase, dietary_preferences, cuisine }
-            });
-
-            if (response.error || !response.data) return { [type]: fallback[type] };
-
-            const schema = type === 'gut_sync' ? ChefGutItemSchema : ChefItemSchema;
-            const parsed = schema.safeParse(response.data);
-
-            if (!parsed.success) {
-                console.error(`Rove Chef Validation Error (${type}):`, parsed.error);
-                return { [type]: fallback[type] };
-            }
-
+            const targetData = isRecord(payload) && payload[type] ? payload[type] : payload;
+            const schema = type === "salad" ? ChefSaladItemSchema : ChefItemSchema;
+            const parsed = schema.safeParse(targetData);
+            if (!parsed.success) return null;
             return { [type]: parsed.data };
         }
-
-        const response = await AIService.generate<RoveChefProtocol>({
-            feature: 'chef' as any,
-            variables: {
-                phase,
-                dietary_preferences,
-                cuisine
-            }
-        });
-
-        if (response.error || !response.data) {
-            console.error("Rove Chef AI Error:", response.error);
-            return fallback;
-        }
-
-        const parsed = RoveChefProtocolSchema.safeParse(response.data);
-        if (!parsed.success) {
-            console.error("Rove Chef Protocol Validation Error:", parsed.error);
-            return fallback;
-        }
-
+        const parsed = RoveChefProtocolSchema.safeParse(payload);
+        if (!parsed.success) return null;
         return parsed.data;
+    };
+
+    try {
+        // Granular Generation Request
+        lastRequest = buildRequest();
+        lastResponse = await executeUnifiedAI(lastRequest);
+
+        let candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+            ? parseCandidate(lastResponse.structuredPayload)
+            : null;
+        let quality = candidate
+            ? evaluateChefQuality(candidate, phase, recentSignatures, retryCount)
+            : {
+                quality_passed: false,
+                retry_count: retryCount,
+                generic_score: 1,
+                duplicate_detected: false,
+                phase_rule_passed: false,
+                reasons: ["invalid_payload_or_safety_flag"]
+            };
+
+        if (qualityGateEnabled && !quality.quality_passed && retryEnabled) {
+            retryCount = 1;
+            lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`, true);
+            lastResponse = await executeUnifiedAI(lastRequest);
+            candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+                ? parseCandidate(lastResponse.structuredPayload)
+                : null;
+            quality = candidate
+                ? evaluateChefQuality(candidate, phase, recentSignatures, retryCount)
+                : {
+                    quality_passed: false,
+                    retry_count: retryCount,
+                    generic_score: 1,
+                    duplicate_detected: false,
+                    phase_rule_passed: false,
+                    reasons: ["retry_invalid_payload_or_safety_flag"]
+                };
+        }
+
+        if (!candidate || (qualityGateEnabled && !quality.quality_passed)) {
+            const fallbackResult = type ? { [type]: fallback[type] } : fallback;
+            if (lastRequest && lastResponse) {
+                await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+            }
+            return fallbackResult;
+        }
+
+        if (lastRequest && lastResponse) {
+            await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+        }
+        return candidate;
     } catch (error) {
         console.error("Rove Chef Unexpected Error:", error);
         return type ? { [type]: fallback[type] } : fallback;
@@ -906,11 +1164,19 @@ export interface RoveCoachPlan {
 
 export async function generateRoveCoachPlan(
     phase: string,
-    energyLevel: string,
+    energyLevel: "Low" | "Medium" | "High",
     goal: string,
     equipment: string,
-    injuries: string
+    injuries: string,
+    fitnessLevel: "Beginner" | "Intermediate" | "Pro" = "Intermediate",
+    workoutFocus = "Full Body",
+    sessionDuration = "30m",
+    progressionPreference: "steady" | "push" | "deload" = "steady",
+    goalFocus = goal,
+    recentOutputSignatures: string[] = []
 ): Promise<RoveCoachPlan | null> {
+    noStore(); // Prevent Next.js from caching AI actions
+
     const fallback: RoveCoachPlan = {
         title: "Balanced Flow",
         duration: "30 mins",
@@ -924,24 +1190,95 @@ export async function generateRoveCoachPlan(
         reasoning: "A balanced routine perfect for your current energy."
     };
 
-    try {
-        const response = await AIService.generate<RoveCoachPlan>({
-            feature: 'coach',
-            variables: {
-                phase,
-                energy_level: energyLevel,
-                goal,
-                equipment,
-                injuries
-            }
-        });
+    const qualityGateEnabled = isFlagEnabled("AI_QUALITY_GATE_ENABLED", true);
+    const retryEnabled = isFlagEnabled("AI_QUALITY_RETRY_ENABLED", true);
+    const retryModelEnabled = isFlagEnabled("AI_RETRY_UPGRADE_MODEL", false);
+    const retryModel = process.env.AI_RETRY_UPGRADE_MODEL_NAME || "gemini-2.5-pro";
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const recentContext = user
+        ? await getRecentOutputContext(user.id, ["exercise_coach", "coach"], { surface: "rove_coach_card" })
+        : { signatures: [], cuisines: [] };
+    const signatures = recentOutputSignatures.length > 0 ? recentOutputSignatures : recentContext.signatures;
 
-        if (response.error || !response.data) {
-            console.error("Rove Coach AI Error:", response.error);
+    let lastRequest: UnifiedAIRequest | null = null;
+    let lastResponse: UnifiedAIResponse | null = null;
+    let retryCount = 0;
+
+    const buildRequest = (qualityFeedback = "", isRetry = false): UnifiedAIRequest => ({
+        skill: "exercise_coach",
+        contextHints: {
+            phase,
+            dayInCycle: null,
+            fitnessGoals: goal,
+            goalFocus,
+            progressionPreference,
+            fitnessLevel,
+            requestedEnergyLevel: energyLevel,
+            equipment,
+            workoutFocus,
+            sessionDuration,
+            limitations: injuries,
+            recentOutputSignatures: signatures,
+            qualityFeedback
+        },
+        clientSurface: "rove_coach_card",
+        memoryMode: "isolated",
+        deferTelemetry: true,
+        overrideModel: isRetry && retryModelEnabled ? retryModel : undefined
+    });
+
+    try {
+        lastRequest = buildRequest();
+        lastResponse = await executeUnifiedAI(lastRequest);
+
+        let candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+            ? RoveCoachPlanSchema.safeParse(lastResponse.structuredPayload)
+            : null;
+
+        let parsedPlan = candidate && candidate.success ? candidate.data : null;
+        let quality = parsedPlan
+            ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount)
+            : {
+                quality_passed: false,
+                retry_count: retryCount,
+                generic_score: 1,
+                duplicate_detected: false,
+                phase_rule_passed: false,
+                reasons: ["invalid_payload_or_safety_flag"]
+            };
+
+        if (qualityGateEnabled && !quality.quality_passed && retryEnabled) {
+            retryCount = 1;
+            lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`, true);
+            lastResponse = await executeUnifiedAI(lastRequest);
+            candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+                ? RoveCoachPlanSchema.safeParse(lastResponse.structuredPayload)
+                : null;
+            parsedPlan = candidate && candidate.success ? candidate.data : null;
+            quality = parsedPlan
+                ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount)
+                : {
+                    quality_passed: false,
+                    retry_count: retryCount,
+                    generic_score: 1,
+                    duplicate_detected: false,
+                    phase_rule_passed: false,
+                    reasons: ["retry_invalid_payload_or_safety_flag"]
+                };
+        }
+
+        if (!parsedPlan || (qualityGateEnabled && !quality.quality_passed)) {
+            if (lastRequest && lastResponse) {
+                await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+            }
             return fallback;
         }
 
-        return response.data;
+        if (lastRequest && lastResponse) {
+            await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+        }
+        return parsedPlan;
     } catch (error) {
         console.error("Rove Coach Unexpected Error:", error);
         return fallback;

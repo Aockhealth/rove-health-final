@@ -26,7 +26,7 @@ export async function fetchInsightsData() {
     const [cycleSettingsResult, logsResult] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs")
-            .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, notes")
+            .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, water_intake, notes")
             .eq("user_id", user.id)
             .gte("date", pastDate.toISOString().split('T')[0])
             .order('date', { ascending: false })
@@ -44,6 +44,15 @@ export async function fetchInsightsData() {
     };
     const moodsByPhase: Record<string, Record<string, number>> = {
         "Menstrual": {}, "Follicular": {}, "Ovulatory": {}, "Luteal": {}
+    };
+    const exerciseByPhase: Record<string, Record<string, number>> = {
+        "Menstrual": {}, "Follicular": {}, "Ovulatory": {}, "Luteal": {}
+    };
+    const hydrationByPhase: Record<string, { total: number, days: number }> = {
+        "Menstrual": { total: 0, days: 0 },
+        "Follicular": { total: 0, days: 0 },
+        "Ovulatory": { total: 0, days: 0 },
+        "Luteal": { total: 0, days: 0 }
     };
 
     // Aggregation Sets
@@ -94,7 +103,15 @@ export async function fetchInsightsData() {
             // Collect all tags found in logs
             log.sleep_quality?.forEach((s: string) => allSleep.add(s));
             log.disruptors?.forEach((d: string) => allDisruptors.add(d));
-            log.exercise_types?.forEach((e: string) => allExercise.add(e));
+            log.exercise_types?.forEach((e: string) => {
+                allExercise.add(e);
+                if (phase) exerciseByPhase[phase][e] = (exerciseByPhase[phase][e] || 0) + 1;
+            });
+
+            if (log.water_intake && phase) {
+                hydrationByPhase[phase].total += log.water_intake;
+                hydrationByPhase[phase].days += 1;
+            }
         });
     }
 
@@ -171,6 +188,9 @@ export async function fetchInsightsData() {
         },
         phaseCounts,
         symptomsByPhase,
+        moodsByPhase,
+        exerciseByPhase,
+        hydrationByPhase,
         tipsByPhase,
         emotionalBaselines,
         // Return full context objects for the UI or AI to use

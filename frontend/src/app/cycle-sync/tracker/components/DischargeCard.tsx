@@ -47,43 +47,43 @@ export default function DischargeCard({
 
     const themes: Record<string, any> = {
         "Menstrual": {
-            border: "border-phase-menstrual/20",
+            border: "border-phase-menstrual/30",
             shadow: "shadow-phase-menstrual/5",
             iconBg: "bg-phase-menstrual/10",
             iconColor: "text-phase-menstrual",
             active: "bg-phase-menstrual/10 border-phase-menstrual/30 shadow-sm",
             inactive: "bg-white border-gray-100 hover:bg-phase-menstrual/5",
-            waveFrom: "from-phase-menstrual/40",
+            waveFrom: "from-phase-menstrual/30",
             waveTo: "to-phase-menstrual"
         },
         "Follicular": {
-            border: "border-phase-follicular/20",
+            border: "border-phase-follicular/30",
             shadow: "shadow-phase-follicular/5",
             iconBg: "bg-phase-follicular/10",
             iconColor: "text-phase-follicular",
             active: "bg-phase-follicular/10 border-phase-follicular/30 shadow-sm",
             inactive: "bg-white border-gray-100 hover:bg-phase-follicular/5",
-            waveFrom: "from-phase-follicular/40",
+            waveFrom: "from-phase-follicular/30",
             waveTo: "to-phase-follicular"
         },
         "Ovulatory": {
-            border: "border-phase-ovulatory/20",
+            border: "border-phase-ovulatory/30",
             shadow: "shadow-phase-ovulatory/5",
             iconBg: "bg-phase-ovulatory/10",
             iconColor: "text-phase-ovulatory",
             active: "bg-phase-ovulatory/10 border-phase-ovulatory/30 shadow-sm",
             inactive: "bg-white border-gray-100 hover:bg-phase-ovulatory/5",
-            waveFrom: "from-phase-ovulatory/40",
+            waveFrom: "from-phase-ovulatory/30",
             waveTo: "to-phase-ovulatory"
         },
         "Luteal": {
-            border: "border-phase-luteal/20",
+            border: "border-phase-luteal/30",
             shadow: "shadow-phase-luteal/5",
             iconBg: "bg-phase-luteal/10",
             iconColor: "text-phase-luteal",
             active: "bg-phase-luteal/10 border-phase-luteal/30 shadow-sm",
             inactive: "bg-white border-gray-100 hover:bg-phase-luteal/5",
-            waveFrom: "from-phase-luteal/40",
+            waveFrom: "from-phase-luteal/30",
             waveTo: "to-phase-luteal"
         }
     };
@@ -93,13 +93,13 @@ export default function DischargeCard({
     return (
         <div
             className={cn(
-                "relative overflow-hidden bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-xl transition-all duration-300 border",
+                "relative overflow-hidden bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-[2rem] shadow-xl transition-all duration-300 border",
                 theme.border,
                 theme.shadow
             )}
         >
             {!isDischargeExpanded ? (
-                <div className="w-full p-5 flex items-center justify-between group transition-colors relative">
+                <div className="w-full p-4 sm:p-5 flex items-start sm:items-center justify-between group transition-colors relative">
                     {/* Main expansion click area - using a button that covers most of the card */}
                     <button
                         onClick={() => setIsDischargeExpanded(true)}
@@ -107,14 +107,14 @@ export default function DischargeCard({
                         aria-label="Expand Discharge"
                     />
 
-                    <div className="flex items-center gap-3 flex-grow text-left relative z-20 pointer-events-none">
+                    <div className="flex items-start sm:items-center gap-3 flex-grow text-left relative z-20 pointer-events-none min-w-0">
                         <div className={cn(
-                            "w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform",
+                            "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shrink-0",
                             theme.iconBg
                         )}>
-                            <Waves className={cn("w-5 h-5", theme.iconColor)} />
+                            <Waves className={cn("w-4 h-4 sm:w-5 sm:h-5", theme.iconColor)} />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex items-center gap-2">
                                 <h3 className="text-base font-heading font-semibold text-gray-900 pointer-events-auto cursor-pointer" onClick={() => setIsDischargeExpanded(true)}>
                                     Discharge
@@ -135,7 +135,7 @@ export default function DischargeCard({
                             </p>
                         </div>
                     </div>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center relative z-20 pointer-events-none transition-colors", theme.iconBg)}>
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center relative z-20 pointer-events-none transition-colors shrink-0", theme.iconBg)}>
                         <ChevronRight className={cn("w-4 h-4 transition-colors", theme.iconColor)} />
                     </div>
                 </div>
@@ -158,15 +158,15 @@ export default function DischargeCard({
                         </svg>
                     </div>
 
-                    <div className="p-6 pt-8 relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", theme.iconBg)}>
-                                    <Waves className={cn("w-5 h-5", theme.iconColor)} />
+                    <div className="p-4 sm:p-6 pt-7 sm:pt-8 relative z-10">
+                        <div className="flex items-start sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+                            <div className="flex items-start sm:items-center gap-3 min-w-0">
+                                <div className={cn("w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0", theme.iconBg)}>
+                                    <Waves className={cn("w-4 h-4 sm:w-5 sm:h-5", theme.iconColor)} />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <h3 className="text-lg font-heading font-semibold text-gray-900">Cervical Discharge</h3>
+                                        <h3 className="text-base sm:text-lg font-heading font-semibold text-gray-900">Cervical Discharge</h3>
                                         <button
                                             onClick={() => setShowInfo(!showInfo)}
                                             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -194,7 +194,7 @@ export default function DischargeCard({
                                     exit={{ opacity: 0, height: 0 }}
                                     className="mb-6 overflow-hidden"
                                 >
-                                    <div className={cn("border rounded-2xl p-4 relative", theme.iconBg, theme.border)}>
+                                    <div className={cn("border rounded-2xl p-3 sm:p-4 relative", theme.iconBg, theme.border)}>
                                         <button
                                             onClick={() => setShowInfo(false)}
                                             className={cn("absolute top-2 right-2", theme.iconColor)}
@@ -209,9 +209,9 @@ export default function DischargeCard({
                             )}
                         </AnimatePresence>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             {/* Q1: Consistency */}
-                            <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                            <div className="bg-white/60 rounded-2xl p-3 sm:p-4 border border-white/50">
                                 <div className="mb-3">
                                     <p className="text-sm font-heading font-bold text-gray-800">
                                         1. Vaginal Fluid
@@ -226,7 +226,7 @@ export default function DischargeCard({
                                             key={opt.label}
                                             onClick={() => setMpiqConsistency(opt.label as Consistency)}
                                             className={cn(
-                                                "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                "relative flex flex-col items-center p-2.5 sm:p-3 rounded-xl border text-center transition-all",
                                                 mpiqConsistency === opt.label ? theme.active : theme.inactive
                                             )}
                                         >
@@ -258,7 +258,7 @@ export default function DischargeCard({
                             </div>
 
                             {/* Q2: Appearance */}
-                            <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                            <div className="bg-white/60 rounded-2xl p-3 sm:p-4 border border-white/50">
                                 <div className="mb-3">
                                     <p className="text-sm font-heading font-bold text-gray-800">
                                         2. How does it look?
@@ -267,13 +267,13 @@ export default function DischargeCard({
                                         Observe the color and clarity of your cervical fluid.
                                     </p>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     {APPEARANCE_OPTIONS.map((opt) => (
                                         <button
                                             key={opt.label}
                                             onClick={() => setMpiqAppearance(opt.label as Appearance)}
                                             className={cn(
-                                                "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                "relative flex flex-col items-center p-2.5 sm:p-3 rounded-xl border text-center transition-all",
                                                 mpiqAppearance === opt.label ? theme.active : theme.inactive
                                             )}
                                         >
@@ -302,7 +302,7 @@ export default function DischargeCard({
                             </div>
 
                             {/* Q3: Sensation */}
-                            <div className="bg-white/60 rounded-2xl p-4 border border-white/50">
+                            <div className="bg-white/60 rounded-2xl p-3 sm:p-4 border border-white/50">
                                 <div className="mb-3">
                                     <p className="text-sm font-heading font-bold text-gray-800">
                                         3. Vaginal Sensation
@@ -317,7 +317,7 @@ export default function DischargeCard({
                                             key={opt.label}
                                             onClick={() => setMpiqSensation(opt.label as Sensation)}
                                             className={cn(
-                                                "relative flex flex-col items-center p-3 rounded-xl border text-center transition-all",
+                                                "relative flex flex-col items-center p-2.5 sm:p-3 rounded-xl border text-center transition-all",
                                                 mpiqSensation === opt.label ? theme.active : theme.inactive
                                             )}
                                         >

@@ -1,144 +1,116 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
+import { trackOnboardingEvent } from "@/lib/onboarding/telemetry";
 
 interface IntroSequenceProps {
-    isLoggedIn: boolean;
+  isLoggedIn: boolean;
 }
 
 export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
-    return (
-        <div className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-[#FDFBF7]">
-            {/* 🌸 LUXURY: Flo-Style Hormone Animation */}
+  const reduceMotion = useReducedMotion();
 
-            {/* 1. Large Main Flow (Peach/Rose) */}
-            <motion.div
-                className="absolute w-[800px] h-[800px] bg-gradient-to-br from-[#F4DCD6]/40 to-[#E68D85]/20 rounded-full blur-[80px] mix-blend-multiply"
-                animate={{
-                    scale: [1, 1.2, 1],
-                    x: [0, 30, 0],
-                    y: [0, -30, 0],
-                    rotate: [0, 10, 0]
-                }}
-                transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }}
-                style={{ top: '10%', left: '-10%' }}
+  const fluidAnimation = reduceMotion
+    ? {}
+    : {
+      scale: [1, 1.15, 1],
+      x: [0, 20, 0],
+      y: [0, -20, 0],
+    };
+
+  const fluidTransition = reduceMotion
+    ? { duration: 0 }
+    : {
+      duration: 12,
+      repeat: Infinity,
+      ease: "easeInOut" as const,
+    };
+
+  return (
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#FDFBF7] px-4 py-8">
+      <motion.div
+        className="pointer-events-none absolute -left-24 -top-20 h-[480px] w-[480px] rounded-full bg-gradient-to-br from-rose-200/40 via-rose-100/40 to-transparent blur-3xl"
+        animate={fluidAnimation}
+        transition={fluidTransition}
+      />
+      <motion.div
+        className="pointer-events-none absolute -bottom-28 -right-20 h-[440px] w-[440px] rounded-full bg-gradient-to-tr from-amber-100/50 via-white/60 to-transparent blur-3xl"
+        animate={fluidAnimation}
+        transition={{ ...fluidTransition, delay: 1.2 }}
+      />
+
+      <motion.div
+        initial={reduceMotion ? undefined : { opacity: 0, y: 24 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-2xl rounded-3xl border border-white/70 bg-white/80 p-8 text-center shadow-[0_24px_80px_-40px_rgba(45,36,32,0.45)] backdrop-blur-md md:p-12"
+      >
+        <div className="mx-auto mb-6 h-16 w-16 md:h-20 md:w-20 opacity-90 drop-shadow-sm">
+          <div className="relative h-full w-full">
+            <Image
+              src="/images/rove_icon_transparent.png"
+              alt="Rove Health"
+              fill
+              priority
+              className="object-contain"
+              unoptimized
             />
-
-            {/* 2. Secondary Flow (Soft White/Cream) */}
-            <motion.div
-                className="absolute w-[600px] h-[600px] bg-gradient-to-tr from-[#FFF]/60 to-[#F9F9F5]/40 rounded-full blur-[60px] mix-blend-overlay"
-                animate={{
-                    scale: [1, 1.1, 1],
-                    x: [0, -20, 0],
-                    y: [0, 40, 0],
-                }}
-                transition={{
-                    duration: 12,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 2
-                }}
-                style={{ bottom: '20%', right: '-5%' }}
-            />
-
-            {/* 3. Deep Accent Flow (Rove Red Tint) */}
-            <motion.div
-                className="absolute w-[400px] h-[400px] bg-[#DC4C3E]/5 rounded-full blur-[100px]"
-                animate={{
-                    opacity: [0.3, 0.6, 0.3],
-                    scale: [1, 1.3, 1],
-                }}
-                transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 4
-                }}
-                style={{ top: '40%', left: '30%' }}
-            />
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 flex flex-col items-center justify-center p-8 text-center max-w-3xl mx-auto"
-            >
-                {/* Rove Logo */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2, duration: 0.8 }}
-                    className="mb-12"
-                >
-                    <div className="relative w-56 h-16 md:w-72 md:h-24 mix-blend-multiply opacity-90">
-                        <Image
-                            src="/assets/rove_logo.png"
-                            alt="Rove Logo"
-                            fill
-                            className="object-contain"
-                            priority
-                            unoptimized
-                        />
-                    </div>
-                </motion.div>
-
-                {/* Badge - Minimalist & Elegant */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.8 }}
-                >
-                    <span className="inline-block px-5 py-2 border border-rove-charcoal/20 rounded-full text-[11px] font-heading font-semibold tracking-[0.25em] uppercase text-rove-charcoal/70 mb-8 select-none">
-                        Biology First
-                    </span>
-                </motion.div>
-
-                {/* Title - Serif Luxury */}
-                <motion.h1
-                    className="font-serif text-5xl md:text-7xl leading-[1.1] text-rove-charcoal mb-8 tracking-tight select-none"
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-                >
-                    You're not inconsistent. <br />
-                    <span className="text-rove-red italic">You're cyclical.</span>
-                </motion.h1>
-
-                {/* Text - Spaced & Clean */}
-                <motion.p
-                    className="text-lg md:text-xl text-rove-stone/90 max-w-xl mx-auto leading-relaxed mb-16 font-light tracking-wide select-none"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7, duration: 0.8 }}
-                >
-                    Stop forcing your 28-day biology into a 24-hour world.
-                    <br className="hidden md:block" />
-                    Rove decodes your hormones to give you the perfect diet, workout, and schedule for today.
-                </motion.p>
-
-                {/* Action Area - Glassmorphic or Solid Premium Button */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9, duration: 0.8 }}
-                    className="w-full flex flex-col items-center gap-5 min-h-[60px]"
-                >
-                    <div className="flex flex-col gap-4 w-full max-w-xs items-center">
-                        <Link href={isLoggedIn ? "/cycle-sync" : "/login"} className="w-full">
-                            <Button className="w-full h-16 rounded-full bg-rove-charcoal text-[#FDFBF7] text-lg font-medium hover:bg-rove-charcoal/85 hover:scale-[1.01] shadow-[0_20px_40px_-12px_rgba(45,36,32,0.3)] transition-all duration-500 ease-out">
-                                {isLoggedIn ? "Go to Dashboard" : "Begin Journey"}
-                            </Button>
-                        </Link>
-                    </div>
-                </motion.div>
-            </motion.div>
+          </div>
         </div>
-    );
+
+        <p className="mb-4 inline-flex items-center rounded-full border border-rove-charcoal/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-rove-charcoal/70">
+          Biology First
+        </p>
+
+        <h1 className="font-serif text-4xl leading-tight text-rove-charcoal md:text-6xl">
+          You are not inconsistent.
+          <br />
+          <span className="italic text-rose-600">You are cyclical.</span>
+        </h1>
+
+        <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-rove-stone md:text-base">
+          Rove translates your cycle into practical daily choices for meals, movement, and recovery.
+          Start with privacy-first onboarding and get a plan that adapts to your phase.
+        </p>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          {isLoggedIn ? (
+            <Link
+              href="/cycle-sync"
+              onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "dashboard" })}
+            >
+              <Button className="h-12 w-full rounded-full bg-rove-charcoal text-base font-semibold text-white hover:bg-rove-charcoal/90">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/signup"
+                onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "signup" })}
+              >
+                <Button className="h-12 w-full rounded-full bg-rove-charcoal text-base font-semibold text-white hover:bg-rove-charcoal/90">
+                  Sign Up
+                </Button>
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "login" })}
+              >
+                <Button
+                  variant="outline"
+                  className="h-12 w-full rounded-full border-rove-charcoal/30 bg-white text-base font-semibold text-rove-charcoal hover:bg-rose-50"
+                >
+                  Log In
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
 }

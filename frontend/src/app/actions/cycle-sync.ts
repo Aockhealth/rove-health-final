@@ -11,6 +11,7 @@ import {
     type SymptomTips
 } from "./ai-actions";
 import { calculatePhase as calculatePhaseCanonical, parseLocalDate, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+import { AIService } from "@/lib/ai/service";
 
 export interface AIContext {
     symptoms: string[];
@@ -51,6 +52,16 @@ function getRandomItems<T>(items: T[], count: number): T[] {
 }
 
 const LOG_WINDOW_DAYS = 90;
+const SYMPTOM_WINDOW_DAYS = 14;
+
+function extractRecentSymptoms(logs: Array<{ symptoms?: unknown }>): string[] {
+    const values = logs
+        .flatMap((log) => Array.isArray(log.symptoms) ? log.symptoms : [])
+        .filter((entry): entry is string => typeof entry === "string")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    return Array.from(new Set(values)).slice(0, 8);
+}
 
 
 // --- AUTO-SYNC HELPERS ---
@@ -126,110 +137,34 @@ async function syncPeriodStartFromLog(
 // --- AI ACTIONS ---
 
 /**
- * Generates a scientific and empathetic insight using Groq LLM (llama-3.3-70b-versatile).
+ * Generates a scientific and empathetic insight using the unified AIService (Gemini).
  */
 export async function generatePhaseAIInsight(
     phase: string,
     context: AIContext
 ) {
-    const apiKey = process.env.GROQ_API_KEY;
-
-    if (!apiKey) {
-        return null;
-    }
-
     const safeJoin = (arr?: string[]) =>
         Array.isArray(arr) && arr.length > 0 ? arr.join(", ") : "None";
 
-    // ✅ CHECK: Do we have symptoms logged for this phase?
-    const hasData = context.symptoms.length > 0;
-
-    let systemPrompt = "";
-    let userContextString = "";
-
-    if (hasData) {
-        // --- PERSONALIZED MODE (User has logs) ---
-        systemPrompt = `You are a compassionate women's health guide.
-Your goal is to help the user understand how their cycle phase explains their specific symptoms today.
-
-### HOW TO WRITE
-• Explain *why* they feel this way based on ${phase} hormones.
-• Use warm, reassuring language.
-• Avoid medical jargon where possible.
-• You may use the "Inner Seasons" metaphor gently as an analogy (e.g., "Menstrual Phase is like your 'Inner Winter' - a time to rest and reset").
-• Do NOT use the season name as the primary label; always link it back to the cycle phase.
-
-### OUTPUT FORMAT (JSON)
-{
-  "insight": "Two sentences explaining their specific symptoms based on the cycle phase.",
-  "moods": ["Emotion 1", "Emotion 2"],
-  "focus": ["Specific Action 1", "Specific Action 2", "Specific Action 3"]
-}`;
-
-        userContextString = `
-Cycle phase: ${phase}
-Body symptoms: ${safeJoin(context.symptoms)}
-Moods: ${safeJoin(context.moods)}
-Sleep: ${safeJoin(context.sleep)}
-    `.trim();
-
-    } else {
-        // --- EDUCATIONAL MODE (No logs yet) ---
-        systemPrompt = `You are a women's health educator.
-The user is in the ${phase} phase but has NOT logged any symptoms yet.
-
-Your goal:
-1. Describe what the ${phase} phase typically feels like (energy, hormones).
-2. Explicitly ask them to log their symptoms to get a personalized analysis.
-
-### OUTPUT FORMAT (JSON)
-{
-  "insight": "General description of the ${phase} phase. Ends with a sentence asking them to log data.",
-  "moods": ["Typical Phase Mood 1", "Typical Phase Mood 2"],
-  "focus": ["General Wellness Tip 1", "General Wellness Tip 2", "Log Your Symptoms"]
-}`;
-
-        userContextString = `Current Phase: ${phase}. No symptoms logged by user.`;
-    }
-
     try {
-        const response = await fetch(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    response_format: { type: "json_object" },
-                    temperature: 0.45,
-                    messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: userContextString },
-                    ],
-                }),
+        const response = await AIService.generate({
+            feature: "phase_insight",
+            variables: {
+                phase,
+                symptoms: safeJoin(context.symptoms),
+                moods: safeJoin(context.moods),
+                sleep: safeJoin(context.sleep),
             }
-        );
+        });
 
-        if (!response.ok) {
+        if (response.error || !response.data) {
+            console.error("[generatePhaseAIInsight] AIService Error:", response.error);
             return null;
         }
 
-        const data = await response.json();
-        const content = data?.choices?.[0]?.message?.content;
-
-        if (!content) return null;
-
-        try {
-            return JSON.parse(content);
-        } catch {
-            console.error("❌ Invalid JSON from AI:", content);
-            return null;
-        }
+        return response.data;
     } catch (error) {
-        console.error("Groq AI Error:", error);
+        console.error("[generatePhaseAIInsight] Unexpected Error:", error);
         return null;
     }
 }
@@ -304,7 +239,7 @@ export async function fetchDashboardData() {
     // ⚡ MEGA PARALLEL: Fetch ALL dashboard data in one trip
     const [profileResult, onboardingResult, settingsResult, logsResult, lifestyleResult] = await Promise.all([
         supabase.from("profiles").select("full_name").eq("id", user.id).single(),
-        supabase.from("user_onboarding").select("tracker_mode, dietary_preferences, metabolic_conditions").eq("user_id", user.id).single(),
+        supabase.from("user_onboarding").select("tracker_mode, goals, conditions").eq("user_id", user.id).single(),
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
         supabase.from("user_lifestyle").select("diet_preference").eq("user_id", user.id).maybeSingle()
@@ -508,7 +443,7 @@ export async function fetchCycleIntelligence() {
 
     const { data: onboarding } = await supabase
         .from("user_onboarding")
-        .select("tracker_mode, dietary_preferences, metabolic_conditions, date_of_birth, weight_kg, height_cm")
+        .select("tracker_mode, goals, conditions, date_of_birth, weight_kg, height_cm")
         .eq("user_id", user.id)
         .single();
 
@@ -637,16 +572,26 @@ export async function fetchCycleIntelligenceAI() {
 
     const { phase, day, nextPeriodDate, cycleLength, settings: cycleSettings } = cycleState;
 
-    // ✅ OPTIMIZED: Fetch 3 things in parallel instead of sequential
-    const [lifestyleResult, weightGoalResult, dietPlanResult] = await Promise.all([
+    const symptomSince = new Date();
+    symptomSince.setDate(symptomSince.getDate() - SYMPTOM_WINDOW_DAYS);
+
+    // Pull profile + recent symptom logs first, then feed symptoms into AI diet generation.
+    const [lifestyleResult, weightGoalResult, symptomLogResult] = await Promise.all([
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
         supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-        getDietPlan({ phase, symptoms: [] }).catch(() => null), // AI call with fallback
+        supabase
+            .from("daily_logs")
+            .select("symptoms,date")
+            .eq("user_id", user.id)
+            .gte("date", formatDate(symptomSince))
+            .order("date", { ascending: false })
+            .limit(SYMPTOM_WINDOW_DAYS)
     ]);
 
     const lifestyle = lifestyleResult.data;
     const weightGoal = weightGoalResult.data;
-    const dietPlan = dietPlanResult;
+    const recentSymptoms = extractRecentSymptoms((symptomLogResult.data || []) as Array<{ symptoms?: unknown }>);
+    const dietPlan = await getDietPlan({ phase, symptoms: recentSymptoms }).catch(() => null);
 
     // ✅ FETCH CONTENT FROM DB (phase_content table)
     const content = await getPhaseContentFromDB(phase);
@@ -790,7 +735,7 @@ export async function fetchPlanPageDataFast() {
         supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
         supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
         supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("user_onboarding").select("dietary_preferences").eq("user_id", user.id).maybeSingle()
+        supabase.from("user_onboarding").select("goals, conditions").eq("user_id", user.id).maybeSingle()
     ]);
 
     const settings = settingsResult.data;
@@ -845,9 +790,12 @@ export async function fetchPlanPageDataFast() {
         } : null,
 
         // Onboarding (Diet)
-        onboarding: onboarding ? {
-            dietary_preferences: onboarding.dietary_preferences
-        } : null,
+        onboarding: onboarding
+            ? {
+                goals: onboarding.goals || [],
+                conditions: onboarding.conditions || []
+            }
+            : null,
 
         // Weight goal data
         weightGoal: weightGoal ? {

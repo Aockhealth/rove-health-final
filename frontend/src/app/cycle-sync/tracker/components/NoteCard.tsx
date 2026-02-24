@@ -14,28 +14,28 @@ export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps)
 
   const themes: Record<string, any> = {
     "Menstrual": {
-      border: "border-phase-menstrual/20",
+      border: "border-phase-menstrual/30",
       shadow: "shadow-phase-menstrual/5",
       iconBg: "bg-phase-menstrual/10",
       iconColor: "text-phase-menstrual",
       inputBorder: "border-phase-menstrual/20 focus:ring-phase-menstrual/30"
     },
     "Follicular": {
-      border: "border-phase-follicular/20",
+      border: "border-phase-follicular/30",
       shadow: "shadow-phase-follicular/5",
       iconBg: "bg-phase-follicular/10",
       iconColor: "text-phase-follicular",
       inputBorder: "border-phase-follicular/20 focus:ring-phase-follicular/30"
     },
     "Ovulatory": {
-      border: "border-phase-ovulatory/20",
+      border: "border-phase-ovulatory/30",
       shadow: "shadow-phase-ovulatory/5",
       iconBg: "bg-phase-ovulatory/10",
       iconColor: "text-phase-ovulatory",
       inputBorder: "border-phase-ovulatory/20 focus:ring-phase-ovulatory/30"
     },
     "Luteal": {
-      border: "border-phase-luteal/20",
+      border: "border-phase-luteal/30",
       shadow: "shadow-phase-luteal/5",
       iconBg: "bg-phase-luteal/10",
       iconColor: "text-phase-luteal",
@@ -47,7 +47,7 @@ export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps)
 
   return (
     <div className={cn(
-      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all",
       theme.border,
       theme.shadow
     )}>

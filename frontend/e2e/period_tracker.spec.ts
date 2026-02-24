@@ -105,4 +105,125 @@ test.describe('Period Tracker E2E', () => {
 
         console.log('Test Passed: Full User Journey Completed successfully (Dashboard Reached).');
     });
+
+    test('Mobile tracker layout: no overflow, safe CTA, and usable period/discharge flows', async ({ page }) => {
+        test.setTimeout(90000);
+
+        await page.goto('/signup');
+        await page.waitForLoadState('networkidle');
+
+        const email = `mobile_tracker_${Date.now()}@rovetest.com`;
+        await page.getByPlaceholder('hello@rove.com').fill(email);
+        await page.getByPlaceholder('25').fill('25');
+        await page.getByPlaceholder('••••••••').first().fill('Password123!');
+        await page.getByPlaceholder('••••••••').nth(1).fill('Password123!');
+        await page.getByRole('button', { name: /Create Account/i }).click();
+
+        await expect(page).toHaveURL(/.*privacy-pledge/, { timeout: 15000 });
+        const agreeBtn = page.getByRole('button').filter({ hasText: /I Understand & Agree/ });
+        await expect(agreeBtn).toBeVisible();
+        await agreeBtn.click();
+
+        await expect(page).toHaveURL(/.*onboarding/, { timeout: 15000 });
+        await page.getByPlaceholder('Your Name').fill('MobileQA');
+        await page.getByRole('button').filter({ hasText: /Next|Continue/ }).first().click();
+        await page.waitForTimeout(700);
+        await page.getByRole('button').filter({ hasText: /Next|Continue/ }).first().click();
+        await page.waitForTimeout(700);
+        await page.getByRole('button').filter({ hasText: /Next|Continue/ }).first().click();
+        await page.waitForTimeout(700);
+        await page.getByRole('button').filter({ hasText: /Next|Continue/ }).first().click();
+        await page.waitForTimeout(700);
+        await page.getByRole('button').filter({ hasText: /Next|Continue/ }).first().click();
+        await page.waitForTimeout(700);
+
+        const cycleSyncGoal = page.getByText('Cycle Syncing').first();
+        if (await cycleSyncGoal.isVisible()) {
+            await cycleSyncGoal.click();
+        } else {
+            await page.locator('.grid > div').first().click();
+        }
+
+        await page.getByRole('button').filter({ hasText: /Finish|Complete/ }).first().click();
+        await expect(page).toHaveURL(/.*cycle-sync/, { timeout: 20000 });
+
+        await page.goto('/cycle-sync/tracker');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+
+        // Ensure period logging mode remains usable on mobile
+        const periodModeButton = page.getByRole('button', { name: /Log Period|Edit Period/i }).first();
+        await expect(periodModeButton).toBeVisible({ timeout: 10000 });
+        await periodModeButton.click();
+        await expect(page.getByRole('button', { name: /End Period Here/i })).toBeVisible();
+        await expect(page.getByRole('button', { name: /^Done$/i })).toBeVisible();
+
+        // Mark one day and save to unlock normal tracking mode for save/discharge assertions
+        const dayTenButton = page.getByRole('button', { name: /^10$/ }).first();
+        if (await dayTenButton.isVisible()) {
+            await dayTenButton.click();
+        } else {
+            await page.locator('.grid.grid-cols-7 button').first().click();
+        }
+        await page.getByRole('button', { name: /^Done$/i }).click();
+        await page.waitForTimeout(1500);
+
+        const saveButton = page.getByRole('button', { name: /Save Log|Saving/i }).first();
+        await expect(saveButton).toBeVisible({ timeout: 10000 });
+
+        // Verify discharge expanded mode is still usable on phone widths
+        const candidateDays = ['10', '7', '15', '18', '22'];
+        for (const day of candidateDays) {
+            const dayBtn = page.getByRole('button', { name: new RegExp(`^${day}$`) }).first();
+            if (await dayBtn.isVisible()) {
+                await dayBtn.click();
+                await page.waitForTimeout(200);
+            }
+            const expandDischarge = page.getByLabel('Expand Discharge').first();
+            if (await expandDischarge.isVisible()) {
+                await expandDischarge.click();
+                break;
+            }
+        }
+        await expect(page.getByRole('heading', { name: /Cervical Discharge/i })).toBeVisible({ timeout: 10000 });
+
+        const viewports = [
+            { width: 320, height: 568 },
+            { width: 375, height: 812 },
+            { width: 390, height: 844 },
+        ];
+
+        for (const viewport of viewports) {
+            await page.setViewportSize(viewport);
+            await page.waitForTimeout(300);
+
+            const hasHorizontalOverflow = await page.evaluate(() =>
+                document.documentElement.scrollWidth > document.documentElement.clientWidth
+            );
+            expect(hasHorizontalOverflow).toBeFalsy();
+
+            const weekHeaders = page.locator('text=/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)$/');
+            await expect(weekHeaders).toHaveCount(7);
+
+            const hasClippedWeekHeader = await weekHeaders.evaluateAll((els) =>
+                els.some((el) => {
+                    const rect = el.getBoundingClientRect();
+                    return rect.left < -0.5 || rect.right > window.innerWidth + 0.5;
+                })
+            );
+            expect(hasClippedWeekHeader).toBeFalsy();
+
+            const bottomNav = page.locator('nav:has-text("Home"):has-text("Tracker"):has-text("Insights")').first();
+            await expect(bottomNav).toBeVisible();
+            await expect(saveButton).toBeVisible();
+
+            const saveBox = await saveButton.boundingBox();
+            const navBox = await bottomNav.boundingBox();
+            expect(saveBox).not.toBeNull();
+            expect(navBox).not.toBeNull();
+            if (saveBox && navBox) {
+                expect(saveBox.y + saveBox.height).toBeLessThanOrEqual(navBox.y - 4);
+            }
+        }
+    });
 });

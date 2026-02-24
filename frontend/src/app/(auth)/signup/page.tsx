@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { signup } from "@backend/actions/auth/auth-actions";
+import { signup } from "../actions";
 import Link from "next/link";
-import Image from "next/image"; 
-import { Loader2, Mail, Calendar, Lock } from "lucide-react"; 
-import { useRouter } from "next/navigation"; 
-import { toast } from "sonner"; 
-import { signupSchema } from "@/lib/schemas"; 
+import Image from "next/image";
+import { Loader2, Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { signupSchema } from "@/lib/schemas";
+import { Button } from "@/components/ui/Button";
+import { motion } from "framer-motion";
 
 type FieldErrors = {
   [key: string]: string | undefined;
@@ -16,11 +18,11 @@ type FieldErrors = {
 export default function SignupPage() {
   const [isPending, startTransition] = useTransition();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  
+
   // 1. Add state to track password input
   const [password, setPassword] = useState("");
-  
-  const router = useRouter(); 
+
+  const router = useRouter();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,16 +46,16 @@ export default function SignupPage() {
     // 2. Server Action
     startTransition(async () => {
       try {
-        const response = await signup(formData); 
-        
+        const response = await signup(formData);
+
         if (response?.error) {
-            setFieldErrors({ server: response.error });
-            toast.error(response.error); 
-        } else if (response?.success) {
-            toast.success("Account created successfully!");
-            router.push("/privacy-pledge");
+          setFieldErrors({ server: response.error });
+          toast.error(response.error);
+        } else if (response?.ok) {
+          toast.success("Account created successfully!");
+          router.push(response.nextRoute || "/privacy-pledge");
         }
-      } catch (error) {
+      } catch {
         setFieldErrors({ server: "Something went wrong. Please try again." });
         toast.error("Something went wrong.");
       }
@@ -61,182 +63,166 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] px-4 py-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-rove-cream px-4 py-8 overflow-hidden grain-overlay">
 
-      {/* Card */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
+      {/* 🌸 BACKGROUND ANIMATION (Standardized) */}
+      <div className="blob-glow-red" />
+      <div className="blob-glow-peach" />
+
+      {/* Decorative Orbs */}
+      <div className="glass-orb glass-orb-3 animate-reverse" />
+      <div className="glass-orb glass-orb-2" />
+
+      {/* Glassmorphic Card */}
+      <div className="w-full max-w-md glass-panel p-8 md:p-10 relative z-20 transition-all hover:shadow-[0_20px_40px_-12px_rgba(45,36,32,0.1)] hover:-translate-y-1">
 
         {/* Header & Logo */}
         <div className="text-center mb-8">
-          {/* 👇 Reduced margin-bottom from mb-6 to mb-1 */}
           <div className="flex justify-center mb-1">
-            <div className="relative w-56 h-40 mix-blend-multiply">
-                <Image 
-                  src="/assets/rove_logo.png" 
-                  alt="Rove Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                  unoptimized 
-                />
+            <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 transition-transform hover:scale-105 duration-500 drop-shadow-sm">
+              <Image
+                src="/images/rove_icon_transparent.png"
+                alt="Rove Logo"
+                fill
+                className="object-contain"
+                priority
+                unoptimized
+              />
             </div>
           </div>
-          
-          {/* 👇 Updated Text to "Join ROVE" */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+
+          <h1 className="text-3xl font-heading text-rove-charcoal mb-2 tracking-tight">
             Join ROVE
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-rove-stone font-medium tracking-wide">
             Start your cycle-sync journey today
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={onSubmit} className="space-y-5" noValidate>
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
 
           {/* Email */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 block pl-1">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[0.2em] pl-1">
               Email
             </label>
             <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Mail size={18} />
-                </div>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="hello@rove.com"
-                  className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-rove-stone/60">
+                <Mail size={18} />
+              </div>
+              <input
+                name="email"
+                type="email"
+                placeholder="hello@rove.com"
+                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
                     ${fieldErrors.email
-                      ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                      : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
-                    }`}
-                />
+                    ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
+                    : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                  }`}
+              />
             </div>
             {fieldErrors.email && (
-              <p className="text-xs text-red-500 pl-1 font-medium">
+              <p className="text-xs text-red-500 pl-1 font-medium mt-1">
                 {fieldErrors.email}
               </p>
             )}
           </div>
 
-          {/* Age */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 block pl-1">
-              Age
-            </label>
-            <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Calendar size={18} />
-                </div>
-                <input
-                  name="age"
-                  type="number"
-                  placeholder="25"
-                  className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
-                    ${fieldErrors.age
-                      ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                      : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
-                    }`}
-                />
-            </div>
-            {fieldErrors.age ? (
-              <p className="text-xs text-red-500 pl-1 font-medium">
-                {fieldErrors.age}
-              </p>
-            ) : (
-                <p className="text-xs text-gray-400 pl-1">Must be 13+</p>
-            )}
-          </div>
-
           {/* Password */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 block pl-1">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[0.2em] pl-1">
               Password
             </label>
             <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Lock size={18} />
-                </div>
-                <input
-                  name="password"
-                  type="password"
-                  // 3. Controlled Input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-rove-stone/60">
+                <Lock size={18} />
+              </div>
+              <input
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
                     ${fieldErrors.password
-                      ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                      : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
-                    }`}
-                />
+                    ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
+                    : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                  }`}
+              />
             </div>
             {fieldErrors.password && (
-              <p className="text-xs text-red-500 pl-1 font-medium">
+              <p className="text-xs text-red-500 pl-1 font-medium mt-1">
                 {fieldErrors.password}
               </p>
             )}
           </div>
 
-          {/* 4. Conditional Rendering for Confirm Password */}
+          {/* Confirm Password */}
           {password.length > 0 && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="text-sm font-medium text-gray-700 block pl-1">
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="space-y-1.5 overflow-hidden"
+            >
+              <label className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[0.2em] pl-1">
                 Confirm Password
-                </label>
-                <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Lock size={18} />
-                    </div>
-                    <input
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
-                        ${fieldErrors.confirmPassword
-                        ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                        : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
-                        }`}
-                    />
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-rove-stone/60">
+                  <Lock size={18} />
                 </div>
-                {fieldErrors.confirmPassword && (
-                <p className="text-xs text-red-500 pl-1 font-medium">
-                    {fieldErrors.confirmPassword}
+                <input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
+                        ${fieldErrors.confirmPassword
+                      ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
+                      : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                    }`}
+                />
+              </div>
+              {fieldErrors.confirmPassword && (
+                <p className="text-xs text-red-500 pl-1 font-medium mt-1">
+                  {fieldErrors.confirmPassword}
                 </p>
-                )}
-            </div>
+              )}
+            </motion.div>
           )}
 
           {/* Server Error Message */}
           {fieldErrors.server && (
-            <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-3 rounded-2xl bg-red-50/80 backdrop-blur-sm text-red-600 text-sm font-medium border border-red-100 flex items-center justify-center text-center"
+            >
               {fieldErrors.server}
-            </div>
+            </motion.div>
           )}
 
           {/* Button */}
-          <button
+          <Button
             type="submit"
             disabled={isPending}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-rose-300 via-rose-100 to-rose-400 text-gray-900 font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+            className="w-full py-6 h-auto rounded-full bg-rove-charcoal text-rove-cream font-semibold text-lg shadow-[0_10px_20px_-5px_rgba(45,36,32,0.2)] hover:bg-rove-charcoal/90 hover:shadow-[0_15px_25px_-5px_rgba(45,36,32,0.3)] hover:scale-[1.01] transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
           >
             {isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" /> Creating Account...
-                </span>
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Creating Account...
+              </span>
             ) : "Create Account"}
-          </button>
+          </Button>
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mt-8 text-center text-sm">
+          <p className="text-rove-stone font-medium">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-rose-500 font-semibold hover:underline underline-offset-4"
+              className="text-rove-charcoal font-bold hover:underline underline-offset-4 decoration-rove-charcoal/30 transition-all"
             >
               Log in
             </Link>

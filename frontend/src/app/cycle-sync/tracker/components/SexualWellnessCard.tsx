@@ -39,7 +39,7 @@ export default function SexualWellnessCard({
 
     const themes: Record<string, any> = {
         "Menstrual": {
-            border: "border-phase-menstrual/20",
+            border: "border-phase-menstrual/30",
             shadow: "shadow-phase-menstrual/5",
             iconBg: "bg-phase-menstrual/10",
             iconColor: "text-phase-menstrual",
@@ -49,7 +49,7 @@ export default function SexualWellnessCard({
             activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
         },
         "Follicular": {
-            border: "border-phase-follicular/20",
+            border: "border-phase-follicular/30",
             shadow: "shadow-phase-follicular/5",
             iconBg: "bg-phase-follicular/10",
             iconColor: "text-phase-follicular",
@@ -59,7 +59,7 @@ export default function SexualWellnessCard({
             activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
         },
         "Ovulatory": {
-            border: "border-phase-ovulatory/20",
+            border: "border-phase-ovulatory/30",
             shadow: "shadow-phase-ovulatory/5",
             iconBg: "bg-phase-ovulatory/10",
             iconColor: "text-phase-ovulatory",
@@ -69,7 +69,7 @@ export default function SexualWellnessCard({
             activeBlue: "bg-blue-100 text-blue-800 border-blue-300 shadow-sm"
         },
         "Luteal": {
-            border: "border-phase-luteal/20",
+            border: "border-phase-luteal/30",
             shadow: "shadow-phase-luteal/5",
             iconBg: "bg-phase-luteal/10",
             iconColor: "text-phase-luteal",
@@ -84,7 +84,7 @@ export default function SexualWellnessCard({
 
     return (
         <div className={cn(
-            "bg-white/60 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl transition-all space-y-8",
+            "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-xl border transition-all space-y-6 sm:space-y-8",
             theme.border,
             theme.shadow
         )}>

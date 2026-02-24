@@ -44,7 +44,7 @@ export const OVULATION_PHASE_WINDOW = 1;
 
 // Fertility window: wider range for fertility tracking
 export const FERTILE_WINDOW_BEFORE = 5;  // Days before ovulation
-export const FERTILE_WINDOW_AFTER = 2;   // Days after ovulation
+export const FERTILE_WINDOW_AFTER = 1;   // Days after ovulation
 
 // ============================================================================
 // HELPERS

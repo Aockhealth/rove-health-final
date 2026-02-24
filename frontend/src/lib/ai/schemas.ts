@@ -17,16 +17,18 @@ export const ChefItemSchema = z.object({
     why: z.string()
 });
 
-export const ChefGutItemSchema = z.object({
+export const ChefSaladItemSchema = z.object({
     name: z.string(),
     description: z.string(),
+    ingredients: z.array(z.string()),
+    instructions: z.array(z.string()).optional(),
     why: z.string()
 });
 
 export const RoveChefProtocolSchema = z.object({
     snack: ChefItemSchema,
     smoothie: ChefItemSchema,
-    gut_sync: ChefGutItemSchema
+    salad: ChefSaladItemSchema
 });
 
 // ============================================

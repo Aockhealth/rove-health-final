@@ -29,7 +29,7 @@ export async function getUserProfile() {
 
     const goals = safeOnboarding.goals && Array.isArray(safeOnboarding.goals) && safeOnboarding.goals.length > 0
         ? safeOnboarding.goals
-        : (safeOnboarding.primary_goal ? safeOnboarding.primary_goal.split(", ") : []);
+        : [];
 
     return {
         ...safeOnboarding,

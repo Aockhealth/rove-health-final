@@ -168,7 +168,7 @@ export default function PlanSetupWizard({ open, currentWeight = 60 }: PlanSetupW
                                         onChange={(e) => setWeeklyRate(Number(e.target.value))}
                                         className="w-full accent-rove-charcoal h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer"
                                     />
-                                    <div className="flex justify-between text-[10px] uppercase font-bold text-rove-stone/40 mt-2">
+                                    <div className="flex justify-between text-[10px] uppercase font-bold text-rove-stone/60 mt-2">
                                         <span>Sustainable</span>
                                         <span>Aggressive</span>
                                     </div>

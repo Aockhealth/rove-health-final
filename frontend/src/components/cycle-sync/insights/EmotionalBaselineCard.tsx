@@ -18,31 +18,31 @@ type EmotionalBaselineCardProps = {
 const PHASES = ["Menstrual", "Follicular", "Ovulatory", "Luteal"] as const;
 
 const PHASE_BLOBS: Record<string, string> = {
-  Menstrual: "bg-rose-400",
-  Follicular: "bg-teal-400",
-  Ovulatory: "bg-amber-400",
-  Luteal: "bg-indigo-400",
+  Menstrual: "bg-phase-menstrual",
+  Follicular: "bg-phase-follicular",
+  Ovulatory: "bg-phase-ovulatory",
+  Luteal: "bg-phase-luteal",
 };
 
 const PHASE_STYLES: Record<string, string> = {
-  Menstrual: "bg-rose-100 text-rose-700 border-rose-200",
-  Follicular: "bg-teal-100 text-teal-700 border-teal-200",
-  Ovulatory: "bg-amber-100 text-amber-700 border-amber-200",
-  Luteal: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  Menstrual: "bg-phase-menstrual/15 text-phase-menstrual border-phase-menstrual/20",
+  Follicular: "bg-phase-follicular/15 text-phase-follicular border-phase-follicular/20",
+  Ovulatory: "bg-phase-ovulatory/15 text-phase-ovulatory border-phase-ovulatory/20",
+  Luteal: "bg-phase-luteal/15 text-phase-luteal border-phase-luteal/20",
 };
 
 const PHASE_GRADIENTS: Record<string, string> = {
-  Menstrual: "from-rose-50/40 to-rose-100/20",
-  Follicular: "from-teal-50/40 to-teal-100/20",
-  Ovulatory: "from-amber-50/40 to-amber-100/20",
-  Luteal: "from-indigo-50/40 to-indigo-100/20",
+  Menstrual: "from-phase-menstrual/5 to-phase-menstrual/3",
+  Follicular: "from-phase-follicular/5 to-phase-follicular/3",
+  Ovulatory: "from-phase-ovulatory/5 to-phase-ovulatory/3",
+  Luteal: "from-phase-luteal/5 to-phase-luteal/3",
 };
 
 const PHASE_GLOW: Record<string, string> = {
-  Menstrual: "bg-rose-200/30",
-  Follicular: "bg-teal-200/30",
-  Ovulatory: "bg-amber-200/30",
-  Luteal: "bg-indigo-200/30",
+  Menstrual: "bg-phase-menstrual/20",
+  Follicular: "bg-phase-follicular/20",
+  Ovulatory: "bg-phase-ovulatory/20",
+  Luteal: "bg-phase-luteal/20",
 };
 
 function TypingText({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -99,7 +99,7 @@ export function EmotionalBaselineCard({
   const hasData = data.title !== "No Data";
 
   return (
-    <div className="relative rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm mt-6 overflow-hidden">
+    <div className="relative bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border border-phase-ovulatory/30 transition-all mt-6 overflow-hidden">
 
       {/* Subtle background gradient */}
       <div className={cn(
@@ -116,14 +116,14 @@ export function EmotionalBaselineCard({
       {/* Header */}
       <div className="relative z-10 mb-6">
         <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shadow-sm">
-            <Activity className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-phase-ovulatory/20 to-phase-ovulatory/30 flex items-center justify-center shadow-sm">
+            <Activity className="w-4 h-4 text-phase-ovulatory" strokeWidth={2.5} />
           </div>
-          <h3 className="text-base font-heading font-bold text-gray-800 tracking-tight">
+          <h3 className="text-base font-heading font-bold text-rove-charcoal tracking-tight">
             Emotional Baseline
           </h3>
         </div>
-        <p className="text-xs text-gray-500 font-light ml-10">
+        <p className="text-xs text-rove-stone font-light ml-10">
           AI analysis of your mood patterns this month
         </p>
       </div>
@@ -141,7 +141,7 @@ export function EmotionalBaselineCard({
                 "relative px-4 py-2 rounded-full text-xs font-semibold transition-all border-2 shrink-0",
                 isActive
                   ? PHASE_STYLES[phase] + " shadow-md"
-                  : "bg-white border-stone-200 text-stone-500 hover:bg-stone-50 hover:border-stone-300"
+                  : "bg-white/60 border-white/40 text-rove-charcoal/60 hover:bg-white/80 hover:text-rove-charcoal/80 hover:border-rove-stone/30"
               )}
             >
               {phase}
@@ -179,18 +179,18 @@ export function EmotionalBaselineCard({
           <div className="relative">
             <h4 className={cn(
               "text-base font-heading font-bold mb-3 flex items-center gap-2",
-              hasData ? "text-gray-800" : "text-gray-300"
+              hasData ? "text-rove-charcoal" : "text-rove-stone/40"
             )}>
               {hasData ? <TypingText text={data.title} delay={200} /> : data.title}
               {hasData && (
-                <span className="text-xs font-normal text-gray-400 ml-auto">
+                <span className="text-xs font-normal text-rove-stone ml-auto">
                   {activePhase}
                 </span>
               )}
             </h4>
             <p className={cn(
               "text-sm leading-relaxed",
-              hasData ? "text-gray-700" : "text-gray-400 italic"
+              hasData ? "text-rove-charcoal/80" : "text-rove-stone italic"
             )}>
               {hasData ? <TypingText text={data.insight} delay={400} /> : data.insight}
             </p>
@@ -203,7 +203,7 @@ export function EmotionalBaselineCard({
         <div className="relative z-10 mt-5 pt-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse" />
-            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+            <span className="text-[10px] text-rove-stone/60 font-medium uppercase tracking-wider">
               Generated by Rove AI
             </span>
           </div>

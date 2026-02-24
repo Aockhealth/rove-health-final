@@ -31,7 +31,7 @@ function DailyFlowRiver({ data, theme }: { data: any, theme: any }) {
 
         }));
 
-    const dietPref = (data?.lifestyle?.diet_preference || data?.onboarding?.dietary_preferences || "").toLowerCase();
+    const dietPref = (data?.lifestyle?.diet_preference || "").toLowerCase();
     const isVeg = dietPref.includes("veg") && !dietPref.includes("non");
 
     const sanitize = (text: string) => {
@@ -552,7 +552,7 @@ export default function CycleSyncDashboard() {
                 <div className="relative z-10 p-4 md:p-8 space-y-6 md:space-y-8 pb-4 md:pb-32">
                     <div className="flex items-center justify-between mb-8 px-2">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/50 mb-0.5">ROVE</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/65 mb-0.5">ROVE</span>
                             <span className="font-heading text-2xl text-rove-charcoal">Hey, {user?.name?.split(" ")[0] || "Love"}</span>
                             <span className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
                         </div>
@@ -588,7 +588,7 @@ export default function CycleSyncDashboard() {
                 {/* NANO HEADER (Personalized) */}
                 <div className="flex items-center justify-between mb-8 px-2">
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/50 mb-0.5">ROVE</span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-rove-charcoal/65 mb-0.5">ROVE</span>
                         <span className="font-heading text-2xl text-rove-charcoal">Hey, {user?.name?.split(" ")[0] || "Love"}</span>
                         <span className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
                     </div>
@@ -789,7 +789,7 @@ export default function CycleSyncDashboard() {
                                                     <p className="text-lg md:text-xl font-heading font-semibold text-rove-charcoal leading-none mb-1">
                                                         {fertileStart && fertileEnd ? `${formatDate(fertileStart)} - ${formatDate(fertileEnd)}` : '--'}
                                                     </p>
-                                                    <p className="text-[9px] text-rove-stone/80 font-medium whitespace-nowrap">6-day window</p>
+                                                    <p className="text-[9px] text-rove-stone/80 font-medium leading-tight max-w-[90%]">Highest chance of pregnancy</p>
                                                 </motion.div>
                                             </Link>
                                         </>

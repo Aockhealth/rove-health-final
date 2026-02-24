@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "build": "next build",
+    "start": "next start",
     "prebuild": "cd ../backend && npm i",
-    "lint": "next lint",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "test:e2e": "playwright test",
     "test:simulation": "ts-node src/tests/comprehensive_cycle_logic_test.ts"
   },

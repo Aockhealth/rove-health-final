@@ -15,9 +15,9 @@ const PHASE_GUIDANCE: Record<string, {
   tips: string[];
 }> = {
   Menstrual: {
-    color: "text-rose-600",
-    bg: "bg-rose-50",
-    blob: "bg-rose-400",
+    color: "text-phase-menstrual",
+    bg: "bg-phase-menstrual/10",
+    blob: "bg-phase-menstrual",
     icon: Coffee,
     tips: [
       "Prioritize warmth and slow movement.",
@@ -26,9 +26,9 @@ const PHASE_GUIDANCE: Record<string, {
     ]
   },
   Follicular: {
-    color: "text-teal-600",
-    bg: "bg-teal-50",
-    blob: "bg-teal-400",
+    color: "text-phase-follicular",
+    bg: "bg-phase-follicular/10",
+    blob: "bg-phase-follicular",
     icon: Leaf,
     tips: [
       "Great time for creative projects.",
@@ -37,9 +37,9 @@ const PHASE_GUIDANCE: Record<string, {
     ]
   },
   Ovulatory: {
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    blob: "bg-amber-400",
+    color: "text-phase-ovulatory",
+    bg: "bg-phase-ovulatory/10",
+    blob: "bg-phase-ovulatory",
     icon: Sun,
     tips: [
       "High energy: Schedule social events.",
@@ -48,9 +48,9 @@ const PHASE_GUIDANCE: Record<string, {
     ]
   },
   Luteal: {
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
-    blob: "bg-indigo-400",
+    color: "text-phase-luteal",
+    bg: "bg-phase-luteal/10",
+    blob: "bg-phase-luteal",
     icon: Heart,
     tips: [
       "Magnesium helps with cravings.",
@@ -89,7 +89,10 @@ export function AiAnalysisCard({
   const GuidanceIcon = guidance.icon;
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm max-w-md mx-auto">
+    <div className={cn(
+      "relative overflow-hidden bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all max-w-md mx-auto",
+      theme?.border || "border-rove-stone/10"
+    )}>
 
       {/* Animated blob that changes color based on phase */}
       <div className={cn(
@@ -118,7 +121,7 @@ export function AiAnalysisCard({
 
       {/* SYMPTOM TILES */}
       <div className="mb-6 min-h-[140px] relative z-10">
-        <h4 className="font-heading text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 text-center">
+        <h4 className="font-heading text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-4 text-center">
           Top Symptoms in {selectedPhase}
         </h4>
 
@@ -138,15 +141,16 @@ export function AiAnalysisCard({
                 return (
                   <div
                     key={name}
-                    className="flex flex-col items-center bg-white border border-stone-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow group"
+                    className="flex flex-col items-center bg-white/60 border border-white/40 rounded-2xl p-3 shadow-sm hover:shadow-md transition-shadow group"
                   >
                     {/* LARGER ICON: 20px circle with 16px image */}
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-stone-50 to-stone-100/80 flex items-center justify-center mb-3 overflow-hidden relative border border-stone-100/50 shadow-sm group-hover:shadow-md transition-all">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rove-cream to-rove-stone/10 flex items-center justify-center mb-3 overflow-hidden relative border border-white/50 shadow-sm group-hover:shadow-md transition-all">
                       <div className="relative w-16 h-16">
                         <Image
                           src={`/assets/symptoms/${iconName}.png`}
                           alt={name}
                           fill
+                          sizes="64px"
                           className="object-contain opacity-90 group-hover:scale-110 transition-transform duration-300"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -178,7 +182,7 @@ export function AiAnalysisCard({
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center h-full py-6 text-center"
             >
-              <div className="w-14 h-14 rounded-full bg-stone-50 flex items-center justify-center mb-2">
+              <div className="w-14 h-14 rounded-full bg-rove-cream flex items-center justify-center mb-2">
                 <span className="text-2xl">📝</span>
               </div>
               <p className="text-sm text-rove-stone">

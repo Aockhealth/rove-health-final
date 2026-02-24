@@ -183,6 +183,45 @@ const FOODS_TO_AVOID: Record<string, string[]> = {
     'Luteal': ['Excess salt', 'Refined sugar', 'Alcohol', 'Caffeine'],
 };
 
+function stableHash(input: string): number {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+        hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+}
+
+function rotateArray<T>(items: T[], offset: number): T[] {
+    if (!items.length) return [];
+    const shift = ((offset % items.length) + items.length) % items.length;
+    return [...items.slice(shift), ...items.slice(0, shift)];
+}
+
+function buildRotatedFoodPlan(
+    phase: string,
+    dietType: string,
+    goal: string,
+    symptoms: string[],
+    foodPool: Array<{ category: string; examples: string[]; reason: string }>
+) {
+    if (!foodPool.length) return [];
+
+    const daySeed = new Date().toISOString().slice(0, 10); // Daily rotation to avoid repetitive outputs.
+    const symptomSeed = [...symptoms].sort().join("|");
+    const seed = stableHash(`${phase}|${dietType}|${goal}|${symptomSeed}|${daySeed}`);
+
+    const rotatedCategories = rotateArray(foodPool, seed);
+    const targetCount = Math.min(3, rotatedCategories.length);
+
+    return rotatedCategories.slice(0, targetCount).map((item, index) => {
+        const rotatedExamples = rotateArray(item.examples, seed + index).slice(0, Math.min(3, item.examples.length));
+        return {
+            ...item,
+            examples: rotatedExamples
+        };
+    });
+}
+
 // Calculate BMR using Mifflin-St Jeor equation (female)
 function calculateBMR(weight: number, height: number, age: number): number {
     return (10 * weight) + (6.25 * height) - (5 * age) - 161;
@@ -299,8 +338,15 @@ serve(async (req: Request) => {
 
         // 7. Get recommended foods
         const normalizedDietType = dietType?.toLowerCase().replace('-', '_') || 'vegetarian';
-        const recommendedFoods = PHASE_FOODS[phase]?.[normalizedDietType] ||
+        const recommendedFoodsPool = PHASE_FOODS[phase]?.[normalizedDietType] ||
             PHASE_FOODS[phase]?.['vegetarian'] || [];
+        const recommendedFoods = buildRotatedFoodPlan(
+            phase,
+            normalizedDietType,
+            goal,
+            symptoms,
+            recommendedFoodsPool
+        );
 
         // 8. Calculate hydration goal (30-35ml per kg)
         const hydrationGoalLiters = Math.round((weight * 0.033) * 10) / 10;

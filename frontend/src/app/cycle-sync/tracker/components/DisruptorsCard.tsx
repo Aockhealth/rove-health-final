@@ -27,7 +27,7 @@ export default function DisruptorsCard({
 
   const themes: Record<string, any> = {
     "Menstrual": {
-      border: "border-phase-menstrual/20",
+      border: "border-phase-menstrual/30",
       shadow: "shadow-phase-menstrual/5",
       iconBg: "bg-phase-menstrual/10",
       iconColor: "text-phase-menstrual",
@@ -35,7 +35,7 @@ export default function DisruptorsCard({
       inactive: "bg-white text-gray-600 border-phase-menstrual/20 hover:bg-phase-menstrual/5"
     },
     "Follicular": {
-      border: "border-phase-follicular/20",
+      border: "border-phase-follicular/30",
       shadow: "shadow-phase-follicular/5",
       iconBg: "bg-phase-follicular/10",
       iconColor: "text-phase-follicular",
@@ -43,7 +43,7 @@ export default function DisruptorsCard({
       inactive: "bg-white text-gray-600 border-phase-follicular/20 hover:bg-phase-follicular/5"
     },
     "Ovulatory": {
-      border: "border-phase-ovulatory/20",
+      border: "border-phase-ovulatory/30",
       shadow: "shadow-phase-ovulatory/5",
       iconBg: "bg-phase-ovulatory/10",
       iconColor: "text-phase-ovulatory",
@@ -51,7 +51,7 @@ export default function DisruptorsCard({
       inactive: "bg-white text-gray-600 border-phase-ovulatory/20 hover:bg-phase-ovulatory/5"
     },
     "Luteal": {
-      border: "border-phase-luteal/20",
+      border: "border-phase-luteal/30",
       shadow: "shadow-phase-luteal/5",
       iconBg: "bg-phase-luteal/10",
       iconColor: "text-phase-luteal",
@@ -64,7 +64,7 @@ export default function DisruptorsCard({
 
   return (
     <div className={cn(
-      "bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl transition-all",
+      "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all",
       theme.border,
       theme.shadow
     )}>
