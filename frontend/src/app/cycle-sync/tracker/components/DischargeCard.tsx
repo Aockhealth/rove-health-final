@@ -42,53 +42,17 @@ export default function DischargeCard({
             (mpiqSensation ? 33.3 : 0)) *
         1;
 
-    // Organic Chromatics Styling
-    const phase = currentPhase || "Menstrual";
-
-    const themes: Record<string, any> = {
-        "Menstrual": {
-            border: "border-phase-menstrual/30",
-            shadow: "shadow-phase-menstrual/5",
-            iconBg: "bg-phase-menstrual/10",
-            iconColor: "text-phase-menstrual",
-            active: "bg-phase-menstrual/10 border-phase-menstrual/30 shadow-sm",
-            inactive: "bg-white border-gray-100 hover:bg-phase-menstrual/5",
-            waveFrom: "from-phase-menstrual/30",
-            waveTo: "to-phase-menstrual"
-        },
-        "Follicular": {
-            border: "border-phase-follicular/30",
-            shadow: "shadow-phase-follicular/5",
-            iconBg: "bg-phase-follicular/10",
-            iconColor: "text-phase-follicular",
-            active: "bg-phase-follicular/10 border-phase-follicular/30 shadow-sm",
-            inactive: "bg-white border-gray-100 hover:bg-phase-follicular/5",
-            waveFrom: "from-phase-follicular/30",
-            waveTo: "to-phase-follicular"
-        },
-        "Ovulatory": {
-            border: "border-phase-ovulatory/30",
-            shadow: "shadow-phase-ovulatory/5",
-            iconBg: "bg-phase-ovulatory/10",
-            iconColor: "text-phase-ovulatory",
-            active: "bg-phase-ovulatory/10 border-phase-ovulatory/30 shadow-sm",
-            inactive: "bg-white border-gray-100 hover:bg-phase-ovulatory/5",
-            waveFrom: "from-phase-ovulatory/30",
-            waveTo: "to-phase-ovulatory"
-        },
-        "Luteal": {
-            border: "border-phase-luteal/30",
-            shadow: "shadow-phase-luteal/5",
-            iconBg: "bg-phase-luteal/10",
-            iconColor: "text-phase-luteal",
-            active: "bg-phase-luteal/10 border-phase-luteal/30 shadow-sm",
-            inactive: "bg-white border-gray-100 hover:bg-phase-luteal/5",
-            waveFrom: "from-phase-luteal/30",
-            waveTo: "to-phase-luteal"
-        }
+    // Category color: Discharge → Soft Blue
+    const theme = {
+        border: "border-[#7CB9E8]/30",
+        shadow: "shadow-[#7CB9E8]/5",
+        iconBg: "bg-[#7CB9E8]/10",
+        iconColor: "text-[#7CB9E8]",
+        active: "bg-[#7CB9E8]/10 border-[#7CB9E8]/40 shadow-sm",
+        inactive: "bg-white border-gray-100 hover:bg-[#7CB9E8]/5",
+        waveFrom: "from-[#7CB9E8]/30",
+        waveTo: "to-[#7CB9E8]"
     };
-
-    const theme = themes[phase] || themes["Menstrual"];
 
     return (
         <div
