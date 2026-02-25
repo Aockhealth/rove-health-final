@@ -123,6 +123,15 @@ export default function TrackerPageRedesigned() {
 
                     // Set all month logs at once (no need for 3 separate fetches)
                     setMonthLogs(data.monthLogs);
+
+                    // Mark current/prev/next months as already loaded so the
+                    // [currentMonth] effect doesn't redundantly re-fetch them
+                    const now = new Date();
+                    for (let offset = -1; offset <= 1; offset++) {
+                        const m = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                        loadedMonthsRef.current.add(`${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`);
+                    }
+
                     setIsSettingsLoaded(true);
                     setIsLogsLoaded(true);
                 } else {
@@ -147,6 +156,10 @@ export default function TrackerPageRedesigned() {
 
     // Fetch month logs when navigating months (only for months not already loaded)
     useEffect(() => {
+        // Don't fire until the initial fast-load has completed,
+        // otherwise we redundantly re-fetch the same data on mount
+        if (!isSettingsLoaded) return;
+
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -197,7 +210,7 @@ export default function TrackerPageRedesigned() {
         loadMonthLogs();
 
         return () => { isMounted = false; };
-    }, [currentMonth]);
+    }, [currentMonth, isSettingsLoaded]);
 
     // ⚡ INSTANT: Load selected date log from cache (no API call)
     useEffect(() => {
