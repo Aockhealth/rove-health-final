@@ -9,7 +9,7 @@ import {
     formatDate
 } from "../../../../../shared/cycle/smart-phase";
 
-const LOG_WINDOW_DAYS = 90;
+const LOG_WINDOW_DAYS = 30; // Using 30 days (Monthly) as you requested
 
 // ==========================================================
 // FETCH INSIGHTS DATA (Main Function)
@@ -22,11 +22,11 @@ export async function fetchInsightsData() {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
 
-    // ✅ OPTIMIZED: Parallel fetch of cycleSettings and logs
+    // ✅ FIXED: Added `exercise_minutes` to the query
     const [cycleSettingsResult, logsResult] = await Promise.all([
         supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
         supabase.from("daily_logs")
-            .select("date, is_period, symptoms, moods, sleep_quality, disruptors, exercise_types, water_intake, notes")
+            .select("date, is_period, symptoms, moods, sleep_quality, sleep_minutes, water_intake, disruptors, exercise_types, exercise_minutes, notes")
             .eq("user_id", user.id)
             .gte("date", pastDate.toISOString().split('T')[0])
             .order('date', { ascending: false })
@@ -45,15 +45,6 @@ export async function fetchInsightsData() {
     const moodsByPhase: Record<string, Record<string, number>> = {
         "Menstrual": {}, "Follicular": {}, "Ovulatory": {}, "Luteal": {}
     };
-    const exerciseByPhase: Record<string, Record<string, number>> = {
-        "Menstrual": {}, "Follicular": {}, "Ovulatory": {}, "Luteal": {}
-    };
-    const hydrationByPhase: Record<string, { total: number, days: number }> = {
-        "Menstrual": { total: 0, days: 0 },
-        "Follicular": { total: 0, days: 0 },
-        "Ovulatory": { total: 0, days: 0 },
-        "Luteal": { total: 0, days: 0 }
-    };
 
     // Aggregation Sets
     const allSymptoms = new Set<string>();
@@ -62,6 +53,17 @@ export async function fetchInsightsData() {
     const allDisruptors = new Set<string>();
     const allExercise = new Set<string>();
     let mostRecentNote = "";
+
+    // Math accumulators for Wellness Averages
+    let totalWater = 0;
+    let waterLogCount = 0;
+    let totalSleepHours = 0;
+    let sleepLogCount = 0;
+    // ✅ NEW accumulators for Average Exercise Minutes
+    let totalExerciseMinutes = 0;
+    let exerciseLogCount = 0;
+    
+    const totalLogs = logs ? logs.length : 0;
 
     // Build logMap first so we can use it for smart phase calculation
     const logMap: Record<string, any> = {};
@@ -83,11 +85,25 @@ export async function fetchInsightsData() {
         if (noteLog) mostRecentNote = noteLog.notes;
 
         logs.forEach((log: any) => {
-            // ✅ FIXED: Using canonical calculatePhase to respect manual period logs + no-data
             const phaseResult = calculatePhase(parseLocalDate(log.date), settings, logMap);
             const phase = phaseResult.phase;
 
             if (phase && phaseCounts[phase] !== undefined) phaseCounts[phase] += 1;
+
+            // ✅ FIXED: Wellness Averages Logic
+            if (log.water_intake && log.water_intake > 0) {
+                totalWater += Number(log.water_intake);
+                waterLogCount++;
+            }
+            if (log.sleep_minutes && log.sleep_minutes > 0) {
+                totalSleepHours += (Number(log.sleep_minutes) / 60); // Convert minutes to hours
+                sleepLogCount++;
+            }
+            // ✅ NEW: Summing up exercise minutes
+            if (log.exercise_minutes && log.exercise_minutes > 0) {
+                totalExerciseMinutes += Number(log.exercise_minutes);
+                exerciseLogCount++;
+            }
 
             // Always collect aggregated tags
             log.symptoms?.forEach((s: string) => {
@@ -103,15 +119,7 @@ export async function fetchInsightsData() {
             // Collect all tags found in logs
             log.sleep_quality?.forEach((s: string) => allSleep.add(s));
             log.disruptors?.forEach((d: string) => allDisruptors.add(d));
-            log.exercise_types?.forEach((e: string) => {
-                allExercise.add(e);
-                if (phase) exerciseByPhase[phase][e] = (exerciseByPhase[phase][e] || 0) + 1;
-            });
-
-            if (log.water_intake && phase) {
-                hydrationByPhase[phase].total += log.water_intake;
-                hydrationByPhase[phase].days += 1;
-            }
+            log.exercise_types?.forEach((e: string) => allExercise.add(e));
         });
     }
 
@@ -143,7 +151,7 @@ export async function fetchInsightsData() {
     // Generate tips from PHASE_CONTENT
     const tipsByPhase: Record<string, string[]> = {};
     phases.forEach(p => {
-        const content = PHASE_CONTENT[p]; // Ensure strict indexing or define Type for PHASE_CONTENT keys
+        const content = PHASE_CONTENT[p as keyof typeof PHASE_CONTENT]; 
         if (content) {
             tipsByPhase[p] = content.plan?.hormones?.symptoms || [];
         }
@@ -186,15 +194,17 @@ export async function fetchInsightsData() {
             nextPeriodDate,
             isIrregular: cycleSettings.is_irregular
         },
+        // ✅ NEW: Corrected averages (using exerciseMinutes instead of activeRate)
+        wellnessAverages: {
+            water: waterLogCount > 0 ? Math.round(totalWater / waterLogCount) : 0,
+            sleep: sleepLogCount > 0 ? (totalSleepHours / sleepLogCount).toFixed(1) : 0,
+            exerciseMinutes: exerciseLogCount > 0 ? Math.round(totalExerciseMinutes / exerciseLogCount) : 0
+        },
         phaseCounts,
         symptomsByPhase,
-        moodsByPhase,
-        exerciseByPhase,
-        hydrationByPhase,
         tipsByPhase,
         emotionalBaselines,
-        // Return full context objects for the UI or AI to use
-        symptoms: Array.from(allSymptoms).map(name => ({ name, count: 1 })), // Simplified count for now
+        symptoms: Array.from(allSymptoms).map(name => ({ name, count: 1 })),
         aggregatedData: {
             moods: Array.from(allMoods),
             sleep: Array.from(allSleep),

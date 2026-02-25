@@ -171,11 +171,12 @@ function SectionHeader({ title, icon: Icon }: { title: string; icon: any }) {
     );
 }
 
-function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+function Card({ children, className, style }: { children: React.ReactNode; className?: string; style?: any }) {
     return (
         <motion.div
             variants={STAGGER_ITEM}
             className={cn("p-4 rounded-2xl bg-white/80 backdrop-blur border border-gray-100/80 shadow-sm", className)}
+            style={style}
         >
             {children}
         </motion.div>

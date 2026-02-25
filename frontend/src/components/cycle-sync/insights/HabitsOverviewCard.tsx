@@ -1,21 +1,19 @@
 "use client";
 
-import { Droplet, Dumbbell, Smile, Sparkles } from "lucide-react";
+import { Droplet, Dumbbell, Moon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HabitsOverviewCardProps {
-    moodsByPhase: Record<string, Record<string, number>>;
-    exerciseByPhase: Record<string, Record<string, number>>;
-    hydrationByPhase: Record<string, { total: number; days: number }>;
-    phase: string;
+    wellnessAverages?: {
+        water: number;
+        sleep: string | number;
+        exerciseMinutes: number; // ✅ Updated from activeRate to exerciseMinutes
+    };
     theme: any;
 }
 
 export function HabitsOverviewCard({
-    moodsByPhase,
-    exerciseByPhase,
-    hydrationByPhase,
-    phase,
+    wellnessAverages,
     theme,
 }: HabitsOverviewCardProps) {
     const safeTheme = theme || {
@@ -25,25 +23,10 @@ export function HabitsOverviewCard({
         blob: "bg-rove-stone/20",
     };
 
-    // 1. Process Moods
-    const currentMoods = moodsByPhase?.[phase] || {};
-    const topMoods = Object.entries(currentMoods)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 2)
-        .map(([mood]) => mood);
-
-    // 2. Process Exercise
-    const currentExercises = exerciseByPhase?.[phase] || {};
-    const topExercises = Object.entries(currentExercises)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 2)
-        .map(([exercise]) => exercise);
-
-    // 3. Process Hydration
-    const hydrationData = hydrationByPhase?.[phase] || { total: 0, days: 0 };
-    const avgHydration = hydrationData.days > 0
-        ? Math.round(hydrationData.total / hydrationData.days)
-        : 0;
+    // Extract averages from backend data (fallback to 0)
+    const avgSleep = Number(wellnessAverages?.sleep || 0);
+    const avgExercise = wellnessAverages?.exerciseMinutes || 0; // ✅ Extracting the new minutes variable
+    const avgHydration = wellnessAverages?.water || 0;
 
     return (
         <div className={cn(
@@ -70,23 +53,24 @@ export function HabitsOverviewCard({
             <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-4">
                     <Sparkles className={cn("w-4 h-4", safeTheme.color)} />
-                    <h3 className="font-heading text-lg text-rove-charcoal">Phase Habits</h3>
+                    <h3 className="font-heading text-lg text-rove-charcoal">30-Day Habits</h3>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {/* Mood Row */}
+                    {/* Sleep Row */}
                     <div className="flex items-center justify-between p-3 bg-white/50 rounded-2xl border border-white/60 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className={cn("p-2 rounded-xl bg-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)]", safeTheme.color)}>
-                                <Smile className="w-4 h-4" />
+                                <Moon className="w-4 h-4" />
                             </div>
-                            <span className="text-sm font-medium text-rove-charcoal">Top Moods</span>
+                            <span className="text-sm font-medium text-rove-charcoal">Avg Sleep</span>
                         </div>
-                        <div className="text-right">
-                            {topMoods.length > 0 ? (
-                                <span className="text-xs font-semibold text-rove-stone capitalize">
-                                    {topMoods.join(", ")}
-                                </span>
+                        <div className="text-right flex items-baseline gap-1">
+                            {avgSleep > 0 ? (
+                                <>
+                                    <span className="font-heading text-lg font-medium text-rove-charcoal">{avgSleep}</span>
+                                    <span className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">hrs</span>
+                                </>
                             ) : (
                                 <span className="text-[10px] text-rove-stone/60 uppercase tracking-wider font-bold">No Data</span>
                             )}
@@ -99,13 +83,14 @@ export function HabitsOverviewCard({
                             <div className={cn("p-2 rounded-xl bg-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)]", safeTheme.color)}>
                                 <Dumbbell className="w-4 h-4" />
                             </div>
-                            <span className="text-sm font-medium text-rove-charcoal">Top Workouts</span>
+                            <span className="text-sm font-medium text-rove-charcoal">Avg Workout</span>
                         </div>
-                        <div className="text-right">
-                            {topExercises.length > 0 ? (
-                                <span className="text-xs font-semibold text-rove-stone capitalize">
-                                    {topExercises.join(", ").replace(/[(].*?[)]/g, "").trim() /* remove parentheses content from logs if any */}
-                                </span>
+                        <div className="text-right flex items-baseline gap-1">
+                            {avgExercise > 0 ? (
+                                <>
+                                    <span className="font-heading text-lg font-medium text-rove-charcoal">{avgExercise}</span>
+                                    <span className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">mins</span>
+                                </>
                             ) : (
                                 <span className="text-[10px] text-rove-stone/60 uppercase tracking-wider font-bold">No Data</span>
                             )}
