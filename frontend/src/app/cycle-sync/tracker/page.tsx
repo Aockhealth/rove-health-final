@@ -68,7 +68,7 @@ export default function TrackerPageRedesigned() {
 
     // Period logging mode (circle calendar toggles only when this is true)
     const [isPeriodLoggingMode, setIsPeriodLoggingMode] = useState(false);
-    const [pendingPeriodChanges, setPendingPeriodChanges] = useState<Set<string>>(new Set());
+    const [pendingPeriodChanges, setPendingPeriodChanges] = useState<Map<string, boolean>>(new Map());
 
     const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -392,6 +392,43 @@ export default function TrackerPageRedesigned() {
                 return;
             }
 
+            // If we logged a period, ensure the latest start anchor is updated
+            if (finalIsPeriod) {
+                const mergedLogs = { ...monthLogs, [dateStr]: { ...monthLogs[dateStr], is_period: true, date: dateStr } };
+                const allPeriodDates = Object.keys(mergedLogs)
+                    .filter((d) => mergedLogs[d]?.is_period === true)
+                    .sort((a, b) => b.localeCompare(a));
+
+                if (allPeriodDates.length > 0) {
+                    const mostRecentPeriodDay = allPeriodDates[0];
+                    let streakStart = mostRecentPeriodDay;
+                    const allPeriodSet = new Set(allPeriodDates);
+                    const cur = new Date(mostRecentPeriodDay);
+                    while (true) {
+                        cur.setDate(cur.getDate() - 1);
+                        const prevStr = formatDate(cur);
+                        if (allPeriodSet.has(prevStr)) {
+                            streakStart = prevStr;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
+                        const updateResult = await updateLastPeriodDate(streakStart);
+                        if (updateResult.success) {
+                            const freshSettings = await fetchUserCycleSettings();
+                            if (freshSettings) {
+                                setCycleSettings({
+                                    last_period_start: freshSettings.last_period_start,
+                                    cycle_length_days: freshSettings.cycle_length_days || 28,
+                                    period_length_days: freshSettings.period_length_days || 5,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
             toast.success("Entry Saved!", { description: "Your daily log has been updated.", duration: 3000 });
 
             // Refresh logs
@@ -413,27 +450,32 @@ export default function TrackerPageRedesigned() {
             const results = await Promise.all(promises);
             const allRefreshedLogs = results.flat();
 
-            const logMap: Record<string, any> = {};
-            allRefreshedLogs.forEach((l: any) => {
-                logMap[l.date] = l;
+            setMonthLogs(prev => {
+                const updated = { ...prev };
+                allRefreshedLogs.forEach((l: any) => { updated[l.date] = l; });
+                return updated;
             });
-            setMonthLogs(logMap);
+            loadedMonthsRef.current.clear();
         });
     };
 
     const handleTogglePeriodDate = (dateStr: string) => {
         const isCurrentlyLogged = monthLogs[dateStr]?.is_period === true;
-        const isPendingLocal = pendingPeriodChanges.has(dateStr);
 
         setPendingPeriodChanges((prev) => {
-            const next = new Set(prev);
-            if (next.has(dateStr)) next.delete(dateStr);
-            else next.add(dateStr);
+            const next = new Map(prev);
+            if (next.has(dateStr)) {
+                next.delete(dateStr); // Undo the pending change
+            } else {
+                next.set(dateStr, !isCurrentlyLogged); // Track intended state
+            }
             return next;
         });
 
         setMonthLogs((prev) => {
-            const newPeriodState = isPendingLocal ? isCurrentlyLogged : !isCurrentlyLogged;
+            const pendingValue = pendingPeriodChanges.get(dateStr);
+            // If already pending, revert to original; otherwise toggle
+            const newPeriodState = pendingValue !== undefined ? isCurrentlyLogged : !isCurrentlyLogged;
             return {
                 ...prev,
                 [dateStr]: {
@@ -452,14 +494,12 @@ export default function TrackerPageRedesigned() {
 
         startTransition(async () => {
             try {
-                const updates = Array.from(pendingPeriodChanges).map(async (dateStr) => {
-                    const isCurrentlyLogged = monthLogs[dateStr]?.is_period === true;
-
+                const updates = Array.from(pendingPeriodChanges.entries()).map(async ([dateStr, isPeriod]) => {
                     return logDailySymptoms({
                         date: dateStr,
                         symptoms: monthLogs[dateStr]?.symptoms || [],
-                        isPeriod: isCurrentlyLogged,
-                        flowIntensity: isCurrentlyLogged ? (monthLogs[dateStr]?.flow_intensity || "Normal") : undefined,
+                        isPeriod: isPeriod,
+                        flowIntensity: isPeriod ? (monthLogs[dateStr]?.flow_intensity || "Normal") : undefined,
                         moods: monthLogs[dateStr]?.moods || [],
                         notes: monthLogs[dateStr]?.notes || "",
                         cervicalDischarge: monthLogs[dateStr]?.cervical_discharge || undefined,
@@ -479,9 +519,15 @@ export default function TrackerPageRedesigned() {
                 await Promise.all(updates);
 
                 // Update last period start from MOST RECENT period streak start
+                // First, merge pending changes into a local logs object so we have the absolute latest state
+                const mergedLogs = { ...monthLogs };
+                pendingPeriodChanges.forEach((isPeriod, dateStr) => {
+                    mergedLogs[dateStr] = { ...mergedLogs[dateStr], is_period: isPeriod, date: dateStr };
+                });
+
                 // Sort all period dates in descending order (most recent first)
-                const allPeriodDates = Object.keys(monthLogs)
-                    .filter((d) => monthLogs[d]?.is_period === true)
+                const allPeriodDates = Object.keys(mergedLogs)
+                    .filter((d) => mergedLogs[d]?.is_period === true)
                     .sort((a, b) => b.localeCompare(a)); // Descending order
 
                 if (allPeriodDates.length > 0) {
@@ -504,11 +550,54 @@ export default function TrackerPageRedesigned() {
                         }
                     }
 
-                    const updateResult = await updateLastPeriodDate(streakStart);
+                    // Only update last_period_start if this streak is MORE RECENT
+                    // than the current setting. This prevents editing old months
+                    // (e.g., Nov) from overwriting the actual latest period (e.g., Feb).
+                    if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
+                        // Clear stale is_period:false entries that fall within the NEW period window.
+                        // These are left over from a previous "End Period Here" action and would
+                        // override the phase calculator's menstrual prediction for the new cycle.
+                        const periodLen = cycleSettings.period_length_days || 5;
+                        const clearStart = new Date(streakStart);
+                        const staleClearPromises: Promise<any>[] = [];
+                        for (let d = 0; d < periodLen; d++) {
+                            const clearDate = new Date(clearStart);
+                            clearDate.setDate(clearStart.getDate() + d);
+                            const clearStr = formatDate(clearDate);
+                            // Clear entries that are explicitly false AND were not touched in this session
+                            if (monthLogs[clearStr]?.is_period === false && !pendingPeriodChanges.has(clearStr)) {
+                                staleClearPromises.push(
+                                    logDailySymptoms({
+                                        date: clearStr,
+                                        symptoms: monthLogs[clearStr]?.symptoms || [],
+                                        isPeriod: null, // Clear the explicit override
+                                        moods: monthLogs[clearStr]?.moods || [],
+                                        notes: monthLogs[clearStr]?.notes || "",
+                                        cervicalDischarge: monthLogs[clearStr]?.cervical_discharge || undefined,
+                                        exerciseTypes: monthLogs[clearStr]?.exercise_types || [],
+                                        exerciseMinutes: monthLogs[clearStr]?.exercise_minutes || null,
+                                        waterIntake: monthLogs[clearStr]?.water_intake || 0,
+                                        selfLoveTags: monthLogs[clearStr]?.self_love_tags || [],
+                                        selfLoveOther: monthLogs[clearStr]?.self_love_other || "",
+                                        sleepQuality: monthLogs[clearStr]?.sleep_quality || [],
+                                        sleepMinutes: monthLogs[clearStr]?.sleep_minutes || null,
+                                        disruptors: monthLogs[clearStr]?.disruptors || [],
+                                        sexActivity: monthLogs[clearStr]?.sex_activity || [],
+                                        contraception: monthLogs[clearStr]?.contraception || [],
+                                    })
+                                );
+                            }
+                        }
+                        if (staleClearPromises.length > 0) {
+                            await Promise.all(staleClearPromises);
+                        }
 
-                    if (!updateResult.success) {
-                        console.error("❌ Failed to update last_period_start:", updateResult.error);
-                        toast.error("Failed to sync period date", { description: updateResult.error });
+                        const updateResult = await updateLastPeriodDate(streakStart);
+
+                        if (!updateResult.success) {
+                            console.error("❌ Failed to update last_period_start:", updateResult.error);
+                            toast.error("Failed to sync period date", { description: updateResult.error });
+                        }
                     }
 
                     const freshSettings = await fetchUserCycleSettings();
@@ -540,13 +629,14 @@ export default function TrackerPageRedesigned() {
                 const results = await Promise.all(promises);
                 const allLogs = results.flat();
 
-                const logMap: Record<string, any> = {};
-                allLogs.forEach((l: any) => {
-                    logMap[l.date] = l;
+                setMonthLogs(prev => {
+                    const updated = { ...prev };
+                    allLogs.forEach((l: any) => { updated[l.date] = l; });
+                    return updated;
                 });
-                setMonthLogs(logMap);
+                loadedMonthsRef.current.clear();
 
-                setPendingPeriodChanges(new Set());
+                setPendingPeriodChanges(new Map());
                 setIsPeriodLoggingMode(false);
 
                 toast.success("Period dates updated!", { duration: 2000 });
@@ -557,7 +647,7 @@ export default function TrackerPageRedesigned() {
     };
 
     const handleEnablePeriodLogging = () => {
-        setPendingPeriodChanges(new Set());
+        setPendingPeriodChanges(new Map());
         setIsPeriodLoggingMode(true);
         setTimeout(() => {
             calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -571,12 +661,12 @@ export default function TrackerPageRedesigned() {
 
         const dateStr = formatDate(selectedDate);
         const updates: Record<string, any> = {};
-        const changedDates = new Set(pendingPeriodChanges);
+        const changedDates = new Map(pendingPeriodChanges);
 
         // 1. Mark current day as period (if not already)
         if (!monthLogs[dateStr]?.is_period) {
             updates[dateStr] = { ...monthLogs[dateStr], is_period: true };
-            changedDates.add(dateStr);
+            changedDates.set(dateStr, true);
         }
 
         // 2. Clear next 7 days
@@ -585,21 +675,9 @@ export default function TrackerPageRedesigned() {
             cur.setDate(cur.getDate() + 1);
             const dStr = formatDate(cur);
 
-            // If it is currently marked as period, unmark it
-            // OR if it's not logged but we want to be explicit? 
-            // The new phase logic respects explicit false. 
-            // So we should explicit set is_period: false even if it was undefined/empty?
-            // Yes, to override prediction.
-
-            if (monthLogs[dStr]?.is_period !== false) { // If it's true or undefined
-                // We want to force it to false
+            if (monthLogs[dStr]?.is_period !== false) {
                 updates[dStr] = { ...monthLogs[dStr], is_period: false };
-
-                // If it was previously TRUE, looking at it toggles it. 
-                // But wait, `handleSavePeriodChanges` blindly saves whatever is in `monthLogs` at that date.
-                // So we just need to ensure `monthLogs` has the correct new state (FALSE).
-                // And we add to `changedDates` so the saver visits it.
-                changedDates.add(dStr);
+                changedDates.set(dStr, false);
             }
         }
 
@@ -619,6 +697,26 @@ export default function TrackerPageRedesigned() {
             const result = await updateLastPeriodDate(dateStr);
 
             if (result.success) {
+                // Also log this day as period so the phase calculator finds it
+                await logDailySymptoms({
+                    date: dateStr,
+                    symptoms: monthLogs[dateStr]?.symptoms || [],
+                    isPeriod: true,
+                    flowIntensity: monthLogs[dateStr]?.flow_intensity || "Normal",
+                    moods: monthLogs[dateStr]?.moods || [],
+                    notes: monthLogs[dateStr]?.notes || "",
+                    cervicalDischarge: monthLogs[dateStr]?.cervical_discharge || undefined,
+                    exerciseTypes: monthLogs[dateStr]?.exercise_types || [],
+                    exerciseMinutes: monthLogs[dateStr]?.exercise_minutes || null,
+                    waterIntake: monthLogs[dateStr]?.water_intake || 0,
+                    selfLoveTags: monthLogs[dateStr]?.self_love_tags || [],
+                    selfLoveOther: monthLogs[dateStr]?.self_love_other || "",
+                    sleepQuality: monthLogs[dateStr]?.sleep_quality || [],
+                    sleepMinutes: monthLogs[dateStr]?.sleep_minutes || null,
+                    disruptors: monthLogs[dateStr]?.disruptors || [],
+                    sexActivity: monthLogs[dateStr]?.sex_activity || [],
+                    contraception: monthLogs[dateStr]?.contraception || [],
+                });
                 setCycleSettings({ ...cycleSettings, last_period_start: dateStr });
                 setIsEditingCycle(false);
                 if (showAlert) {
@@ -648,11 +746,12 @@ export default function TrackerPageRedesigned() {
                 const results = await Promise.all(promises);
                 const allUpdatedLogs = results.flat();
 
-                const updatedLogMap: Record<string, any> = {};
-                allUpdatedLogs.forEach((l: any) => {
-                    updatedLogMap[l.date] = l;
+                setMonthLogs(prev => {
+                    const updated = { ...prev };
+                    allUpdatedLogs.forEach((l: any) => { updated[l.date] = l; });
+                    return updated;
                 });
-                setMonthLogs(updatedLogMap);
+                loadedMonthsRef.current.clear();
 
                 toast.success("Cycle Updated!", { duration: 3000 });
             } else {
@@ -746,6 +845,23 @@ export default function TrackerPageRedesigned() {
     return (
         <div className="min-h-screen overflow-x-clip bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
             <Toaster position="top-center" richColors />
+
+            {/* Loading overlay during period save operations */}
+            <AnimatePresence>
+                {isPending && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-paper/60 backdrop-blur-sm"
+                    >
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-10 h-10 border-3 border-phase-menstrual/30 border-t-phase-menstrual rounded-full animate-spin" />
+                            <p className="text-sm font-medium text-gray-600">Syncing your cycle…</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Header */}
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">

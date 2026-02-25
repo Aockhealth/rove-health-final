@@ -83,7 +83,7 @@ export const parseLocalDate = (dateStr: string): Date => {
 export const daysBetween = (start: Date, end: Date): number => {
     const s = normalizeToLocalMidnight(start);
     const e = normalizeToLocalMidnight(end);
-    return Math.floor((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
 };
 
 // ============================================================================
@@ -220,8 +220,60 @@ export function calculatePhase(
         if (dayInCycle <= 0) dayInCycle += cycleLength;
     }
 
-    // 6. Explicit END: If logged as NOT period, don't show Menstrual
-    const isExplicitlyNotPeriod = monthLogs[dateStr]?.is_period === false;
+    // 5b. Forward-period anchoring: if there's a FUTURE logged period within
+    //     one cycle, anchor backwards from it instead. This prevents editing
+    //     an old period from cascading through months with their own anchors.
+    if (!isLate && source !== 'none') {
+        const futurePeriodDates = Object.keys(monthLogs)
+            .filter(d => monthLogs[d]?.is_period && d > dateStr)
+            .sort();
+
+        if (futurePeriodDates.length > 0) {
+            const nextPeriodStr = findStreakStart(futurePeriodDates[0], monthLogs);
+            const nextStart = parseLocalDate(nextPeriodStr);
+            const daysToNext = daysBetween(target, nextStart);
+            // If the next period is within one cycle AND anchor gives a valid position
+            if (daysToNext > 0 && daysToNext <= cycleLength) {
+                // Recalculate dayInCycle counting backwards from the future period
+                dayInCycle = cycleLength - daysToNext + 1;
+            }
+        }
+    }
+
+    // 6. Explicit END: If logged as NOT period, only respect it if the false entry
+    //    is adjacent to the current period streak. This prevents stale "End Period Here"
+    //    entries from a previous cycle from overriding the new cycle's menstrual prediction.
+    let isExplicitlyNotPeriod = monthLogs[dateStr]?.is_period === false;
+
+    if (isExplicitlyNotPeriod && dayInCycle <= periodLength && !isLate && source === 'logs') {
+        // Check: is there a continuous chain of is_period:true from relevantStart
+        // up to the day before this date? If not, this false entry is stale.
+        let hasAdjacentPeriodStreak = false;
+
+        // Walk backwards from the day before to see if we reach relevantStart via is_period:true
+        let walker = new Date(target);
+        walker.setDate(walker.getDate() - 1);
+        let valid = true;
+        while (formatDate(walker) >= relevantStart) {
+            const wStr = formatDate(walker);
+            if (wStr === relevantStart) {
+                // Reached the start — it must be a logged period day
+                hasAdjacentPeriodStreak = monthLogs[wStr]?.is_period === true;
+                break;
+            }
+            if (monthLogs[wStr]?.is_period !== true) {
+                // Gap found — the false entry is NOT adjacent to a continuous period streak
+                valid = false;
+                break;
+            }
+            walker.setDate(walker.getDate() - 1);
+        }
+
+        if (!valid || !hasAdjacentPeriodStreak) {
+            // The is_period:false is stale (from a previous cycle), ignore it
+            isExplicitlyNotPeriod = false;
+        }
+    }
 
     // 7. Determine phase
     let phase: Phase;

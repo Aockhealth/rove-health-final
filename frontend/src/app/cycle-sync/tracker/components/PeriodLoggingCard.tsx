@@ -414,7 +414,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             // We want "Orb" logic at 20% scale for active/selected
                             // And "Solid Blocks" replaced by Vertical Bars for period
 
-                            const isPhaseIndicated = !loggedPeriod && phase && !isPeriodLoggingMode;
+                            const isPhaseIndicated = !!phase;
                             const logEntry = monthLogs[dateStr];
                             const loggedCategories = !isPeriodLoggingMode && !disabled ? getLoggedCategories(logEntry) : [];
 

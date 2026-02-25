@@ -27,7 +27,7 @@ export interface AIContext {
 const DailyLogSchema = z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     symptoms: z.array(z.string()).default([]),
-    isPeriod: z.boolean(),
+    isPeriod: z.boolean().nullable(),
     flowIntensity: z.string().optional().nullable(),
     moods: z.array(z.string()).optional().default([]),
     notes: z.string().max(2000, "Notes cannot exceed 2000 characters").optional().default(""), // Prevent massive text spam
@@ -1035,7 +1035,7 @@ export async function fetchInsightsData() {
 export interface LogDailySymptomsPayload {
     date: string;
     symptoms: string[];
-    isPeriod: boolean;
+    isPeriod: boolean | null;
     flowIntensity?: string;
     moods?: string[];
     notes?: string;
@@ -1093,11 +1093,6 @@ export async function logDailySymptoms(payload: LogDailySymptomsPayload) {
         }).select().single();
 
         if (error) return { success: false, error: error.message };
-
-        // Auto-sync period start when period is logged
-        if (safeData.isPeriod) {
-            await syncPeriodStartFromLog(supabase, user.id, safeData.date);
-        }
 
         return { success: true, data };
     } catch (err) {
