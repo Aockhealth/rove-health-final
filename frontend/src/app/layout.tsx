@@ -22,10 +22,14 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Rove Health | Precision Women's Health",
   description: "Doctor-formulated supplements for women's health.",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Rove Health",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 

@@ -1,0 +1,28 @@
+{
+    "name": "Rove Health",
+    "short_name": "Rove Health",
+    "description": "Premium Period and Health Tracker tailored for Indian women.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FAF9F6",
+    "theme_color": "#D35400",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
