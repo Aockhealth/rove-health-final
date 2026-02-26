@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Outfit, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import { InstallPrompt } from "@/components/ui/InstallPrompt";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -50,19 +49,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <meta name="theme-color" content="#D35400" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Rove Health" />
-      </head>
       <body
         className={`${inter.variable} ${outfit.variable} ${cormorant.variable} antialiased`}
         suppressHydrationWarning
       >
         {children}
-        <InstallPrompt />
       </body>
     </html>
   );
