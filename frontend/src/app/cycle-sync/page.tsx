@@ -13,6 +13,7 @@ import { calculatePhase } from "@shared/cycle/phase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import WelcomeTour from "@/components/cycle-sync/WelcomeTour";
 
 // --- 1. Helper Components ---
 
@@ -1020,6 +1021,9 @@ export default function CycleSyncDashboard() {
                     )
                 }
             </AnimatePresence >
+
+            {/* First-time user welcome tour */}
+            <WelcomeTour />
         </div >
     );
 }

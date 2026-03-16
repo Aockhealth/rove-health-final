@@ -27,9 +27,9 @@ import WaterIntakeCard from "./components/WaterIntakeCard";
 import SleepCard from "./components/SleepCard";
 import DisruptorsCard from "./components/DisruptorsCard";
 import SelfLoveCard from "./components/SelfLoveCard";
-import SexualWellnessCard from "./components/SexualWellnessCard";
 import NoteCard from "./components/NoteCard";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import PageGuide from "@/components/cycle-sync/PageGuide";
 
 export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
@@ -891,6 +891,13 @@ export default function TrackerPageRedesigned() {
             </div>
 
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+                <PageGuide
+                    pageKey="tracker"
+                    icon={Calendar}
+                    title="Log Your Daily Vibes"
+                    description="Consistent tracking unlocks hyper-personalized Rove intel and accurate cycle predictions."
+                    className="mx-0 mt-0 mb-4"
+                />
 
                 {/* Phase + Selected badge (updates when you click a date) */}
                 <div className={cn(
@@ -1015,14 +1022,6 @@ export default function TrackerPageRedesigned() {
                             selfLoveOther={selfLoveOther}
                             setSelectedSelfLove={setSelectedSelfLove}
                             setSelfLoveOther={setSelfLoveOther}
-                            currentPhase={currentPhase}
-                        />
-
-                        <SexualWellnessCard
-                            selectedSexActivity={selectedSexActivity}
-                            setSelectedSexActivity={setSelectedSexActivity}
-                            selectedContraception={selectedContraception}
-                            setSelectedContraception={setSelectedContraception}
                             currentPhase={currentPhase}
                         />
 

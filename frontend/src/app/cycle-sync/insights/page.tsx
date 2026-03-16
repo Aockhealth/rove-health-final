@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Activity, Calendar, Zap, User } from "lucide-react";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ✅ UPDATED IMPORTS: Using @backend alias from tsconfig.json
 import { fetchInsightsData } from "@backend/actions/cycle-sync/insights/insights-cycle-sync";
@@ -13,6 +13,7 @@ import {
   generatePhaseAIInsight,
   type AIContext
 } from "@/app/actions/cycle-sync";
+
 // --- COMPONENTS ---
 import { AiAnalysisCard } from "@/components/cycle-sync/insights/AiAnalysisCard";
 import { MentalHealthCheckCard } from "@/components/cycle-sync/insights/MentalHealthCheckCard";
@@ -20,6 +21,8 @@ import { CycleOverviewCard } from "@/components/cycle-sync/insights/CycleOvervie
 import { HabitsOverviewCard } from "@/components/cycle-sync/insights/HabitsOverviewCard";
 import { PhaseInsightCard } from "@/components/cycle-sync/insights/PhaseInsightCard";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import PageGuide from "@/components/cycle-sync/PageGuide";
+import { BarChart2 } from "lucide-react";
 
 // --- PHASE THEMES ---
 const phaseThemes: Record<string, any> = {
@@ -188,6 +191,14 @@ export default function InsightsPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-5xl relative z-10">
+        <PageGuide
+          pageKey="insights"
+          icon={BarChart2}
+          title="Your Body Intelligence"
+          description="Rove analyzes your logged data to surface patterns, predictions, and personalized health insights."
+          className="mx-0 mt-0 mb-6"
+        />
+
         {/* TABS */}
         <div className="flex bg-white/40 backdrop-blur-md rounded-2xl p-1 mb-6 border border-white/60">
           {[

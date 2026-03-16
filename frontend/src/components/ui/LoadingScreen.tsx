@@ -64,7 +64,7 @@ export default function LoadingScreen() {
         {/* Logo Container - Clean Breathing Animation */}
         <div className="relative mb-10 w-28 h-28 flex items-center justify-center">
           <motion.div
-            className="relative w-full h-full flex items-center justify-center drop-shadow-md"
+            className="relative w-full h-full flex items-center justify-center"
             animate={{
               scale: [1, 1.05, 1],
               opacity: [0.85, 1, 0.85],

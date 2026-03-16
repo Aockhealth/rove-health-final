@@ -9,6 +9,7 @@ import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { cn, getStorageUrl } from "@/lib/utils";
 import type { LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import PageGuide from "@/components/cycle-sync/PageGuide";
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
@@ -95,15 +96,25 @@ export default function LearnPage() {
                 <Link href="/cycle-sync" className="pointer-events-auto inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors backdrop-blur-md bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
                     <ChevronLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-wider">Back</span>
                 </Link>
-                
+
                 {/* Wrapped in pointer-events-auto so it is clickable */}
                 <div className="pointer-events-auto">
                     <ProfileAvatar />
                 </div>
             </div>
 
+            <div className="pt-20 px-4 md:px-8 mb-8 max-w-5xl mx-auto">
+                <PageGuide
+                    pageKey="learn"
+                    icon={Bookmark}
+                    title="Rove Library"
+                    description="Deep-dive into holistic science, Ayurvedic practices, and body literacy."
+                    className="mx-0 mt-0 mb-6"
+                />
+            </div>
+
             {featured ? (
-                <div className="relative h-[70vh] w-full overflow-hidden">
+                <div className="relative h-[70vh] w-full overflow-hidden" >
                     <div className="absolute inset-0 bg-neutral-900">
                         {featuredImage && (
                             <Image
@@ -158,7 +169,8 @@ export default function LearnPage() {
                 <div className="h-[50vh] flex items-center justify-center text-neutral-400">
                     No articles found.
                 </div>
-            )}
+            )
+            }
 
             <div className="relative z-10 -mt-10 md:-mt-20 space-y-6">
                 <ContentRow title="Cycle Syncing" articles={cycleArticles} />
@@ -222,6 +234,6 @@ export default function LearnPage() {
                     </div>
                 </div>
             </footer>
-        </div>
+        </div >
     );
 }

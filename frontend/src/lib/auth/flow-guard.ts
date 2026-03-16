@@ -49,6 +49,8 @@ function isAuthRoute(pathname: string): boolean {
 }
 
 function isProtectedRoute(pathname: string): boolean {
+  // Allow public access to blog/learn articles for SEO crawling
+  if (pathname.startsWith("/cycle-sync/learn")) return false;
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
