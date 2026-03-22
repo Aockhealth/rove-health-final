@@ -67,6 +67,7 @@ export const UnifiedAIRequestSchema = z.object({
     overrideProvider: z.string().optional(), // specific provider request
     overrideModel: z.string().optional(), // optional one-off model override (e.g., retry upgrade)
     deferTelemetry: z.boolean().optional(), // caller will manually log after post-processing
+    
 });
 
 export const ChatbotModuleSchema = z.enum([

@@ -1,7 +1,7 @@
 import { PenLine } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-
+const MAX_LENGTH = 1000;
 interface NoteCardProps {
   note: string;
   setNote: (note: string) => void;
@@ -69,14 +69,20 @@ export default function NoteCard({ note, setNote, currentPhase }: NoteCardProps)
       </div>
       <textarea
         value={note}
-        onChange={(e) => setNote(e.target.value)}
+    /*     onChange={(e) => setNote(e.target.value)} */
+    onChange={(e) => {
+  const value = e.target.value;
+  if (value.length <= MAX_LENGTH) {
+    setNote(value);
+  }
+}}
         placeholder="How are you feeling today?"
         className={cn(
           "w-full bg-white/50 border rounded-2xl p-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all resize-none h-32",
           theme.inputBorder
         )}
       />
-      <div className="mt-2 text-xs text-gray-400 text-right">{note.length} characters</div>
+      <div className="mt-2 text-xs text-gray-400 text-right">{MAX_LENGTH - note.length} characters left</div>
     </div>
   );
 }

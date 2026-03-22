@@ -17,7 +17,7 @@ import {
     Flame, Info, Leaf, Pill, Utensils, Waves, Beaker,
     Moon, Zap, Move, Music, Wind, Bike, Fish, Carrot, Wheat, Drumstick, Footprints, Heart, Coffee, Soup,
     Shield, Droplets, AlertCircle, Sun, Sunrise, Sunset, Ban, LayoutGrid, Dumbbell, ChevronLeft, Ruler, Weight, Check,
-    Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2, Pencil, X
+    Flower2, Target, Scale, Plus, Trash2, Compass, Star, Wand2, Pencil, X, BarChart2,
 } from "lucide-react";
 import { DIET_RECOMMENDATIONS, DietType } from "@/data/diet-recommendations";
 import LoadingScreen from "@/components/ui/LoadingScreen";
@@ -32,8 +32,9 @@ import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
 import { ExerciseOrb } from "@/components/cycle-sync/ExerciseOrb";
 import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
-
+import { WorkoutHistory } from "@/components/cycle-sync/WorkoutHistory";
 // --- Data: Phase Blueprints (PRESERVED) ---
+
 const BLUEPRINTS: any = {
     "Menstrual": {
         color: "bg-phase-menstrual",
@@ -612,6 +613,7 @@ const PHASE_IMAGES: Record<string, string> = {
 };
 
 export default function DetailedPlanPage() {
+    const [exerciseView, setExerciseView] = useState<"coach" | "history">("coach");
     const [hasPlanSetup, setHasPlanSetup] = useState(false);
     const [setupLoading, setSetupLoading] = useState(true);
     const [setupStep, setSetupStep] = useState(1);
@@ -1876,9 +1878,47 @@ export default function DetailedPlanPage() {
 
 
                                 {/* AI Exercise Builder */}
-                                <div id="ai-exercise-builder" className="scroll-mt-24">
-                                    <ExerciseBuilder phase={phaseName} theme={theme} />
-                                </div>
+                                {/* AI Exercise Builder / History Toggle */}
+<div id="ai-exercise-builder" className="scroll-mt-24">
+    {/* Tab Toggle */}
+    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner mb-4">
+        <button
+            onClick={() => setExerciseView("coach")}
+            className={cn(
+                "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                exerciseView === "coach"
+                    ? cn("text-white shadow-sm", theme.accent)
+                    : "text-gray-500 hover:text-gray-700"
+            )}
+        >
+            <Dumbbell className="w-3.5 h-3.5" /> Workout Coach
+        </button>
+        <button
+            onClick={() => setExerciseView("history")}
+            className={cn(
+                "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                exerciseView === "history"
+                    ? cn("text-white shadow-sm", theme.accent)
+                    : "text-gray-500 hover:text-gray-700"
+            )}
+        >
+            <BarChart2 className="w-3.5 h-3.5" /> History
+        </button>
+    </div>
+
+    {/* Conditional View */}
+    <AnimatePresence mode="wait">
+        {exerciseView === "coach" ? (
+    <motion.div key="coach" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+        <ExerciseBuilder phase={phaseName} theme={theme} hideHeader />
+    </motion.div>
+) : (
+    <motion.div key="history" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+        <WorkoutHistory phase={phaseName} hideHeader />
+    </motion.div>
+)}
+    </AnimatePresence>
+</div>
                             </motion.div>
                         )
                     }
