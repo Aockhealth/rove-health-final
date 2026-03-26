@@ -34,11 +34,17 @@ export async function updateSession(request: NextRequest) {
     )
 
     const path = request.nextUrl.pathname;
+
     const isNonProtectedApi = path.startsWith('/api') && !path.startsWith('/api/protected');
     if (isNonProtectedApi) {
         return response;
     }
-    if (path.startsWith('/auth/callback')) {
+
+    // ✅ FIX: Allow auth callback + reset password flow to bypass middleware
+    if (
+        path.startsWith('/auth/callback') ||
+        path.startsWith('/reset-password')
+    ) {
         return response;
     }
 
