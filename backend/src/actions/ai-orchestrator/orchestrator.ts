@@ -245,18 +245,34 @@ async function handleChatbotSkill(req: UnifiedAIRequest, context: UnifiedAIConte
         : "not specified";
     const dietPreference = context.dietaryPreference || context.dietaryPreferences || "not specified";
 
-    const vars = {
+   /*  const vars = {
         phase: context.phase,
         cycle_day: context.dayInCycle ?? "unknown",
         average_cycle_length: context.averageCycleLength ?? "unknown",
         last_period_date: context.lastPeriodDate ?? "unknown",
         current_symptoms: symptoms,
         diet_preference: dietPreference,
+        dietary_preferences: dietPreference,
         has_pcos_like_patterns: context.hasPcosLikePatterns ? "yes" : "no",
         history: historyText,
         user_message: req.userMessage || ""
     };
-
+ */
+const vars = {
+    phase: context.phase,
+    cycle_day: context.dayInCycle ?? "unknown",
+    average_cycle_length: context.averageCycleLength ?? "unknown",
+    last_period_date: context.lastPeriodDate ?? "unknown",
+    current_symptoms: symptoms,
+    diet_preference: dietPreference,
+    dietary_preferences: dietPreference,                                          // 👈 fix missing_data bug
+    goals: context.goalFocus || context.fitnessGoals || "not specified",          // 👈 add
+    typical_symptoms: context.recentSymptoms?.join(", ") || "not specified",      // 👈 add
+    activity_level: context.fitnessLevel || context.inferredEnergyLevel || "unknown", // 👈 add                        // 👈 add
+    has_pcos_like_patterns: context.hasPcosLikePatterns ? "yes" : "no",
+    history: historyText,
+    user_message: req.userMessage || ""
+}
     const response = await ModelRouter.executeWithFallback(req, "chat", vars);
     if (!response.structuredPayload) return response;
 

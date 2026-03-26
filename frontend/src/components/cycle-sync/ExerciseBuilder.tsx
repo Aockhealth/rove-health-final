@@ -2,17 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, RefreshCw, RotateCcw, Home, Building2, Trophy, Medal, Star, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play, CheckCircle2, Circle, Clock, Flame, Info } from "lucide-react";
+import { Dumbbell, RefreshCw, RotateCcw, Home, Building2, BicepsFlexed, Footprints, HeartPulse, Activity, Brain, Zap, Play, CheckCircle2, Circle, Clock, Flame, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { generateRoveCoachPlan, RoveCoachPlan, WorkoutSet } from "@/app/actions/ai-actions";
+import { createClient } from "@/utils/supabase/client"; // 👈 adjust this path
 
 interface ExerciseBuilderProps {
     phase: string;
-    theme?: any; // Made optional as we'll use internal theming
+    theme?: any;
+    hideHeader?: boolean;
 }
 
-export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
+export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
+    const supabase = createClient();
+
     const [setting, setSetting] = useState<"Home" | "Gym" | null>(null);
     const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Pro">("Intermediate");
     const [focus, setFocus] = useState<"Full Body" | "Upper Body" | "Lower Body" | "Cardio" | "Core" | "Mobility">("Full Body");
@@ -29,7 +33,11 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
     const [completedSets, setCompletedSets] = useState<Record<number, boolean>>({});
     const [sessionTimer, setSessionTimer] = useState(0);
 
-    // Organic Chromatics Styling
+    // Save State
+    const [isSaving, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
     const currentPhase = phase || "Menstrual";
     const themes: Record<string, any> = {
         "Menstrual": {
@@ -84,18 +92,12 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
         if (!setting) return;
         setIsGenerating(true);
         setResult(null);
-
         try {
             const plan = await generateRoveCoachPlan(
-                phase,
-                energy,
-                `${time} ${focus} workout`, // Goal
-                setting === "Home" ? "Bodyweight / Mat" : "Full Gym", // Equipment
-                symptoms, // Injuries/Limitations
-                level,
-                focus,
-                time,
-                progressionPreference,
+                phase, energy,
+                `${time} ${focus} workout`,
+                setting === "Home" ? "Bodyweight / Mat" : "Full Gym",
+                symptoms, level, focus, time, progressionPreference,
                 `${focus} performance`
             );
             setResult(plan);
@@ -111,15 +113,14 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
         setSessionMode(false);
         setSessionTimer(0);
         setCompletedSets({});
+        setSaved(false);
+        setSaveError(null);
     };
 
-    // Session Timer Logic
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (sessionMode) {
-            interval = setInterval(() => {
-                setSessionTimer(t => t + 1);
-            }, 1000);
+            interval = setInterval(() => setSessionTimer(t => t + 1), 1000);
         } else {
             setSessionTimer(0);
         }
@@ -132,15 +133,92 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
-    const toggleSession = () => {
-        if (!sessionMode) {
-            setSessionMode(true);
-            setCompletedSets({});
-        } else {
-            // Ending the session
-            setSessionMode(false);
+    // ─── Core save logic ──────────────────────────────────────────────────────
+    const saveSession = async () => {
+        if (!result) return;
+        setIsSaving(true);
+        setSaveError(null);
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Not authenticated");
+
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Insert workout session
+            const { data: session, error: sessionError } = await supabase
+                .from('workout_sessions')
+                .insert({
+                    user_id: user.id,
+                    date: today,
+                    phase,
+                    energy_level: energy,
+                    progression: progressionPreference,
+                    setting,
+                    focus,
+                    duration_seconds: sessionTimer,
+                    exercises_total: result.main_set.length,
+                    exercises_completed: Object.values(completedSets).filter(Boolean).length,
+                    plan_title: result.title,
+                    plan_intensity: result.intensity,
+                    plan_reasoning: result.reasoning,
+                    warmup: result.warmup,
+                    cooldown: result.cooldown,
+                })
+                .select('id')
+                .single();
+
+            if (sessionError) throw sessionError;
+
+            // 2. Insert one row per exercise into exercise_history
+            const exerciseRows = result.main_set.map((ex, i) => {
+    // Safely parse sets/reps — handles "3", "3x12", "10-12", etc.
+    const parseNum = (val: any): number => {
+        if (!val) return 0;
+        const str = String(val);
+        // Extract first number found
+        const match = str.match(/\d+/);
+        return match ? parseInt(match[0], 10) : 0;
+    };
+
+    return {
+        user_id: user.id,
+        workout_session_id: session.id,
+        exercise_name: ex.name,
+        date: today,
+        sets_completed: completedSets[i] ? parseNum(ex.sets) : 0,
+        reps_completed: completedSets[i] ? parseNum(ex.reps) : 0,
+        completed: !!completedSets[i],
+    };
+});
+
+            const { error: exerciseError } = await supabase
+                .from('exercise_history')
+                .insert(exerciseRows);
+
+            if (exerciseError) throw exerciseError;
+
+            setSaved(true);
+        } catch (err: any) {
+            console.error("Failed to save session:", err);
+            setSaveError("Couldn't save. Tap to retry.");
+        } finally {
+            setIsSaving(false);
         }
     };
+
+    const handleEndSession = async () => {
+        await saveSession();
+        setSessionMode(false);
+    };
+
+    const startSession = () => {
+        setSessionMode(true);
+        setCompletedSets({});
+        setSaved(false);
+        setSaveError(null);
+    };
+    // ─────────────────────────────────────────────────────────────────────────
 
     const toggleSet = (index: number) => {
         setCompletedSets(prev => ({ ...prev, [index]: !prev[index] }));
@@ -149,27 +227,29 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
     return (
         <div className={cn(
             "w-full bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative group transition-all",
-            theme.border,
-            theme.shadow
+            theme.border, theme.shadow
         )}>
             <div className={cn("absolute bottom-0 left-0 w-64 h-64 rounded-full blur-[80px] pointer-events-none opacity-30", theme.blob)} />
 
             <div className="p-5 md:p-6 relative z-10">
-                <header className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <div className={cn("p-1.5 rounded-lg border border-white/60", theme.iconBg, theme.iconColor)}>
-                            <Dumbbell className="w-4 h-4" />
-                        </div>
-                        <h3 className={cn("font-heading text-lg", theme.header)}>Workout Coach</h3>
-                    </div>
-                    {((result && !isGenerating) || sessionMode) && (
-                        <button onClick={reset} className="text-[11px] font-bold uppercase tracking-wider text-gray-400 hover:text-gray-800 transition-colors flex items-center gap-1 bg-white/50 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/80">
-                            <RotateCcw className="w-3 h-3" /> Start Over
-                        </button>
-                    )}
-                </header>
+                {!hideHeader && (
+    <header className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+            <div className={cn("p-1.5 rounded-lg border border-white/60", theme.iconBg, theme.iconColor)}>
+                <Dumbbell className="w-4 h-4" />
+            </div>
+            <h3 className={cn("font-heading text-lg", theme.header)}>Workout Coach</h3>
+        </div>
+        {((result && !isGenerating) || sessionMode) && (
+            <button onClick={reset} className="text-[11px] font-bold uppercase tracking-wider text-gray-400 hover:text-gray-800 transition-colors flex items-center gap-1 bg-white/50 px-3 py-1.5 rounded-full shadow-sm hover:bg-white/80">
+                <RotateCcw className="w-3 h-3" /> Start Over
+            </button>
+        )}
+    </header>
+)}
 
                 <AnimatePresence mode="wait">
+                    {/* ── SESSION VIEW ── */}
                     {sessionMode && result ? (
                         <motion.div key="session" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
                             <div className="flex justify-between items-center bg-white/60 p-4 rounded-xl shadow-sm border border-white/60">
@@ -183,7 +263,6 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                             </div>
 
                             <div className="space-y-5 max-h-[50vh] overflow-y-auto pr-1 pb-4">
-                                {/* Warmup */}
                                 {result.warmup && result.warmup.length > 0 && (
                                     <div className="space-y-2">
                                         <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Warmup</h5>
@@ -196,12 +275,10 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                     </div>
                                 )}
 
-                                {/* Main Set */}
                                 <div className="space-y-2">
                                     <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Main Set</h5>
                                     {result.main_set?.map((item, i) => (
-                                        <div key={`m-${i}`}
-                                            onClick={() => toggleSet(i)}
+                                        <div key={`m-${i}`} onClick={() => toggleSet(i)}
                                             className={cn(
                                                 "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-2",
                                                 completedSets[i] ? "bg-green-50/80 border-green-200 shadow-inner" : "bg-white/70 border-white shadow-sm hover:bg-white"
@@ -214,7 +291,9 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                                         <span className="bg-gray-100/80 px-2 py-1 rounded-md text-gray-600">{item.reps} Reps</span>
                                                     </div>
                                                 </div>
-                                                {completedSets[i] ? <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 mt-1 drop-shadow-sm" /> : <Circle className="w-6 h-6 text-gray-300 shrink-0 mt-1" />}
+                                                {completedSets[i]
+                                                    ? <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 mt-1 drop-shadow-sm" />
+                                                    : <Circle className="w-6 h-6 text-gray-300 shrink-0 mt-1" />}
                                             </div>
                                             {item.notes && !completedSets[i] && (
                                                 <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100/50 p-2.5 rounded-lg inline-flex items-start gap-1.5 mt-2 font-medium">
@@ -225,7 +304,6 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                     ))}
                                 </div>
 
-                                {/* Cooldown */}
                                 {result.cooldown && result.cooldown.length > 0 && (
                                     <div className="space-y-2">
                                         <h5 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Cooldown</h5>
@@ -239,13 +317,38 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                 )}
                             </div>
 
-                            <button onClick={toggleSession} className="w-full py-3.5 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 text-gray-800 text-sm font-bold flex items-center justify-center transition-all shadow-sm group">
-                                <CheckCircle2 className="w-4 h-4 mr-2 group-hover:text-green-500 transition-colors" /> End Session & Save
+                            {/* Error message */}
+                            {saveError && (
+                                <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 px-3 py-2 rounded-lg text-center">
+                                    {saveError}
+                                </p>
+                            )}
+
+                            {/* End Session button — 3 states: saving / saved / idle */}
+                            <button
+                                onClick={handleEndSession}
+                                disabled={isSaving || saved}
+                                className={cn(
+                                    "w-full py-3.5 rounded-xl border text-sm font-bold flex items-center justify-center transition-all shadow-sm group",
+                                    saved
+                                        ? "bg-green-50 border-green-200 text-green-700 cursor-default"
+                                        : isSaving
+                                            ? "bg-gray-50 border-gray-100 text-gray-400 cursor-wait"
+                                            : "bg-white hover:bg-gray-50 border-gray-100 text-gray-800"
+                                )}>
+                                {saved ? (
+                                    <><CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Session Saved!</>
+                                ) : isSaving ? (
+                                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+                                ) : (
+                                    <><CheckCircle2 className="w-4 h-4 mr-2 group-hover:text-green-500 transition-colors" /> End Session & Save</>
+                                )}
                             </button>
                         </motion.div>
+
                     ) : !result && !isGenerating ? (
+                        /* ── INPUT FORM ── */
                         <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                            {/* 1. Setting / Equipment */}
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Home className="w-3.5 h-3.5" /> Where?</label>
                                 <div className="grid grid-cols-2 gap-3">
@@ -259,7 +362,6 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Energy */}
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Energy</label>
                                     <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner">
@@ -270,8 +372,6 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* Time */}
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Time</label>
                                     <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner grid grid-cols-4">
@@ -284,7 +384,6 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                 </div>
                             </div>
 
-                            {/* Focus Area */}
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Focus Area</label>
                                 <div className="grid grid-cols-3 gap-2">
@@ -304,53 +403,38 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                 </div>
                             </div>
 
-                            {/* Symptoms / Limitations */}
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Progression</label>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {([
-                                        { id: "steady", label: "Steady" },
-                                        { id: "push", label: "Push" },
-                                        { id: "deload", label: "Deload" }
-                                    ] as const).map((item) => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => setProgressionPreference(item.id)}
-                                            className={cn(
-                                                "py-2 rounded-xl border text-[11px] font-bold transition-all",
-                                                progressionPreference === item.id
-                                                    ? theme.active
-                                                    : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm"
-                                            )}
-                                        >
+                                    {([{ id: "steady", label: "Steady" }, { id: "push", label: "Push" }, { id: "deload", label: "Deload" }] as const).map((item) => (
+                                        <button key={item.id} onClick={() => setProgressionPreference(item.id)}
+                                            className={cn("py-2 rounded-xl border text-[11px] font-bold transition-all", progressionPreference === item.id ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
                                             {item.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Symptoms / Limitations */}
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Anything to keep in mind?</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Cramps, sore knees, skip jumps..."
-                                    value={symptoms}
-                                    onChange={(e) => setSymptoms(e.target.value)}
-                                    className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-all font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                                />
+                                <input type="text" placeholder="e.g. Cramps, sore knees, skip jumps..."
+                                    value={symptoms} onChange={(e) => setSymptoms(e.target.value)}
+                                    className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-all font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" />
                             </div>
 
                             <button onClick={handleGenerate} disabled={!setting} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all hover:shadow-lg mt-2", setting ? theme.button : "bg-gray-300 text-white cursor-not-allowed border outline-none")}>
                                 <Flame className="w-4 h-4" /> Generate AI Plan
                             </button>
                         </motion.div>
+
                     ) : isGenerating ? (
                         <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-16 flex flex-col items-center justify-center text-center">
                             <RefreshCw className={cn("w-10 h-10 animate-spin mb-4", theme.iconColor)} />
                             <p className="text-sm font-bold tracking-wide text-gray-600 animate-pulse">Designing your {phase} workout...</p>
                         </motion.div>
+
                     ) : (
+                        /* ── RESULT PREVIEW ── */
                         <motion.div key="result" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                             <div className="p-5 bg-white/70 rounded-2xl border border-white shadow-sm">
                                 <div className="flex justify-between items-start mb-3">
@@ -360,14 +444,12 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                         <Badge variant="outline" className="bg-white/50 text-gray-600 border-none px-2 shadow-sm font-bold flex gap-1 items-center"><Clock className="w-3 h-3" /> {result?.duration}</Badge>
                                     </div>
                                 </div>
-
                                 {result?.reasoning && (
                                     <div className="mt-4 mb-5 text-sm text-gray-600 bg-white/60 p-3.5 rounded-xl border border-white leading-relaxed italic relative">
                                         <div className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-xl opacity-40", theme.blob)} />
                                         "{result.reasoning}"
                                     </div>
                                 )}
-
                                 <div className="mt-4 space-y-2.5">
                                     <h5 className="text-[11px] uppercase font-bold text-gray-400 tracking-widest pl-1 mb-1.5">Main Routine Preview</h5>
                                     {result?.main_set?.map((ex: WorkoutSet, i: number) => (
@@ -378,7 +460,7 @@ export function ExerciseBuilder({ phase }: ExerciseBuilderProps) {
                                     ))}
                                 </div>
                             </div>
-                            <button onClick={toggleSession} className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]", theme.blob, theme.button)}>
+                            <button onClick={startSession} className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]", theme.blob, theme.button)}>
                                 <Play className="w-5 h-5 fill-white" /> Start Guided Session
                             </button>
                         </motion.div>
