@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2, Mail, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
-import { forgotPasswordSchema } from "@/lib/schemas"; // 👈 Import Zod Schema
+import { forgotPasswordSchema } from "@/lib/schemas";
 
 type FieldErrors = {
     [key: string]: string | undefined;
@@ -18,7 +18,6 @@ export default function ForgotPasswordPage() {
     const [serverError, setServerError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
-    // Use Client-Side Supabase (Standard for Reset Password flows to handle URL origin)
     const supabase = createClient();
 
     function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -30,7 +29,6 @@ export default function ForgotPasswordPage() {
         const formData = new FormData(event.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        // 1. Client-Side Validation (Zod)
         const result = forgotPasswordSchema.safeParse(data);
 
         if (!result.success) {
@@ -44,12 +42,10 @@ export default function ForgotPasswordPage() {
 
         const email = result.data.email;
 
-        // 2. Submit Logic
         startTransition(async () => {
             try {
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    // Redirect back to your app's callback route
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
                 });
 
                 if (error) {
@@ -65,14 +61,9 @@ export default function ForgotPasswordPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] px-4 py-8">
-
-            {/* Card */}
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
-
-                {/* Header & Logo */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-1">
-                        {/* Matches Login/Signup Logo Style */}
                         <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 drop-shadow-sm">
                             <Image
                                 src="/images/rove_icon_transparent.png"
@@ -93,7 +84,6 @@ export default function ForgotPasswordPage() {
                     </p>
                 </div>
 
-                {/* Success Message (Inline, No Toaster) */}
                 {success ? (
                     <div className="animate-in fade-in zoom-in duration-300">
                         <div className="bg-green-50 border border-green-100 rounded-2xl p-6 text-center">
@@ -114,10 +104,7 @@ export default function ForgotPasswordPage() {
                         </div>
                     </div>
                 ) : (
-                    /* Form */
                     <form onSubmit={onSubmit} className="space-y-5" noValidate>
-
-                        {/* Email */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700 block pl-1">Email</label>
                             <div className="relative">
@@ -140,7 +127,6 @@ export default function ForgotPasswordPage() {
                             )}
                         </div>
 
-                        {/* Server Error */}
                         {serverError && (
                             <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 flex items-center justify-center gap-2">
                                 <AlertCircle size={16} />
@@ -160,7 +146,6 @@ export default function ForgotPasswordPage() {
                             ) : "Send Reset Link"}
                         </Button>
 
-                        {/* Back to Login */}
                         <div className="text-center mt-6">
                             <Link
                                 href="/login"

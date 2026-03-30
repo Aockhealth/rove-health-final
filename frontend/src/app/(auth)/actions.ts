@@ -1,3 +1,4 @@
+// src/app/(auth)/actions.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -15,6 +16,61 @@ type ActionResult = {
   error?: string;
   nextRoute?: string;
 };
+
+/**
+ * Initiates a password reset by sending a secure link to the user's email.
+ */
+export async function requestPasswordReset(email: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  // The redirectTo points to the callback route which handles the token exchange and then redirects to the reset page.
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?type=recovery`,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: error.message,
+      code: "RESET_FAILED",
+      message: error.message
+    };
+  }
+
+  return {
+    ok: true,
+    success: true,
+    message: "A password reset link has been sent to your email."
+  };
+}
+
+/**
+ * Updates user email in Auth and phone number in the profiles table.
+ */
+export async function updateContactInfo(email: string, phone: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  // 1. Update Auth Email - Supabase handles verification for the new address.
+  const { error: authError } = await supabase.auth.updateUser({ email });
+  if (authError) return { ok: false, error: authError.message };
+
+  // 2. Update Phone Number in the Database profiles table.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ phone_number: phone })
+      .eq("id", user.id);
+
+    if (profileError) return { ok: false, error: profileError.message };
+  }
+
+  revalidatePath("/cycle-sync/profile");
+  return {
+    ok: true,
+    message: "Contact info updated. Please check your new email for a confirmation link."
+  };
+}
 
 export async function login(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
@@ -51,11 +107,9 @@ export async function login(formData: FormData): Promise<ActionResult> {
 export async function signup(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
 
-  // 1. Extract inputs
   const email = (formData.get("email") as string)?.trim();
   const password = (formData.get("password") as string)?.trim();
 
-  // 2. Sign up with Supabase
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -72,7 +126,6 @@ export async function signup(formData: FormData): Promise<ActionResult> {
     return { ok: false, error: error.message, code: "SIGNUP_FAILED", message: error.message };
   }
 
-  // If email verification is turned on, session will be null.
   if (!data?.session) {
     return {
       ok: false,
@@ -82,7 +135,6 @@ export async function signup(formData: FormData): Promise<ActionResult> {
     };
   }
 
-  // If auto-login succeeded (email verify disabled/optional), set up the profile
   if (data?.user) {
     await supabase
       .from("profiles")
@@ -97,7 +149,6 @@ export async function signup(formData: FormData): Promise<ActionResult> {
     return { ok: true, success: true, nextRoute: "/privacy-pledge" };
   }
 
-  // Fallback
   return { ok: false, error: "Signup encountered an unknown error.", code: "UNKNOWN" };
 }
 
@@ -121,7 +172,6 @@ export async function recordPrivacyConsent(input: ConsentRecord): Promise<Action
   }
 
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
