@@ -912,7 +912,7 @@ export default function TrackerPageRedesigned() {
                                 {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </p>
                             {hasPhaseData && phaseResult.latePeriod && (
-                                <p className="text-[10px] text-rose-500 font-medium">
+                                <p className="text-[10px] text-phase-menstrual font-medium">
                                     Late {lateByDays}d
                                 </p>
                             )}

@@ -1020,7 +1020,7 @@ export default function DetailedPlanPage() {
                             {setupStep === 3 && (
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-600">
+                                        <div className="p-2 bg-emerald-500/10 rounded-full text-phase-follicular">
                                             <Target className="w-6 h-6" />
                                         </div>
                                         <h2 className="text-xl font-heading text-rove-charcoal">Fitness Goal</h2>
@@ -1646,7 +1646,7 @@ export default function DetailedPlanPage() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className={cn("p-4 rounded-xl border", theme.softBg, theme.border)}>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                                                        <div className="w-9 h-9 rounded-lg bg-phase-menstrual/20 text-phase-menstrual flex items-center justify-center">
                                                             <Utensils className="w-4 h-4" />
                                                         </div>
                                                         <div>

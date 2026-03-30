@@ -27,5 +27,21 @@
             "type": "image/png",
             "purpose": "maskable"
         }
+    ],
+    "shortcuts": [
+        {
+            "name": "Cycle Tracker",
+            "short_name": "Tracker",
+            "description": "Log cycle insights and symptoms",
+            "url": "/cycle-sync",
+            "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Ayurvedic Learn",
+            "short_name": "Learn",
+            "description": "Read Ayurvedic articles",
+            "url": "/cycle-sync/learn",
+            "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+        }
     ]
 }

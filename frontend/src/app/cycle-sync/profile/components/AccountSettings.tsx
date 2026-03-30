@@ -108,7 +108,7 @@ export function AccountSettings({
             <Button 
                 onClick={onLogout} 
                 variant="outline" 
-                className="w-full border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 py-6 rounded-xl"
+                className="w-full border-phase-menstrual/20 text-phase-menstrual/80 hover:text-phase-menstrual hover:bg-phase-menstrual/10 py-6 rounded-xl"
             >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

@@ -326,7 +326,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                     <div className="w-full sm:w-auto flex flex-wrap gap-2">
                         <button
                             onClick={onEndPeriod}
-                            className="flex-1 sm:flex-none px-4 py-2 bg-white text-phase-menstrual border border-phase-menstrual/20 hover:bg-rose-50 text-xs font-semibold rounded-full transition-colors"
+                            className="flex-1 sm:flex-none px-4 py-2 bg-white text-phase-menstrual border border-phase-menstrual/20 hover:bg-phase-menstrual/10 text-xs font-semibold rounded-full transition-colors"
                         >
                             End Period Here
                         </button>
@@ -586,8 +586,8 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                             {/* Header */}
                             <div className="sticky top-0 bg-white/80 backdrop-blur-md px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between z-10">
                                 <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-rose-100 rounded-xl sm:rounded-2xl flex items-center justify-center">
-                                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
+                                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-phase-menstrual/20 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-phase-menstrual" />
                                     </div>
                                     <h2 className="text-lg sm:text-xl font-heading font-bold text-gray-900">Tracker Guide</h2>
                                 </div>
@@ -616,7 +616,7 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
 
                                 {/* Step 2: Logging Period */}
                                 <section className="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-rose-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-rose-500">
+                                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-phase-menstrual/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-phase-menstrual">
                                         <Edit3 className="w-5 h-5 sm:w-6 sm:h-6" />
                                     </div>
                                     <div className="space-y-2">
@@ -649,10 +649,10 @@ const PeriodLoggingCard = memo(function PeriodLoggingCard({
                                         Cycle Phases
                                     </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div className="p-3 sm:p-4 bg-rose-50 border border-rose-100 rounded-xl sm:rounded-2xl">
-                                            <div className="w-3 h-3 bg-rose-400 rounded-full mb-2" />
-                                            <p className="text-xs font-bold text-rose-900">Menstrual</p>
-                                            <p className="text-[10px] text-rose-700">Days 1-5 (Period)</p>
+                                        <div className="p-3 sm:p-4 bg-phase-menstrual/10 border border-phase-menstrual/20 rounded-xl sm:rounded-2xl">
+                                            <div className="w-3 h-3 bg-phase-menstrual/80 rounded-full mb-2" />
+                                            <p className="text-xs font-bold text-phase-menstrual">Menstrual</p>
+                                            <p className="text-[10px] text-phase-menstrual">Days 1-5 (Period)</p>
                                         </div>
                                         <div className="p-3 sm:p-4 bg-teal-50 border border-teal-100 rounded-xl sm:rounded-2xl">
                                             <div className="w-3 h-3 bg-teal-400 rounded-full mb-2" />

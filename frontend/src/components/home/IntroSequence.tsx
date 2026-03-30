@@ -13,55 +13,38 @@ interface IntroSequenceProps {
   isLoggedIn: boolean;
 }
 
-// Complex SVG paths for the continuous line animation.
-// Shape 1: Lotus/Leaf (Delicate, folded)
-const pathLotus = "M 50,80 C 30,70 10,40 50,10 C 90,40 70,70 50,80 Z";
-
-// Shape 2: Converging Droplets (Hormones/Dual forces) 
-const pathDroplets = "M 30,70 C 10,70 10,30 30,30 C 50,30 50,70 30,70 Z M 70,70 C 90,70 90,30 70,30 C 50,30 50,70 70,70 Z";
-
-// Shape 3: Flowing Path/River (Movement/Time)
-const pathRiver = "M 10,80 C 40,80 30,20 50,50 C 70,80 60,20 90,20";
-
-// Shape 4: Aura/Sun (Wholeness/Completion)
-const pathAura = "M 50,10 C 72,10 90,28 90,50 C 90,72 72,90 50,90 C 28,90 10,72 10,50 C 10,28 28,10 50,10 Z";
-
 const SCREENS = [
   {
     id: 0,
     title: "Welcome to Rove",
     subtitle: "Your body runs on a continuous biological cycle. Every day is different.",
-    path: pathLotus,
     colorClass: "text-phase-menstrual",
-    gradientClass: "from-phase-menstrual/20 to-transparent",
-    orbGlow: "shadow-[0_0_60px_rgba(175,107,107,0.4)]"
+    gradientClass: "from-phase-menstrual/40 to-phase-menstrual/10",
+    orbGlow: "shadow-[0_0_80px_rgba(175,107,107,0.5)]"
   },
   {
     id: 1,
     title: "Most apps just count days.",
     subtitle: "Rove reads your biology. We track your hormones, not just your calendar.",
-    path: pathDroplets,
     colorClass: "text-phase-follicular",
-    gradientClass: "from-phase-follicular/20 to-transparent",
-    orbGlow: "shadow-[0_0_60px_rgba(141,170,157,0.4)]"
+    gradientClass: "from-phase-follicular/40 to-phase-follicular/10",
+    orbGlow: "shadow-[0_0_80px_rgba(141,170,157,0.5)]"
   },
   {
     id: 2,
     title: "Diet. Movement. Skin.",
     subtitle: "Personalized daily plans that shift with your cycle — rooted in bespoke wellness.",
-    path: pathRiver,
     colorClass: "text-phase-ovulatory",
-    gradientClass: "from-phase-ovulatory/20 to-transparent",
-    orbGlow: "shadow-[0_0_60px_rgba(212,162,95,0.4)]"
+    gradientClass: "from-phase-ovulatory/40 to-phase-ovulatory/10",
+    orbGlow: "shadow-[0_0_80px_rgba(212,162,95,0.5)]"
   },
   {
     id: 3,
     title: "Ready to feel in sync?",
     subtitle: "It takes 2 minutes to set up. Your data stays private. Always.",
-    path: pathAura,
     colorClass: "text-phase-luteal",
-    gradientClass: "from-phase-luteal/20 to-transparent",
-    orbGlow: "shadow-[0_0_60px_rgba(123,130,168,0.4)]"
+    gradientClass: "from-phase-luteal/40 to-phase-luteal/10",
+    orbGlow: "shadow-[0_0_80px_rgba(123,130,168,0.5)]"
   }
 ];
 
@@ -81,6 +64,20 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     }
     setMounted(true);
   }, [isLoggedIn]);
+
+  // Auto-advance the splash screens
+  useEffect(() => {
+    if (isFirstTime === false || isFirstTime === null) return;
+    
+    // Stop auto-scrolling on the last screen so they can read the CTA
+    if (currentStep >= SCREENS.length - 1) return;
+
+    const autoScrollTimer = setTimeout(() => {
+      setCurrentStep(s => s + 1);
+    }, 2500); // 2.5 seconds per screen
+
+    return () => clearTimeout(autoScrollTimer);
+  }, [currentStep, isFirstTime]);
 
   const handleSkip = () => {
     localStorage.setItem("rove-splash-seen", "true");
@@ -118,7 +115,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     return (
       <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-[#FDFBF7] px-4 py-8 grain-overlay">
         <motion.div
-          className="pointer-events-none absolute -left-24 -top-20 h-[480px] w-[480px] rounded-full bg-gradient-to-br from-rose-200/40 via-rose-100/40 to-transparent blur-3xl"
+          className="pointer-events-none absolute -left-24 -top-20 h-[480px] w-[480px] rounded-full bg-gradient-to-br from-phase-menstrual/15 via-phase-menstrual/10 to-transparent blur-3xl"
           animate={fluidAnimation}
           transition={fluidTransition}
         />
@@ -142,7 +139,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
             Biology First
           </p>
           <h1 className="font-serif text-4xl leading-tight text-rove-charcoal md:text-6xl">
-            You are not inconsistent.<br /><span className="italic text-rose-600">You are cyclical.</span>
+            You are not inconsistent.<br /><span className="italic text-phase-menstrual">You are cyclical.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-rove-stone md:text-base">
             Rove translates your cycle into practical daily choices for meals, movement, and recovery.
@@ -163,7 +160,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                   </Button>
                 </Link>
                 <Link href="/login" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "login" })}>
-                  <Button variant="outline" className="h-12 w-full rounded-full border-rove-charcoal/30 bg-white text-base font-semibold text-rove-charcoal hover:bg-rose-50">
+                  <Button variant="outline" className="h-12 w-full rounded-full border-rove-charcoal/30 bg-white text-base font-semibold text-rove-charcoal hover:bg-phase-menstrual/10">
                     Log In
                   </Button>
                 </Link>
@@ -236,34 +233,41 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
             className="w-full max-w-sm mx-auto flex flex-col items-center text-center space-y-12"
           >
 
-            {/* The SVG Canvas Container */}
-            <div className={cn("relative w-48 h-48 md:w-64 md:h-64 rounded-full flex items-center justify-center transition-all duration-1000", screen.orbGlow)}>
-              <svg
-                viewBox="0 0 100 100"
-                className={cn("w-full h-full transform transition-colors duration-1000", screen.colorClass)}
-                style={{ overflow: 'visible' }}
-              >
-                {/* Subtle base ring */}
-                <circle cx="50" cy="50" r="48" fill="transparent" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.1" />
+            {/* The Pulsing Orb Container */}
+            <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center pt-4">
+              {/* Outer soft glow ring */}
+              <motion.div
+                className={cn("absolute inset-0 rounded-full blur-2xl transition-all duration-1000 opacity-50", screen.orbGlow)}
+                animate={reduceMotion ? { scale: 1 } : { scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              />
 
-                {/* The Continuous Animating Line */}
-                <motion.path
-                  d={screen.path}
-                  fill="transparent"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={reduceMotion ? false : { pathLength: 0 }}
-                  animate={reduceMotion ? false : { pathLength: 1 }}
-                  transition={{
-                    duration: 2,
-                    ease: "easeInOut",
-                    // For the morph transition between shapes
-                    d: { duration: 1.5, ease: [0.32, 0.72, 0, 1] }
-                  }}
+              {/* Main Orb Body */}
+              <motion.div
+                className={cn(
+                  "relative w-36 h-36 md:w-48 md:h-48 rounded-full border border-white/40 shadow-inner bg-gradient-to-br transition-colors duration-1000 overflow-hidden",
+                  screen.gradientClass,
+                  screen.orbGlow
+                )}
+                animate={reduceMotion ? { scale: 1 } : { scale: [1, 1.05, 1] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  backdropFilter: "blur(20px)",
+                }}
+              >
+                {/* Light reflection highlight on orb */}
+                <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.8)_0%,transparent_60%)] opacity-70 mix-blend-overlay" />
+                
+                {/* Inner deep core */}
+                <motion.div
+                  className={cn(
+                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 md:w-28 md:h-28 rounded-full blur-xl transition-all duration-1000",
+                    screen.colorClass.replace("text-", "bg-")
+                  )}
+                  animate={reduceMotion ? {} : { scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 />
-              </svg>
+              </motion.div>
             </div>
 
             {/* Typography */}

@@ -15,11 +15,11 @@ export default function EditCycleBanner({ isEditingCycle, onUpdate, onClose }: E
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-gradient-to-r from-rose-50 to-orange-50 rounded-3xl p-5 border border-rose-100"
+                    className="bg-gradient-to-r from-phase-menstrual/10 to-orange-50 rounded-3xl p-5 border border-phase-menstrual/20"
                 >
                     <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <Calendar className="w-5 h-5 text-rose-600" />
+                            <Calendar className="w-5 h-5 text-phase-menstrual" />
                         </div>
                         <div className="flex-1">
                             <h3 className="text-sm font-semibold text-gray-900 mb-1">Update Period Start Date</h3>

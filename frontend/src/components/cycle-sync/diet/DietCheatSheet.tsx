@@ -38,14 +38,14 @@ export function DietCheatSheet({ data, theme, phase }: DietCheatSheetProps) {
                 {/* Focus Row */}
                 <div>
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-phase-follicular">
                             <Check className="w-3 h-3" />
                         </div>
                         <h4 className="font-bold text-xs uppercase text-emerald-900 tracking-widest leading-none mt-0.5">{data.focus.title}</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {data.focus.items.map((item, i) => (
-                            <span key={i} className="px-3 py-1.5 rounded-lg bg-emerald-50/50 border border-emerald-100 text-emerald-900 text-xs font-bold shadow-sm backdrop-blur-sm">
+                            <span key={i} className="px-3 py-1.5 rounded-lg bg-emerald-50/50 border border-phase-follicular/20 text-emerald-900 text-xs font-bold shadow-sm backdrop-blur-sm">
                                 {item}
                             </span>
                         ))}
@@ -57,14 +57,14 @@ export function DietCheatSheet({ data, theme, phase }: DietCheatSheetProps) {
                 {/* Avoid Row */}
                 <div>
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                        <div className="w-5 h-5 rounded-full bg-phase-menstrual/20 flex items-center justify-center text-phase-menstrual">
                             <X className="w-3 h-3" />
                         </div>
-                        <h4 className="font-bold text-xs uppercase text-rose-900 tracking-widest leading-none mt-0.5">{data.avoid.title}</h4>
+                        <h4 className="font-bold text-xs uppercase text-phase-menstrual tracking-widest leading-none mt-0.5">{data.avoid.title}</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {data.avoid.items.map((item, i) => (
-                            <span key={i} className="px-3 py-1.5 rounded-lg bg-rose-50/50 border border-rose-100 text-rose-900 text-xs font-medium shadow-sm opacity-80 decoration-rose-300/50 line-through decoration-2">
+                            <span key={i} className="px-3 py-1.5 rounded-lg bg-phase-menstrual/5 border border-phase-menstrual/20 text-phase-menstrual text-xs font-medium shadow-sm opacity-80 decoration-phase-menstrual/20 line-through decoration-2">
                                 {item}
                             </span>
                         ))}

@@ -94,10 +94,10 @@ export default function PrivacyPledgeClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-50 via-white to-rose-100 px-4 py-6 md:px-6 md:py-10">
-      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-rose-100 bg-white shadow-xl">
-        <header className="border-b border-rose-100 p-6 md:p-8">
-          <div className={`mb-4 rounded-2xl bg-gradient-to-r from-rose-100 via-pink-50 to-amber-50 p-2 ${styles.gradientFrame}`}>
+    <main className="min-h-screen bg-gradient-to-b from-phase-menstrual/10 via-white to-phase-menstrual/20 px-4 py-6 md:px-6 md:py-10">
+      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-phase-menstrual/20 bg-white shadow-xl">
+        <header className="border-b border-phase-menstrual/20 p-6 md:p-8">
+          <div className={`mb-4 rounded-2xl bg-gradient-to-r from-phase-menstrual/20 via-phase-menstrual/10 to-amber-50 p-2 ${styles.gradientFrame}`}>
             <div className="relative mx-auto aspect-[4/2] w-full max-w-xl">
               <Image
                 src="/assets/Data-privacy.png"
@@ -110,7 +110,7 @@ export default function PrivacyPledgeClient() {
           </div>
 
           <div className="flex items-start gap-3">
-            <ShieldCheck className="mt-1 h-6 w-6 text-rose-500" aria-hidden="true" />
+            <ShieldCheck className="mt-1 h-6 w-6 text-phase-menstrual" aria-hidden="true" />
             <div>
               <h1 className="text-2xl font-semibold text-rove-charcoal md:text-3xl">Privacy Promise</h1>
               <p className="mt-2 text-sm text-rove-stone md:text-base">
@@ -126,7 +126,7 @@ export default function PrivacyPledgeClient() {
             <button
               type="button"
               onClick={toggleAll}
-              className="rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+              className="rounded-full border border-phase-menstrual/30 px-3 py-1 text-xs font-semibold text-phase-menstrual hover:bg-phase-menstrual/10"
             >
               {allExpanded ? "Collapse all" : "Expand all"}
             </button>
@@ -171,7 +171,7 @@ export default function PrivacyPledgeClient() {
               type="checkbox"
               checked={agreed}
               onChange={(event) => setAgreed(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-rose-500 focus:ring-rose-200"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-phase-menstrual focus:ring-phase-menstrual/30"
             />
             <span className="text-sm text-rove-charcoal">
               I understand and consent to Rove processing my data as described above (Policy version{" "}
@@ -182,10 +182,10 @@ export default function PrivacyPledgeClient() {
           <div className="mt-3 text-xs text-rove-stone">
             Read the full policy:{" "}
             <Link
-              href="https://rove.health/privacy"
+              href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-rose-600 underline decoration-rose-300 underline-offset-2"
+              className="font-semibold text-phase-menstrual underline decoration-phase-menstrual/40 underline-offset-2"
             >
               Privacy Policy
             </Link>
@@ -213,7 +213,7 @@ export default function PrivacyPledgeClient() {
 
           <p className="mt-4 text-center text-xs text-rove-stone">
             Need help?{" "}
-            <a href="mailto:rovehealthofficial@gmail.com" className="font-semibold text-rose-600 underline">
+            <a href="mailto:rovehealthofficial@gmail.com" className="font-semibold text-phase-menstrual underline">
               rovehealthofficial@gmail.com
             </a>
           </p>

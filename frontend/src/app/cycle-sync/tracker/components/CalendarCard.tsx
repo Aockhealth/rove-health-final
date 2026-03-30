@@ -56,7 +56,7 @@ export default function CalendarCard({
     const getPhaseColor = (p: Phase) => {
         switch (p) {
             case "Menstrual":
-                return "bg-rose-100 border border-rose-200 text-rose-900 hover:bg-rose-200";
+                return "bg-phase-menstrual/20 border border-phase-menstrual/30 text-phase-menstrual hover:bg-phase-menstrual/30";
             case "Follicular":
                 return "bg-teal-100 border border-teal-200 text-teal-900 hover:bg-teal-200";
             case "Ovulatory":
@@ -106,22 +106,22 @@ export default function CalendarCard({
     };
 
     return (
-        <div className="bg-white/80 backdrop-blur-3xl rounded-[2rem] p-6 shadow-xl shadow-rose-100/20 border border-white/50 mb-6">
+        <div className="bg-white/80 backdrop-blur-3xl rounded-[2rem] p-6 shadow-xl shadow-phase-menstrual/5 border border-white/50 mb-6">
             {/* Period Logging Mode Banner */}
             {isPeriodLoggingMode && (
-                <div className="mb-4 p-4 bg-pink-50 rounded-2xl border border-pink-200">
+                <div className="mb-4 p-4 bg-phase-menstrual/10 rounded-2xl border border-phase-menstrual/30">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-sm font-semibold text-pink-900 mb-1">
+                            <h3 className="text-sm font-semibold text-phase-menstrual mb-1">
                                 Select your period dates
                             </h3>
-                            <p className="text-xs text-pink-600">
+                            <p className="text-xs text-phase-menstrual/80">
                                 Tap dates to mark or unmark period days
                             </p>
                         </div>
                         <button
                             onClick={onExitPeriodLogging}
-                            className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-full transition-colors"
+                            className="px-4 py-2 bg-phase-menstrual hover:bg-phase-menstrual/90 text-white text-sm font-medium rounded-full transition-colors"
                         >
                             Done
                         </button>
@@ -194,15 +194,15 @@ export default function CalendarCard({
                                 {/* Day Circle */}
                                 <div className={cn(
                                     "w-10 h-10 rounded-full flex items-center justify-center text-sm transition-all",
-                                    isLogged && "bg-pink-500 text-white",
-                                    isPredicted && "border-2 border-dashed border-pink-300",
+                                    isLogged && "bg-phase-menstrual text-white",
+                                    isPredicted && "border-2 border-dashed border-phase-menstrual/40",
                                     !isLogged && !isPredicted && "border border-gray-300",
                                     isDisabled && "opacity-30 cursor-not-allowed"
                                 )}>
                                     {isLogged ? "✓" : ""}
                                 </div>
                                 {/* Date Number */}
-                                <span className="text-xs text-pink-700 mt-1">
+                                <span className="text-xs text-phase-menstrual mt-1">
                                     {date.getDate()}
                                 </span>
                             </button>

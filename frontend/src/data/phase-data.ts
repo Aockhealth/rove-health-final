@@ -102,8 +102,8 @@ const menstrualPhase: PhaseData = {
         name: "Menstrual",
         altName: "Rajaswala Kala",
         duration: "Days 1-5",
-        color: "bg-rose-500",
-        badgeColor: "bg-rose-50 text-rose-600 border-rose-100",
+        color: "bg-phase-menstrual",
+        badgeColor: "bg-phase-menstrual/10 text-phase-menstrual border-phase-menstrual/20",
         season: "Inner Winter",
         icon: "Moon"
     },
@@ -745,7 +745,7 @@ const lutealPhase: PhaseData = {
     hormones: {
         title: "Progesterone Rising",
         summary: "Progesterone rises, then falls; PMS may appear",
-        description: "Your 'inner autumn' - a time for completion, detail work, and nesting. Progesterone rises to prepare for potential pregnancy, then drops, which can trigger PMS symptoms in the last days.",
+        description: "Your 'inner autumn' - a time for completion and detail work. Progesterone rises to prepare for potential pregnancy, then drops, which can trigger PMS symptoms in the last days.",
         estrogen: "Moderate",
         progesterone: "Peak",
         symptoms: ["PMS possible", "Bloating", "Cravings", "Mood swings", "Breast tenderness", "Fatigue (late phase)"],

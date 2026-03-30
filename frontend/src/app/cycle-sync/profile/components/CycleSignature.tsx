@@ -53,7 +53,7 @@ export function CycleSignature({ cycleLength, periodLength, isIrregular, phaseNa
     );
 
     const phases = [
-        { name: "Menstrual", label: "Men", color: "bg-rose-400", shadow: "shadow-[0_0_12px_rgba(251,113,133,0.6)]" },
+        { name: "Menstrual", label: "Men", color: "bg-phase-menstrual/80", shadow: "shadow-[0_0_12px_rgba(251,113,133,0.6)]" },
         { name: "Follicular", label: "Fol", color: "bg-teal-400", shadow: "shadow-[0_0_12px_rgba(45,212,191,0.6)]" },
         { name: "Ovulatory", label: "Ovu", color: "bg-amber-400", shadow: "shadow-[0_0_12px_rgba(251,191,36,0.6)]" },
         { name: "Luteal", label: "Lut", color: "bg-indigo-400", shadow: "shadow-[0_0_12px_rgba(129,140,248,0.6)]" },

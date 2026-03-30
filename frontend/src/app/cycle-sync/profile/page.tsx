@@ -143,11 +143,12 @@ export default function ProfilePage() {
         }
     };
 
-    const PROFILE_THEMES: Record<string, { bg: string, ring: string, accent: string }> = {
-        "Menstrual": { bg: "bg-gradient-to-br from-rose-50 via-white to-rose-50", ring: "ring-rose-100", accent: "text-rose-900" },
-        "Follicular": { bg: "bg-gradient-to-br from-teal-50 via-white to-teal-50", ring: "ring-teal-100", accent: "text-teal-900" },
-        "Ovulatory": { bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50", ring: "ring-amber-100", accent: "text-amber-900" },
-        "Luteal": { bg: "bg-gradient-to-br from-indigo-50 via-white to-violet-50", ring: "ring-indigo-100", accent: "text-indigo-900" },
+    // --- LUXURY THEMES ---
+    const PROFILE_THEMES: Record<string, { bg: string, ring: string, accent: string, badge: string }> = {
+        "Menstrual": { bg: "bg-gradient-to-br from-phase-menstrual/10 via-white to-phase-menstrual/10", ring: "ring-phase-menstrual/20", accent: "text-phase-menstrual", badge: "border-phase-menstrual/30 text-phase-menstrual bg-phase-menstrual/10" },
+        "Follicular": { bg: "bg-gradient-to-br from-teal-50 via-white to-teal-50", ring: "ring-teal-100", accent: "text-teal-900", badge: "border-teal-200 text-teal-700 bg-teal-50" },
+        "Ovulatory": { bg: "bg-gradient-to-br from-amber-50 via-white to-orange-50", ring: "ring-amber-100", accent: "text-amber-900", badge: "border-amber-200 text-amber-700 bg-amber-50" },
+        "Luteal": { bg: "bg-gradient-to-br from-indigo-50 via-white to-violet-50", ring: "ring-indigo-100", accent: "text-indigo-900", badge: "border-indigo-200 text-indigo-700 bg-indigo-50" },
     };
     const theme = PROFILE_THEMES[unifiedPhase || "Menstrual"] || PROFILE_THEMES["Menstrual"];
 

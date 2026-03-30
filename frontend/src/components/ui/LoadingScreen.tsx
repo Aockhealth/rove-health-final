@@ -8,7 +8,7 @@ const FUN_FACTS = [
   "Cycle Syncing Tip: Focus on high-intensity workouts like HIIT during your Follicular phase.",
   "Cycle Syncing Tip: Seed cycling with flax and pumpkin seeds can naturally support estrogen levels.",
   "Cycle Syncing Tip: Your pain tolerance peaks during Ovulation—it's the best time for deep tissue massages!",
-  "Cycle Syncing Tip: Progesterone rises in your Luteal phase, making it the perfect time for yoga and nesting.",
+  "Cycle Syncing Tip: Progesterone rises in your Luteal phase, making it the perfect time for gentle yoga and relaxation.",
   "Cycle Syncing Tip: Warm, iron-rich foods like stews and spinach help replenish your body during menstruation.",
   "Did you know? Estrogen peaks in your follicular phase, naturally boosting your memory and verbal skills.",
   "Cycle Syncing Tip: Insulin sensitivity drops pre-period. Pair carbs with protein to avoid sugar crashes.",
@@ -46,7 +46,7 @@ export default function LoadingScreen() {
             y: [0, -20, 0]
           }}
           transition={reduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-1/4 -z-10 h-64 w-64 rounded-full bg-rose-200/40 blur-[80px]"
+          className="absolute top-1/4 left-1/4 -z-10 h-64 w-64 rounded-full bg-phase-menstrual/15 blur-[80px]"
         />
         <motion.div
           animate={reduceMotion ? undefined : {
@@ -121,7 +121,7 @@ export default function LoadingScreen() {
             {/* Indeterminate loading bar */}
             <div className="w-full h-1 bg-rove-stone/10 rounded-full mt-6 overflow-hidden relative">
               <motion.div
-                className="absolute left-0 top-0 bottom-0 w-1/3 bg-rose-400/60 rounded-full"
+                className="absolute left-0 top-0 bottom-0 w-1/3 bg-phase-menstrual/50 rounded-full"
                 animate={{
                   x: ['-100%', '300%']
                 }}

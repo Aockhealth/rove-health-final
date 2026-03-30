@@ -109,7 +109,7 @@ export function HealthPassport({ formData, setFormData, onSave, isPending, theme
                         <span className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Conditions Managed</span>
                         <div className="flex flex-wrap gap-2">
                             {formData.conditions?.map((c: string) => (
-                                <button key={c} onClick={() => removeCondition(c)} className="group px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 text-xs font-bold border border-rose-100 flex items-center gap-1 hover:bg-rose-100 transition-colors">
+                                <button key={c} onClick={() => removeCondition(c)} className="group px-3 py-1.5 rounded-full bg-phase-menstrual/10 text-phase-menstrual text-xs font-bold border border-phase-menstrual/20 flex items-center gap-1 hover:bg-phase-menstrual/20 transition-colors">
                                     {c}
                                     <X className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>

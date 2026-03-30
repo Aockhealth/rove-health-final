@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
                                     className={`w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 text-gray-900 border outline-none transition-all placeholder:text-gray-400
                                         ${fieldErrors.email
                                             ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                                            : "border-gray-200 focus:border-rose-400 focus:bg-white focus:ring-2 focus:ring-rose-100"
+                                            : "border-gray-200 focus:border-phase-menstrual/60 focus:bg-white focus:ring-2 focus:ring-phase-menstrual/20"
                                         }`}
                                 />
                             </div>
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="w-full py-4 rounded-xl bg-gradient-to-r from-rose-300 via-rose-100 to-rose-400 text-gray-900 font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-phase-menstrual/40 via-phase-menstrual/20 to-phase-menstrual/80 text-gray-900 font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                         >
                             {isPending ? (
                                 <span className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function ForgotPasswordPage() {
                         <div className="text-center mt-6">
                             <Link
                                 href="/login"
-                                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors"
+                                className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-phase-menstrual transition-colors"
                             >
                                 <ArrowLeft size={16} />
                                 Back to Log in

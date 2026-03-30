@@ -40,7 +40,7 @@ const REST_SECONDS = 20;
 function pad(n: number) { return String(n).padStart(2, "0"); }
 
 function intensityBadgeStyle(intensity: string) {
-    if (intensity === "Low") return "bg-emerald-50 text-emerald-600 border border-emerald-200";
+    if (intensity === "Low") return "bg-phase-follicular/10 text-phase-follicular border border-emerald-200";
     if (intensity === "High") return "bg-red-50 text-red-600 border border-red-200";
     return "bg-amber-50 text-amber-600 border border-amber-200";
 }

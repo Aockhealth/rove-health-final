@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { executeUnifiedAI } from "@backend/actions/ai-orchestrator/orchestrator";
 import { UnifiedAIRequest } from "@/lib/ai/unified-schemas";
+import { aiRateLimiter } from "@/lib/rate-limiter";
 
 type ClientMessage = {
     role: "user" | "assistant" | string;
@@ -26,19 +27,27 @@ export async function POST(req: Request) {
         }
 
         // Rate limiting check
-        const now = Date.now();
-        const userLimit = rateLimitMap.get(user.id) || { count: 0, lastReset: now };
-
-        if (now - userLimit.lastReset > RATE_LIMIT_WINDOW) {
-            userLimit.count = 1;
-            userLimit.lastReset = now;
+        if (aiRateLimiter) {
+            const { success } = await aiRateLimiter.limit(`unified_chat_${user.id}`);
+            if (!success) {
+                return NextResponse.json({ error: "Rate limit exceeded. Please try again in a minute." }, { status: 429 });
+            }
         } else {
-            userLimit.count++;
-        }
-        rateLimitMap.set(user.id, userLimit);
+            // Local fallback
+            const now = Date.now();
+            const userLimit = rateLimitMap.get(user.id) || { count: 0, lastReset: now };
 
-        if (userLimit.count > RATE_LIMIT_COUNT) {
-            return NextResponse.json({ error: "Rate limit exceeded. Please try again in a minute." }, { status: 429 });
+            if (now - userLimit.lastReset > RATE_LIMIT_WINDOW) {
+                userLimit.count = 1;
+                userLimit.lastReset = now;
+            } else {
+                userLimit.count++;
+            }
+            rateLimitMap.set(user.id, userLimit);
+
+            if (userLimit.count > RATE_LIMIT_COUNT) {
+                return NextResponse.json({ error: "Rate limit exceeded. Please try again in a minute." }, { status: 429 });
+            }
         }
 
         const body = await req.json();

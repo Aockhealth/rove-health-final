@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { aiRateLimiter } from "@/lib/rate-limiter";
 
 // In-memory rate limiting (per user)
 const userRequestMap = new Map<string, { count: number; resetAt: number }>();
@@ -314,11 +315,22 @@ export async function POST(req: Request) {
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // Check rate limit
-        if (!checkRateLimit(user.id)) {
-            return NextResponse.json(
-                { error: "Too many requests. Please wait a minute before trying again." },
-                { status: 429 }
-            );
+        if (aiRateLimiter) {
+            const { success } = await aiRateLimiter.limit(`legacy_ai_chat_${user.id}`);
+            if (!success) {
+                return NextResponse.json(
+                    { error: "Too many requests. Please wait a minute before trying again." },
+                    { status: 429 }
+                );
+            }
+        } else {
+            // Local fallback
+            if (!checkRateLimit(user.id)) {
+                return NextResponse.json(
+                    { error: "Too many requests. Please wait a minute before trying again." },
+                    { status: 429 }
+                );
+            }
         }
 
         const body = await req.json();

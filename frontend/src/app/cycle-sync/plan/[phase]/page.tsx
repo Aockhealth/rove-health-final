@@ -188,7 +188,7 @@ function ExerciseListCard({
     ex, index, accent,
 }: { ex: any; index: number; accent: string }) {
     const intensityColor = ex.intensity === "Low"
-        ? "border-emerald-200 text-emerald-600 bg-emerald-50"
+        ? "border-emerald-200 text-phase-follicular bg-phase-follicular/10"
         : ex.intensity === "High"
             ? "border-red-200 text-red-600 bg-red-50"
             : "border-amber-200 text-amber-600 bg-amber-50";
@@ -553,8 +553,8 @@ export default function PhaseDetailPage() {
                                 </motion.section>
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <Card className="bg-emerald-50/50 border-emerald-100 p-3">
-                                        <h4 className="text-[9px] font-bold uppercase text-emerald-600 mb-2 flex items-center gap-1">
+                                    <Card className="bg-emerald-50/50 border-phase-follicular/20 p-3">
+                                        <h4 className="text-[9px] font-bold uppercase text-phase-follicular mb-2 flex items-center gap-1">
                                             <Heart className="w-3 h-3" /> Eat
                                         </h4>
                                         <ul className="space-y-1.5">

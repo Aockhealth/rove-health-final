@@ -49,7 +49,7 @@ export const getCalendarDays = (currentMonth: Date): CalendarDay[] => {
 export const getPhaseColor = (phase: Phase): string => {
   switch (phase) {
     case "Menstrual":
-      return "bg-rose-200/40 text-gray-900 hover:bg-rose-200/60";
+      return "bg-phase-menstrual/15 text-gray-900 hover:bg-phase-menstrual/20";
     case "Follicular":
       return "bg-teal-200/40 text-gray-900 hover:bg-teal-200/60";
     case "Ovulatory":
@@ -63,7 +63,7 @@ export const getPhaseColor = (phase: Phase): string => {
 
 export const getPhaseDot = (phase: Phase): string => {
   switch (phase) {
-    case "Menstrual": return "bg-rose-400";
+    case "Menstrual": return "bg-phase-menstrual/80";
     case "Follicular": return "bg-teal-400";
     case "Ovulatory": return "bg-amber-400";
     case "Luteal": return "bg-indigo-400";

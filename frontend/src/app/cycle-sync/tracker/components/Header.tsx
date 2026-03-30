@@ -9,8 +9,8 @@ export default function Header({ onEditClick }: HeaderProps) {
     <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
       <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-rose-600" />
+          <div className="w-10 h-10 bg-phase-menstrual/20 rounded-full flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-phase-menstrual" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Tracker</h1>

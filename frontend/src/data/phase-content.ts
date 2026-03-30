@@ -778,7 +778,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
 
     "Luteal": {
         river: [
-            "Organize • Nest • Complete", "Focus • Finish • Ground", "Settle • Sort • Slow",
+            "Organize • Reflect • Complete", "Focus • Finish • Ground", "Settle • Sort • Slow",
             "Root • Anchor • Hold", "Detail • Depth • Clarity"
         ],
         nutrition_guide: {
@@ -791,7 +791,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             },
             symptom_decoder: {
                 title: "Luteal Phase",
-                subtitle: "Organize, Nest, Complete",
+                subtitle: "Organize, Reflect, Complete",
                 cards: [
                     { title: "PMS Moodiness", condition: "Irritable", biology: "Serotonin dropping.", fix: "B6 for mood boost." },
                     { title: "Sugar Cravings", condition: "Hungry", biology: "Blood sugar unstable.", fix: "Complex carbs stabilize." },
@@ -902,7 +902,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Organize Home",
                 desc: "Cleaning",
                 icon: "Home",
-                detail: "The 'nesting' instinct begins. Cleaning drawers or organizing your space feels satisfying now."
+                detail: "A desire for order begins. Cleaning drawers or organizing your space feels satisfying now."
             },
             {
                 title: "Pilates/Yoga",

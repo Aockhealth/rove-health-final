@@ -42,7 +42,7 @@ export default function WeightProgressCard({
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                        <Target className="w-5 h-5 text-emerald-600" />
+                        <Target className="w-5 h-5 text-phase-follicular" />
                     </div>
                     <div>
                         <h3 className="font-heading font-semibold text-rove-charcoal">Weight Goal</h3>
@@ -50,7 +50,7 @@ export default function WeightProgressCard({
                     </div>
                 </div>
                 <div className="text-right">
-                    <span className="text-2xl font-bold text-emerald-600">{progress.toFixed(0)}%</span>
+                    <span className="text-2xl font-bold text-phase-follicular">{progress.toFixed(0)}%</span>
                 </div>
             </div>
 
@@ -99,7 +99,7 @@ export default function WeightProgressCard({
                                 <span className="font-semibold text-rove-charcoal">{weeksRemaining} weeks</span> to go
                             </>
                         ) : (
-                            <span className="font-semibold text-emerald-600">Goal reached! 🎉</span>
+                            <span className="font-semibold text-phase-follicular">Goal reached! 🎉</span>
                         )}
                     </span>
                 </div>

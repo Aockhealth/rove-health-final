@@ -278,21 +278,7 @@ export function PhaseInsightCard({ phase, day, insight, theme, isGenerating, onG
           </div>
 
 
-          {/* Footer with animated sparkles */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1 }}
-            className="pt-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-rove-stone/60 border-t border-rove-stone/10 mt-2"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            >
-              <Brain className="w-3 h-3" />
-            </motion.div>
-            <span>Powered by Gemini 2.5 Flash</span>
-          </motion.div>
+
         </div>
       </motion.div>
     </motion.div>

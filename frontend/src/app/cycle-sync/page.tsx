@@ -354,7 +354,7 @@ const PHASE_EXPLAINERS: Record<string, string> = {
     "Menstrual": "Why Red? 🌹 Honoring your body's sacred reset.",
     "Follicular": "Why Green? 🌱 Just like spring, your energy is blooming!",
     "Ovulatory": "Why Gold? ✨ You're glowing with peak summer vibes!",
-    "Luteal": "Why Indigo? 🌙 Deep colors for deep thoughts & nesting."
+    "Luteal": "Why Indigo? 🌙 Deep colors for deep thoughts & reflection."
 };
 
 // --- 3. Animated Components ---
