@@ -10,6 +10,12 @@ import { cn, getStorageUrl } from "@/lib/utils";
 import type { LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 
+const cleanTitle = (title: string) => {
+    if (!title) return "";
+    // Removes things like "A.1.", "A1", "B.2 ", etc. from the start of the string, and removes file extensions from the end
+    return title.replace(/^[A-Za-z][.\s-]*\d+[.\s-]*\s*/, "").replace(/\.[^/.]+$/, "").trim();
+};
+
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
 
@@ -32,7 +38,7 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
                                     {imageUrl ? (
                                         <Image
                                             src={imageUrl}
-                                            alt={article.title}
+                                            alt={cleanTitle(article.title)}
                                             fill
                                             className="object-cover"
                                             sizes="(max-width: 768px) 200px, 260px"
@@ -50,7 +56,7 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
                                             {article.category}
                                         </span>
                                         <h4 className="font-bold leading-tight text-sm line-clamp-2 drop-shadow-md">
-                                            {article.title}
+                                            {cleanTitle(article.title)}
                                         </h4>
                                     </div>
                                 </div>
@@ -108,7 +114,7 @@ export default function LearnPage() {
                         {featuredImage && (
                             <Image
                                 src={featuredImage}
-                                alt={featured.title}
+                                alt={cleanTitle(featured.title)}
                                 fill
                                 className="object-cover opacity-80"
                                 priority
@@ -131,7 +137,7 @@ export default function LearnPage() {
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                             className="text-4xl md:text-6xl font-heading text-white leading-[0.9] drop-shadow-lg"
                         >
-                            {featured.title}
+                            {cleanTitle(featured.title)}
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}

@@ -10,6 +10,11 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+const cleanTitle = (title: string) => {
+    if (!title) return "";
+    return title.replace(/^[A-Za-z][.\s-]*\d+[.\s-]*\s*/, "").replace(/\.[^/.]+$/, "").trim();
+};
+
 export default async function ArticlePage({ params }: Props) {
   // 1. Resolve Params
   const resolvedParams = await params;
@@ -32,6 +37,8 @@ export default async function ArticlePage({ params }: Props) {
       const res = await fetch(markdownUrl);
       if (res.ok) {
         markdownContent = await res.text();
+        // Remove the very first Markdown H1 heading to avoid duplicating the page title
+        markdownContent = markdownContent.trimStart().replace(/^#\s+[^\n]+(\r?\n)*/, "");
       } else {
         markdownContent = `_Error loading content: ${res.statusText}_`;
       }
@@ -48,7 +55,7 @@ export default async function ArticlePage({ params }: Props) {
         {imageUrl ? (
           <Image
             src={imageUrl}
-            alt={article.title}
+            alt={cleanTitle(article.title)}
             fill
             className="object-cover"
             priority
@@ -88,19 +95,11 @@ export default async function ArticlePage({ params }: Props) {
                 <Clock className="w-3.5 h-3.5" /> {article.read_time}
               </span>
             )}
-            {article.published_date && (
-              <span className="flex items-center gap-1.5 bg-stone-50 px-3 py-1.5 rounded-full text-xs">
-                <Calendar className="w-3.5 h-3.5" />
-                {new Date(article.published_date).toLocaleDateString(undefined, {
-                  month: 'short', day: 'numeric', year: 'numeric'
-                })}
-              </span>
-            )}
           </div>
 
           {/* Title */}
           <h1 className="text-3xl md:text-5xl font-heading font-semibold text-rove-charcoal mb-6 leading-[1.15] tracking-tight text-balance">
-            {article.title}
+            {cleanTitle(article.title)}
           </h1>
 
           {/* Medical Reviewers */}
@@ -117,13 +116,6 @@ export default async function ArticlePage({ params }: Props) {
               </p>
             </div>
           </div>
-
-          {/* Excerpt */}
-          {article.excerpt && (
-            <p className="font-heading text-xl md:text-2xl text-rove-charcoal/70 leading-relaxed mb-10 pb-6 border-b border-stone-100">
-              {article.excerpt}
-            </p>
-          )}
 
           {/* ✅ HIGHLY STYLED MARKDOWN CONTENT */}
           <article className="w-full max-w-none pb-12">
