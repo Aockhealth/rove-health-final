@@ -32,6 +32,7 @@ import { MacroFuelGauge } from "@/components/cycle-sync/diet/MacroFuelGauge";
 import { DietCheatSheet } from "@/components/cycle-sync/diet/DietCheatSheet";
 import { ExerciseOrb } from "@/components/cycle-sync/ExerciseOrb";
 import WeightProgressCard from "@/components/cycle-sync/WeightProgressCard";
+import PageGuide from "@/components/cycle-sync/PageGuide";
 
 // --- Data: Phase Blueprints (PRESERVED) ---
 const BLUEPRINTS: any = {
@@ -1331,6 +1332,13 @@ export default function DetailedPlanPage() {
             </div>
 
             <div className="container mx-auto px-4 py-6 max-w-5xl">
+                <PageGuide
+                    pageKey="plan"
+                    icon={Target}
+                    title="Your AI Cycle Plan"
+                    description="Your phase-specific cheat sheet. Swipe through Guide, Nourish, and Move for personalized protocols."
+                    className="mx-0 mt-0 mb-6"
+                />
 
                 {/* 2. TABS - Modern Pill Design */}
                 <div className="mb-6">

@@ -59,9 +59,19 @@ export default function Header({ user }: { user: any }) {
                     {user ? (
                         // Logged In State
                         <div className="hidden sm:flex items-center gap-4">
-                            <span className="text-sm text-rove-charcoal font-medium">
-                                Hi, {user.user_metadata?.full_name?.split(" ")[0] || "there"}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-rove-stone/20">
+                                    <Image
+                                        src="/images/A_logo.png"
+                                        alt="User Profile"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <span className="text-sm text-rove-charcoal font-medium">
+                                    Hi, {user.user_metadata?.full_name?.split(" ")[0] || "there"}
+                                </span>
+                            </div>
                             <Button variant="outline" size="sm" onClick={handleSignOut}>
                                 Sign Out
                             </Button>

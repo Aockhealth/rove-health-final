@@ -61,71 +61,29 @@ export default function LoadingScreen() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
-        {/* Logo Container - Animated Mask Reveal */}
+        {/* Logo Container - Clean Breathing Animation */}
         <div className="relative mb-10 w-28 h-28 flex items-center justify-center">
-          {/* We use an SVG mask to reveal the actual perfect PNG image */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 120">
-            <defs>
-              <mask id="snake-mask">
-                <motion.path
-                  d="M 50 32.5 C 36 32.5, 37 52, 50 62.5 C 58 70, 54 82, 50 87 C 46 82, 42 70, 50 62.5 C 63 52, 64 32.5, 50 32.5 Z"
-                  fill="transparent"
-                  stroke="white"
-                  strokeWidth="30"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: [0, 1, 1] }}
-                  transition={{
-                    duration: 3,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    repeatType: "loop",
-                    times: [0, 0.8, 1]
-                  }}
-                />
-              </mask>
-            </defs>
-          </svg>
-
-          <div
-            className="relative w-full h-full flex items-center justify-center drop-shadow-md"
-            style={{
-              WebkitMaskImage: 'url(#snake-mask)',
-              maskImage: 'url(#snake-mask)'
+          <motion.div
+            className="relative w-full h-full flex items-center justify-center"
+            animate={{
+              scale: [1, 1.05, 1],
+              opacity: [0.85, 1, 0.85],
+            }}
+            transition={{
+              duration: 2.5,
+              ease: "easeInOut",
+              repeat: Infinity,
             }}
           >
             <Image
               src="/images/rove_icon_transparent.png"
               alt="Rove Health"
               fill
+              sizes="112px"
               className="object-contain"
               priority
             />
-          </div>
-
-          {/* Subtle tracing glow dot on top of the logo */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 120">
-            <motion.circle
-              r="4.5"
-              fill="rgba(255, 255, 255, 0.9)"
-              className="drop-shadow-sm mix-blend-overlay"
-              style={{
-                offsetPath: `path("M 50 32.5 C 36 32.5, 37 52, 50 62.5 C 58 70, 54 82, 50 87 C 46 82, 42 70, 50 62.5 C 63 52, 64 32.5, 50 32.5 Z")`,
-              }}
-              animate={{
-                offsetDistance: ["0%", "100%", "100%"],
-                opacity: [0, 1, 0]
-              }}
-              transition={{
-                duration: 3,
-                ease: "easeInOut",
-                repeat: Infinity,
-                repeatType: "loop",
-                times: [0, 0.8, 1]
-              }}
-            />
-          </svg>
+          </motion.div>
         </div>
 
         {/* Fact Container (Glassmorphism) */}
