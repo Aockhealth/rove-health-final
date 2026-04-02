@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 import { StructuredResponseRenderer } from "./StructuredResponseRenderer";
+import { AllLimitsIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION } from "@/components/ui/PromptLimitIndicator";
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -27,7 +28,50 @@ const MISSING_DATA_LABELS: Record<string, string> = {
 };
 
 const CHAT_STORAGE_KEY = "rove_chat_session";
+const CHAT_PROMPT_COUNT_KEY = "rove_chat_prompt_count";
 const CHAT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Helper: Load prompt count from localStorage, resetting if 24 hours passed
+ */
+function loadPromptCount(storageKey: string): number {
+    if (typeof window === "undefined") return 0;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+            const { count, timestamp } = JSON.parse(stored);
+            if (Date.now() - timestamp < CHAT_EXPIRY_MS) {
+                return count || 0;
+            }
+            localStorage.removeItem(storageKey);
+        }
+    } catch { }
+    return 0;
+}
+
+/**
+ * Helper: Save prompt count to localStorage with timestamp
+ */
+function savePromptCount(storageKey: string, count: number): void {
+    if (typeof window === "undefined") return;
+    try {
+        localStorage.setItem(storageKey, JSON.stringify({ count, timestamp: Date.now() }));
+    } catch { }
+}
+
+/**
+ * Helper: Count user prompts in conversation (excluding system intro)
+ */
+function countUserPrompts(msgs: Message[]): number {
+    return msgs.filter(m => m.role === "user").length;
+}
+
+/**
+ * Helper: Get character count remaining
+ */
+function getCharRemaining(text: string): number {
+    return MAX_PROMPT_CHARS - text.length;
+}
 
 
 /**
@@ -87,6 +131,7 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
     const [isTyping, setIsTyping] = useState(false);
     const [isAgentActive, setIsAgentActive] = useState(false);
     const [agentStatus, setAgentStatus] = useState<string>("idle");
+    const [promptCount, setPromptCount] = useState(() => loadPromptCount(CHAT_PROMPT_COUNT_KEY));
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const conversationRef = useRef<any>(null);
@@ -414,7 +459,8 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
     };
 
     const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() || inputValue.length > MAX_PROMPT_CHARS) return;
+        if (promptCount >= MAX_PROMPTS_PER_SESSION) return;
 
         const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
         const newUserMessage: Message = {
@@ -427,6 +473,11 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         const messageText = inputValue;
         setInputValue("");
         setIsTyping(true);
+        
+        // Increment and save prompt count
+        const newCount = promptCount + 1;
+        setPromptCount(newCount);
+        savePromptCount(CHAT_PROMPT_COUNT_KEY, newCount);
 
         try {
             // Security: Only send user and assistant messages to the server
@@ -801,18 +852,19 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                     WebkitBackdropFilter: 'blur(24px)',
                     borderTop: '1px solid rgba(45, 36, 32, 0.06)'
                 }}>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                     <input
                         type="text"
                         data-chat-input
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e) => setInputValue(e.target.value.slice(0, MAX_PROMPT_CHARS))}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
+                            if (e.key === "Enter" && !e.shiftKey && inputValue.length <= MAX_PROMPT_CHARS) {
                                 e.preventDefault();
                                 handleSendMessage();
                             }
                         }}
+                        maxLength={MAX_PROMPT_CHARS}
                         placeholder="Ask about your cycle..."
                         className="flex-1 rounded-full px-5 py-3 text-sm transition-all duration-200 focus:outline-none"
                         style={{
@@ -825,14 +877,22 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                     <Button
                         onClick={handleSendMessage}
                         size="icon"
-                        disabled={!inputValue.trim() || isTyping}
+                        disabled={!inputValue.trim() || isTyping || inputValue.length > MAX_PROMPT_CHARS || promptCount >= MAX_PROMPTS_PER_SESSION}
                         className="rounded-full w-11 h-11 text-white shadow-md disabled:opacity-40 disabled:shadow-none transition-all duration-200 hover:scale-105"
                         style={{
-                            backgroundColor: !inputValue.trim() || isTyping ? '#A8A29E' : '#2D2420',
+                            backgroundColor: !inputValue.trim() || isTyping || inputValue.length > MAX_PROMPT_CHARS || promptCount >= MAX_PROMPTS_PER_SESSION ? '#A8A29E' : '#2D2420',
                         }}
                     >
                         <Send className="w-4 h-4" />
                     </Button>
+                </div>
+                
+                {/* Prompt Limits Indicator */}
+                <div className="px-1">
+                    <AllLimitsIndicator 
+                        charCount={inputValue.length} 
+                        promptCount={promptCount}
+                    />
                 </div>
             </div>
         </div>

@@ -5,6 +5,41 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChefHat, RefreshCw, Droplets, Leaf, Cookie } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateRoveChefProtocol, type RoveChefProtocol } from "@/app/actions/ai-actions";
+import { CharLimitIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION, PromptCountIndicator } from "@/components/ui/PromptLimitIndicator";
+
+// ============================================
+// PROMPT LIMIT CONSTANTS & STORAGE
+// ============================================
+const CHEF_PROMPT_COUNT_KEY = "rove_chef_prompt_count";
+const STORAGE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Helper: Load prompt count from localStorage, resetting if 24 hours passed
+ */
+function loadPromptCount(storageKey: string): number {
+    if (typeof window === "undefined") return 0;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+            const { count, timestamp } = JSON.parse(stored);
+            if (Date.now() - timestamp < STORAGE_EXPIRY_MS) {
+                return count || 0;
+            }
+            localStorage.removeItem(storageKey);
+        }
+    } catch { }
+    return 0;
+}
+
+/**
+ * Helper: Save prompt count to localStorage with timestamp
+ */
+function savePromptCount(storageKey: string, count: number): void {
+    if (typeof window === "undefined") return;
+    try {
+        localStorage.setItem(storageKey, JSON.stringify({ count, timestamp: Date.now() }));
+    } catch { }
+}
 
 // --- TYPES ---
 interface RoveChefProps {
@@ -33,7 +68,7 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
     const [goalFocus, setGoalFocus] = useState("Hormone balance and steady energy");
     const [currentSymptomsOrCraving, setCurrentSymptomsOrCraving] = useState("");
     const [avoidIngredients, setAvoidIngredients] = useState("");
-
+    const [generationCount, setGenerationCount] = useState(() => loadPromptCount(CHEF_PROMPT_COUNT_KEY));
     // Organic Chromatics Styling
     const currentPhase = phase || "Menstrual";
     const themes: Record<string, any> = {
@@ -79,6 +114,9 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
 
     const handleGenerate = () => {
         setShowForm(false);
+        const newCount = generationCount + 1;
+        setGenerationCount(newCount);
+        savePromptCount(CHEF_PROMPT_COUNT_KEY, newCount);
         startTransition(async () => {
             // Generate ONLY the active tab item
             const data = await generateRoveChefProtocol(
@@ -264,14 +302,21 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                                     </label>
                                                     <label className="flex flex-col gap-1">
                                                         <span className="text-[10px] font-bold uppercase tracking-wider text-rove-stone ml-1">Avoid Ingredients</span>
-                                                        <input type="text" value={avoidIngredients} onChange={(e) => setAvoidIngredients(e.target.value)} placeholder="e.g. peanuts, dairy, soy..." className="w-full bg-white/40 border border-white/60 rounded-xl px-3 py-2 text-xs font-medium text-rove-charcoal placeholder:text-rove-stone/60 focus:outline-none focus:bg-white/60 transition-all" />
+                                                        <input type="text" value={avoidIngredients} onChange={(e) => setAvoidIngredients(e.target.value.slice(0, MAX_PROMPT_CHARS))} maxLength={MAX_PROMPT_CHARS} placeholder="e.g. peanuts, dairy, soy..." className="w-full bg-white/40 border border-white/60 rounded-xl px-3 py-2 text-xs font-medium text-rove-charcoal placeholder:text-rove-stone/60 focus:outline-none focus:bg-white/60 transition-all" />
                                                     </label>
+                                                </div>
+                                                <div className="mb-3 grid grid-cols-2 gap-3 px-1 text-xs">
+                                                    <CharLimitIndicator charCount={avoidIngredients.length} />
+                                                    <PromptCountIndicator promptCount={generationCount} showLabel={true} />
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button onClick={() => setShowForm(false)} className="text-xs font-bold px-4 py-2.5 rounded-full border border-rove-stone/20 text-rove-stone hover:bg-white/40 transition-all">
                                                         Cancel
                                                     </button>
-                                                    <button onClick={handleGenerate} className={cn("flex-1 group relative px-6 py-2.5 rounded-2xl font-bold text-white text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all hover:scale-[1.02] active:scale-95 overflow-hidden", theme.button)}>
+                                                    <button 
+                                                        onClick={handleGenerate}
+                                                        disabled={generationCount >= MAX_PROMPTS_PER_SESSION || avoidIngredients.length > MAX_PROMPT_CHARS}
+                                                        className={cn("flex-1 group relative px-6 py-2.5 rounded-2xl font-bold text-white text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all hover:scale-[1.02] active:scale-95 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100", theme.button)}>
                                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                                         <Sparkles className="w-3.5 h-3.5" />
                                                         <span className="relative">Generate {activeTabLabel}</span>

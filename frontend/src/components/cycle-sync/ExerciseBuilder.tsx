@@ -7,6 +7,38 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { generateRoveCoachPlan, RoveCoachPlan, WorkoutSet } from "@/app/actions/ai-actions";
 import { createClient } from "@/utils/supabase/client"; // 👈 adjust this path
+import { CharLimitIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION, PromptCountIndicator } from "@/components/ui/PromptLimitIndicator";
+
+const EXERCISE_PROMPT_COUNT_KEY = "rove_exercise_prompt_count";
+const STORAGE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Helper: Load prompt count from localStorage, resetting if 24 hours passed
+ */
+function loadPromptCount(storageKey: string): number {
+    if (typeof window === "undefined") return 0;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+            const { count, timestamp } = JSON.parse(stored);
+            if (Date.now() - timestamp < STORAGE_EXPIRY_MS) {
+                return count || 0;
+            }
+            localStorage.removeItem(storageKey);
+        }
+    } catch { }
+    return 0;
+}
+
+/**
+ * Helper: Save prompt count to localStorage with timestamp
+ */
+function savePromptCount(storageKey: string, count: number): void {
+    if (typeof window === "undefined") return;
+    try {
+        localStorage.setItem(storageKey, JSON.stringify({ count, timestamp: Date.now() }));
+    } catch { }
+}
 
 interface ExerciseBuilderProps {
     phase: string;
@@ -18,12 +50,9 @@ export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
     const supabase = createClient();
 
     const [setting, setSetting] = useState<"Home" | "Gym" | null>(null);
-    const [level, setLevel] = useState<"Beginner" | "Intermediate" | "Pro">("Intermediate");
     const [focus, setFocus] = useState<"Full Body" | "Upper Body" | "Lower Body" | "Cardio" | "Core" | "Mobility">("Full Body");
-    const [progressionPreference, setProgressionPreference] = useState<"steady" | "push" | "deload">("steady");
-    const [energy, setEnergy] = useState<"Low" | "Medium" | "High">("Medium");
-    const [time, setTime] = useState<"15m" | "30m" | "45m" | "60m">("30m");
     const [symptoms, setSymptoms] = useState("");
+    const [generationCount, setGenerationCount] = useState(() => loadPromptCount(EXERCISE_PROMPT_COUNT_KEY));
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [result, setResult] = useState<RoveCoachPlan | null>(null);
@@ -92,12 +121,15 @@ export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
         if (!setting) return;
         setIsGenerating(true);
         setResult(null);
+        const newCount = generationCount + 1;
+        setGenerationCount(newCount);
+        savePromptCount(EXERCISE_PROMPT_COUNT_KEY, newCount);
         try {
             const plan = await generateRoveCoachPlan(
-                phase, energy,
-                `${time} ${focus} workout`,
+                phase, "Medium",
+                `${focus} workout`,
                 setting === "Home" ? "Bodyweight / Mat" : "Full Gym",
-                symptoms, level, focus, time, progressionPreference,
+                symptoms, "Intermediate", focus, "30m", "steady",
                 `${focus} performance`
             );
             setResult(plan);
@@ -361,28 +393,7 @@ export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Energy</label>
-                                    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner">
-                                        {(["Low", "Medium", "High"] as const).map((lvl) => (
-                                            <button key={lvl} onClick={() => setEnergy(lvl)} className={cn("flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center", energy === lvl ? cn("text-white shadow-sm", theme.blob) : "text-gray-500 hover:text-gray-700")}>
-                                                {lvl}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Time</label>
-                                    <div className="flex bg-white/40 p-1 rounded-xl border border-white/60 shadow-inner grid grid-cols-4">
-                                        {(["15m", "30m", "45m", "60m"] as const).map((t) => (
-                                            <button key={t} onClick={() => setTime(t)} className={cn("py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center", time === t ? cn("text-white shadow-sm", theme.blob) : "text-gray-500 hover:text-gray-700")}>
-                                                {t.replace('m', '')}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Focus Area</label>
@@ -403,26 +414,21 @@ export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Progression</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {([{ id: "steady", label: "Steady" }, { id: "push", label: "Push" }, { id: "deload", label: "Deload" }] as const).map((item) => (
-                                        <button key={item.id} onClick={() => setProgressionPreference(item.id)}
-                                            className={cn("py-2 rounded-xl border text-[11px] font-bold transition-all", progressionPreference === item.id ? theme.active : "bg-white/40 border-white/60 text-gray-500 hover:bg-white/60 hover:text-gray-700 shadow-sm")}>
-                                            {item.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+
 
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> Anything to keep in mind?</label>
                                 <input type="text" placeholder="e.g. Cramps, sore knees, skip jumps..."
-                                    value={symptoms} onChange={(e) => setSymptoms(e.target.value)}
+                                    value={symptoms} onChange={(e) => setSymptoms(e.target.value.slice(0, MAX_PROMPT_CHARS))}
+                                    maxLength={MAX_PROMPT_CHARS}
                                     className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-all font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]" />
+                                <div className="grid grid-cols-2 gap-3 px-1 text-xs pt-1">
+                                    <CharLimitIndicator charCount={symptoms.length} />
+                                    <PromptCountIndicator promptCount={generationCount} showLabel={true} />
+                                </div>
                             </div>
 
-                            <button onClick={handleGenerate} disabled={!setting} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all hover:shadow-lg mt-2", setting ? theme.button : "bg-gray-300 text-white cursor-not-allowed border outline-none")}>
+                            <button onClick={handleGenerate} disabled={!setting || generationCount >= MAX_PROMPTS_PER_SESSION || symptoms.length > MAX_PROMPT_CHARS} className={cn("w-full py-3.5 rounded-xl font-bold text-white shadow-md flex items-center justify-center gap-2 transition-all hover:shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md", setting && generationCount < MAX_PROMPTS_PER_SESSION && symptoms.length <= MAX_PROMPT_CHARS ? theme.button : "bg-gray-300 text-white cursor-not-allowed border outline-none")}>
                                 <Flame className="w-4 h-4" /> Generate AI Plan
                             </button>
                         </motion.div>
