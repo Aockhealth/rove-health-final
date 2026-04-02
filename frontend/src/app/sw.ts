@@ -11,12 +11,15 @@ declare global {
 // @ts-expect-error - Next.js default tsconfig doesn't include the 'webworker' lib
 declare const self: ServiceWorkerGlobalScope;
 
-const serwist = new Serwist({
-    precacheEntries: self.__SW_MANIFEST,
-    skipWaiting: true,
-    clientsClaim: true,
-    navigationPreload: true,
-    runtimeCaching: defaultCache,
-});
+// Only run in worker context (not on server)
+if (typeof self !== "undefined" && "ServiceWorkerGlobalScope" in self) {
+    const serwist = new Serwist({
+        precacheEntries: self.__SW_MANIFEST,
+        skipWaiting: true,
+        clientsClaim: true,
+        navigationPreload: true,
+        runtimeCaching: defaultCache,
+    });
 
-serwist.addEventListeners();
+    serwist.addEventListeners();
+}

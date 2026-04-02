@@ -184,8 +184,6 @@ export function ExerciseBuilder({ phase , hideHeader}: ExerciseBuilderProps) {
                     user_id: user.id,
                     date: today,
                     phase,
-                    energy_level: energy,
-                    progression: progressionPreference,
                     setting,
                     focus,
                     duration_seconds: sessionTimer,
