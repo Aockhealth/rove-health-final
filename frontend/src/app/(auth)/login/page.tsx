@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "@/lib/schemas";
 import confetti from "canvas-confetti";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 type FieldErrors = {
   [key: string]: string | undefined;
@@ -199,6 +200,17 @@ export default function LoginPage() {
             ) : "Log In"}
           </Button>
         </form>
+
+        <div className="relative mt-8 mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-rove-stone/20"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-[#FDFBF7] text-rove-stone font-medium rounded-full">Or continue with</span>
+          </div>
+        </div>
+
+        <GoogleAuthButton label="Google" />
 
         {/* Footer */}
         <div className="mt-8 text-center">

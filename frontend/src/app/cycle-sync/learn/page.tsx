@@ -11,6 +11,12 @@ import type { LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actio
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import PageGuide from "@/components/cycle-sync/PageGuide";
 
+const cleanTitle = (title: string) => {
+    if (!title) return "";
+    // Removes things like "A.1.", "A1", "B.2 ", etc. from the start of the string, and removes file extensions from the end
+    return title.replace(/^[A-Za-z][.\s-]*\d+[.\s-]*\s*/, "").replace(/\.[^/.]+$/, "").trim();
+};
+
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [showLeft, setShowLeft] = useState(false);
@@ -72,69 +78,44 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
                     {articles.map((article) => {
                         const imageUrl = getStorageUrl("learn-images", article.image_path);
 
-                        return (
-                            <Link href={`/cycle-sync/learn/${article.id}`} key={article.id} className="snap-start shrink-0">
-                                <motion.div
-                                    whileHover={{ y: -8 }}
-                                    className="w-[240px] md:w-[280px] cursor-pointer group/card relative"
-                                >
-                                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-sm mb-4 bg-neutral-100 border border-neutral-100 transition-shadow duration-300 group-hover/card:shadow-xl group-hover/card:shadow-phase-menstrual/10">
-                                        {imageUrl ? (
-                                            <Image
-                                                src={imageUrl}
-                                                alt={article.title}
-                                                fill
-                                                className="object-cover transition-transform duration-700 group-hover/card:scale-105"
-                                                sizes="(max-width: 768px) 240px, 280px"
-                                                loading="lazy"
-                                            />
-                                        ) : (
-                                            <div className="absolute inset-0 bg-neutral-50 flex items-center justify-center text-neutral-400 font-medium text-sm">
-                                                No Image
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity duration-300 group-hover/card:opacity-90" />
-                                        
-                                        {/* Play Icon Overlay on Hover */}
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 bg-black/10">
-                                           <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40">
-                                              <Play className="w-5 h-5 text-white ml-1 fill-white" />
-                                           </div>
+                    return (
+                        <Link href={`/cycle-sync/learn/${article.id}`} key={article.id}>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                className="min-w-[200px] w-[200px] md:min-w-[260px] md:w-[260px] cursor-pointer group/card relative"
+                            >
+                                <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-sm mb-3 bg-neutral-100">
+                                    {imageUrl ? (
+                                        <Image
+                                            src={imageUrl}
+                                            alt={cleanTitle(article.title)}
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 200px, 260px"
+                                            loading="lazy"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center text-neutral-400">
+                                            No Image
                                         </div>
-
-                                        <div className="absolute bottom-4 left-4 right-4 text-white">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-2 block text-phase-menstrual/40">
-                                                {article.category}
-                                            </span>
-                                            <h4 className="font-heading text-lg leading-tight line-clamp-2 drop-shadow-md">
-                                                {article.title}
-                                            </h4>
-                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
+                                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-80 mb-1 block">
+                                            {article.category}
+                                        </span>
+                                        <h4 className="font-bold leading-tight text-sm line-clamp-2 drop-shadow-md">
+                                            {cleanTitle(article.title)}
+                                        </h4>
                                     </div>
-                                </motion.div>
-                            </Link>
-                        );
-                    })}
-                </div>
-
-                <AnimatePresence>
-                    {showRight && (
-                        <motion.button 
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            onClick={() => scroll("right")} 
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-neutral-100 hover:bg-white hover:text-phase-menstrual hover:scale-110 transition-all hidden md:block opacity-0 group-hover/row:opacity-100 translate-x-4 group-hover/row:-translate-x-2"
-                        >
-                            <ChevronRight className="w-6 h-6" />
-                        </motion.button>
-                    )}
-                </AnimatePresence>
-
-                {/* Fade edge mask for desktop */}
-                <div className="absolute right-0 top-0 bottom-8 w-12 bg-gradient-to-l from-[#FAF9F6] to-transparent pointer-events-none hidden md:block" />
+                                </div>
+                            </motion.div>
+                        </Link>
+                    );
+                })}
             </div>
-        </motion.div>
+        </div>
     );
 };
 
@@ -185,7 +166,7 @@ export default function LearnPage() {
                         {featuredImage && (
                             <Image
                                 src={featuredImage}
-                                alt={featured.title}
+                                alt={cleanTitle(featured.title)}
                                 fill
                                 className="object-cover opacity-80"
                                 priority
@@ -209,7 +190,7 @@ export default function LearnPage() {
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                             className="text-4xl md:text-6xl lg:text-7xl font-heading text-white leading-[1.05] drop-shadow-lg tracking-tight"
                         >
-                            {featured.title}
+                            {cleanTitle(featured.title)}
                         </motion.h1>
                         
                         <motion.p

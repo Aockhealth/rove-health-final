@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { signupSchema } from "@/lib/schemas";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 type FieldErrors = {
   [key: string]: string | undefined;
@@ -215,6 +216,17 @@ export default function SignupPage() {
             ) : "Create Account"}
           </Button>
         </form>
+
+        <div className="relative mt-8 mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-rove-stone/20"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-[#FDFBF7] text-rove-stone font-medium rounded-full">Or continue with</span>
+          </div>
+        </div>
+
+        <GoogleAuthButton label="Google" />
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm">
