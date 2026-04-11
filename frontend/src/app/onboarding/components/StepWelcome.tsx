@@ -18,7 +18,7 @@ export default function StepWelcome({
     errors,
 }: StepWelcomeProps) {
     const maxDate = new Date();
-    maxDate.setFullYear(maxDate.getFullYear() - 10);
+    maxDate.setFullYear(maxDate.getFullYear() - 18); // 18+ years only (<= 2008)
     const maxDateStr = maxDate.toISOString().split("T")[0];
     const minDate = new Date();
     minDate.setFullYear(minDate.getFullYear() - 120);

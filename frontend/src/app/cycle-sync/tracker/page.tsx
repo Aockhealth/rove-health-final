@@ -28,6 +28,8 @@ import SleepCard from "./components/SleepCard";
 import DisruptorsCard from "./components/DisruptorsCard";
 import SelfLoveCard from "./components/SelfLoveCard";
 import NoteCard from "./components/NoteCard";
+import SexualWellnessCard from "./components/SexualWellnessCard";
+import SaveButton from "./components/SaveButton";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import PageGuide from "@/components/cycle-sync/PageGuide";
 
@@ -322,7 +324,9 @@ export default function TrackerPageRedesigned() {
     const isFutureDate = useCallback((date: Date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        return date > today;
+        const compDate = new Date(date);
+        compDate.setHours(0, 0, 0, 0);
+        return compDate > today;
     }, []);
 
     const calendarDays = useMemo(() => {
@@ -1012,6 +1016,14 @@ export default function TrackerPageRedesigned() {
                             setSelectedSleepQuality={setSelectedSleepQuality}
                             setSleepHours={setSleepHours}
                             setSleepMinutes={setSleepMinutes}
+                            currentPhase={currentPhase}
+                        />
+
+                        <SexualWellnessCard
+                            selectedSexActivity={selectedSexActivity}
+                            setSelectedSexActivity={setSelectedSexActivity}
+                            selectedContraception={selectedContraception}
+                            setSelectedContraception={setSelectedContraception}
                             currentPhase={currentPhase}
                         />
 

@@ -11,14 +11,14 @@ export class ModelRouter {
         variables: Record<string, any>
     ): Promise<UnifiedAIResponse> {
 
-        // Default is Azure. Callers can explicitly request a provider/model (e.g., retry upgrade).
+        // Default is Gemini. Callers can explicitly request a provider/model (e.g., retry upgrade).
         const provider = (request.overrideProvider === "openai"
             || request.overrideProvider === "gemini"
             || request.overrideProvider === "groq"
             || request.overrideProvider === "sarvam"
             || request.overrideProvider === "azure")
             ? request.overrideProvider
-            : "azure";
+            : "gemini";
 
         const startTime = Date.now();
         try {

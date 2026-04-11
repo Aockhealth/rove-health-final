@@ -217,7 +217,7 @@ export default function SignupPage() {
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm">
+        <div className="mt-8 text-center text-sm space-y-4">
           <p className="text-rove-stone font-medium">
             Already have an account?{" "}
             <Link
@@ -226,6 +226,9 @@ export default function SignupPage() {
             >
               Log in
             </Link>
+          </p>
+          <p className="text-rove-stone/60 text-xs">
+            By joining, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal transition-colors">Privacy Policy</Link>
           </p>
         </div>
 

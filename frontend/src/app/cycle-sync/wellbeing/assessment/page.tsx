@@ -222,7 +222,7 @@ function AssessmentContent() {
 
                 <div className="bg-stone-50 border border-stone-100 rounded-2xl p-4 mb-8 text-left">
                   <p className="text-[13px] text-stone-500 leading-relaxed m-0">
-                    This score is a starting point for self-reflection. If your results feel concerning or you are struggling, please consider sharing them with a qualified health professional.
+                    <strong>This is not a medical diagnosis. Results are informational only.</strong> This score is a starting point for self-reflection. If your results feel concerning or you are struggling, please consider sharing them with a qualified health professional.
                   </p>
                 </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import Image from "next/image";
 
 export default function StepIntro() {
     return (
@@ -14,7 +14,16 @@ export default function StepIntro() {
             >
                 <div className="absolute inset-0 rounded-full border border-white/60" />
                 <div className="absolute -inset-4 rounded-full border border-rove-charcoal/10" />
-                <Sparkles className="h-10 w-10 text-phase-ovulatory" strokeWidth={1.5} />
+                <div className="relative h-16 w-16 opacity-90 drop-shadow-sm saturate-150 transition-transform duration-700 hover:scale-105">
+                    <Image
+                        src="/images/rove_icon_transparent.png"
+                        alt="Rove Health"
+                        fill
+                        priority
+                        className="object-contain"
+                        unoptimized
+                    />
+                </div>
             </motion.div>
 
             <motion.div

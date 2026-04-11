@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ChevronLeft, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ShieldCheck, Lock, EyeOff, Server, UserCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Privacy Policy | Rove Health",
@@ -8,98 +9,162 @@ export const metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-[#FAF9F6] text-rove-charcoal pb-24">
+    <main className="min-h-screen bg-[#FDFBF7] text-rove-charcoal pb-32 grain-overlay overflow-x-hidden relative">
+      {/* Ambient Orbs */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-[20%] -left-[10%] w-[500px] h-[500px] bg-phase-menstrual/10 blur-[100px] rounded-full mix-blend-multiply" />
+        <div className="absolute top-[40%] -right-[20%] w-[600px] h-[600px] bg-phase-follicular/10 blur-[120px] rounded-full mix-blend-multiply" />
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#FAF9F6]/80 backdrop-blur-md border-b border-neutral-200/60 transition-all p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <Link href="/onboarding" className="inline-flex items-center gap-2 text-rove-stone hover:text-rove-charcoal transition-colors bg-white/50 px-4 py-2 rounded-full border border-neutral-200 shadow-sm">
-            <ChevronLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-wider">Back</span>
+      <div className="sticky top-0 z-50 bg-[#FDFBF7]/80 backdrop-blur-xl border-b border-rove-charcoal/5 transition-all pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4">
+        <div className="max-w-3xl mx-auto flex justify-between items-center relative h-10">
+          <Link href="/onboarding" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm border border-rove-stone/10 text-rove-stone hover:text-rove-charcoal transition-all hover:scale-105 active:scale-95">
+            <ChevronLeft className="w-5 h-5 -ml-0.5" />
           </Link>
-          <div className="flex items-center gap-2 bg-phase-menstrual/10 text-phase-menstrual px-4 py-1.5 rounded-full border border-phase-menstrual/20">
-            <ShieldCheck className="w-4 h-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Verified Secure</span>
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-phase-menstrual/20 shadow-sm">
+            <ShieldCheck className="w-4 h-4 text-phase-menstrual" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-phase-menstrual">Verified Secure</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 md:px-8 mt-12 md:mt-20">
-        <header className="mb-12 border-b border-neutral-200 pb-10">
-          <h1 className="text-4xl md:text-5xl font-heading text-rove-charcoal mb-4">Privacy Policy</h1>
-          <p className="text-sm font-medium text-rove-stone tracking-widest uppercase">Last Updated: March 2026</p>
+      <div className="relative z-10 max-w-3xl mx-auto px-6 mt-12 md:mt-20">
+        
+        {/* Editorial Title */}
+        <header className="mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-rove-stone/10 text-[10px] font-bold uppercase tracking-[0.2em] text-rove-stone">
+            <Lock className="w-3 h-3" /> Transparency
+          </div>
+          <h1 className="text-5xl md:text-6xl font-serif text-rove-charcoal leading-tight tracking-tight mb-6">
+            Your body.<br/>
+            <span className="italic text-phase-menstrual">Your data.</span>
+          </h1>
+          <p className="text-lg md:text-xl font-medium text-rove-stone leading-relaxed max-w-xl">
+            At Rove Health, your privacy is our highest priority. We believe female health data demands radical protection.
+          </p>
+          <p className="text-xs font-bold text-rove-stone/60 tracking-widest uppercase mt-8">Last Updated: March 2026</p>
         </header>
 
-        <article className="prose prose-stone prose-lg max-w-none 
-          prose-headings:font-heading prose-headings:font-normal prose-headings:tracking-tight 
-          prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 
-          prose-h3:text-xl prose-h3:mt-8 prose-h2:text-rove-charcoal
-          prose-p:text-neutral-600 prose-p:leading-relaxed 
-          prose-a:text-phase-menstrual prose-a:font-semibold hover:prose-a:text-phase-menstrual/80
-          prose-li:marker:text-phase-menstrual/60"
-        >
-          <p className="lead text-xl text-neutral-500 font-medium">
-            At Rove Health ("we", "our", or "us"), your privacy is our highest priority. This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application, website, and related services (collectively, the "Services").
-          </p>
+        <div className="space-y-12">
+          
+          {/* Highlight Card: No Selling */}
+          <div className="bg-white rounded-3xl p-8 border border-phase-menstrual/20 shadow-[0_8px_30px_rgba(175,107,107,0.06)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <EyeOff className="w-32 h-32 text-phase-menstrual" />
+            </div>
+            <h2 className="text-2xl font-serif text-rove-charcoal mb-4 relative z-10">1. We Do Not Sell Your Data</h2>
+            <p className="text-rove-stone leading-relaxed relative z-10 font-medium">
+              Rove Health has a fundamental commitment to your privacy: <strong>we do not, and will never, sell, trade, or rent your personal health information</strong> to third parties, advertisers, or data brokers. Your reproductive health data is yours.
+            </p>
+          </div>
 
-          <h2>1. We Do Not Sell Your Data</h2>
-          <p>
-            Rove Health has a fundamental commitment to your privacy: <strong>we do not, and will never, sell, trade, or rent your personal health information</strong> to third parties, advertisers, or data brokers. Your reproductive health data is yours.
-          </p>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal flex items-center gap-3">
+              <UserCheck className="w-5 h-5 text-phase-follicular" /> 2. Information We Collect
+            </h2>
+            <p className="text-rove-stone leading-relaxed">We only collect the information necessary to provide you with insights, cycle tracking, and holistic recommendations.</p>
+            <div className="grid gap-4 mt-6">
+              {[
+                { title: "Account Information", desc: "When you create an account, we collect your name, email address, and secure password credentials." },
+                { title: "Health and Cycle Logs", desc: "We collect data you voluntarily input, such as cycle dates, flow severity, symptoms, moods, and biometric data (like basal body temperature or cervical fluid)." },
+                { title: "Device and Usage Data", desc: "We automatically collect standard diagnostic data, including device type, operating system, and app usage patterns to improve app stability and user experience." }
+              ].map((item, i) => (
+                <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-5 border border-rove-stone/10 flex flex-col gap-1">
+                  <strong className="text-sm text-rove-charcoal tracking-wide">{item.title}</strong>
+                  <span className="text-sm text-rove-stone leading-relaxed">{item.desc}</span>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          <h2>2. Information We Collect</h2>
-          <p>We only collect the information necessary to provide you with insights, cycle tracking, and holistic recommendations.</p>
-          <ul>
-            <li><strong>Account Information:</strong> When you create an account, we collect your name, email address, and secure password credentials.</li>
-            <li><strong>Health and Cycle Logs:</strong> We collect data you voluntarily input, such as cycle dates, flow severity, symptoms, moods, and biometric data (like basal body temperature or cervical fluid).</li>
-            <li><strong>Device and Usage Data:</strong> We automatically collect standard diagnostic data, including device type, operating system, and app usage patterns to improve app stability and user experience.</li>
-          </ul>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal flex items-center gap-3">
+              <Server className="w-5 h-5 text-phase-ovulatory" /> 3. Identity Firewall & Security
+            </h2>
+            <p className="text-rove-stone leading-relaxed">
+              To radically reduce exposure, we maintain a hard infrastructure boundary between your identity and your health data. 
+            </p>
+            <p className="text-rove-stone leading-relaxed">
+              Your personally identifiable information (like your email address) is stored in a highly secure, separate database from your daily cycle logs. Under normal operating bounds, your health data is stored using anonymous identifiers. All data is encrypted in transit using industry-standard TLS protocols and encrypted at rest.
+            </p>
+          </section>
 
-          <h2>3. Identity Firewall & Security</h2>
-          <p>
-            To radically reduce exposure, we maintain a hard infrastructure boundary between your identity and your health data. 
-          </p>
-          <p>
-            Your personally identifiable information (like your email address) is stored in a highly secure, separate database from your daily cycle logs. Under normal operating bounds, your health data is stored using anonymous identifiers. All data is encrypted in transit using industry-standard TLS protocols and encrypted at rest.
-          </p>
+          <section className="space-y-6 bg-phase-luteal/5 p-8 rounded-3xl border border-phase-luteal/10">
+            <h2 className="text-2xl font-serif text-rove-charcoal">4. AI Privacy and Safeguards</h2>
+            <p className="text-rove-stone leading-relaxed font-medium">
+              Rove Health utilizes advanced Artificial Intelligence to generate bespoke insights and phase-based recommendations. To protect your privacy during this process:
+            </p>
+            <ul className="space-y-4 mt-6">
+              <li className="flex items-start gap-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-phase-luteal mt-2 flex-shrink-0" />
+                <p className="text-sm text-rove-stone leading-relaxed"><strong className="text-rove-charcoal">Anonymized Processing:</strong> Before any internal or external AI processing occurs, your personal identifiers are stripped. The AI only analyzes raw cycle characteristics, never your identity.</p>
+              </li>
+              <li className="flex items-start gap-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-phase-luteal mt-2 flex-shrink-0" />
+                <p className="text-sm text-rove-stone leading-relaxed"><strong className="text-rove-charcoal">No Model Training:</strong> Your individual health logs are isolated and are not used to train global generative AI models.</p>
+              </li>
+            </ul>
+          </section>
 
-          <h2>4. AI Privacy and Safegaurds</h2>
-          <p>
-            Rove Health utilizes advanced Artificial Intelligence to generate bespoke insights and phase-based recommendations. To protect your privacy during this process:
-          </p>
-          <ul>
-            <li><strong>Anonymized Processing:</strong> Before any internal or external AI processing occurs, your personal identifiers are stripped. The AI only analyzes raw cycle characteristics, never your identity.</li>
-            <li><strong>No Model Training:</strong> Your individual health logs are isolated and are not used to train global generative AI models.</li>
-          </ul>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal">5. How We Share Information</h2>
+            <p className="text-rove-stone leading-relaxed">We strictly limit an outside party&apos;s access to your data. We only share information in the following circumstances:</p>
+            <ul className="space-y-4">
+              <li className="flex gap-4 p-4 bg-white rounded-2xl border border-rove-stone/10">
+                <div className="font-semibold text-sm text-rove-charcoal min-w-[120px]">Service Providers</div>
+                <div className="text-sm text-rove-stone leading-relaxed">We use trusted third-party cloud infrastructure to operate our Services. These providers are strictly bound by confidentiality agreements.</div>
+              </li>
+              <li className="flex gap-4 p-4 bg-white rounded-2xl border border-rove-stone/10">
+                <div className="font-semibold text-sm text-rove-charcoal min-w-[120px]">Legal Compliance</div>
+                <div className="text-sm text-rove-stone leading-relaxed">We will only disclose your information if required to do so by a legally binding subpoena. We actively challenge broad or overly invasive requests.</div>
+              </li>
+            </ul>
+          </section>
 
-          <h2>5. How We Share Information</h2>
-          <p>We strictly limit an outside party&apos;s access to your data. We only share information in the following circumstances:</p>
-          <ul>
-            <li><strong>Service Providers:</strong> We use trusted third-party cloud infrastructure (e.g., secure database hosting) to operate our Services. These providers are strictly bound by confidentiality agreements.</li>
-            <li><strong>Legal Compliance:</strong> We will only disclose your information if required to do so by a legally binding subpoena, court order, or similar legal process. We actively challenge broad or overly invasive requests for user data.</li>
-          </ul>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal">6. Your Rights & Controls</h2>
+            <p className="text-rove-stone leading-relaxed">You have absolute control over your profile. At any time, you can:</p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <div className="flex-1 bg-white p-6 rounded-2xl border border-rove-stone/10 text-center">
+                <h4 className="font-bold text-rove-charcoal mb-2">Access Your Data</h4>
+                <p className="text-xs text-rove-stone">Request a complete export of your health logs via your Profile Settings.</p>
+              </div>
+              <div className="flex-1 bg-phase-menstrual/5 p-6 rounded-2xl border border-phase-menstrual/10 text-center">
+                <h4 className="font-bold text-rove-charcoal mb-2">Delete Your Account</h4>
+                <p className="text-xs text-rove-stone/80">Request a full deletion of your account. All associated health data is permanently wiped.</p>
+              </div>
+            </div>
+          </section>
 
-          <h2>6. Your Rights & Controls</h2>
-          <p>You have absolute control over your profile. At any time, you can:</p>
-          <ul>
-            <li><strong>Access Your Data:</strong> Request a complete export of your health logs via your Profile Settings.</li>
-            <li><strong>Delete Your Account:</strong> Request a full deletion of your account. Upon deletion, all associated health data is permanently wiped from our active operational servers.</li>
-          </ul>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal">7. Children's Privacy</h2>
+            <p className="text-rove-stone leading-relaxed">
+              Our Services are not designed or directed toward individuals under the age of 18. We do not knowingly collect personal information from individuals under 18 without explicit parental consent.
+            </p>
+          </section>
 
-          <h2>7. Children's Privacy</h2>
-          <p>
-            Our Services are not designed or directed toward individuals under the age of 13. We do not knowingly collect personal information from children under 13.
-          </p>
+          <section className="space-y-6">
+            <h2 className="text-2xl font-serif text-rove-charcoal">8. Updates to this Policy</h2>
+            <p className="text-rove-stone leading-relaxed">
+              We may update this Privacy Policy periodically. If we make material changes, we will notify you within the App or via email, and you will be asked to review and consent to the new terms at an onboarding checkpoint.
+            </p>
+          </section>
 
-          <h2>8. Updates to this Policy</h2>
-          <p>
-            We may update this Privacy Policy periodically. If we make material changes, we will notify you within the App or via email, and you will be asked to review and consent to the new terms at an onboarding checkpoint.
-          </p>
+          <section className="space-y-6 border-t border-rove-stone/10 pt-12 text-center">
+            <h2 className="text-2xl font-serif text-rove-charcoal mb-4">9. Contact Us</h2>
+            <p className="text-rove-stone leading-relaxed mb-6">
+              If you have any questions, concerns, or data requests, please reach out directly to our privacy team.
+            </p>
+            <a 
+              href="mailto:rovehealthofficial@gmail.com"
+              className="inline-flex items-center justify-center px-8 py-3 bg-rove-charcoal text-white rounded-full font-semibold text-sm hover:bg-black transition-colors"
+            >
+              rovehealthofficial@gmail.com
+            </a>
+          </section>
 
-          <h2>9. Contact Us</h2>
-          <p>
-            If you have any questions, concerns, or data requests, please reach out directly to our privacy team at: <br/>
-            <a href="mailto:rovehealthofficial@gmail.com">rovehealthofficial@gmail.com</a>
-          </p>
-        </article>
+        </div>
       </div>
     </main>
   );

@@ -108,11 +108,9 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
 
     useAnimationFrame((t, delta) => {
         if (!isPaused && contentWidth > 0) {
-            let moveBy = (direction === "left" ? -1 : 1) * (speed / 1000) * delta;
-
-            // Adjust speed factor separately
-            const velocityFactor = 0.5; // Base speed
-            moveBy = (direction === "left" ? -1 : 1) * velocityFactor;
+            // Speed = pixels per second. 
+            // delta is ms since last frame. (delta / 1000) gives fraction of a second.
+            let moveBy = (direction === "left" ? -1 : 1) * speed * (delta / 1000);
 
             let newX = baseX.get() + moveBy;
 
@@ -162,8 +160,8 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
                             <div
                                 key={i}
                                 className={cn(
-                                    "w-auto min-w-[140px] sm:min-w-[160px] md:min-w-[180px] flex-shrink-0 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl backdrop-blur-md shadow-sm flex items-center gap-2 sm:gap-3 transition-all select-none",
-                                    cardClass || "bg-white/60 border border-white/50",
+                                    "w-auto min-w-[140px] sm:min-w-[160px] md:min-w-[180px] flex-shrink-0 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-sm flex items-center gap-2 sm:gap-3 transition-all select-none will-change-transform",
+                                    cardClass || "bg-white/95 border border-white/50",
                                     isClickable
                                         ? "cursor-pointer hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] pointer-events-auto"
                                         : "pointer-events-none"

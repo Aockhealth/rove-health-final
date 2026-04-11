@@ -201,12 +201,15 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-4">
           <p className="text-sm text-rove-stone font-medium">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-rove-charcoal font-bold hover:underline underline-offset-4 decoration-rove-charcoal/30 transition-all">
               Sign up
             </Link>
+          </p>
+          <p className="text-rove-stone/60 text-xs text-center">
+            View our <Link href="/privacy" className="underline hover:text-rove-charcoal transition-colors">Privacy Policy</Link>
           </p>
         </div>
 

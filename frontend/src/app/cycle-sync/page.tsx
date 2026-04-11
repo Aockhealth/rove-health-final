@@ -549,7 +549,7 @@ export default function CycleSyncDashboard() {
 
     if (!hasCycleData) {
         return (
-            <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20 grain-overlay">
+            <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-[max(1rem,env(safe-area-inset-top))] md:pt-20 grain-overlay">
                 <div className="relative z-10 p-4 md:p-8 space-y-6 md:space-y-8 pb-4 md:pb-32">
                     <div className="flex items-center justify-between mb-8 px-2">
                         <div className="flex flex-col">
@@ -578,7 +578,7 @@ export default function CycleSyncDashboard() {
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-4 md:pt-20 grain-overlay">
+        <div className="relative min-h-screen overflow-hidden bg-rove-cream/20 pt-[max(1rem,env(safe-area-inset-top))] md:pt-20 grain-overlay">
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className={`absolute top-[-10%] left-[-10%] w-[500px] h-[500px] ${theme.blob} rounded-full blur-[80px] animate-pulse will-change-[opacity]`} style={{ animationDuration: "10s" }} />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rove-charcoal/5 rounded-full blur-[80px] animate-pulse will-change-[opacity]" style={{ animationDuration: "15s" }} />

@@ -140,8 +140,7 @@ export async function signup(formData: FormData): Promise<ActionResult> {
       .from("profiles")
       .update({
         onboarding_flow_version: ONBOARDING_FLOW_VERSION,
-        onboarding_status: "onboarding_in_progress",
-        onboarding_step: 1,
+        onboarding_status: "privacy_pending",
       })
       .eq("id", data.user.id);
 

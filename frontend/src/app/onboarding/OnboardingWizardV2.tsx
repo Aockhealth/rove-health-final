@@ -231,10 +231,6 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
       await trackOnboardingEvent("onboarding_completed", {
         nextRoute: result.nextRoute ?? "/cycle-sync",
       });
-
-      setTimeout(() => {
-        router.push(result.nextRoute ?? "/cycle-sync");
-      }, 1400);
     });
   }
 
@@ -247,6 +243,18 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
   // Progress starts from 2nd step (Intro is step 1, where progress is 0)
   const progress = state.step > 1 ? ((state.step - 1) / (ONBOARDING_STEPS - 1)) * 100 : 0;
   const showHeader = state.step > 1;
+  const isReturningUser = initialStep && initialStep > 1;
+
+  const CUTE_HEADINGS = useMemo(() => [
+    { pt1: "You are not inconsistent.", pt2: "You are cyclical.", desc: "Your biology isn't broken. Rove is translating your cycle into practical daily choices for meals, movement, and rest." },
+    { pt1: "Your body isn't a machine.", pt2: "It's a garden.", desc: "Blooming in phases. Allow Rove to tune your daily choices to match your natural rhythm perfectly." },
+    { pt1: "Stop fighting your biology.", pt2: "Start flowing with it.", desc: "Your energy naturally ebbs and flows. Rove is calibrating your personalized plan to honor your cycle." },
+    { pt1: "No more guesswork.", pt2: "Just perfect timing.", desc: "Syncing your lifestyle to your cycle changes everything. Preparing your phase-aligned insights now..." },
+    { pt1: "Your energy shifts?", pt2: "That's your superpower.", desc: "Every phase has a unique advantage. Rove helps you harness your shifts for peak performance and recovery." }
+  ], []);
+
+  // Use randomized copy for freshness
+  const CURRENT_CUTE = useMemo(() => CUTE_HEADINGS[Math.floor(Math.random() * CUTE_HEADINGS.length)], [CUTE_HEADINGS]);
 
   return (
     <main className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-rove-cream grain-overlay">
@@ -269,23 +277,80 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-rove-cream/95 backdrop-blur-lg"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-rove-cream grain-overlay"
           >
+            {/* Ambient Background Glows */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.4, 0.3] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] rounded-full bg-rove-peach/20 blur-[100px]"
+              />
+            </div>
+
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="text-center"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10 text-center px-6 max-w-sm flex flex-col items-center"
             >
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rove-charcoal">
-                <Check className="h-7 w-7 text-rove-cream" />
+              {/* Rove Icon */}
+              <div className="mb-10 w-12 h-12 relative opacity-80 mix-blend-multiply">
+                 <img src="/images/rove_icon_transparent.png" alt="Rove" className="object-contain w-full h-full" />
               </div>
-              <h2 className="font-heading text-2xl font-semibold text-rove-charcoal">
-                You&apos;re all set
-              </h2>
-              <p className="mt-2 text-sm text-rove-stone">
-                Preparing your personalized plan...
-              </p>
+
+              {/* Pill Badge */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="mb-8 rounded-full border border-rove-charcoal/20 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-rove-stone/80"
+              >
+                Biology First
+              </motion.div>
+
+              {/* Headings */}
+              <div className="space-y-2 mb-8">
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                  className="font-heading text-3xl sm:text-4xl font-medium text-rove-charcoal tracking-tight"
+                >
+                  {isReturningUser ? "Profile updated." : CURRENT_CUTE.pt1}
+                </motion.h2>
+                <motion.h2 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9, duration: 0.8, ease: "easeOut" }}
+                  className="font-heading text-4xl sm:text-5xl italic text-rove-peach"
+                >
+                   {isReturningUser ? "We're in sync." : CURRENT_CUTE.pt2}
+                </motion.h2>
+              </div>
+
+              {/* Description */}
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 0.8 }}
+                className="text-sm font-medium leading-relaxed text-rove-stone/80 mb-12"
+              >
+                {CURRENT_CUTE.desc}
+              </motion.p>
+
+              {/* CTA Button */}
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5, duration: 0.6 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push("/cycle-sync")}
+                className="w-full rounded-full bg-rove-charcoal py-4 text-base font-semibold text-rove-cream shadow-xl shadow-rove-charcoal/10 transition-all hover:bg-black"
+              >
+                Go to Dashboard
+              </motion.button>
             </motion.div>
           </motion.div>
         )}

@@ -11,6 +11,7 @@ import {
   Check,
   Shield,
 } from "lucide-react";
+import Link from "next/link";
 
 const GOALS = [
   { id: "syncing", label: "Cycle Syncing", description: "Align routines with your hormonal phases", Icon: Calendar },
@@ -144,7 +145,7 @@ export default function StepGoals({
               <Shield className="h-3.5 w-3.5 text-rove-stone/50" />
               <span className="font-semibold text-rove-charcoal">Privacy & Data</span>
             </div>
-            I agree that my health data is stored securely and used only to personalize my experience.
+            I agree to the <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link> and that my health data is stored securely and used only to personalize my experience.
             My data is never sold to third parties.
           </div>
         </label>

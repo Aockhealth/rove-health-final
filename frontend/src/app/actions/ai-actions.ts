@@ -1064,7 +1064,7 @@ export async function generateRoveChefProtocol(
             currentSymptomsOrCraving: personalization.currentSymptomsOrCraving || "",
             avoidIngredients: normalizeList(personalization.avoidIngredients),
             recentOutputSignatures: recentSignatures,
-            qualityFeedback
+            qualityFeedback: qualityFeedback ? qualityFeedback + ` [Seed: ${Date.now()}]` : `[Seed: ${Date.now()}]`
         },
         clientSurface: "rove_chef_card",
         memoryMode: "isolated",
@@ -1220,7 +1220,7 @@ export async function generateRoveCoachPlan(
             sessionDuration,
             limitations: injuries,
             recentOutputSignatures: signatures,
-            qualityFeedback
+            qualityFeedback: qualityFeedback ? qualityFeedback + ` [Seed: ${Date.now()}]` : `[Seed: ${Date.now()}]`
         },
         clientSurface: "rove_coach_card",
         memoryMode: "isolated",

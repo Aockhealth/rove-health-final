@@ -1,7 +1,7 @@
 
 // src/lib/ai/service.ts
 
-import prompts from './prompts.json';
+import prompts from './prompts.json'; // Force Next.js HMR reload
 
 // --- TYPES ---
 
@@ -50,7 +50,7 @@ const ENV_KEYS: Record<AIProvider, string> = {
     azure: 'AZURE_OPENAI_API_KEY'
 };
 
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 
 class JSONParseFailure extends Error {
     public readonly likelyTruncated: boolean;
