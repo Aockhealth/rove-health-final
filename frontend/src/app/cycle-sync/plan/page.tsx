@@ -1440,45 +1440,38 @@ export default function DetailedPlanPage() {
 
 
                                         {isEditingGoal ? (
-                                            <div className="space-y-3">
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div>
-                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Start</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.start}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, start: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
-                                                        />
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3 pb-2">
+                                                {[
+                                                    { label: "Start", key: "start" },
+                                                    { label: "Now", key: "current" },
+                                                    { label: "Goal", key: "target" }
+                                                ].map(({ label, key }) => (
+                                                    <div key={key} className={cn("flex items-center justify-between p-3 rounded-2xl border bg-white/60 backdrop-blur-md shadow-sm", theme.border)}>
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{label}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <button 
+                                                                onClick={() => setTempGoalData(p => ({...p, [key]: Math.max(0, p[key as keyof typeof p] - 0.5)}))}
+                                                                className="w-7 h-7 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 text-rove-stone font-heading transition-colors"
+                                                            >−</button>
+                                                            <div className="w-14 text-center">
+                                                                <span className="text-xl font-heading font-bold text-rove-charcoal">{tempGoalData[key as keyof typeof tempGoalData]}</span>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => setTempGoalData(p => ({...p, [key]: p[key as keyof typeof p] + 0.5}))}
+                                                                className="w-7 h-7 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 text-rove-stone font-heading transition-colors"
+                                                            >+</button>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Now</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.current}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, current: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[8px] font-bold uppercase text-rove-stone mb-1 block">Goal</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.target}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, target: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded px-2 py-1 text-xs"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => setIsEditingGoal(false)} className="text-[10px] font-bold text-rove-stone">
+                                                ))}
+                                                <div className="flex justify-end gap-3 mt-4">
+                                                    <button onClick={() => setIsEditingGoal(false)} className="text-[10px] font-bold uppercase tracking-widest text-rove-stone px-3 py-2">
                                                         Cancel
                                                     </button>
-                                                    <button onClick={handleSaveGoal} disabled={isSavingGoal} className={cn("text-[10px] font-bold text-white px-3 py-1 rounded-full", theme.accent)}>
+                                                    <button onClick={handleSaveGoal} disabled={isSavingGoal} className={cn("text-[10px] uppercase tracking-widest font-bold text-white px-5 py-2 rounded-full shadow-sm transition-all hover:scale-105 active:scale-95 flex flex-col items-center justify-center", theme.accent)}>
                                                         {isSavingGoal ? "..." : "Save"}
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         ) : (
                                             <>
                                                 {/* Main Dashboard (Weight Goal + Diet + Activity) */}
@@ -1547,45 +1540,41 @@ export default function DetailedPlanPage() {
                                         </div>
 
                                         {isEditingGoal ? (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex-1">
-                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Start (kg)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.start}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, start: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Now (kg)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.current}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, current: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
-                                                        />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label className="text-[10px] font-bold uppercase text-rove-stone mb-1 block">Goal (kg)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={tempGoalData.target}
-                                                            onChange={(e) => setTempGoalData({ ...tempGoalData, target: parseFloat(e.target.value) })}
-                                                            className="w-full bg-white/50 border border-black/10 rounded-lg px-3 py-2 text-sm font-bold"
-                                                        />
-                                                    </div>
+                                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-2">
+                                                <div className="flex gap-4 max-w-xl mx-auto">
+                                                    {[
+                                                        { label: "Start", key: "start", color: "text-rove-stone" },
+                                                        { label: "Now", key: "current", color: theme.color },
+                                                        { label: "Goal", key: "target", color: "text-rove-charcoal" }
+                                                    ].map(({ label, key, color }) => (
+                                                        <div key={key} className={cn("flex-1 bg-white/60 backdrop-blur-sm rounded-[1.5rem] p-5 shadow-sm border flex flex-col items-center transition-all hover:bg-white/80", theme.border)}>
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-4">{label}</span>
+                                                            <div className="flex items-center gap-3 w-full justify-center">
+                                                                <button 
+                                                                    onClick={() => setTempGoalData(p => ({...p, [key]: Math.max(0, p[key as keyof typeof p] - 0.5)}))}
+                                                                    className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 text-rove-stone text-lg transition-transform hover:-translate-x-0.5"
+                                                                >−</button>
+                                                                <div className="text-center min-w-[64px]">
+                                                                    <span className={cn("text-3xl font-heading font-bold", color)}>{tempGoalData[key as keyof typeof tempGoalData]}</span>
+                                                                </div>
+                                                                <button 
+                                                                    onClick={() => setTempGoalData(p => ({...p, [key]: p[key as keyof typeof p] + 0.5}))}
+                                                                    className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 text-rove-stone text-lg transition-transform hover:translate-x-0.5"
+                                                                >+</button>
+                                                            </div>
+                                                            <span className="text-[10px] text-rove-stone/50 mt-3 font-medium uppercase tracking-widest">kg</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div className="flex justify-end gap-2 mt-4">
-                                                    <Button variant="ghost" size="sm" onClick={() => setIsEditingGoal(false)}>
+                                                <div className="flex justify-end gap-3 max-w-xl mx-auto">
+                                                    <Button variant="ghost" className="rounded-full px-6 text-xs uppercase tracking-widest" onClick={() => setIsEditingGoal(false)}>
                                                         Cancel
                                                     </Button>
-                                                    <Button size="sm" onClick={handleSaveGoal} disabled={isSavingGoal}>
-                                                        {isSavingGoal ? "Saving..." : "Save Changes"}
+                                                    <Button className={cn("rounded-full px-8 shadow-md hover:shadow-lg transition-all text-xs uppercase tracking-widest", theme.accent)} onClick={handleSaveGoal} disabled={isSavingGoal}>
+                                                        {isSavingGoal ? "Saving..." : "Save Progress"}
                                                     </Button>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         ) : (
                                             <>
                                                 {/* Main Dashboard (Weight Goal + Diet + Activity) */}
@@ -1763,8 +1752,8 @@ export default function DetailedPlanPage() {
 
                                         return (
                                             <>
-                                                <RiverTrack label="Eat More" items={row1} speed={409} cardClass={cn(theme.cardBg, theme.border)} />
-                                                <RiverTrack label="Power Foods" items={row2} direction="right" speed={409} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Eat More" items={row1} speed={40} cardClass={cn(theme.cardBg, theme.border)} />
+                                                <RiverTrack label="Power Foods" items={row2} direction="right" speed={40} cardClass={cn(theme.cardBg, theme.border)} />
                                             </>
                                         )
                                     })()}

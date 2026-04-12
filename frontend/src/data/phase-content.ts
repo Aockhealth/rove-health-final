@@ -293,7 +293,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 detail: "Immerse yourself in warm water with epsom salts to absorb magnesium through the skin and relax the nervous system."
             },
             {
-                title: "Nesting",
+                title: "Sanctuary",
                 desc: "Safe Space",
                 icon: "Home",
                 detail: "Make your bedroom cozy. Change the sheets, dim the lights, and create a sanctuary for your bleed days."

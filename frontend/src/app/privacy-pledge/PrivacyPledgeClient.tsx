@@ -116,7 +116,7 @@ export default function PrivacyPledgeClient() {
 
   return (
     <main className="relative min-h-[100dvh] bg-[#FDFBF7] grain-overlay overflow-hidden py-12 px-4 md:py-20 z-0">
-      
+
       {/* Ambient Atmosphere */}
       <div className="fixed inset-0 pointer-events-none z-[-1] flex items-center justify-center">
         <div className="absolute w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] rounded-full bg-phase-menstrual/10 blur-[100px] -top-[10%] -left-[10%] mix-blend-multiply" />
@@ -125,7 +125,7 @@ export default function PrivacyPledgeClient() {
 
       <div className="relative z-10 mx-auto w-full max-w-2xl rounded-[2.5rem] border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_24px_80px_-40px_rgba(45,36,32,0.45)] p-2">
         <div className="bg-white/50 rounded-[2.25rem] overflow-hidden">
-          
+
           <header className="px-6 pt-10 pb-6 md:px-10 md:pt-12 md:pb-8">
             <div className="flex flex-col gap-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-phase-menstrual/10 text-phase-menstrual w-max">
@@ -133,7 +133,7 @@ export default function PrivacyPledgeClient() {
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Verified Secure</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-serif text-rove-charcoal leading-[1.1] tracking-tight mb-2">
-                Your body.<br/>
+                Your body.<br />
                 <span className="italic text-phase-menstrual">Your data.</span>
               </h1>
               <p className="mt-4 text-[15px] font-medium leading-relaxed text-rove-stone md:text-base max-w-md">
@@ -176,8 +176,8 @@ export default function PrivacyPledgeClient() {
                         />
                       </button>
                     </h3>
-                    <div 
-                      id={`${section.id}-content`} 
+                    <div
+                      id={`${section.id}-content`}
                       className={`px-5 text-[13px] font-medium leading-relaxed text-rove-stone/90 transition-all duration-300 ${isOpen ? "pb-5 max-h-40 opacity-100" : "max-h-0 opacity-0 overflow-hidden"}`}
                     >
                       {section.content}
@@ -226,7 +226,7 @@ export default function PrivacyPledgeClient() {
                   "I Understand & Agree"
                 )}
               </button>
-              
+
               <div className="text-center">
                 <p className="text-[11px] font-semibold text-rove-stone tracking-wide">
                   SECURED BY IDENTITY FIREWALL

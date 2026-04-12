@@ -482,7 +482,20 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
                 Back
               </button>
             ) : (
-              <div /> /* Empty div to push next button to the right */
+              <button
+                type="button"
+                onClick={async () => {
+                  const { createClient } = await import('@/utils/supabase/client');
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  router.push('/login');
+                  router.refresh();
+                }}
+                disabled={isPending}
+                className="inline-flex items-center gap-1 rounded-xl px-3 py-2.5 text-sm font-semibold text-rove-stone transition hover:text-rove-charcoal active:scale-95 disabled:opacity-0"
+              >
+                Log Out
+              </button>
             )}
 
             {isLastStep ? (
