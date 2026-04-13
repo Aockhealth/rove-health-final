@@ -3,6 +3,7 @@ import { Inter, Outfit, Cormorant_Garamond } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { GlobalLoader } from "@/components/pwa/GlobalLoader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -149,6 +150,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${outfit.variable} ${cormorant.variable} antialiased`}
         suppressHydrationWarning
       >
+        <GlobalLoader />
         {children}
         <InstallPrompt />
       </body>
