@@ -37,7 +37,7 @@ export function GoogleAuthButton({ label = "Continue with Google" }: { label?: s
       variant="outline"
       onClick={handleGoogleSignIn}
       disabled={isLoading}
-      className="w-full py-6 h-auto rounded-full bg-white text-rove-charcoal font-semibold text-base md:text-lg hover:bg-gray-50 border-gray-200 border shadow-sm transition-all flex items-center justify-center gap-3 mt-4"
+      className="w-full py-6 h-auto rounded-full bg-white/70 text-rove-charcoal font-semibold text-lg border border-white/60 backdrop-blur-sm shadow-[0_8px_16px_-6px_rgba(45,36,32,0.08)] hover:bg-white hover:shadow-[0_15px_25px_-5px_rgba(45,36,32,0.15)] hover:-translate-y-0.5 hover:scale-[1.01] transition-all flex items-center justify-center gap-3 mt-4"
     >
       {isLoading ? (
         <Loader2 className="w-5 h-5 animate-spin" />

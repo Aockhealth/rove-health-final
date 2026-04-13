@@ -215,6 +215,9 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                   </Link>
                 </div>
               )}
+              <p className="mt-6 text-[10px] text-center text-rove-stone/60">
+                By continuing, you agree to our <Link href="/terms" className="underline hover:text-rove-charcoal">Terms</Link> and <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
+              </p>
             </div>
           </motion.div>
         </div>
@@ -366,10 +369,13 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                     Get Started <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                 </Link>
-                <div className="text-center">
+                <div className="text-center flex flex-col gap-3">
                   <Link href="/login" onClick={handleSkip} className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                     Already have an account? Log in
                   </Link>
+                  <p className="text-[10px] text-rove-stone/60">
+                    By continuing, you agree to our <Link href="/terms" className="underline hover:text-rove-charcoal">Terms</Link> and <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
+                  </p>
                 </div>
               </motion.div>
             )}
