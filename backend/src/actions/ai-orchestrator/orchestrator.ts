@@ -9,6 +9,7 @@ import { createClient } from "@/utils/supabase/server";
 import { buildUnifiedContext } from "./context-builder";
 import { ModelRouter } from "./router";
 import { logAIGenerationEvent } from "./telemetry";
+import { validateSkillPrompt } from "./prompt-limiter";
 
 function pickFirstNonEmpty<T>(...values: Array<T | undefined | null>): T | undefined {
     for (const value of values) {
@@ -155,6 +156,25 @@ export async function executeUnifiedAI(rawRequest: unknown): Promise<UnifiedAIRe
     }
 
     const request = parsed.data;
+    
+    // ============================================
+    // PROMPT LIMITER: Validate prompts before execution
+    // ============================================
+    const promptValidation = validateSkillPrompt(
+        request.skill,
+        request.userMessage,
+        request.conversationHistory
+    );
+    
+    if (!promptValidation.valid) {
+        console.warn(`[Orchestrator] Prompt validation failed for skill ${request.skill}: ${promptValidation.error}`);
+        return {
+            skill: request.skill,
+            narrative: promptValidation.error || "Your prompt did not meet the requirements.",
+            safety: { flagged: true, reason: "Prompt validation failed" }
+        };
+    }
+    
     let context = mergeContext(request.contextHints, {
         phase: "Menstrual",
         dayInCycle: 1

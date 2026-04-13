@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { executeUnifiedAI } from "@backend/actions/ai-orchestrator/orchestrator";
 import { UnifiedAIRequest } from "@/lib/ai/unified-schemas";
 import { aiRateLimiter } from "@/lib/rate-limiter";
+import { validateSkillPrompt } from "@backend/actions/ai-orchestrator/prompt-limiter";
 
 type ClientMessage = {
     role: "user" | "assistant" | string;
@@ -66,6 +67,23 @@ export async function POST(req: Request) {
             }));
 
         const latestQuery = normalizedMessages[normalizedMessages.length - 1]?.content || "";
+
+        // ============================================
+        // PROMPT LIMITER: Validate prompt before execution
+        // ============================================
+        const promptValidation = validateSkillPrompt(
+            "chatbot",
+            latestQuery,
+            normalizedMessages
+        );
+
+        if (!promptValidation.valid) {
+            console.warn(`[Chat API] Prompt validation failed: ${promptValidation.error}`);
+            return NextResponse.json({
+                error: promptValidation.error || "Your prompt did not meet the requirements.",
+                ok: false
+            }, { status: 400 });
+        }
 
         // Backend orchestrator handles ALL context assembly via buildUnifiedContext()
         // No client-side contextHints needed — eliminates duplicate DB fetching

@@ -168,6 +168,7 @@ function NutritionFactsCarousel({ phase, theme }: { phase: string; theme: any })
             { icon: "🚫", title: "Skip Heavy Fats", tip: "Avoid fried & greasy foods", desc: "Your liver is processing extra estrogen" }
         ],
         "Luteal": [
+            { icon: "🥚", title: "Protein Stabilizer", tip: "Maintain 70g protein", desc: "Supports mood stability & muscle retention" },
             { icon: "🍠", title: "Complex Carbs", tip: "Don't cut carbs!", desc: "They boost serotonin & reduce PMS anxiety" },
             { icon: "🥜", title: "Healthy Fats", tip: "Increase good fats now", desc: "Supports progesterone production" },
             { icon: "🍫", title: "Magnesium Rich", tip: "Dark chocolate is okay!", desc: "Magnesium eases cramps & cravings" },
