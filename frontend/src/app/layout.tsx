@@ -127,17 +127,16 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png" />
 
-        {/* Google Analytics 4 */}
+        {/* Privacy-friendly analytics by Plausible */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-PRB0J30QW5"
+          async
+          src="https://plausible.io/js/pa-ZlkvCXdsvKMmfZp132y7r.js"
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="plausible-init" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-PRB0J30QW5');
+            window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+            plausible.init()
           `}
         </Script>
 

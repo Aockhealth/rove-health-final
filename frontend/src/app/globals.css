@@ -62,11 +62,16 @@ body {
 
 /* --- 📱 Mobile Safe Area Utilities --- */
 .pb-safe-nav {
-  padding-bottom: calc(70px + var(--safe-area-bottom, 20px));
+  /* Height of nav (around 70px) + safe bottom */
+  padding-bottom: calc(75px + var(--safe-area-bottom, 24px));
 }
 
 .safe-bottom-padding {
-  padding-bottom: calc(1rem + var(--safe-area-bottom, 20px));
+  padding-bottom: calc(0px + var(--safe-area-bottom, 20px));
+}
+
+.min-h-dvh {
+  min-height: 100dvh;
 }
 
 /* Grain Overlay */

@@ -860,8 +860,7 @@ export default function TrackerPageRedesigned() {
 
 
     return (
-        <div className="min-h-screen overflow-x-clip bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
-            <Toaster position="top-center" richColors />
+        <div className="relative space-y-4">
 
             {/* Loading overlay during period save operations */}
             <AnimatePresence>
