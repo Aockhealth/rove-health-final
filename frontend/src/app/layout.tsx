@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { GlobalLoader } from "@/components/pwa/GlobalLoader";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -153,6 +154,7 @@ export default async function RootLayout({
         <GlobalLoader />
         {children}
         <InstallPrompt />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

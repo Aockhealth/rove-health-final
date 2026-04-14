@@ -18,7 +18,6 @@ test.describe('Period Tracker E2E', () => {
         console.log(`Creating account for: ${email}`);
 
         await page.getByPlaceholder('hello@rove.com').fill(email);
-        await page.getByPlaceholder('25').fill('25');
         await page.getByPlaceholder('••••••••').first().fill('Password123!');
         // Confirm password appears after typing
         await page.getByPlaceholder('••••••••').nth(1).fill('Password123!');
@@ -114,7 +113,6 @@ test.describe('Period Tracker E2E', () => {
 
         const email = `mobile_tracker_${Date.now()}@rovetest.com`;
         await page.getByPlaceholder('hello@rove.com').fill(email);
-        await page.getByPlaceholder('25').fill('25');
         await page.getByPlaceholder('••••••••').first().fill('Password123!');
         await page.getByPlaceholder('••••••••').nth(1).fill('Password123!');
         await page.getByRole('button', { name: /Create Account/i }).click();

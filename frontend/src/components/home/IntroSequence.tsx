@@ -121,8 +121,9 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
       { pt1: "Honor your rest.", pt2: "Maximize your rise.", desc: "Rove learns your biological rhythm to tell you exactly when to push and when to pause." }
     ];
 
-    // Pick a random quote but keep it stable on render
-    const CURRENT_CUTE = CUTE_HEADINGS[Math.floor(Math.random() * CUTE_HEADINGS.length)];
+    // Pick a stable quote based on the day of the year (deterministic, no hydration mismatch)
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    const CURRENT_CUTE = CUTE_HEADINGS[dayOfYear % CUTE_HEADINGS.length];
 
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-rove-cream grain-overlay px-6">
@@ -216,7 +217,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                 </div>
               )}
               <p className="mt-6 text-[10px] text-center text-rove-stone/60">
-                By continuing, you agree to our <Link href="/terms" className="underline hover:text-rove-charcoal">Terms</Link> and <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
+                By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
               </p>
             </div>
           </motion.div>
@@ -264,15 +265,13 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
           if (swipe < -50 && currentStep < 3) setCurrentStep(s => s + 1);
           if (swipe > 50 && currentStep > 0) setCurrentStep(s => s - 1);
         }}
-        onClick={() => {
-          // Tap right side of screen to advance, left side to go back (desktop friendly)
-          if (typeof window !== 'undefined') {
-            const tapX = (window.event as MouseEvent)?.clientX;
-            if (tapX > window.innerWidth / 2) {
-              if (currentStep < 3) setCurrentStep(s => s + 1);
-            } else {
-              if (currentStep > 0) setCurrentStep(s => s - 1);
-            }
+        onClick={(e: React.MouseEvent) => {
+          // Tap right side of screen to advance, left side to go back
+          const tapX = e.clientX;
+          if (tapX > window.innerWidth / 2) {
+            if (currentStep < 3) setCurrentStep(s => s + 1);
+          } else {
+            if (currentStep > 0) setCurrentStep(s => s - 1);
           }
         }}
       >
@@ -374,7 +373,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                     Already have an account? Log in
                   </Link>
                   <p className="text-[10px] text-rove-stone/60">
-                    By continuing, you agree to our <Link href="/terms" className="underline hover:text-rove-charcoal">Terms</Link> and <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
+                    By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
                   </p>
                 </div>
               </motion.div>

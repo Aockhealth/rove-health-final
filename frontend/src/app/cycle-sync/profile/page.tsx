@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { getUserProfile, updateUserProfile } from "./actions";
+import { fetchProfilePageData, updateUserProfile, deleteUserAccount } from "./actions";
 import { updateCycleLength, updateLastPeriodDate } from "@/app/actions/cycle-sync";
-import { fetchUnifiedCycleData } from "@/app/actions/unified-cycle";
-import { requestPasswordReset, updateContactInfo } from "@/app/(auth)/actions"; //
+import { requestPasswordReset, updateContactInfo } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/Button";
 import {
-    Calendar, ChevronLeft, Crown, Edit2
+    ChevronLeft, Crown, Edit2
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { CycleSignature } from "./components/CycleSignature";
 import { HealthPassport } from "./components/HealthPassport";
 import { AccountSettings } from "./components/AccountSettings";
-import { HistoryView } from "./components/HistoryView";
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -35,7 +34,7 @@ export default function ProfilePage() {
         activity_level: "moderate",
         diet_preference: "non_veg",
         is_irregular: false,
-        phone_number: "" // State for phone number
+        phone_number: ""
     });
 
     // Cycle Settings State
@@ -47,53 +46,30 @@ export default function ProfilePage() {
 
     const [unifiedPhase, setUnifiedPhase] = useState<string | null>("Menstrual");
 
+    // ⚡ Phase 1: Single bundled data fetch (1 auth call, 5 parallel DB queries)
     useEffect(() => {
         const loadData = async () => {
-            const [profile, unifiedRes, authUser] = await Promise.all([
-                getUserProfile(),
-                fetchUnifiedCycleData(),
-                supabase.auth.getUser()
-            ]);
-
-            if (profile) {
-                setFormData(prev => ({
-                    ...prev,
-                    full_name: profile.full_name || "",
-                    tracker_mode: profile.tracker_mode || "menstruation",
-                    goals: profile.goals || [],
-                    conditions: profile.conditions || [],
-                    weight: profile.weight_kg || 0,
-                    height: profile.height_cm || 0,
-                    activity_level: profile.activity_level || "moderate",
-                    diet_preference: profile.diet_preference || "non_veg",
-                    is_irregular: profile.is_irregular || false,
-                    phone_number: profile.phone_number || "" // Load phone from DB
-                }));
+            const data = await fetchProfilePageData();
+            if (data) {
+                setUser(data.user);
+                setFormData(data.formData);
+                setCycleData(data.cycleData);
+                setUnifiedPhase(data.smartPhase);
             }
-
-            if (unifiedRes) {
-                setCycleData({
-                    last_period_start: unifiedRes.settings.last_period_start || "",
-                    cycle_length_days: unifiedRes.settings.cycle_length_days || 28,
-                    period_length_days: unifiedRes.settings.period_length_days || 5
-                });
-                setUnifiedPhase(unifiedRes.smartPhase.phase);
-            }
-
-            setUser(authUser.data?.user);
             setLoading(false);
         };
         loadData();
     }, []);
 
+    // Phase 3: All saves now use toast() instead of alert()
     const handleSaveProfile = () => {
         startTransition(async () => {
             const res = await updateUserProfile(formData);
             if (res.error) {
-                alert("Error: " + res.error);
+                toast.error("Failed to save profile", { description: res.error });
                 return;
             }
-            alert("Profile updated!");
+            toast.success("Profile updated");
         });
     };
 
@@ -101,9 +77,7 @@ export default function ProfilePage() {
         startTransition(async () => {
             await updateLastPeriodDate(cycleData.last_period_start);
             await updateCycleLength(cycleData.period_length_days, cycleData.cycle_length_days, formData.is_irregular);
-            const unifiedRes = await fetchUnifiedCycleData();
-            if (unifiedRes) setUnifiedPhase(unifiedRes.smartPhase.phase);
-            alert("Cycle settings updated!");
+            toast.success("Cycle settings updated");
         });
     };
 
@@ -112,11 +86,10 @@ export default function ProfilePage() {
         startTransition(async () => {
             const res = await updateContactInfo(newEmail, newPhone);
             if (res.ok) {
-                alert(res.message);
-                // If email changed, Supabase requires verification; if only phone changed, update local state
+                toast.success("Contact info updated", { description: res.message });
                 setFormData(prev => ({ ...prev, phone_number: newPhone }));
             } else {
-                alert("Update failed: " + res.error);
+                toast.error("Update failed", { description: res.error });
             }
         });
     };
@@ -126,7 +99,11 @@ export default function ProfilePage() {
         if (!user?.email) return;
         startTransition(async () => {
             const res = await requestPasswordReset(user.email);
-            alert(res.ok ? res.message : "Error: " + res.error);
+            if (res.ok) {
+                toast.success("Password reset email sent", { description: res.message });
+            } else {
+                toast.error("Failed to send reset email", { description: res.error });
+            }
         });
     };
 
@@ -135,12 +112,17 @@ export default function ProfilePage() {
         router.push("/login");
     };
 
+    // Phase 4: Real account deletion
     const handleAccountDeletion = async () => {
-        const confirmed = confirm("Are you absolutely sure? This will permanently delete your health data and account.");
-        if (confirmed) {
-            alert("Account deletion request submitted. This feature is being finalized.");
-            // In a full implementation, you would call a 'deleteAccount' server action here.
-        }
+        startTransition(async () => {
+            const res = await deleteUserAccount();
+            if (res.error) {
+                toast.error("Failed to delete account", { description: res.error });
+                return;
+            }
+            toast.success("Account deleted. Goodbye.");
+            router.push("/login");
+        });
     };
 
     // --- LUXURY THEMES ---
@@ -205,6 +187,7 @@ export default function ProfilePage() {
                         <h3 className="font-heading text-xl text-stone-800 mb-6">Cycle Settings</h3>
                         <div className="space-y-6">
                             <div className="space-y-4">
+                                {/* Cycle Length Slider */}
                                 <div>
                                     <div className="flex justify-between mb-2">
                                         <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Cycle Length</span>
@@ -219,6 +202,22 @@ export default function ProfilePage() {
                                         className="w-full h-2 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-stone-800"
                                     />
                                 </div>
+                                {/* Phase 4: Period Length Slider (NEW) */}
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Period Length</span>
+                                        <span className="font-heading font-bold text-stone-800">{cycleData.period_length_days} Days</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="2"
+                                        max="10"
+                                        value={cycleData.period_length_days}
+                                        onChange={(e) => setCycleData(p => ({ ...p, period_length_days: parseInt(e.target.value) }))}
+                                        className="w-full h-2 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-phase-menstrual"
+                                    />
+                                </div>
+                                {/* Last Period Date */}
                                 <div>
                                     <span className="block text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Last Period Start</span>
                                     <input
@@ -243,7 +242,7 @@ export default function ProfilePage() {
                         theme={theme}
                     />
 
-                    <HistoryView theme={theme} />
+                    {/* Phase 2: HistoryView REMOVED (was 100% hardcoded fake data) */}
 
                     {/* Integrated Account Settings */}
                     <AccountSettings 
@@ -253,6 +252,7 @@ export default function ProfilePage() {
                         onResetPassword={handleResetPassword}
                         onUpdateContact={handleUpdateContact}
                         onDeleteAccount={handleAccountDeletion}
+                        isPending={isPending}
                     />
                 </div>
             </main>

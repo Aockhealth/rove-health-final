@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-[#FDFBF7]/80 backdrop-blur-xl border-b border-rove-charcoal/5 transition-all pt-[max(1rem,env(safe-area-inset-top))] px-4 pb-4">
         <div className="max-w-3xl mx-auto flex justify-between items-center relative h-10">
-          <Link href="/onboarding" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm border border-rove-stone/10 text-rove-stone hover:text-rove-charcoal transition-all hover:scale-105 active:scale-95">
+          <Link href="/" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm border border-rove-stone/10 text-rove-stone hover:text-rove-charcoal transition-all hover:scale-105 active:scale-95">
             <ChevronLeft className="w-5 h-5 -ml-0.5" />
           </Link>
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-phase-menstrual/20 shadow-sm">

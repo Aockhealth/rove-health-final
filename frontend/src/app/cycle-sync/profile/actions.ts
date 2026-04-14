@@ -3,6 +3,124 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+
+const LOG_WINDOW_DAYS = 90;
+
+// ============================================
+// BUNDLED PROFILE PAGE DATA (Phase 1: Performance)
+// Single auth call, 5 parallel DB queries
+// ============================================
+
+export async function fetchProfilePageData() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
+
+    // ⚡ ALL 5 queries in ONE parallel trip
+    const [
+        profileResult,
+        onboardingResult,
+        lifestyleResult,
+        cycleSettingsResult,
+        logsResult
+    ] = await Promise.all([
+        supabase.from("profiles").select("full_name, phone_number").eq("id", user.id).single(),
+        supabase.from("user_onboarding").select("tracker_mode, goals, conditions").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_lifestyle").select("weight_kg, height_cm, activity_level, diet_preference").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_cycle_settings").select("last_period_start, cycle_length_days, period_length_days, is_irregular").eq("user_id", user.id).maybeSingle(),
+        supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", pastDate.toISOString().split("T")[0])
+    ]);
+
+    const profile = profileResult.data;
+    const onboarding = onboardingResult.data;
+    const lifestyle = lifestyleResult.data;
+    const cycleSettings = cycleSettingsResult.data;
+    const logs = logsResult.data || [];
+
+    // Build log map for smart phase calculation
+    const monthLogs: Record<string, DailyLog> = {};
+    logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
+
+    // Calculate phase
+    let smartPhase = "Menstrual";
+    if (cycleSettings?.last_period_start) {
+        const settings: CycleSettings = {
+            last_period_start: cycleSettings.last_period_start,
+            cycle_length_days: cycleSettings.cycle_length_days || 28,
+            period_length_days: cycleSettings.period_length_days || 5,
+        };
+        const result = calculatePhase(new Date(), settings, monthLogs);
+        smartPhase = result.phase || "Menstrual";
+    }
+
+    return {
+        user: { id: user.id, email: user.email || "" },
+        formData: {
+            full_name: profile?.full_name || "",
+            tracker_mode: onboarding?.tracker_mode || "menstruation",
+            goals: Array.isArray(onboarding?.goals) ? onboarding.goals : [],
+            conditions: Array.isArray(onboarding?.conditions) ? onboarding.conditions : [],
+            weight: lifestyle?.weight_kg || 0,
+            height: lifestyle?.height_cm || 0,
+            activity_level: lifestyle?.activity_level || "moderate",
+            diet_preference: lifestyle?.diet_preference || "non_veg",
+            is_irregular: cycleSettings?.is_irregular || false,
+            phone_number: profile?.phone_number || "",
+        },
+        cycleData: {
+            last_period_start: cycleSettings?.last_period_start || "",
+            cycle_length_days: cycleSettings?.cycle_length_days || 28,
+            period_length_days: cycleSettings?.period_length_days || 5,
+        },
+        smartPhase,
+    };
+}
+
+// ============================================
+// DELETE USER ACCOUNT (Phase 4: Real Implementation)
+// Hard deletes all user data from every table
+// ============================================
+
+export async function deleteUserAccount(): Promise<{ success?: boolean; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Unauthorized" };
+
+    const userId = user.id;
+
+    // Delete from all data tables in parallel
+    const deletions = await Promise.all([
+        supabase.from("daily_logs").delete().eq("user_id", userId),
+        supabase.from("user_onboarding").delete().eq("user_id", userId),
+        supabase.from("user_lifestyle").delete().eq("user_id", userId),
+        supabase.from("user_weight_goals").delete().eq("user_id", userId),
+        supabase.from("user_cycle_settings").delete().eq("user_id", userId),
+        supabase.from("ai_cache_keys").delete().eq("user_id", userId),
+        supabase.from("onboarding_events").delete().eq("user_id", userId),
+    ]);
+
+    // Check for errors in any deletion
+    const errors = deletions.filter(d => d.error).map(d => d.error?.message);
+    if (errors.length > 0) {
+        console.error("[deleteUserAccount] Partial deletion errors:", errors);
+    }
+
+    // Delete the profiles row (this is the core identity)
+    await supabase.from("profiles").delete().eq("id", userId);
+
+    // Sign the user out
+    await supabase.auth.signOut();
+
+    return { success: true };
+}
 
 export async function getUserProfile() {
     const supabase = await createClient();
