@@ -16,7 +16,7 @@ interface IntroSequenceProps {
 const SCREENS = [
   {
     id: 0,
-    title: "Welcome to Rove",
+    title: "Welcome to Rove Health",
     subtitle: "Your body runs on a continuous biological cycle. Every day is different.",
     colorClass: "text-phase-menstrual",
     gradientClass: "from-phase-menstrual/40 to-phase-menstrual/10",
@@ -25,7 +25,7 @@ const SCREENS = [
   {
     id: 1,
     title: "Most apps just count days.",
-    subtitle: "Rove reads your biology. We track your hormones, not just your calendar.",
+    subtitle: "Rove Health reads your biology. We track your hormones, not just your calendar.",
     colorClass: "text-phase-follicular",
     gradientClass: "from-phase-follicular/40 to-phase-follicular/10",
     orbGlow: "shadow-[0_0_80px_rgba(141,170,157,0.5)]"
@@ -113,12 +113,12 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     };
 
     const CUTE_HEADINGS = [
-      { pt1: "You are not inconsistent.", pt2: "You are cyclical.", desc: "Your biology isn't broken. Rove is translating your cycle into practical daily choices for meals, movement, and rest." },
-      { pt1: "Your body isn't a machine.", pt2: "It's a garden.", desc: "Blooming in phases. Allow Rove to tune your daily choices to match your natural rhythm perfectly." },
-      { pt1: "Stop fighting your biology.", pt2: "Start flowing with it.", desc: "Your energy naturally ebbs and flows. Rove is calibrating your personalized plan to honor your cycle." },
-      { pt1: "No more guesswork.", pt2: "Just perfect timing.", desc: "Syncing your lifestyle to your cycle changes everything. Rove keeps you one step ahead of your hormonal shifts." },
-      { pt1: "Your energy shifts?", pt2: "That's your superpower.", desc: "Every phase has a unique advantage. Rove helps you harness your shifts for peak performance and recovery." },
-      { pt1: "Honor your rest.", pt2: "Maximize your rise.", desc: "Rove learns your biological rhythm to tell you exactly when to push and when to pause." }
+      { pt1: "You are not inconsistent.", pt2: "You are cyclical.", desc: "Your biology isn't broken. Rove Health is translating your cycle into practical daily choices for meals, movement, and rest." },
+      { pt1: "Your body isn't a machine.", pt2: "It's a garden.", desc: "Blooming in phases. Allow Rove Health to tune your daily choices to match your natural rhythm perfectly." },
+      { pt1: "Stop fighting your biology.", pt2: "Start flowing with it.", desc: "Your energy naturally ebbs and flows. Rove Health is calibrating your personalized plan to honor your cycle." },
+      { pt1: "No more guesswork.", pt2: "Just perfect timing.", desc: "Syncing your lifestyle to your cycle changes everything. Rove Health keeps you one step ahead of your hormonal shifts." },
+      { pt1: "Your energy shifts?", pt2: "That's your superpower.", desc: "Every phase has a unique advantage. Rove Health helps you harness your shifts for peak performance and recovery." },
+      { pt1: "Honor your rest.", pt2: "Maximize your rise.", desc: "Rove Health learns your biological rhythm to tell you exactly when to push and when to pause." }
     ];
 
     // Pick a stable quote based on the day of the year (deterministic, no hydration mismatch)
@@ -244,8 +244,8 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
 
       {/* Top Bar with Safe Area */}
       <div className="absolute pl-6 pr-6 left-0 right-0 top-[max(1.5rem,env(safe-area-inset-top))] flex justify-between items-center z-50">
-        <div className="w-8 h-8 relative opacity-80">
-          <Image src="/images/rove_icon_transparent.png" alt="Rove" fill className="object-contain" unoptimized />
+        <div className="w-10 h-10 relative opacity-80">
+          <Image src="/images/rove_icon_transparent.png" alt="Rove Health" fill className="object-contain" unoptimized />
         </div>
         {currentStep < 3 && (
           <button onClick={handleSkip} className="text-[10px] font-bold uppercase tracking-[0.2em] text-rove-stone hover:text-rove-charcoal transition-colors p-2">
@@ -380,6 +380,15 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
             )}
           </AnimatePresence>
 
+        </div>
+      </div>
+
+      {/* Persistent Footer for Google OAuth Compliance */}
+      <div className="absolute bottom-4 left-0 right-0 z-[60] flex justify-center pointer-events-none">
+        <div className="pointer-events-auto px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+          <Link href="/privacy" className="text-[9px] font-bold uppercase tracking-[0.2em] text-rove-stone/60 hover:text-rove-charcoal transition-colors">
+            Privacy Policy
+          </Link>
         </div>
       </div>
 
