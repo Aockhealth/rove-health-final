@@ -1,0 +1,26 @@
+[33m5f7d793[m fixed basic errors
+[33m86d2e55[m[33m ([m[1;31morigin/Saundarya-main[m[33m)[m Merge remote-tracking branch 'origin/Aditya' into Saundarya-main
+[33mebc06b4[m Merge branch 'Saundarya-main' into aditya
+[33m75e73e7[m Merge Krisha into Saundarya-main
+[33mfc8a10a[m[33m ([m[1;32mKrisha[m[33m)[m merged branches
+[33m81068e0[m Merge branch 'Krisha' into aditya
+[33m1b2d817[m Merge branch 'Saundarya-main' into aditya
+[33m8513d92[m Merge remote-tracking branch 'origin/Krisha' into aditya
+[33m45699d0[m Merge branch 'Krisha' of https://github.com/saun09/rove-health into aditya
+[33me96532f[m Merge branch 'Saundarya-main' of https://github.com/saun09/rove-health into aditya # Please enter a commit message to explain why this merge is necessary, # especially if it merges an updated upstream into a topic branch. # # Lines starting with '#' will be ignored, and an empty message aborts # the commit.
+[33mc640f63[m Resolve merge conflicts in root files
+[33m3427e92[m Merge remote-tracking branch 'krisha/Krisha' into saundarya
+[33m9de6712[m Resolve merge: Keep Learn screen, revert Plan/Insights/Tracker to original, fix build and PWA setup
+[33mcd00e14[m Merge branch 'Krisha' of https://github.com/saun09/rove-health into Krisha
+[33mb82a2e8[m Merge branch 'Aditya' into Krisha
+[33meb5652d[m Sync Krisha's Insight changes, resolve conflicts, and fix build errors
+[33me56027a[m Merge branch 'Aditya' of https://github.com/saun09/rove-health into Aditya
+[33mc5604ea[m Merge Saundarya-main: Accept tracker page updates
+[33m75a426d[m Merge branch 'Saundarya-main': Accept tracker updates
+[33medf5e22[m Save local progress: Intro Splash, Header fixes, River gestures
+[33ma46cffa[m Merge Saundarya-main into Krisha: Resolve cycle-sync.ts conflicts
+[33m2c6b958[m Merge remote-tracking branch 'origin/Krisha' into Saundarya-main
+[33mf674b17[m Merge remote-tracking branch 'origin/feature/home-page-redesign' into Saundarya-main
+[33mb51f6e8[m Merge remote-tracking branch 'origin/Saundarya' into feature/home-page-redesign
+[33m9b724c7[m Merge branch 'Krisha' of https://github.com/saun09/rove-health into feature/home-page-redesign
+[33mbe5866b[m Merge branch 'Saundarya' of https://github.com/saun09/rove-health into merge-saundarya-fix

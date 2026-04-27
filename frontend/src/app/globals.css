@@ -1,0 +1,212 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Rove Health Brand Colors - Organic Chromatics */
+  --color-phase-menstrual: #AF6B6B;
+  /* Terra Rose */
+  --color-phase-follicular: #8DAA9D;
+  /* Sage Dew */
+  --color-phase-ovulatory: #D4A25F;
+  /* Soleil Ochre */
+  --color-phase-luteal: #7B82A8;
+  /* Dusk Slate */
+
+  --color-white-bone: #FDFCFB;
+  --color-obsidian: #1A1A1A;
+  --color-paper: #FAF9F6;
+
+  /* Legacy aliases to maintain compatibility during migration, can be refactored later */
+  --color-rove-red: #AF6B6B;
+  --color-rove-green: #8DAA9D;
+  --color-rove-cream: #F9F9F5;
+  --color-rove-stone: #A8A29E;
+  --color-rove-charcoal: #2D2420;
+  --color-rove-peach: #F4DCD6;
+
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-serif);
+  --font-serif: var(--font-serif);
+}
+
+:root {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+
+  --background: #FAF9F6;
+  /* Warm Paper */
+  --foreground: #2D2420;
+
+  /* RGB Values for Opacity Maps */
+  --phase-menstrual-rgb: 175, 107, 107;
+  --phase-follicular-rgb: 141, 170, 157;
+  --phase-ovulatory-rgb: 212, 162, 95;
+  --phase-luteal-rgb: 123, 130, 168;
+
+  /* Legacy RGB aliases for blob animations */
+  --rove-red-rgb: 175, 107, 107;
+  --rove-peach-rgb: 244, 220, 214;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* --- 📱 Mobile Safe Area Utilities --- */
+.pb-safe-nav {
+  padding-bottom: calc(70px + var(--safe-area-bottom, 20px));
+}
+
+.safe-bottom-padding {
+  padding-bottom: calc(1rem + var(--safe-area-bottom, 20px));
+}
+
+/* Grain Overlay */
+.grain-overlay::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* --- 🌸 Organic Blob Glows --- */
+.blob-glow-red {
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+
+  /* Uses the RGB variable for transparency */
+  background-color: rgba(var(--rove-red-rgb), 0.15);
+
+  filter: blur(100px);
+  animation: breathe 10s infinite ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+  /* Allows clicking through the blob */
+}
+
+.blob-glow-peach {
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+
+  /* Uses the RGB variable for transparency */
+  background-color: rgba(var(--rove-peach-rgb), 0.3);
+
+  filter: blur(80px);
+  animation: breathe 14s infinite ease-in-out reverse;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+
+  0%,
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.1) translate(20px, -20px);
+    opacity: 1;
+  }
+}
+
+/* --- 🧊 Glassmorphism Panel --- */
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.75);
+
+  /* The Blur Effect */
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+
+  /* Borders and Shadows for depth */
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 8px 32px -4px rgba(0, 0, 0, 0.08),
+    0 20px 40px -8px rgba(0, 0, 0, 0.06),
+    inset 0 0 40px rgba(255, 255, 255, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  border-radius: 2.5rem;
+}
+
+/* --- 🔮 Glass Orbs (Floating decorative elements) --- */
+.glass-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 0 20px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  z-index: 1;
+  animation: float 20s infinite ease-in-out;
+}
+
+.glass-orb-1 {
+  width: 120px;
+  height: 120px;
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.glass-orb-2 {
+  width: 80px;
+  height: 80px;
+  top: 60%;
+  right: 15%;
+  animation-delay: -7s;
+}
+
+.glass-orb-3 {
+  width: 100px;
+  height: 100px;
+  bottom: 20%;
+  left: 20%;
+  animation-delay: -14s;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 0.8;
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+    opacity: 0.7;
+  }
+}

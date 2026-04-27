@@ -1,0 +1,47 @@
+{
+    "name": "Rove Health",
+    "short_name": "Rove Health",
+    "description": "Premium Period and Health Tracker tailored for Indian women.",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#FAF9F6",
+    "theme_color": "#D35400",
+    "orientation": "portrait",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Cycle Tracker",
+            "short_name": "Tracker",
+            "description": "Log cycle insights and symptoms",
+            "url": "/cycle-sync",
+            "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Ayurvedic Learn",
+            "short_name": "Learn",
+            "description": "Read Ayurvedic articles",
+            "url": "/cycle-sync/learn",
+            "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+        }
+    ]
+}

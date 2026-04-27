@@ -1,0 +1,151 @@
+import { Dumbbell, Clock, Check, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { EXERCISE_OPTIONS } from "../constants";
+
+interface ExerciseCardProps {
+  selectedExercise: string[];
+  setSelectedExercise: (exercise: string[]) => void;
+  exerciseMinutes: string;
+  setExerciseMinutes: (minutes: string) => void;
+  currentPhase?: string | null;
+}
+
+export default function ExerciseCard({
+  selectedExercise,
+  setSelectedExercise,
+  exerciseMinutes,
+  setExerciseMinutes,
+  currentPhase,
+}: ExerciseCardProps) {
+  const [showInfo, setShowInfo] = useState(false);
+  const toggleItem = (item: string) => {
+    if (selectedExercise.includes(item)) {
+      setSelectedExercise(selectedExercise.filter((i) => i !== item));
+    } else {
+      setSelectedExercise([...selectedExercise, item]);
+    }
+  };
+
+  // Category color: Exercise Log → Warm Red
+  const theme = {
+    border: "border-[#E07B7B]/30",
+    shadow: "shadow-[#E07B7B]/5",
+    iconBg: "bg-[#E07B7B]/10",
+    iconColor: "text-[#E07B7B]",
+    active: "bg-[#E07B7B] text-white border-[#E07B7B] shadow-md",
+    inactive: "bg-white text-gray-600 border-[#E07B7B]/20 hover:bg-[#E07B7B]/5",
+    inputBorder: "border-[#E07B7B]/30"
+  };
+
+  return (
+    <div className={cn(
+      "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border transition-all",
+      theme.border,
+      theme.shadow
+    )}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <motion.div
+            animate={{
+              rotate: [0, 45, 0],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center",
+              theme.iconBg
+            )}
+          >
+            <Dumbbell className={cn("w-4 h-4", theme.iconColor)} />
+          </motion.div>
+          <div className="flex items-center gap-2 relative min-w-0">
+            <h3 className="text-base font-heading font-semibold text-gray-900">Exercise Log</h3>
+            <div
+              className="relative"
+              onMouseEnter={() => setShowInfo(true)}
+              onMouseLeave={() => setShowInfo(false)}
+            >
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="flex items-center justify-center p-1 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Exercise Information"
+              >
+                <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+              </button>
+
+              <AnimatePresence>
+                {showInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-56 max-w-[calc(100vw-2rem)] p-3 bg-gray-900 text-white text-[11px] rounded-xl z-[100] text-center shadow-2xl font-sans normal-case tracking-normal leading-relaxed"
+                  >
+                    Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+        {/*  <button
+          onClick={() => {
+            setSelectedExercise([]);
+            setExerciseMinutes("");
+          }}
+          className="w-full sm:w-auto text-[10px] font-medium text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full bg-white border border-gray-100 hover:border-red-100"
+        >
+          Didn't Exercise
+        </button> */}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap gap-2">
+          {EXERCISE_OPTIONS.map((e) => {
+            const isActive = selectedExercise.includes(e);
+            return (
+              <button
+                key={e}
+                onClick={() => toggleItem(e)}
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 border",
+                  isActive ? theme.active : theme.inactive
+                )}
+              >
+                {isActive && <Check className="w-3.5 h-3.5" />}
+                {e}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={cn(
+          "flex items-center gap-3 bg-white/60 p-3 rounded-2xl border",
+          theme.inputBorder
+        )}>
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center",
+            theme.iconBg
+          )}>
+            <Clock className={cn("w-4 h-4", theme.iconColor)} />
+          </div>
+          <div className="flex-1">
+            <label className="text-xs text-gray-500 block mb-1">Duration (minutes)</label>
+            <input
+              type="number"
+              value={exerciseMinutes}
+              onChange={(e) => setExerciseMinutes(e.target.value)}
+              placeholder="00"
+              className="w-full bg-transparent text-xl font-mono font-bold text-gray-700 placeholder:text-gray-300 focus:outline-none"
+            />
+          </div>
+          <div className="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+            MIN
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
