@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 import { StructuredResponseRenderer } from "./StructuredResponseRenderer";
 import { AllLimitsIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION } from "@/components/ui/PromptLimitIndicator";
-
+import { usePostHog } from 'posthog-js/react';
 const LOG_WINDOW_DAYS = 90;
 
 interface Message {
@@ -127,6 +127,7 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         }
         return DEFAULT_MESSAGES;
     });
+    const posthog = usePostHog();
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isAgentActive, setIsAgentActive] = useState(false);
@@ -473,6 +474,9 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
         const messageText = inputValue;
         setInputValue("");
         setIsTyping(true);
+        posthog.capture('chat_message_sent', {
+            message_length: messageText.length
+        });
         
         // Increment and save prompt count
         const newCount = promptCount + 1;

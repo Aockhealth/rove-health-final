@@ -263,7 +263,7 @@ serve(async (req) => {
         }
 
         const exerciseCount = availableTime <= 20 ? 3 : availableTime <= 35 ? 4 : availableTime <= 50 ? 5 : 6;
-        const variationSeed = stableHash(`${phase}|${energyLevel}|${availableTime}|${focusArea}|${progressionPreference}|${new Date().toISOString().slice(0, 10)}`);
+        const variationSeed = stableHash(`${phase}|${energyLevel}|${availableTime}|${focusArea}|${progressionPreference}|${new Date().getTime()}`);
         const rotatedMain = rotateArray(candidateExercises, variationSeed).slice(0, Math.min(exerciseCount, candidateExercises.length));
 
         const warmup = rotateArray(WARMUP_LIBRARY, variationSeed + 1).slice(0, 3);

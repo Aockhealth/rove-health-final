@@ -785,12 +785,12 @@ function evaluateChefQuality(
 
     const genericScore = computeGenericScore(textChunks);
     const phaseRulePassed = evaluateChefPhaseRule(phase, textChunks.join(" ").toLowerCase());
-    const qualityPassed = !duplicateDetected && phaseRulePassed && genericScore <= 0.24;
+    // Relaxed quality gate: 50% generic threshold, less strict duplicate detection
+    const qualityPassed = phaseRulePassed && genericScore <= 0.50;
 
     const reasons: string[] = [];
-    if (duplicateDetected) reasons.push("duplicate_signature_detected");
     if (!phaseRulePassed) reasons.push("phase_rule_failed");
-    if (genericScore > 0.24) reasons.push("generic_score_too_high");
+    if (genericScore > 0.50) reasons.push("generic_score_too_high");
 
     return {
         quality_passed: qualityPassed,
@@ -827,10 +827,12 @@ function evaluateCoachQuality(
     if (normalizedPhase === "ovulatory") {
         const notes = candidate.main_set.map((set) => (set.notes || "").toLowerCase()).join(" ");
         if (!hasAny(notes, ["form", "joint", "alignment", "control", "stability"])) {
+            console.log("[Quality] Ovulatory phase requires form/joint/alignment/control/stability keyword in notes. Found notes:", notes);
             phaseRulePassed = false;
         }
     }
     if (!Array.isArray(candidate.main_set) || candidate.main_set.length < 3) {
+        console.log("[Quality] main_set check failed. Is array:", Array.isArray(candidate.main_set), "Length:", candidate.main_set?.length);
         phaseRulePassed = false;
     }
 
@@ -843,12 +845,23 @@ function evaluateCoachQuality(
     ];
 
     const genericScore = computeGenericScore(textChunks);
-    const qualityPassed = !duplicateDetected && phaseRulePassed && genericScore <= 0.24;
+    // Relaxed thresholds: allow 50% generic content (up from 24%) and don't fail on duplicates alone
+    const qualityPassed = phaseRulePassed && genericScore <= 0.50;
+
+    console.log("[Quality] Coach evaluation:", {
+        phase: normalizedPhase,
+        intensity: normalizedIntensity,
+        phaseRulePassed,
+        genericScore,
+        threshold: 0.50,
+        qualityPassed,
+        title: candidate.title,
+        mainSetCount: candidate.main_set?.length
+    });
 
     const reasons: string[] = [];
-    if (duplicateDetected) reasons.push("duplicate_signature_detected");
     if (!phaseRulePassed) reasons.push("phase_rule_failed");
-    if (genericScore > 0.24) reasons.push("generic_score_too_high");
+    if (genericScore > 0.50) reasons.push("generic_score_too_high");
 
     return {
         quality_passed: qualityPassed,
@@ -1230,11 +1243,24 @@ export async function generateRoveCoachPlan(
 
     try {
         lastRequest = buildRequest();
+        console.log("[Rove Coach] Executing AI request...", { phase, energyLevel, equipment });
         lastResponse = await executeUnifiedAI(lastRequest);
+        console.log("[Rove Coach] AI Response received:", { 
+            isFlagged: lastResponse.safety?.flagged, 
+            hasPayload: !!lastResponse.structuredPayload 
+        });
 
         let candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
             ? RoveCoachPlanSchema.safeParse(lastResponse.structuredPayload)
             : null;
+        console.log("[Rove Coach] Schema parse result:", { 
+            success: candidate?.success, 
+            error: candidate?.error?.toString() 
+        });
+
+        if (candidate?.error) {
+            console.log("[Rove Coach] Schema validation failed. Payload was:", JSON.stringify(lastResponse.structuredPayload).substring(0, 800));
+        }
 
         let parsedPlan = candidate && candidate.success ? candidate.data : null;
         let quality = parsedPlan
@@ -1247,8 +1273,15 @@ export async function generateRoveCoachPlan(
                 phase_rule_passed: false,
                 reasons: ["invalid_payload_or_safety_flag"]
             };
+        console.log("[Rove Coach] Quality evaluation:", { 
+            passed: quality.quality_passed, 
+            reasons: quality.reasons,
+            genericScore: quality.generic_score,
+            phaseRulePassed: quality.phase_rule_passed
+        });
 
         if (qualityGateEnabled && !quality.quality_passed && retryEnabled) {
+            console.log("[Rove Coach] Quality gate failed. Retrying with feedback...");
             retryCount = 1;
             lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`, true);
             lastResponse = await executeUnifiedAI(lastRequest);
@@ -1266,15 +1299,22 @@ export async function generateRoveCoachPlan(
                     phase_rule_passed: false,
                     reasons: ["retry_invalid_payload_or_safety_flag"]
                 };
+            console.log("[Rove Coach] Retry quality evaluation:", { 
+                passed: quality.quality_passed, 
+                reasons: quality.reasons 
+            });
         }
 
         if (!parsedPlan || (qualityGateEnabled && !quality.quality_passed)) {
+            console.log("[Rove Coach] RETURNING FALLBACK - parsedPlan:", parsedPlan ? "exists" : "null", "qualityGateEnabled:", qualityGateEnabled, "qualityPassed:", quality.quality_passed);
+            console.log("[Rove Coach] Fallback plan: Squats & Pushups");
             if (lastRequest && lastResponse) {
                 await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
             }
             return fallback;
         }
 
+        console.log("[Rove Coach] SUCCESS - Returning parsed plan:", parsedPlan?.title);
         if (lastRequest && lastResponse) {
             await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
         }

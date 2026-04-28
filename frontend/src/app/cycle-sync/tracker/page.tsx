@@ -16,7 +16,7 @@ import {
 import { calculatePhase as sharedCalculatePhase, isInFertileWindow, type CycleSettings, type DailyLog as SharedDailyLog } from "@shared/cycle/phase";
 import confetti from "canvas-confetti";
 import { toast, Toaster } from "sonner";
-
+import { usePostHog } from 'posthog-js/react';
 import PeriodLoggingCard from "./components/PeriodLoggingCard";
 import FlowCard from "./components/FlowCard";
 import DischargeCard, { Consistency, Appearance, Sensation } from "./components/DischargeCard";
@@ -39,6 +39,7 @@ export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
 export default function TrackerPageRedesigned() {
     const router = useRouter();
+    const posthog = usePostHog();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -447,6 +448,13 @@ export default function TrackerPageRedesigned() {
             }
 
             toast.success("Entry Saved!", { description: "Your daily log has been updated.", duration: 3000 });
+
+            posthog.capture('symptom_logged', {
+                symptoms_count: selectedSymptoms.length,
+                moods_count: selectedMoods.length,
+                tracked_phase: trackMode,
+                water_intake: waterIntake
+            });
 
             // Refresh logs
             const year = currentMonth.getFullYear();
@@ -860,7 +868,8 @@ export default function TrackerPageRedesigned() {
 
 
     return (
-        <div className="relative space-y-4">
+        <div className="min-h-screen overflow-x-clip bg-paper bg-gradient-to-b from-paper via-white-bone to-paper grain-overlay">
+            <Toaster position="top-center" richColors />
 
             {/* Loading overlay during period save operations */}
             <AnimatePresence>

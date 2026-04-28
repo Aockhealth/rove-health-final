@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ✅ UPDATED IMPORTS: Using @backend alias from tsconfig.json
+// ✅ UPDATED IMPORTS: Using @backend alias from tsconfig.json
 import { fetchInsightsData } from "@backend/actions/cycle-sync/insights/insights-cycle-sync";
 import {
   generatePhaseAIInsight,
+  getCachedPhaseInsight,
   type AIContext
 } from "@/app/actions/cycle-sync";
 
@@ -74,6 +76,12 @@ export default function InsightsPage() {
 
           if (data.phase?.name) {
             setSelectedPhase((prev) => prev || data.phase!.name);
+            
+            // Check cache silently when phase is loaded
+            const cachedInsight = await getCachedPhaseInsight(data.phase.name);
+            if (cachedInsight) {
+              setAiInsight(cachedInsight);
+            }
           }
         }
       } catch (err) {

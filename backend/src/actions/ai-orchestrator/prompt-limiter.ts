@@ -18,7 +18,7 @@ export interface PromptValidationResult {
 }
 
 const DEFAULT_CONFIG: PromptLimitConfig = {
-    maxPromptsPerSession: 5,
+    maxPromptsPerSession: 50,
     maxCharactersPerPrompt: 1000
 };
 

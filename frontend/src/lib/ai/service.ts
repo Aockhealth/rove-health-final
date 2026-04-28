@@ -211,6 +211,13 @@ export class AIService {
             : promptConfig.model.name);
         const apiKey = process.env[ENV_KEYS[provider]];
 
+        console.log(`[AIService] Checking API key for provider: ${provider}`);
+        console.log(`[AIService] Looking for env var: ${ENV_KEYS[provider]}`);
+        console.log(`[AIService] Env var exists: ${!!apiKey}`);
+        if (provider === 'azure') {
+            console.log(`[AIService] Azure endpoint configured: ${!!process.env.AZURE_OPENAI_ENDPOINT}`);
+        }
+
         if (!apiKey) {
             console.error(`[AIService] Missing API Key for ${provider}`);
             return { data: null, error: `Configuration Error: Missing API Key for ${provider}`, provider, model: modelName };
@@ -277,6 +284,16 @@ export class AIService {
 
         } catch (error: any) {
             console.error(`[AIService] Error generating ${feature}:`, error);
+            
+            // Enhanced error logging for Azure auth issues
+            if (provider === 'azure' && error.status === 401) {
+                console.error("[AIService] Azure 401 Authentication Error Details:");
+                console.error("[AIService] - API Key should start with:", process.env.AZURE_OPENAI_API_KEY?.substring(0, 5));
+                console.error("[AIService] - Endpoint:", process.env.AZURE_OPENAI_ENDPOINT);
+                console.error("[AIService] - Model:", modelName);
+                console.error("[AIService] Check that API key has not expired and endpoint is correct");
+            }
+            
             return { data: null, error: error.message || "Unknown AI Error", provider, model: modelName };
         }
     }
@@ -303,13 +320,26 @@ export class AIService {
 
     private static async callAzure(apiKey: string, model: string, system: string, user: string, config: AIModelConfig): Promise<string> {
         const { OpenAI } = await import('openai');
-        const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+        let endpoint = process.env.AZURE_OPENAI_ENDPOINT;
         if (!endpoint) throw new Error('AZURE_OPENAI_ENDPOINT is not configured');
 
+        // Remove trailing slash and /v1 if present, as OpenAI SDK adds it
+        endpoint = endpoint.replace(/\/$/, '').replace(/\/openai\/v1\/?$/, '').replace(/\/v1\/?$/, '');
+
+        console.log("[AIService] Azure setup - cleaned endpoint:", endpoint);
+        console.log("[AIService] Azure setup - API key length:", apiKey?.length);
+        console.log("[AIService] Azure setup - API key starts with:", apiKey?.substring(0, 5));
+        console.log("[AIService] Azure setup - model:", model);
+
         const client = new OpenAI({
-            apiKey,
-            baseURL: endpoint
+            apiKey: apiKey,
+            baseURL: endpoint,
+            defaultHeaders: {
+                'api-key': apiKey
+            }
         });
+
+        console.log("[AIService] Azure client created, calling chat.completions...");
 
         const response = await client.chat.completions.create({
             model: model,

@@ -22,18 +22,18 @@ export default function CycleSyncShell({
   ];
 
   return (
-    <div className="min-h-dvh bg-rove-cream/20 grain-overlay">
-      <main className="container relative mx-auto min-h-dvh max-w-md bg-white shadow-2xl shadow-rove-stone/5 md:my-8 md:max-w-4xl md:rounded-[3rem] pt-[env(safe-area-inset-top,0px)]">
+    <div className="min-h-screen bg-rove-cream/20 pb-safe-nav md:pb-0">
+      <main className="container relative mx-auto min-h-screen max-w-md overflow-hidden bg-white shadow-2xl shadow-rove-stone/5 md:my-8 md:max-w-4xl md:rounded-[3rem]">
         {children}
       </main>
 
       <nav
-        className="fixed bottom-0 isolate left-0 right-0 z-50 px-6 pt-3 pb-[env(safe-area-inset-bottom,20px)] md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 px-6 pt-3 safe-bottom-padding md:hidden"
         style={{
-          backgroundColor: "rgba(250, 249, 246, 0.96)",
+          backgroundColor: "rgba(250, 249, 246, 0.92)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          borderTop: "1px solid rgba(45, 36, 32, 0.05)",
+          borderTop: "1px solid rgba(45, 36, 32, 0.06)",
         }}
       >
         <div className="relative mx-auto flex max-w-md items-center justify-between">

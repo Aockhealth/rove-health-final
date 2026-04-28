@@ -40,6 +40,19 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: "No events found, cleared summary" }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // 1.5️⃣ Fetch existing summaries to preserve phase_data (AI Insights)
+    const { data: existingSummaries } = await supabase
+      .from("cycle_summary")
+      .select("cycle_start_date, phase_data")
+      .eq("user_id", user_id);
+
+    const existingPhaseDataMap = new Map();
+    if (existingSummaries) {
+      existingSummaries.forEach(s => {
+        existingPhaseDataMap.set(s.cycle_start_date, s.phase_data);
+      });
+    }
+
     // 2️⃣ Delete old summaries (Rebuild Strategy)
     const { error: deleteError } = await supabase
       .from("cycle_summary")
@@ -130,14 +143,18 @@ serve(async (req) => {
       if (validHistoryCount >= 6) confidence = "high";
       else if (validHistoryCount >= 3) confidence = "medium";
 
+      const cycleStartDateStr = c.start.toISOString().split('T')[0];
+      const previousPhaseData = existingPhaseDataMap.get(cycleStartDateStr) || {};
+
       summariesToAdd.push({
         user_id,
-        cycle_start_date: c.start.toISOString().split('T')[0],
+        cycle_start_date: cycleStartDateStr,
         cycle_end_date: c.end ? c.end.toISOString().split('T')[0] : null,
         cycle_length: c.length,
         ovulation_date: ovulation ? ovulation.toISOString().split('T')[0] : null,
         confidence_score: confidence,
         phase_data: {
+          ...previousPhaseData,
           is_projected: !!c.is_projected,
           avg_length_used: avgCycleLength
         }

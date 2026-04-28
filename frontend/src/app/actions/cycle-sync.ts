@@ -138,6 +138,7 @@ async function syncPeriodStartFromLog(
 
 /**
  * Generates a scientific and empathetic insight using the unified AIService (Gemini).
+ * Implements cycle_intelligence_cache and ai_user_state syncing.
  */
 export async function generatePhaseAIInsight(
     phase: string,
@@ -147,6 +148,27 @@ export async function generatePhaseAIInsight(
         Array.isArray(arr) && arr.length > 0 ? arr.join(", ") : "None";
 
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        // 1. CHECK CACHE FIRST
+        const { data: cached } = await supabase
+            .from("cycle_intelligence_cache")
+            .select("data")
+            .eq("user_id", user.id)
+            .eq("phase", phase)
+            .gt("expires_at", new Date().toISOString())
+            .single();
+
+        if (cached?.data) {
+            console.log(`[AI Cache Hit] Insight found for phase: ${phase}`);
+            return cached.data;
+        }
+
+        console.log(`[AI Cache Miss] Generating new insight for phase: ${phase}`);
+
+        // 2. GENERATE NEW INSIGHT
         const response = await AIService.generate({
             feature: "phase_insight",
             variables: {
@@ -162,12 +184,97 @@ export async function generatePhaseAIInsight(
             return null;
         }
 
-        return response.data;
+        const insightData = response.data;
+
+        // 3. SECURELY SAVE TO CACHE
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30); // Will be invalidated by trigger on new symptoms
+
+        await supabase.from("cycle_intelligence_cache").insert({
+            user_id: user.id,
+            phase: phase,
+            date: new Date().toISOString().split('T')[0],
+            data: insightData,
+            computed_at: new Date().toISOString(),
+            expires_at: expiresAt.toISOString()
+        });
+
+        // 4. UPSERT AI USER STATE
+        // We first try to get existing to merge it, or just overwrite insights
+        const { data: existingState } = await supabase
+            .from("ai_user_state")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (existingState) {
+            await supabase.from("ai_user_state").update({
+                insights: { active_phase: phase, data: insightData },
+                updated_at: new Date().toISOString()
+            }).eq("user_id", user.id);
+        } else {
+            await supabase.from("ai_user_state").insert({
+                user_id: user.id,
+                insights: { active_phase: phase, data: insightData },
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        // 5. ARCHIVE IN OPEN CYCLE SUMMARY
+        const { data: activeCycle } = await supabase
+            .from("cycle_summary")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("cycle_start_date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (activeCycle) {
+            const currentPhaseData = activeCycle.phase_data || {};
+            const cycleInsights = currentPhaseData.insights || {};
+            cycleInsights[phase] = insightData;
+
+            await supabase
+                .from("cycle_summary")
+                .update({ 
+                    phase_data: { 
+                        ...currentPhaseData, 
+                        insights: cycleInsights 
+                    } 
+                })
+                .eq("id", activeCycle.id);
+        }
+
+        return insightData;
     } catch (error) {
         console.error("[generatePhaseAIInsight] Unexpected Error:", error);
         return null;
     }
 }
+
+/**
+ * Fast-path check for cached insight to load on page mount
+ */
+export async function getCachedPhaseInsight(phase: string) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data: cached } = await supabase
+            .from("cycle_intelligence_cache")
+            .select("data")
+            .eq("user_id", user.id)
+            .eq("phase", phase)
+            .gt("expires_at", new Date().toISOString())
+            .single();
+
+        return cached?.data || null;
+    } catch (error) {
+        return null;
+    }
+}
+
 // --- DATABASE ACTIONS ---
 
 export async function fetchDashboardData() {

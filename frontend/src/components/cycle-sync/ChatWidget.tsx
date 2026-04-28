@@ -23,7 +23,7 @@ export function ChatWidget() {
                         key="active-widget"
                         className={cn(
                             "fixed right-5 md:bottom-8 md:right-8 z-[75] transition-all duration-300",
-                            isTrackerPage ? "bottom-[115px] md:bottom-8" : "bottom-24"
+                            isTrackerPage ? "bottom-[130px] md:bottom-8" : "bottom-28"
                         )}
                         initial={{ scale: 0, x: 100 }}
                         animate={{ scale: 1, x: 0 }}
@@ -66,7 +66,7 @@ export function ChatWidget() {
                         key="docked-handle"
                         className={cn(
                             "fixed -right-2 md:bottom-8 md:-right-2 z-[75] cursor-pointer group transition-all duration-300",
-                            isTrackerPage ? "bottom-[115px] md:bottom-8" : "bottom-24"
+                            isTrackerPage ? "bottom-[130px] md:bottom-8" : "bottom-28"
                         )}
                         initial={{ x: 50 }}
                         animate={{ x: 0 }}

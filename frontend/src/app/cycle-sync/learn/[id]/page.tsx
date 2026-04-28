@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-
+import { ArticleTracker } from "./ArticleTracker";
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -50,6 +50,7 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-rove-cream pb-20">
+      <ArticleTracker articleId={id} articleTitle={cleanTitle(article.title)} category={article.category} />
       {/* --- HERO SECTION --- */}
       <div className="relative h-[45vh] w-full bg-rove-stone/20">
         {imageUrl ? (

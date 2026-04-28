@@ -5,7 +5,7 @@
  */
 
 export const MAX_PROMPT_CHARS = 1000;
-export const MAX_PROMPTS_PER_SESSION = 5;
+export const MAX_PROMPTS_PER_SESSION = 50;
 
 interface CharLimitIndicatorProps {
     charCount: number;
