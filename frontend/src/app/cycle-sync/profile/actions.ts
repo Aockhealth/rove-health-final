@@ -63,7 +63,7 @@ export async function fetchProfilePageData() {
     return {
         user: { id: user.id, email: user.email || "" },
         formData: {
-            full_name: profile?.full_name || "",
+            full_name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "",
             tracker_mode: onboarding?.tracker_mode || "menstruation",
             goals: Array.isArray(onboarding?.goals) ? onboarding.goals : [],
             conditions: Array.isArray(onboarding?.conditions) ? onboarding.conditions : [],
@@ -152,7 +152,7 @@ export async function getUserProfile() {
     return {
         ...safeOnboarding,
         ...safeLifestyle, // Merge lifestyle (height, weight, diet)
-        full_name: profileCore?.full_name || "",
+        full_name: profileCore?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "",
         goals,
         conditions: safeOnboarding.conditions || [],
         diet_preference: safeLifestyle.diet_preference || "non_veg",
