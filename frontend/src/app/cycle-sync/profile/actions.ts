@@ -185,6 +185,7 @@ export async function getHeaderProfile() {
 }
 
 export async function updateUserProfile(data: {
+    full_name?: string;
     tracker_mode: string;
     goals: string[];
     conditions: string[];
@@ -198,6 +199,16 @@ export async function updateUserProfile(data: {
 
     if (!user) {
         return { error: "Unauthorized" };
+    }
+
+    // 0. Update Core Profile (Name)
+    let profileError = null;
+    if (data.full_name !== undefined) {
+        const { error: pError } = await supabase
+            .from("profiles")
+            .update({ full_name: data.full_name })
+            .eq("id", user.id);
+        profileError = pError;
     }
 
     // 1. Update Identity (Onboarding table)
@@ -223,11 +234,12 @@ export async function updateUserProfile(data: {
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
 
+    if (profileError) console.error("Error updating profile name:", profileError);
     if (obError) console.error("Error updating onboarding:", obError);
     if (lsError) console.error("Error updating lifestyle:", lsError);
 
-    if (obError || lsError) {
-        return { error: `Failed to save: ${obError?.message || ''} ${lsError?.message || ''}` };
+    if (profileError || obError || lsError) {
+        return { error: `Failed to save: ${profileError?.message || ''} ${obError?.message || ''} ${lsError?.message || ''}` };
     }
 
     revalidatePath("/cycle-sync/profile");
