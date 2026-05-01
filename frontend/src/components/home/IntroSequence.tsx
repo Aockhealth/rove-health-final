@@ -372,13 +372,15 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
                   <Link href="/login" onClick={handleSkip} className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                     Already have an account? Log in
                   </Link>
-                  <p className="text-[10px] text-rove-stone/60">
-                    By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
-                  </p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Always Visible Privacy Link for Google Crawler */}
+          <p className="mt-2 text-[10px] text-rove-stone/60 pointer-events-auto">
+            By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
+          </p>
 
         </div>
       </div>
