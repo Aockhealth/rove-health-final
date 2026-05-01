@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Outfit, Cormorant_Garamond } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { InstallPrompt } from "@/components/pwa/InstallPrompt";
-import { PostHogProvider } from "./providers";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -149,10 +147,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${outfit.variable} ${cormorant.variable} antialiased`}
         suppressHydrationWarning
       >
-        <PostHogProvider>
-          {children}
-          <InstallPrompt />
-        </PostHogProvider>
+        {children}
       </body>
     </html>
   );

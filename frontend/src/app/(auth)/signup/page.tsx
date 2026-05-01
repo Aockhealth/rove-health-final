@@ -3,13 +3,9 @@
 import { useState, useTransition } from "react";
 import { signup } from "../actions";
 import Link from "next/link";
-import Image from "next/image";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { signupSchema } from "@/lib/schemas";
 import { Button } from "@/components/ui/Button";
-import { motion } from "framer-motion";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 type FieldErrors = {
@@ -19,6 +15,7 @@ type FieldErrors = {
 export default function SignupPage() {
   const [isPending, startTransition] = useTransition();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 1. Add state to track password input
   const [password, setPassword] = useState("");
@@ -28,19 +25,27 @@ export default function SignupPage() {
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFieldErrors({});
+    setSuccessMessage(null);
 
     const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+    const email = formData.get("email") as string;
+    const pass = formData.get("password") as string;
+    const confirmPass = formData.get("confirmPassword") as string;
 
-    // 1. Client-Side Validation (Zod)
-    const result = signupSchema.safeParse(data);
+    // 1. Lightweight Client-Side Validation
+    const errors: FieldErrors = {};
+    if (!email || !email.includes("@")) {
+      errors.email = "Please enter a valid email address.";
+    }
+    if (!pass || pass.length < 6) {
+      errors.password = "Password must be at least 6 characters.";
+    }
+    if (pass !== confirmPass) {
+      errors.confirmPassword = "Passwords do not match.";
+    }
 
-    if (!result.success) {
-      const formattedErrors: FieldErrors = {};
-      result.error.issues.forEach((issue) => {
-        formattedErrors[issue.path[0].toString()] = issue.message;
-      });
-      setFieldErrors(formattedErrors);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -51,14 +56,12 @@ export default function SignupPage() {
 
         if (response?.error) {
           setFieldErrors({ server: response.error });
-          toast.error(response.error);
         } else if (response?.ok) {
-          toast.success("Account created successfully!");
-          router.push(response.nextRoute || "/privacy-pledge");
+          setSuccessMessage("Account created successfully! Loading...");
+          router.replace(response.nextRoute || "/privacy-pledge");
         }
       } catch {
         setFieldErrors({ server: "Something went wrong. Please try again." });
-        toast.error("Something went wrong.");
       }
     });
   }
@@ -66,28 +69,23 @@ export default function SignupPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-rove-cream px-4 py-8 overflow-hidden grain-overlay">
 
-      {/* 🌸 BACKGROUND ANIMATION (Standardized) */}
-      <div className="blob-glow-red" />
-      <div className="blob-glow-peach" />
+      {/* Decorative Layer - Static for performance */}
+      <div className="absolute inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-10 left-10 w-64 h-64 bg-phase-menstrual/20 rounded-full blur-[80px]" />
+        <div className="absolute bottom-10 right-10 w-64 h-64 bg-phase-follicular/20 rounded-full blur-[80px]" />
+      </div>
 
-      {/* Decorative Orbs */}
-      <div className="glass-orb glass-orb-3 animate-reverse" />
-      <div className="glass-orb glass-orb-2" />
-
-      {/* Glassmorphic Card */}
-      <div className="w-full max-w-md glass-panel p-8 md:p-10 relative z-20 transition-all hover:shadow-[0_20px_40px_-12px_rgba(45,36,32,0.1)] hover:-translate-y-1">
+      {/* Static Card */}
+      <div className="w-full max-w-md bg-white/90 p-8 md:p-10 relative z-20 rounded-[2rem] border border-rove-charcoal/5 shadow-xl transition-all">
 
         {/* Header & Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-1">
-            <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 transition-transform hover:scale-105 duration-500 drop-shadow-sm">
-              <Image
+            <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 drop-shadow-sm">
+              <img
                 src="/images/rove_icon_transparent.png"
                 alt="Rove Logo"
-                fill
-                className="object-contain"
-                priority
-                unoptimized
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
@@ -116,10 +114,10 @@ export default function SignupPage() {
                 name="email"
                 type="email"
                 placeholder="hello@rove.com"
-                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
-                    ${fieldErrors.email
+                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-rove-cream/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
+                    \${fieldErrors.email
                     ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
-                    : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                    : "border-transparent focus:border-rove-charcoal/20 focus:bg-white focus:ring-4 focus:ring-rove-charcoal/5"
                   }`}
               />
             </div>
@@ -145,10 +143,10 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
-                    ${fieldErrors.password
+                className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-rove-cream/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
+                    \${fieldErrors.password
                     ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
-                    : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                    : "border-transparent focus:border-rove-charcoal/20 focus:bg-white focus:ring-4 focus:ring-rove-charcoal/5"
                   }`}
               />
             </div>
@@ -161,11 +159,7 @@ export default function SignupPage() {
 
           {/* Confirm Password */}
           {password.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="space-y-1.5 overflow-hidden"
-            >
+            <div className="space-y-1.5 overflow-hidden transition-all duration-300">
               <label className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[0.2em] pl-1">
                 Confirm Password
               </label>
@@ -177,10 +171,10 @@ export default function SignupPage() {
                   name="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-white/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
-                        ${fieldErrors.confirmPassword
+                  className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-rove-cream/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/40 font-medium
+                        \${fieldErrors.confirmPassword
                       ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
-                      : "border-white/50 focus:border-rove-charcoal/20 focus:bg-white/80 focus:ring-4 focus:ring-rove-charcoal/5"
+                      : "border-transparent focus:border-rove-charcoal/20 focus:bg-white focus:ring-4 focus:ring-rove-charcoal/5"
                     }`}
                 />
               </div>
@@ -189,25 +183,26 @@ export default function SignupPage() {
                   {fieldErrors.confirmPassword}
                 </p>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* Server Error Message */}
           {fieldErrors.server && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-3 rounded-2xl bg-red-50/80 backdrop-blur-sm text-red-600 text-sm font-medium border border-red-100 flex items-center justify-center text-center"
-            >
+            <div className="p-3 rounded-2xl bg-red-50/80 text-red-600 text-sm font-medium border border-red-100 flex items-center justify-center text-center transition-opacity duration-300">
               {fieldErrors.server}
-            </motion.div>
+            </div>
+          )}
+          {successMessage && (
+            <div className="p-3 rounded-2xl bg-green-50/80 text-green-700 text-sm font-medium border border-green-100 flex items-center justify-center text-center transition-opacity duration-300">
+              {successMessage}
+            </div>
           )}
 
           {/* Button */}
           <Button
             type="submit"
-            disabled={isPending}
-            className="w-full py-6 h-auto rounded-full bg-rove-charcoal text-rove-cream font-semibold text-lg shadow-[0_10px_20px_-5px_rgba(45,36,32,0.2)] hover:bg-rove-charcoal/90 hover:shadow-[0_15px_25px_-5px_rgba(45,36,32,0.3)] hover:scale-[1.01] transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+            disabled={isPending || !!successMessage}
+            className="w-full py-6 h-auto rounded-full bg-rove-charcoal text-rove-cream font-semibold text-lg shadow-lg hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
           >
             {isPending ? (
               <span className="flex items-center justify-center gap-2">
@@ -222,7 +217,7 @@ export default function SignupPage() {
             <div className="w-full border-t border-rove-stone/20"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#FDFBF7] text-rove-stone font-medium rounded-full">Or continue with</span>
+            <span className="px-4 bg-white text-rove-stone font-medium rounded-full">Or continue with</span>
           </div>
         </div>
 

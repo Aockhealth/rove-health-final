@@ -48,6 +48,13 @@ export async function updateSession(request: NextRequest) {
         return response;
     }
 
+    // 🔥 Fast-path for Android container cold start on public auth routes
+    const isPublicAuthRoute = path === '/login' || path === '/signup' || path === '/forgot-password';
+    const hasAuthCookie = request.cookies.getAll().some(c => c.name.includes('-auth-token'));
+    if (isPublicAuthRoute && !hasAuthCookie) {
+        return response;
+    }
+
     const {
         data: { user },
     } = await supabase.auth.getUser()
