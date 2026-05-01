@@ -76,7 +76,7 @@ export function InstallPrompt() {
   if (!isReadyForInstall || isDismissed) return null;
 
   return (
-    <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-white border border-rove-peach shadow-lg rounded-2xl p-4 z-50 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5">
+    <div className="fixed top-4 left-4 right-4 md:top-auto md:bottom-6 md:left-auto md:right-6 md:w-96 bg-white border border-rove-peach shadow-2xl rounded-2xl p-4 z-[100] flex items-start gap-3 animate-in fade-in zoom-in-95 duration-300">
       <div className="bg-rove-peach/20 p-2 rounded-xl text-rove-orange flex-shrink-0">
         <Download className="w-6 h-6" />
       </div>
