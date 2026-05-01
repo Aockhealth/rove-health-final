@@ -158,15 +158,15 @@ export function AccountSettings({
                         )}
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 group-hover:text-rose-600">
+                            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-400 group-hover:text-red-600">
                                 <Trash2 className="w-4 h-4" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-rose-500">Delete Account</p>
-                                <p className="text-xs text-rose-300">Permanently remove data</p>
+                                <p className="text-sm font-bold text-red-500">Delete Account</p>
+                                <p className="text-xs text-red-300">Permanently remove data</p>
                             </div>
                         </div>
-                        {!showDeleteConfirm && <ChevronRight className="w-4 h-4 text-rose-200" />}
+                        {!showDeleteConfirm && <ChevronRight className="w-4 h-4 text-red-200" />}
                     </div>
 
                     <AnimatePresence>
@@ -177,34 +177,34 @@ export function AccountSettings({
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="mt-4 p-4 bg-rose-50/80 rounded-2xl border border-rose-100 space-y-3">
+                                <div className="mt-4 p-4 bg-red-50/80 rounded-2xl border border-red-100 space-y-3">
                                     <div className="flex items-start gap-2">
-                                        <AlertTriangle className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
-                                        <p className="text-xs text-rose-600 leading-relaxed">
+                                        <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                                        <p className="text-xs text-red-600 leading-relaxed">
                                             This will <strong>permanently delete</strong> your cycle logs, health data, AI insights, and account. This action cannot be undone.
                                         </p>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 block">Type DELETE to confirm</label>
+                                        <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1 block">Type DELETE to confirm</label>
                                         <input
                                             value={deleteInput}
                                             onChange={(e) => setDeleteInput(e.target.value)}
                                             placeholder="DELETE"
-                                            className="w-full bg-white border border-rose-200 rounded-xl px-4 py-3 text-sm text-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-200 font-mono tracking-widest"
+                                            className="w-full bg-white border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800 focus:outline-none focus:ring-2 focus:ring-red-200 font-mono tracking-widest"
                                         />
                                     </div>
                                     <div className="flex gap-2">
                                         <Button 
                                             onClick={handleDeleteConfirm} 
                                             disabled={deleteInput !== "DELETE" || isPending}
-                                            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-widest disabled:opacity-40"
+                                            className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-widest disabled:opacity-40"
                                         >
                                             Delete Forever
                                         </Button>
                                         <Button 
                                             onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
                                             variant="outline" 
-                                            className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest border-rose-200 text-rose-500"
+                                            className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest border-red-200 text-red-500"
                                         >
                                             Cancel
                                         </Button>

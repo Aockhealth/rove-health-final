@@ -111,7 +111,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 hormone_insight: "Progesterone & Estrogen at lowest point.",
                 narrative: "Your lining is shedding, which requires energy and nutrients.",
                 goal: "Replenish iron and warm your body to ease flow.",
-                color: "bg-red-500" // Optional accent
+                color: "bg-phase-menstrual" // Optional accent
             },
             symptom_decoder: {
                 title: "Menstrual Phase",
@@ -370,7 +370,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 hormone_insight: "Estrogen is rising, energy is climbing.",
                 narrative: "Your body is preparing to release an egg. Energy is returning.",
                 goal: "Fuel rising energy with fresh, light, fermented foods.",
-                color: "bg-pink-400"
+                color: "bg-phase-follicular"
             },
             symptom_decoder: {
                 title: "Follicular Phase",
@@ -579,7 +579,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 hormone_insight: "Peak Estrogen & Testosterone.",
                 narrative: "You are at your most magnetic and energetic.",
                 goal: "Support liver detox and cool down high internal heat.",
-                color: "bg-purple-500"
+                color: "bg-phase-ovulatory"
             },
             symptom_decoder: {
                 title: "Ovulatory Phase",
@@ -787,7 +787,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 hormone_insight: "Progesterone rises, then drops.",
                 narrative: "Your body is winding down. Cravings signal energy needs.",
                 goal: "Stabilize blood sugar and boost mood with complex carbs.",
-                color: "bg-orange-400"
+                color: "bg-phase-luteal"
             },
             symptom_decoder: {
                 title: "Luteal Phase",

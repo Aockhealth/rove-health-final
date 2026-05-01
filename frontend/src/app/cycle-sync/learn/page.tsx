@@ -133,7 +133,7 @@ export default function LearnPage() {
                                 unoptimized
                             />
                         )}
-                        <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-gradient-to-br from-purple-900 to-rose-900" />
+                        <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-gradient-to-br from-stone-900 to-black" />
                     </div>
                     {/* ... Rest of your hero content ... */}
                     <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/30" />
