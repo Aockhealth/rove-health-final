@@ -69,7 +69,14 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     } else {
       setIsFirstTime(true);
     }
-    setMounted(true);
+    
+    // Ensure the splash screen quote is visible for at least 2 seconds 
+    // before hydrating into the main app to provide a premium feel
+    const splashTimer = setTimeout(() => {
+      setMounted(true);
+    }, 2000);
+
+    return () => clearTimeout(splashTimer);
   }, [isLoggedIn]);
 
   // Auto-advance the splash screens
