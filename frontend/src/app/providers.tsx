@@ -89,6 +89,8 @@ export function AppQueryProvider({
     </UserIdContext.Provider>
   );
 
+  const [isRestored, setIsRestored] = useState(false);
+
   // If we have a userId, use persistence; otherwise memory-only
   if (persister) {
     return (
@@ -101,8 +103,9 @@ export function AppQueryProvider({
             shouldDehydrateQuery,
           },
         }}
+        onSuccess={() => setIsRestored(true)}
       >
-        {inner}
+        {isRestored ? inner : null}
       </PersistQueryClientProvider>
     );
   }
