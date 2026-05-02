@@ -61,12 +61,16 @@ body {
 }
 
 /* --- 📱 Mobile Safe Area Utilities --- */
+.pt-safe {
+  padding-top: var(--safe-area-top, 44px);
+}
+
 .pb-safe-nav {
-  padding-bottom: calc(70px + var(--safe-area-bottom, 20px));
+  padding-bottom: calc(60px + var(--safe-area-bottom, 12px));
 }
 
 .safe-bottom-padding {
-  padding-bottom: calc(1rem + var(--safe-area-bottom, 20px));
+  padding-bottom: calc(0.5rem + var(--safe-area-bottom, 12px));
 }
 
 /* Grain Overlay */

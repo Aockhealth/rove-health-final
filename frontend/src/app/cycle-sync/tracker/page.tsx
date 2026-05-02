@@ -874,7 +874,7 @@ export default function TrackerPageRedesigned() {
             </AnimatePresence>
 
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 pt-safe">
                 <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
                     <div className="w-10 h-10  rounded-full flex items-center justify-center">
                         <Calendar className="w-5 h-5 text-black" />

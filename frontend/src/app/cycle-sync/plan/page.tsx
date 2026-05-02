@@ -1236,7 +1236,7 @@ export default function DetailedPlanPage() {
     if (!hasCycleData) {
         return (
             <div className="min-h-screen bg-rove-cream/20 flex flex-col">
-                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b">
+                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b pt-safe">
                     <div className="container mx-auto px-4 h-14 flex items-center justify-between">
                         <Link href="/cycle-sync">
                             <ChevronLeft className="w-5 h-5 text-gray-500" />
@@ -1320,7 +1320,7 @@ export default function DetailedPlanPage() {
         <div className={cn("min-h-screen bg-gradient-to-b transition-colors duration-500 grain-overlay", theme.pageGradient)}>
 
             {/* 1. TOP NAVIGATION (High Density) */}
-            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
+            <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm pt-safe">
                 <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
                     <Link href="/cycle-sync" className="p-2 -ml-2 text-rove-stone hover:text-rove-charcoal transition-colors">
                         <ChevronLeft className="w-5 h-5" />

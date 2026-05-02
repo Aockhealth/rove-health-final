@@ -122,7 +122,7 @@ export default function InsightsPage() {
   if (!selectedPhase) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-rove-cream/20 via-white to-white">
-        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b">
+        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b pt-safe">
           <div className="container mx-auto px-4 h-14 flex items-center justify-between">
             <Link href="/cycle-sync">
               <ChevronLeft className="w-5 h-5 text-gray-500" />
@@ -174,7 +174,7 @@ export default function InsightsPage() {
       )} />
 
       {/* HEADER */}
-      <div className="sticky top-0 z-50 bg-rove-cream/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-50 bg-rove-cream/80 backdrop-blur-xl pt-safe">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/cycle-sync">
             <ChevronLeft className="w-5 h-5 text-rove-stone" />

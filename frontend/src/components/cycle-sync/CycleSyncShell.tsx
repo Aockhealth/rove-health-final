@@ -81,7 +81,7 @@ export default function CycleSyncShell({
       </main>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 px-6 pt-3 safe-bottom-padding md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 px-4 pt-2 pb-2 safe-bottom-padding md:hidden"
         style={{
           backgroundColor: "rgba(250, 249, 246, 0.92)",
           backdropFilter: "blur(24px)",
@@ -107,7 +107,7 @@ export default function CycleSyncShell({
               >
                 <div
                   className={cn(
-                    "rounded-full p-1.5 transition-all duration-300",
+                    "rounded-full p-1 transition-all duration-300",
                     isActive ? "" : "bg-transparent"
                   )}
                   style={
@@ -117,12 +117,12 @@ export default function CycleSyncShell({
                   }
                 >
                   <item.icon
-                    className={cn("h-6 w-6", isActive && "stroke-[2.5px]")}
+                    className={cn("h-5 w-5", isActive && "stroke-[2.5px]")}
                     style={isActive ? { fill: "rgba(175, 107, 107, 0.12)" } : undefined}
                   />
                 </div>
                 <span
-                  className={cn("text-[11px] font-semibold transition-all", isActive ? "opacity-100" : "opacity-70")}
+                  className={cn("text-[10px] font-semibold transition-all", isActive ? "opacity-100" : "opacity-70")}
                   style={{ color: isActive ? "#2D2420" : "#A8A29E" }}
                 >
                   {item.label}
