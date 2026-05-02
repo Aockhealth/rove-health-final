@@ -13,6 +13,14 @@ interface IntroSequenceProps {
   isLoggedIn: boolean;
 }
 
+const QUOTES = [
+  "Brewing some Ayurvedic magic...",
+  "Loading good vibes and balanced hormones...",
+  "Aligning your cycle, one phase at a time...",
+  "Your daily dose of cycle clarity is arriving...",
+  "Syncing your rhythm with nature..."
+];
+
 const SCREENS = [
   {
     id: 0,
@@ -98,6 +106,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
   // Only render once we know the state to prevent hydration mismatch.
   // During SSR, we show a clean, premium minimalist splash screen to avoid a white flash.
   if (!mounted || isFirstTime === null) {
+    const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FDFBF7] px-6">
         <div className="relative w-28 h-28 flex items-center justify-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
@@ -110,7 +119,15 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
             unoptimized 
           />
         </div>
-        <div className="absolute bottom-12 opacity-0 animate-[fadeIn_1s_ease-out_0.3s_forwards] flex flex-col items-center gap-3">
+        
+        <p 
+          suppressHydrationWarning 
+          className="mt-6 text-sm font-medium text-rove-stone/70 tracking-wide text-center opacity-0 animate-[fadeIn_1s_ease-out_0.5s_forwards]"
+        >
+          {randomQuote}
+        </p>
+
+        <div className="absolute bottom-12 opacity-0 animate-[fadeIn_1s_ease-out_0.8s_forwards] flex flex-col items-center gap-3">
             <div className="w-5 h-5 border-2 border-rove-stone/20 border-t-rove-stone/80 rounded-full animate-spin"></div>
         </div>
       </div>
