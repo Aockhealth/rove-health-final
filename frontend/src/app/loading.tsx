@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Loading() {
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FDFBF7] px-6">
-        <div className="relative w-28 h-28 flex items-center justify-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
+        <div className="relative w-28 h-28 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
           <Image 
             src="/images/rove_logo_updated.png" 
             alt="Rove Health" 
