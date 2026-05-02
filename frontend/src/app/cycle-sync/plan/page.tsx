@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useTransition } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUserId } from "@/app/providers";
 import { fetchCycleIntelligenceAI } from "@/app/actions/cycle-sync";
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
 import { calculatePhase } from "@shared/cycle/phase";
@@ -616,7 +618,6 @@ const PHASE_IMAGES: Record<string, string> = {
 export default function DetailedPlanPage() {
     const [exerciseView, setExerciseView] = useState<"coach" | "history">("coach");
     const [hasPlanSetup, setHasPlanSetup] = useState(false);
-    const [setupLoading, setSetupLoading] = useState(true);
     const [setupStep, setSetupStep] = useState(1);
 
 
@@ -671,6 +672,7 @@ export default function DetailedPlanPage() {
             }));
         }
         setIsSavingGoal(false);
+        queryClient.invalidateQueries({ queryKey: ['plan'] });
     };
 
     // ✅ CLIENT-SIDE RECALCULATION (Unified Smart Logic)
@@ -686,50 +688,48 @@ export default function DetailedPlanPage() {
         }
     }, [unifiedData]);
 
+    const userId = useUserId();
+    const queryClient = useQueryClient();
+
+    const { data: fastData, isPending: setupLoading } = useQuery({
+        queryKey: ['plan', userId],
+        queryFn: async () => {
+            const { fetchPlanPageDataFast } = await import("@/app/actions/cycle-sync");
+            return await fetchPlanPageDataFast();
+        }
+    });
+
     useEffect(() => {
-        const load = async () => {
-            try {
-                // ⚡ ULTRA-FAST: Single action fetches ALL data in 1 trip
-                const { fetchPlanPageDataFast } = await import("@/app/actions/cycle-sync");
-                const fastData = await fetchPlanPageDataFast();
+        if (fastData?.lifestyle) {
+            setHasPlanSetup(true);
+            if (fastData.lifestyle.weight_kg) setWeight(fastData.lifestyle.weight_kg.toString());
+            if (fastData.lifestyle.height_cm) setHeight(fastData.lifestyle.height_cm.toString());
+            if (fastData.lifestyle.activity_level) setActivity(fastData.lifestyle.activity_level);
+            if (fastData.lifestyle.fitness_goal) setFitnessGoal(fastData.lifestyle.fitness_goal);
 
-                if (fastData?.lifestyle) {
-                    setHasPlanSetup(true);
-                    if (fastData.lifestyle.weight_kg) setWeight(fastData.lifestyle.weight_kg.toString());
-                    if (fastData.lifestyle.height_cm) setHeight(fastData.lifestyle.height_cm.toString());
-                    if (fastData.lifestyle.activity_level) setActivity(fastData.lifestyle.activity_level);
-                    if (fastData.lifestyle.fitness_goal) setFitnessGoal(fastData.lifestyle.fitness_goal);
+            // Set unified data for smart phase calculation
+            setUnifiedData({
+                settings: fastData.settings,
+                monthLogs: fastData.monthLogs,
+                smartPhase: calculatePhase(new Date(), fastData.settings, fastData.monthLogs),
+                userId: ""
+            });
 
-                    // Set unified data for smart phase calculation
-                    setUnifiedData({
-                        settings: fastData.settings,
-                        monthLogs: fastData.monthLogs,
-                        smartPhase: calculatePhase(new Date(), fastData.settings, fastData.monthLogs),
-                        userId: ""
-                    });
-
-                    // Set legacy data format for UI components
-                    setData({
-                        phase: fastData.phase,
-                        day: fastData.day,
-                        blueprint: fastData.blueprint,
-                        biometrics: fastData.biometrics,
-                        weightGoal: fastData.weightGoal,
-                        settings: fastData.settings,
-                        onboarding: fastData.onboarding,
-                        lifestyle: fastData.lifestyle // Added for active diet check
-                    });
-                } else {
-                    setHasPlanSetup(false);
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setSetupLoading(false);
-            }
-        };
-        load();
-    }, []);
+            // Set legacy data format for UI components
+            setData({
+                phase: fastData.phase,
+                day: fastData.day,
+                blueprint: fastData.blueprint,
+                biometrics: fastData.biometrics,
+                weightGoal: fastData.weightGoal,
+                settings: fastData.settings,
+                onboarding: fastData.onboarding,
+                lifestyle: fastData.lifestyle // Added for active diet check
+            });
+        } else if (!setupLoading) {
+            setHasPlanSetup(false);
+        }
+    }, [fastData, setupLoading]);
 
     // Helper: Calculate Personalized Macros based on Phase & Biometrics
     const getPersonalizedMacros = (phaseName: string, w: number, h: number, age: number = 30, act: string, goal: string) => {
@@ -855,6 +855,8 @@ export default function DetailedPlanPage() {
             });
             if (res.success) {
                 setHasPlanSetup(true);
+                queryClient.invalidateQueries({ queryKey: ['plan'] });
+                queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                 const cycleData = await fetchCycleIntelligenceAI();
                 if (cycleData) setData(cycleData);
             } else {

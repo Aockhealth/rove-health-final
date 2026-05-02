@@ -11,23 +11,20 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { clearRoveQueryCache } from "@/lib/query-cache";
 
 export default function Header({ user }: { user: any }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const router = useRouter();
 
-    /*    const handleSignOut = async () => {
-           const supabase = createClient();
-           await supabase.auth.signOut();
-           router.refresh(); // Refresh server components
-       }; */
     const handleSignOut = async () => {
+        await clearRoveQueryCache();
         const supabase = createClient();
         const { error } = await supabase.auth.signOut();
         if (error) {
-            console.error('Sign out error:', error.message); // log if 401 happens
+            console.error('Sign out error:', error.message);
         } else {
-            router.replace('/login'); // redirect after sign-out
+            router.replace('/login');
             router.refresh();
         }
     };

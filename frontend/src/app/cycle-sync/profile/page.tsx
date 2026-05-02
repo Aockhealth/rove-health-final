@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { clearRoveQueryCache, removeAllRoveQueryCaches } from "@/lib/query-cache";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CycleSignature } from "./components/CycleSignature";
@@ -17,6 +19,7 @@ import { HealthPassport } from "./components/HealthPassport";
 import { AccountSettings } from "./components/AccountSettings";
 
 export default function ProfilePage() {
+    const queryClient = useQueryClient();
     const [loading, setLoading] = useState(true);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
@@ -70,6 +73,7 @@ export default function ProfilePage() {
                 return;
             }
             toast.success("Profile updated");
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         });
     };
 
@@ -78,6 +82,10 @@ export default function ProfilePage() {
             await updateLastPeriodDate(cycleData.last_period_start);
             await updateCycleLength(cycleData.period_length_days, cycleData.cycle_length_days, formData.is_irregular);
             toast.success("Cycle settings updated");
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['trackerData'] });
+            queryClient.invalidateQueries({ queryKey: ['plan'] });
+            queryClient.invalidateQueries({ queryKey: ['insights'] });
         });
     };
 
@@ -108,6 +116,7 @@ export default function ProfilePage() {
     };
 
     const handleLogout = async () => {
+        await clearRoveQueryCache(queryClient);
         await supabase.auth.signOut();
         router.push("/login");
     };
@@ -252,6 +261,11 @@ export default function ProfilePage() {
                         onResetPassword={handleResetPassword}
                         onUpdateContact={handleUpdateContact}
                         onDeleteAccount={handleAccountDeletion}
+                        onClearLocalData={async () => {
+                            await removeAllRoveQueryCaches();
+                            queryClient.clear();
+                            toast.success("Local data cleared", { description: "Cached data has been removed from this device." });
+                        }}
                         isPending={isPending}
                     />
                 </div>

@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { Home, Calendar, BarChart2, List, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatWidget } from "@/components/cycle-sync/ChatWidget";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUserId } from "@/app/providers";
 
 export default function CycleSyncShell({
   children,
@@ -12,6 +15,56 @@ export default function CycleSyncShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const userId = useUserId();
+
+  // Prefetch sibling tabs in the background so they are instant
+  useEffect(() => {
+    // Only prefetch when on the dashboard (initial landing tab)
+    if (pathname !== "/cycle-sync" || !userId) return;
+
+    const staleTime = 5 * 60 * 1000;
+
+    // Prefetch articles (public, cheap)
+    queryClient.prefetchQuery({
+      queryKey: ['articles'],
+      queryFn: async () => {
+        const res = await fetch('/api/learn');
+        return await res.json().catch(() => []);
+      },
+      staleTime,
+    });
+
+    // Prefetch insights
+    queryClient.prefetchQuery({
+      queryKey: ['insights', userId],
+      queryFn: async () => {
+        const { fetchInsightsData } = await import("@backend/actions/cycle-sync/insights/insights-cycle-sync");
+        return await fetchInsightsData();
+      },
+      staleTime,
+    });
+
+    // Prefetch tracker summary
+    queryClient.prefetchQuery({
+      queryKey: ['trackerData', userId],
+      queryFn: async () => {
+        const { fetchTrackerPageDataFast } = await import("@/app/actions/cycle-sync");
+        return await fetchTrackerPageDataFast();
+      },
+      staleTime,
+    });
+
+    // Prefetch plan
+    queryClient.prefetchQuery({
+      queryKey: ['plan', userId],
+      queryFn: async () => {
+        const { fetchPlanPageDataFast } = await import("@/app/actions/cycle-sync");
+        return await fetchPlanPageDataFast();
+      },
+      staleTime,
+    });
+  }, [pathname, queryClient, userId]);
 
   const navItems = [
     { href: "/cycle-sync", icon: Home, label: "Home" },

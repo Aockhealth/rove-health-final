@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Mail, LogOut, ChevronRight, Trash2, AlertTriangle } from "lucide-react";
+import { Shield, Mail, LogOut, ChevronRight, Trash2, AlertTriangle, Database } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ interface AccountSettingsProps {
     onResetPassword: () => void;
     onUpdateContact: (email: string, phone: string) => void;
     onDeleteAccount: () => void;
+    onClearLocalData?: () => void;
     isPending?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function AccountSettings({
     onResetPassword, 
     onUpdateContact,
     onDeleteAccount,
+    onClearLocalData,
     isPending,
 }: AccountSettingsProps) {
     // Phase 3: Inline edit form state (replaces window.prompt)
@@ -147,6 +149,25 @@ export function AccountSettings({
                 </div>
 
                 {/* Phase 2: Subscription row REMOVED (no payment system exists) */}
+
+                {/* Clear Local Data */}
+                {onClearLocalData && (
+                    <div 
+                        onClick={onClearLocalData} 
+                        className="p-4 flex items-center justify-between hover:bg-white/40 transition-colors cursor-pointer"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+                                <Database className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-stone-700">Clear Local Data</p>
+                                <p className="text-xs text-stone-400">Remove cached data from this device</p>
+                            </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-stone-300" />
+                    </div>
+                )}
 
                 {/* Delete Account — Phase 4: Real Typed Confirmation */}
                 <div className="p-4">

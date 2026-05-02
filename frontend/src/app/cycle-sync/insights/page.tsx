@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useUserId } from "@/app/providers";
 import { ChevronLeft, Activity, Calendar, Zap, User } from "lucide-react";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import Link from "next/link";
@@ -60,39 +62,32 @@ const phaseThemes: Record<string, any> = {
 
 export default function InsightsPage() {
   const [activeTab, setActiveTab] = useState<"cycle" | "symptoms" | "medical">("cycle");
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [aiInsight, setAiInsight] = useState<any>(null);
   const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
+  const userId = useUserId();
+
+  const { data: stats, isPending: loading } = useQuery({
+    queryKey: ['insights', userId],
+    queryFn: async () => {
+      const data = await fetchInsightsData();
+      if (data?.phase?.name) {
+        const cachedInsight = await getCachedPhaseInsight(data.phase.name);
+        return { ...data, cachedInsight } as any;
+      }
+      return data as any;
+    }
+  });
+
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchInsightsData();
-
-        if (data) {
-          setStats(data);
-
-          if (data.phase?.name) {
-            setSelectedPhase((prev) => prev || data.phase!.name);
-            
-            // Check cache silently when phase is loaded
-            const cachedInsight = await getCachedPhaseInsight(data.phase.name);
-            if (cachedInsight) {
-              setAiInsight(cachedInsight);
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Insights load failed", err);
-      } finally {
-        setLoading(false);
+    if (stats?.phase?.name && !selectedPhase) {
+      setSelectedPhase(stats.phase.name);
+      if (stats.cachedInsight) {
+        setAiInsight(stats.cachedInsight);
       }
     }
-
-    load();
-  }, []);
+  }, [stats, selectedPhase]);
 
   async function handleGenerateInsight() {
     if (!stats?.phase?.name || isGeneratingInsight) return;

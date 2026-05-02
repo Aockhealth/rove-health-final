@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/Button";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { Droplets, Zap, Moon, Sun, ArrowRight, Baby, TrendingUp, Brain, Activity, Utensils, Dumbbell, Flower2, Heart, Wind, ChevronLeft, CalendarPlus, Plus, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useUserId } from "@/app/providers";
 import { cn } from "@/lib/utils";
 import { fetchDashboardData } from "@/app/actions/cycle-sync"; // Still needed for content
 import { fetchUnifiedCycleData, UnifiedCycleData } from "@/app/actions/unified-cycle"; // NEW
@@ -485,59 +487,42 @@ function SeasonalBackground({ phase }: { phase: string }) {
 // --- 5. Main Component ---
 
 export default function CycleSyncDashboard() {
-    const [data, setData] = useState<any>(null);
-    const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
-    const [unifiedData, setUnifiedData] = useState<UnifiedCycleData | null>(null); // NEW
     const router = useRouter();
+    const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
 
-    // ✅ CLIENT-SIDE RECALCULATION
-    const [clientDay, setClientDay] = useState<number | null>(null);
-    const [clientPhaseName, setClientPhaseName] = useState<string | null>(null);
+    const userId = useUserId();
 
-    useEffect(() => {
-        if (unifiedData) {
-            const result = calculatePhase(new Date(), unifiedData.settings, unifiedData.monthLogs);
-            setClientDay(result.day > 0 ? result.day : null);
-            setClientPhaseName(result.phase);
-        }
-    }, [unifiedData]);
+    const { data, isPending } = useQuery({
+        queryKey: ['dashboard', userId],
+        queryFn: fetchDashboardData,
+        enabled: !!userId,
+    });
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                // ⚡ ULTRA-FAST: Single action now includes all data
-                const dashboardData = await fetchDashboardData();
-
-                if (dashboardData) {
-                    setData(dashboardData);
-                    // Set unified data from the same response (no second call needed)
-                    if (dashboardData.settings && dashboardData.monthLogs) {
-                        setUnifiedData({
-                            settings: dashboardData.settings,
-                            monthLogs: dashboardData.monthLogs,
-                            smartPhase: calculatePhase(new Date(), dashboardData.settings, dashboardData.monthLogs),
-                            userId: ""
-                        });
-                    }
-                } else {
-                    router.push("/onboarding");
-                }
-            } catch (error) {
-                console.error("Dashboard Load Error:", error);
-            }
+        if (!isPending && !data) {
+            router.push("/onboarding");
         }
-        load();
-    }, [router]);
+    }, [data, isPending, router]);
 
-    if (!data) return <LoadingScreen />;
+    const { clientDay, clientPhaseName } = useMemo(() => {
+        if (data?.settings && data?.monthLogs) {
+            const result = calculatePhase(new Date(), data.settings, data.monthLogs);
+            return {
+                clientDay: result.day > 0 ? result.day : null,
+                clientPhaseName: result.phase
+            };
+        }
+        return { clientDay: null, clientPhaseName: null };
+    }, [data]);
 
+    if (isPending || !data) return <LoadingScreen />;
 
     const hasCycleData =
         !!data?.settings?.last_period_start ||
         Object.values(data?.monthLogs || {}).some((log: any) => log?.is_period);
 
     // ✅ OVERRIDE PHASE DATA
-    const { user, phase: serverPhase } = data;
+    const { user, phase: serverPhase } = data as any;
     const currentPhase = {
         ...serverPhase,
         name: clientPhaseName || serverPhase.name,

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition, useRef, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUserId } from "@/app/providers";
 import { useRouter } from "next/navigation";
 import { Calendar, Edit2, X } from "lucide-react";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
@@ -75,10 +77,6 @@ export default function TrackerPageRedesigned() {
 
     const calendarRef = useRef<HTMLDivElement>(null);
 
-    // NEW: Load states to prevent flash
-    const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
-    const [isLogsLoaded, setIsLogsLoaded] = useState(false);
-
     // MPIQ Specific State
     const [mpiqConsistency, setMpiqConsistency] = useState<Consistency | null>(null);
     const [mpiqAppearance, setMpiqAppearance] = useState<Appearance | null>(null);
@@ -98,61 +96,43 @@ export default function TrackerPageRedesigned() {
         return `${year}-${month}-${day}`;
     }, []);
 
-    // ⚡ ULTRA-FAST: Single unified load for settings + all logs (runs ONCE on mount)
+    const userId = useUserId();
+    const queryClient = useQueryClient();
+
+    const { data: trackerData, isPending: isTrackerLoading } = useQuery({
+        queryKey: ['trackerData', userId],
+        queryFn: async () => {
+            const { fetchTrackerPageDataFast } = await import("@/app/actions/cycle-sync");
+            return await fetchTrackerPageDataFast();
+        }
+    });
+
     useEffect(() => {
-        let isMounted = true;
+        if (trackerData) {
+            setCycleSettings({
+                last_period_start: trackerData.settings?.last_period_start || "",
+                cycle_length_days: trackerData.settings?.cycle_length_days || 28,
+                period_length_days: trackerData.settings?.period_length_days || 5,
+            });
 
-        const loadTrackerData = async () => {
-            try {
-                const { fetchTrackerPageDataFast } = await import("@/app/actions/cycle-sync");
-                const data = await fetchTrackerPageDataFast();
-
-                if (!isMounted) return;
-
-                if (data) {
-                    // Set cycle settings
-                    setCycleSettings({
-                        last_period_start: data.settings.last_period_start,
-                        cycle_length_days: data.settings.cycle_length_days,
-                        period_length_days: data.settings.period_length_days,
-                    });
-
-                    if (!data.hasSettings) {
-                        setIsEditingCycle(true);
-                        toast.info("Welcome back! Please set your last period date to sync your cycle.", {
-                            duration: 6000,
-                        });
-                    }
-
-                    // Set all month logs at once (no need for 3 separate fetches)
-                    setMonthLogs(data.monthLogs);
-
-                    // Mark current/prev/next months as already loaded so the
-                    // [currentMonth] effect doesn't redundantly re-fetch them
-                    const now = new Date();
-                    for (let offset = -1; offset <= 1; offset++) {
-                        const m = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-                        loadedMonthsRef.current.add(`${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`);
-                    }
-
-                    setIsSettingsLoaded(true);
-                    setIsLogsLoaded(true);
-                } else {
-                    setIsEditingCycle(true);
-                    setIsSettingsLoaded(true);
-                    setIsLogsLoaded(true);
-                }
-            } catch (error) {
-                console.error("Tracker load error:", error);
-                setIsSettingsLoaded(true);
-                setIsLogsLoaded(true);
+            if (!trackerData.hasSettings) {
+                setIsEditingCycle(true);
             }
-        };
 
-        loadTrackerData();
+            setMonthLogs(trackerData.monthLogs || {});
 
-        return () => { isMounted = false; };
-    }, []); // ⚡ Empty deps = runs ONCE on mount
+            const now = new Date();
+            for (let offset = -1; offset <= 1; offset++) {
+                const m = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                loadedMonthsRef.current.add(`${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`);
+            }
+        } else if (!isTrackerLoading) {
+            setIsEditingCycle(true);
+        }
+    }, [trackerData, isTrackerLoading]);
+
+    const isSettingsLoaded = !isTrackerLoading && !!trackerData;
+    const isLogsLoaded = !isTrackerLoading && !!trackerData;
 
     // Track loaded months to prevent infinite re-fetching of empty months
     const loadedMonthsRef = useRef<Set<string>>(new Set());
@@ -448,6 +428,11 @@ export default function TrackerPageRedesigned() {
             }
 
             toast.success("Entry Saved!", { description: "Your daily log has been updated.", duration: 3000 });
+
+            // Invalidate sibling tab caches so they refetch with new data
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['insights'] });
+            queryClient.invalidateQueries({ queryKey: ['plan'] });
 
             posthog.capture('symptom_logged', {
                 symptoms_count: selectedSymptoms.length,

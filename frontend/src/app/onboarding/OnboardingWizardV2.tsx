@@ -486,6 +486,8 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
                 type="button"
                 onClick={async () => {
                   const { createClient } = await import('@/utils/supabase/client');
+                  const { clearRoveQueryCache } = await import('@/lib/query-cache');
+                  await clearRoveQueryCache();
                   const supabase = createClient();
                   await supabase.auth.signOut();
                   router.push('/login');

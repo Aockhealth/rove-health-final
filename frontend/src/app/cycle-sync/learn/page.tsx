@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ChevronLeft, Play, ArrowRight, Bookmark } from "lucide-react";
 import Link from "next/link";
@@ -71,19 +72,13 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
 };
 
 export default function LearnPage() {
-    const [articles, setArticles] = useState<LearnArticle[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function load() {
-            setLoading(true);
-            const res = await fetch('/api/learn')
-            const data = await res.json().catch(() => [])
-            setArticles(data || []);
-            setLoading(false);
+    const { data: articles = [], isPending: loading } = useQuery<LearnArticle[]>({
+        queryKey: ['articles'],
+        queryFn: async () => {
+            const res = await fetch('/api/learn');
+            return await res.json().catch(() => []);
         }
-        load();
-    }, []);
+    });
 
     const cycleArticles = articles.filter(a => a.category === "Cycle Syncing");
     const pcosArticles = articles.filter(a => a.category === "PCOS");
