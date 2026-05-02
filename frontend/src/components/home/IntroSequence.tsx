@@ -14,7 +14,6 @@ interface IntroSequenceProps {
 }
 
 const QUOTES = [
-  "Brewing some Ayurvedic magic...",
   "Loading good vibes and balanced hormones...",
   "Aligning your cycle, one phase at a time...",
   "Your daily dose of cycle clarity is arriving...",
