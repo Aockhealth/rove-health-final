@@ -93,7 +93,7 @@ export default function LearnPage() {
 
     return (
         <div className="min-h-screen bg-white text-rove-charcoal pb-4">
-            <div className="fixed top-0 left-0 right-0 z-50 p-4 bg-gradient-to-b from-black/50 to-transparent pointer-events-none flex justify-between items-center">
+            <div className="fixed top-0 left-0 right-0 z-50 px-4 pb-4 pt-safe bg-gradient-to-b from-black/50 to-transparent pointer-events-none flex justify-between items-center">
                 <Link href="/cycle-sync" className="pointer-events-auto inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors backdrop-blur-md bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
                     <ChevronLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-wider">Back</span>
                 </Link>

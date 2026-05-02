@@ -72,7 +72,7 @@ export default async function ArticlePage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-rove-cream via-rove-charcoal/20 to-black/40" />
 
         {/* Navbar */}
-        <div className="absolute top-0 left-0 p-6 z-10 w-full pt-safe-nav">
+        <div className="absolute top-0 left-0 px-6 pb-6 pt-safe z-10 w-full">
           <Link
             href="/cycle-sync/learn"
             className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white font-medium hover:bg-white/30 transition-all text-sm shadow-sm"
