@@ -95,26 +95,8 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     trackOnboardingEvent("splash_cta_clicked", { cta: "get_started_story" });
   };
 
-  // Only render fully interactive component once we know the state to prevent hydration mismatch.
-  // During SSR and initial hydration, show a fast CSS-only skeleton loader to prevent white screens.
-  if (!mounted || isFirstTime === null) {
-    return (
-      <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-[#FDFBF7] grain-overlay px-6">
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="relative w-24 h-24 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
-            <Image 
-              src="/images/rove_icon_transparent.png" 
-              alt="Loading Rove Health" 
-              fill 
-              priority 
-              className="object-contain drop-shadow-md opacity-80" 
-              unoptimized 
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Only render once we know the state to prevent hydration mismatch
+  if (!mounted || isFirstTime === null) return null;
 
   // --- EXISTING SIMPLE LANDING PAGE (For returning/logged-in users) ---
   if (!isFirstTime) {
