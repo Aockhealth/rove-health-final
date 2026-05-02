@@ -35,6 +35,11 @@ export async function updateSession(request: NextRequest) {
 
     const path = request.nextUrl.pathname;
 
+    // 🔥 Fast-path for root to prevent white screen blocking
+    if (path === '/') {
+        return response;
+    }
+
     const isNonProtectedApi = path.startsWith('/api') && !path.startsWith('/api/protected');
     if (isNonProtectedApi) {
         return response;

@@ -117,7 +117,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={{ backgroundColor: "#FAF9F6" }}>
       <head>
         {/* PWA: Apple Touch Icon */}
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -146,6 +146,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${outfit.variable} ${cormorant.variable} antialiased`}
         suppressHydrationWarning
+        style={{ backgroundColor: "#FAF9F6" }}
       >
         {children}
       </body>

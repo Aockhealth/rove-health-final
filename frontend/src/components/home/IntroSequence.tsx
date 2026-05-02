@@ -9,9 +9,7 @@ import { trackOnboardingEvent } from "@/lib/onboarding/telemetry";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface IntroSequenceProps {
-  isLoggedIn: boolean;
-}
+import { createClient } from "@/utils/supabase/client";
 
 const QUOTES = [
   "Loading good vibes and balanced hormones...",
@@ -55,29 +53,42 @@ const SCREENS = [
   }
 ];
 
-export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
+export function IntroSequence() {
   const [mounted, setMounted] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    // Check if user has seen splash before
-    const hasSeen = localStorage.getItem("rove-splash-seen") === "true";
-    if (hasSeen || isLoggedIn) {
-      setIsFirstTime(false);
-    } else {
-      setIsFirstTime(true);
-    }
-    
-    // Ensure the splash screen quote is visible for at least 2 seconds 
-    // before hydrating into the main app to provide a premium feel
-    const splashTimer = setTimeout(() => {
-      setMounted(true);
-    }, 2000);
+    let _isLoggedIn = false;
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setIsLoggedIn(true);
+        _isLoggedIn = true;
+      }
+      
+      const hasSeen = localStorage.getItem("rove-splash-seen") === "true";
+      if (hasSeen || _isLoggedIn) {
+        setIsFirstTime(false);
+      } else {
+        setIsFirstTime(true);
+      }
+      
+      // If the user has seen the splash before or is logged in, use a shorter delay
+      // Otherwise, use 2000ms for first time users.
+      const delay = (hasSeen || _isLoggedIn) ? 500 : 2000;
+      
+      const splashTimer = setTimeout(() => {
+        setMounted(true);
+      }, delay);
 
-    return () => clearTimeout(splashTimer);
-  }, [isLoggedIn]);
+      return () => clearTimeout(splashTimer);
+    };
+    checkAuth();
+  }, []);
 
   // Auto-advance the splash screens
   useEffect(() => {
@@ -114,15 +125,12 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
   if (!mounted || isFirstTime === null) {
     const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     return (
-      <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FDFBF7] px-6">
+      <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FAF9F6] px-6">
         <div className="relative w-28 h-28 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
-          <Image 
-            src="/images/rove_icon_transparent.png" 
+          <img 
+            src="/images/rove_logo_updated.png" 
             alt="Rove Health" 
-            fill 
-            priority 
-            className="object-contain" 
-            unoptimized 
+            className="w-full h-full object-contain" 
           />
         </div>
         
@@ -168,7 +176,7 @@ export function IntroSequence({ isLoggedIn }: IntroSequenceProps) {
     const CURRENT_CUTE = CUTE_HEADINGS[dayOfYear % CUTE_HEADINGS.length];
 
     return (
-      <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-rove-cream grain-overlay px-6">
+      <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-[#FAF9F6] grain-overlay px-6">
         {/* Ambient atmospheric background (Fluid Ecosystem) */}
         <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70 pointer-events-none">
           <motion.div

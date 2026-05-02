@@ -1,14 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
 import { IntroSequence } from "@/components/home/IntroSequence";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
-
+export default function Home() {
   return (
-    <main className="min-h-screen bg-white text-rove-charcoal font-sans selection:bg-rove-red/20">
-      <IntroSequence isLoggedIn={isLoggedIn} />
+    <main className="min-h-screen bg-[#FAF9F6] text-rove-charcoal font-sans selection:bg-phase-menstrual/20">
+      <IntroSequence />
     </main>
   );
 }
