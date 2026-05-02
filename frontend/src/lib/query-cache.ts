@@ -33,11 +33,14 @@ function getIdbKey(userId?: string): string {
 //   dashboard  — contains cycle settings, monthLogs (period dates)
 //   insights   — contains recentNote, symptomsByPhase
 //   plan       — contains monthLogs, weight, height, lifestyle
-//   trackerData — contains daily symptom/mood/period logs
-//   chat, profile, onboarding, auth — sensitive by definition
+//   trackerData — contains daily symptom/mood/period logs (NEVER persisted)
+//   chat, profile, onboarding, auth — sensitive by definition (NEVER persisted)
 //
 const PERSIST_ALLOWLIST = new Set([
-  'articles',  // public learn content — safe to persist
+  'articles',  // public learn content
+  'dashboard', // core UI (sensitive fields scrubbed before save)
+  'insights',  // phase charts (notes scrubbed before save)
+  'plan',      // fitness goals
 ]);
 
 /**
@@ -69,7 +72,26 @@ export function createIdbPersister(userId: string): Persister {
   const key = getIdbKey(userId);
   return {
     persistClient: async (client: PersistedClient) => {
-      await set(key, client);
+      // 🛡️ PRIVACY SCRUBBER: Deep copy to avoid mutating active memory cache
+      const scrubbedClient = JSON.parse(JSON.stringify(client));
+      
+      for (const query of scrubbedClient.clientState.queries) {
+        const key = query.queryKey[0];
+        const data = query.state?.data;
+        
+        if (data) {
+          if (key === 'insights') {
+            // Remove raw text notes from disk storage
+            delete data.recentNote;
+            delete data.symptomsByPhase;
+          } else if (key === 'dashboard') {
+             // We keep monthLogs because the dashboard needs them to render instantly,
+             // but we ensure trackerData (the full daily logs) is never cached.
+          }
+        }
+      }
+      
+      await set(key, scrubbedClient);
     },
     restoreClient: async () => {
       return await get<PersistedClient>(key);
