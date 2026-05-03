@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ChevronLeft, Play, ArrowRight, Bookmark } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
-import { cn, getStorageUrl } from "@/lib/utils";
+import { getStorageUrl } from "@/lib/utils";
 import type { LearnArticle } from "@backend/actions/cycle-sync/learn/learn-actions";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import PageGuide from "@/components/cycle-sync/PageGuide";
@@ -17,6 +16,19 @@ const cleanTitle = (title: string) => {
     // Removes things like "A.1.", "A1", "B.2 ", etc. from the start of the string, and removes file extensions from the end
     return title.replace(/^[A-Za-z][.\s-]*\d+[.\s-]*\s*/, "").replace(/\.[^/.]+$/, "").trim();
 };
+
+async function fetchArticles(): Promise<LearnArticle[]> {
+    try {
+        const res = await fetch('/api/learn');
+        if (!res.ok) return [];
+
+        const payload: unknown = await res.json().catch(() => []);
+        return Array.isArray(payload) ? (payload as LearnArticle[]) : [];
+    } catch (error) {
+        console.error("Failed to load learn articles:", error);
+        return [];
+    }
+}
 
 const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle[] }) => {
     if (!articles || articles.length === 0) return null;
@@ -74,10 +86,7 @@ const ContentRow = ({ title, articles }: { title: string, articles: LearnArticle
 export default function LearnPage() {
     const { data: articles = [], isPending: loading } = useQuery<LearnArticle[]>({
         queryKey: ['articles'],
-        queryFn: async () => {
-            const res = await fetch('/api/learn');
-            return await res.json().catch(() => []);
-        }
+        queryFn: fetchArticles
     });
 
     const cycleArticles = articles.filter(a => a.category === "Cycle Syncing");
@@ -92,8 +101,8 @@ export default function LearnPage() {
     if (loading) return <LoadingScreen />;
 
     return (
-        <div className="min-h-screen bg-white text-rove-charcoal pb-4">
-            <div className="fixed top-0 left-0 right-0 z-50 px-4 pb-4 pt-safe bg-gradient-to-b from-black/50 to-transparent pointer-events-none flex justify-between items-center">
+        <div className="relative min-h-screen bg-white text-rove-charcoal pb-4">
+            <div className="absolute top-0 left-0 right-0 z-40 px-4 pb-4 pt-safe bg-gradient-to-b from-black/50 to-transparent pointer-events-none flex justify-between items-center">
                 <Link href="/cycle-sync" className="pointer-events-auto inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors backdrop-blur-md bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
                     <ChevronLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase tracking-wider">Back</span>
                 </Link>

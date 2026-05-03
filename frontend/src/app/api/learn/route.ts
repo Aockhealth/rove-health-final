@@ -1,7 +1,6 @@
-import type { NextRequest } from 'next/server'
 import { fetchLearnArticles } from '@backend/actions/cycle-sync/learn/learn-actions'
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const articles = await fetchLearnArticles()
     return new Response(JSON.stringify(articles ?? []), {
@@ -10,6 +9,9 @@ export async function GET(_req: NextRequest) {
     })
   } catch (err) {
     console.error('API /api/learn error:', err)
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 })
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
 }
