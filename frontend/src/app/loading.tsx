@@ -1,9 +1,9 @@
 export default function Loading() {
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FAF9F6] px-6">
-        <div className="relative w-28 h-28 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
+        <div className="relative w-40 sm:w-48 h-16 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
           <img 
-            src="/images/rove_logo_updated.png" 
+            src="/images/rove_logo_final.png" 
             alt="Rove Health" 
             className="w-full h-full object-contain" 
           />

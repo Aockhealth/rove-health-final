@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                     <div className="flex justify-center mb-1">
                         <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 drop-shadow-sm">
                             <Image
-                                src="/images/rove_icon_transparent.png"
+                                src="/images/rove_logo_final.png"
                                 alt="Rove Logo"
                                 fill
                                 className="object-contain"

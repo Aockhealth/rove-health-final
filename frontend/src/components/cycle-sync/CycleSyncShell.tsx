@@ -1,13 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import type { MouseEvent } from "react";
 import { Home, Calendar, BarChart2, List, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatWidget } from "@/components/cycle-sync/ChatWidget";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserId } from "@/app/providers";
+
+function isNavActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return href === "/cycle-sync"
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isModifiedClick(event: MouseEvent<HTMLAnchorElement>) {
+  return (
+    event.button !== 0 ||
+    event.metaKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.shiftKey
+  );
+}
 
 export default function CycleSyncShell({
   children,
@@ -15,8 +33,11 @@ export default function CycleSyncShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const userId = useUserId();
+  const [optimisticPathname, setOptimisticPathname] = useState<string | null>(null);
+  const [, startNavTransition] = useTransition();
 
   // Prefetch sibling tabs in the background so they are instant
   useEffect(() => {
@@ -66,6 +87,18 @@ export default function CycleSyncShell({
     });
   }, [pathname, queryClient, userId]);
 
+  useEffect(() => {
+    if (optimisticPathname && isNavActive(pathname, optimisticPathname)) {
+      setOptimisticPathname(null);
+    }
+  }, [optimisticPathname, pathname]);
+
+  useEffect(() => {
+    if (!optimisticPathname) return;
+    const timeout = window.setTimeout(() => setOptimisticPathname(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [optimisticPathname]);
+
   const navItems = [
     { href: "/cycle-sync", icon: Home, label: "Home" },
     { href: "/cycle-sync/tracker", icon: Calendar, label: "Tracker" },
@@ -91,12 +124,26 @@ export default function CycleSyncShell({
       >
         <div className="relative mx-auto flex max-w-md items-center justify-between">
           {navItems.map((item) => {
-            const isActive = item.href === "/cycle-sync" ? pathname === item.href : pathname.startsWith(item.href);
+            const activePathname = optimisticPathname ?? pathname;
+            const isActive = isNavActive(activePathname, item.href);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(event) => {
+                  if (event.defaultPrevented || isModifiedClick(event)) return;
+                  if (isNavActive(pathname, item.href)) {
+                    setOptimisticPathname(null);
+                    return;
+                  }
+
+                  event.preventDefault();
+                  setOptimisticPathname(item.href);
+                  startNavTransition(() => {
+                    router.push(item.href);
+                  });
+                }}
                 aria-current={isActive ? "page" : undefined}
                 aria-label={item.label}
                 className={cn(

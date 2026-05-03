@@ -793,7 +793,18 @@ export default function CycleSyncDashboard() {
                         {/* Today's Snapshot */}
                         <section>
                             <div className="flex justify-between items-baseline mb-4">
-                                <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal">Today's Snapshot</h3>
+                                <div className="flex items-center gap-3">
+                                    <h3 className="font-heading text-xl md:text-2xl text-rove-charcoal px-2">Today's Snapshot</h3>
+                                    <motion.div 
+                                        initial={{ opacity: 0.5 }}
+                                        animate={{ opacity: [0.5, 1, 0.5] }}
+                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                        className="flex items-center gap-1 bg-white/60 px-2 py-0.5 rounded-full border border-white/80 shadow-sm"
+                                    >
+                                        <span className="text-[10px]">✨</span>
+                                        <span className="text-[9px] font-bold text-rove-stone/80 tracking-wide">Tap cards</span>
+                                    </motion.div>
+                                </div>
                                 <Link href="/cycle-sync/plan">
                                     <Button variant="link" className="text-rove-stone hover:text-rove-charcoal transition-colors">View Full Plan</Button>
                                 </Link>

@@ -62,7 +62,7 @@ export default function LoadingScreen() {
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
         {/* Logo Container - Clean Breathing Animation */}
-        <div className="relative mb-10 w-28 h-28 flex items-center justify-center">
+        <div className="relative mb-10 w-40 sm:w-48 h-16 flex items-center justify-center">
           <motion.div
             className="relative w-full h-full flex items-center justify-center"
             animate={{
@@ -76,7 +76,7 @@ export default function LoadingScreen() {
             }}
           >
             <Image
-              src="/images/rove_icon_transparent.png"
+              src="/images/rove_logo_final.png"
               alt="Rove Health"
               fill
               sizes="112px"

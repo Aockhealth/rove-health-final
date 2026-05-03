@@ -134,8 +134,19 @@ export function RiverTrack({ items, direction = "left", speed = 20, label, onCar
 
     return (
         <div className="w-full overflow-hidden">
-            <div className="px-4 md:px-8 mb-1">
+            <div className="px-4 md:px-8 mb-2 flex items-center gap-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/70">{label}</span>
+                {!!onCardClick && (
+                    <motion.div 
+                        initial={{ opacity: 0.5 }}
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="flex items-center gap-1 bg-white/60 px-2 py-0.5 rounded-full border border-white/80 shadow-sm"
+                    >
+                        <span className="text-[10px]">✨</span>
+                        <span className="text-[9px] font-bold text-rove-stone/80 tracking-wide">Tap cards</span>
+                    </motion.div>
+                )}
             </div>
 
             <div className="relative overflow-hidden cursor-grab active:cursor-grabbing px-4 md:px-8">

@@ -48,7 +48,7 @@ export default function SexualWellnessCard({
 
     return (
         <div className={cn(
-            "bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-xl border transition-all space-y-6 sm:space-y-8",
+            "py-3 transition-all space-y-6 sm:space-y-8",
             theme.border,
             theme.shadow
         )}>

@@ -1,17 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export function GlobalLoader() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Fast fade-out after the JS bundle hydrates
-    const timer = setTimeout(() => setLoading(false), 500);
+    // Trigger loader on route change
+    setLoading(true);
+    
+    // Fast fade-out after navigation
+    const timer = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [pathname, searchParams]);
 
   if (!loading) return null;
 
@@ -23,14 +29,14 @@ export function GlobalLoader() {
     >
       <div className="relative flex flex-col items-center">
         {/* Soft rotating pulse ring */}
-        <div className="absolute -inset-4 rounded-full border border-rove-charcoal/10 animate-[spin_4s_linear_infinite]" />
+        <div className="absolute -inset-8 rounded-[3rem] border border-rove-charcoal/5 animate-[spin_6s_linear_infinite]" />
         
-        {/* Center Orb */}
-        <div className="h-20 w-20 relative flex items-center justify-center rounded-full bg-white/80 shadow-lg shadow-rove-charcoal/5 backdrop-blur-xl animate-pulse">
-            <div className="absolute inset-0 rounded-full border border-[#D35400]/30 animate-[spin_2s_linear_infinite]" style={{ borderTopColor: '#D35400' }}></div>
-            <div className="h-10 w-10 relative opacity-90 saturate-150">
+        {/* Center Logo */}
+        <div className="h-16 w-40 sm:w-48 relative flex items-center justify-center bg-white/40 shadow-xl shadow-rove-charcoal/5 backdrop-blur-xl rounded-2xl p-4 animate-pulse">
+            <div className="absolute inset-0 rounded-2xl border border-[#D35400]/20" />
+            <div className="h-full w-full relative opacity-90 saturate-150">
               <Image
-                  src="/images/rove_icon_transparent.png"
+                  src="/images/rove_logo_final.png"
                   alt="Loading Rove"
                   fill
                   priority
@@ -40,7 +46,7 @@ export function GlobalLoader() {
             </div>
         </div>
         
-        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.25em] text-rove-stone/70 animate-pulse">
+        <p className="mt-10 text-[11px] font-bold uppercase tracking-[0.25em] text-rove-stone/70 animate-pulse">
             Syncing your rhythm
         </p>
       </div>

@@ -31,16 +31,15 @@ export default function Header({ user }: { user: any }) {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-rove-stone/10">
             <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-                <Link href="/" className="font-heading text-lg font-bold text-rove-charcoal tracking-tight flex items-center gap-2">
-                    <div className="relative w-8 h-8">
+                <Link href="/" className="flex items-center">
+                    <div className="relative w-32 h-10 md:w-40 md:h-12">
                         <Image
-                            src="/images/rove_icon_transparent.png"
+                            src="/images/rove_logo_final.png"
                             alt="Rove Health Logo"
                             fill
-                            className="object-contain"
+                            className="object-contain object-left"
                         />
                     </div>
-                    <span>ROVE HEALTH</span>
                 </Link>
 
                 {/* Desktop Navigation */}
@@ -59,7 +58,7 @@ export default function Header({ user }: { user: any }) {
                             <div className="flex items-center gap-2">
                                 <div className="relative w-8 h-8 rounded-full overflow-hidden border border-rove-stone/20">
                                     <Image
-                                        src="/images/A_logo.png"
+                                        src="/images/rove_logo_final.png"
                                         alt="User Profile"
                                         fill
                                         className="object-cover"

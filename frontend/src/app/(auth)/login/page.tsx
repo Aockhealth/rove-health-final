@@ -71,7 +71,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-6">
             <div className="relative w-16 h-16 md:w-20 md:h-20 opacity-90 drop-shadow-sm">
               <img
-                src="/images/rove_icon_transparent.png"
+                src="/images/rove_logo_final.png"
                 alt="Rove Logo"
                 className="w-full h-full object-contain"
               />

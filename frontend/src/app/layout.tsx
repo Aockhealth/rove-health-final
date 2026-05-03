@@ -47,7 +47,7 @@ export const metadata: Metadata = {
       "India's first cycle-syncing app. Get personalized diet, exercise, and lifestyle plans based on your menstrual phase.",
     images: [
       {
-        url: `${siteUrl}/images/rove_logo_new.png`,
+        url: `${siteUrl}/images/rove_logo_final.png`,
         width: 1200,
         height: 630,
         alt: "Rove Health - Cycle Syncing App",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     title: "Rove Health | AI-Powered Cycle Syncing",
     description:
       "Sync your diet, exercise & lifestyle with your cycle. Personalized plans powered by AI.",
-    images: [`${siteUrl}/images/rove_logo_new.png`],
+    images: [`${siteUrl}/images/rove_logo_final.png`],
   },
   appleWebApp: {
     capable: true,

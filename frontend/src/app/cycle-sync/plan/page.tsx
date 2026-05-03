@@ -52,7 +52,7 @@ const BLUEPRINTS: any = {
             practices: [
                 { title: "Journaling", desc: "Reflect on the past month", icon: "Book" },
                 { title: "Yoga Nidra", desc: "Deep conscious rest", icon: "Moon" },
-                { title: "Salt Bath", desc: "Magnesium absoption & relaxation", icon: "Waves" },
+                { title: "Salt Bath", desc: "Magnesium absorption & relaxation", icon: "Waves" },
                 { title: "Phone Detox", desc: "Reduce sensory input", icon: "Ban" }
             ],
             symptom_relief: [
@@ -118,7 +118,7 @@ const BLUEPRINTS: any = {
             },
             cheat_sheet: {
                 focus: { title: "What to Eat", items: ["Warm Foods", "Iron", "Rest"] },
-                avoid: { title: "What to Limit", items: ["Cold Salads", "Caffeine", "HIIT"] }
+                avoid: { title: "What to Limit", items: ["Cold Salads", "Caffeine", "Refined Sugar"] }
             }
         }
     },
@@ -200,7 +200,7 @@ const BLUEPRINTS: any = {
                 ]
             },
             cheat_sheet: {
-                focus: { title: "What to Eat", items: ["Fresh Veggies", "Probiotics", "Cardio"] },
+                focus: { title: "What to Eat", items: ["Fresh Veggies", "Probiotics", "Lean Protein"] },
                 avoid: { title: "What to Limit", items: ["Heavy Oils", "Processed Sugar"] }
             }
         }
@@ -283,7 +283,7 @@ const BLUEPRINTS: any = {
                 ]
             },
             cheat_sheet: {
-                focus: { title: "What to Eat", items: ["Fiber", "Cruciferous Veg", "HIIT"] },
+                focus: { title: "What to Eat", items: ["Fiber", "Cruciferous Veg", "Antioxidants"] },
                 avoid: { title: "What to Limit", items: ["Alcohol", "Heavy Carbs"] }
             }
         }
@@ -317,7 +317,7 @@ const BLUEPRINTS: any = {
                 { id: "fiber", title: "Fiber", desc: "Prevent bloating", icon: Leaf }
             ],
             ideal_meals: [
-                { time: "Morning", title: "Stable Cabs", items: ["Oatmeal w/ seeds", "Sweet potato hash", "Avocado toast", "Herbal tea"], icon: Sunrise },
+                { time: "Morning", title: "Stable Carbs", items: ["Oatmeal w/ seeds", "Sweet potato hash", "Avocado toast", "Herbal tea"], icon: Sunrise },
                 { time: "Lunch", title: "Grain Bowl", items: ["Brown rice + Beans", "Roasted root veggies", "Chickpea curry", "Soup"], icon: Sun },
                 { time: "Snack", title: "Cravings Fix", items: ["Dark chocolate", "Apple + Nut butter", "Roasted chickpeas"], icon: Coffee },
                 { time: "Dinner", title: "Comforting", items: ["Baked potato", "Turkey/Tofu stir fry", "Warm golden milk"], icon: Moon }
@@ -368,7 +368,7 @@ const BLUEPRINTS: any = {
                 ]
             },
             cheat_sheet: {
-                focus: { title: "What to Eat", items: ["Complex Carbs", "Magnesium", "Pilates"] },
+                focus: { title: "What to Eat", items: ["Complex Carbs", "Magnesium", "Healthy Fats"] },
                 avoid: { title: "What to Limit", items: ["Salt", "Sugar", "Caffeine"] }
             }
         }

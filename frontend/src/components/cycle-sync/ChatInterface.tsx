@@ -576,7 +576,7 @@ export function ChatInterface({ onClose }: { onClose?: () => void }) {
                 <div className="flex items-center gap-1">
                     <div className="w-10 h-10 flex items-center justify-center">
                         <img
-                            src="/images/rove_icon_transparent.png"
+                            src="/images/rove_logo_final.png"
                             alt="Rove AI"
                             className="w-full h-full object-contain scale-[1.35] drop-shadow-sm"
                         />

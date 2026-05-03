@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { trackOnboardingEvent } from "@/lib/onboarding/telemetry";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, BookOpen, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { createClient } from "@/utils/supabase/client";
@@ -128,7 +128,7 @@ export function IntroSequence() {
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-[#FAF9F6] px-6">
         <div className="relative w-28 h-28 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite]">
           <img 
-            src="/images/rove_logo_updated.png" 
+            src="/images/rove_logo_final.png" 
             alt="Rove Health" 
             className="w-full h-full object-contain" 
           />
@@ -148,45 +148,35 @@ export function IntroSequence() {
     );
   }
 
-  // --- EXISTING SIMPLE LANDING PAGE (For returning/logged-in users) ---
+  // --- LANDING PAGE (For returning/logged-in users) ---
   if (!isFirstTime) {
-    const fluidAnimation = reduceMotion ? {} : {
-      scale: [1, 1.15, 1],
-      x: [0, 20, 0],
-      y: [0, -20, 0],
-    };
-
-    const fluidTransition = reduceMotion ? { duration: 0 } : {
-      duration: 12,
-      repeat: Infinity,
-      ease: "easeInOut" as const,
-    };
-
     const CUTE_HEADINGS = [
-      { pt1: "You are not inconsistent.", pt2: "You are cyclical.", desc: "Your biology isn't broken. Rove is translating your cycle into practical daily choices for meals, movement, and rest." },
-      { pt1: "Your body isn't a machine.", pt2: "It's a garden.", desc: "Blooming in phases. Allow Rove to tune your daily choices to match your natural rhythm perfectly." },
-      { pt1: "Stop fighting your biology.", pt2: "Start flowing with it.", desc: "Your energy naturally ebbs and flows. Rove is calibrating your personalized plan to honor your cycle." },
-      { pt1: "No more guesswork.", pt2: "Just perfect timing.", desc: "Syncing your lifestyle to your cycle changes everything. Rove keeps you one step ahead of your hormonal shifts." },
-      { pt1: "Your energy shifts?", pt2: "That's your superpower.", desc: "Every phase has a unique advantage. Rove helps you harness your shifts for peak performance and recovery." },
-      { pt1: "Honor your rest.", pt2: "Maximize your rise.", desc: "Rove learns your biological rhythm to tell you exactly when to push and when to pause." }
+      { pt1: "The new basics", pt2: "of cycle sync.", desc: "Meals, movement, and rest — redesigned around your biology." },
+      { pt1: "Your cycle is", pt2: "your compass.", desc: "Every phase tells you what your body needs. We translate it." },
+      { pt1: "Built different.", pt2: "Built for you.", desc: "Not another period tracker. A complete cycle-synced lifestyle." },
+      { pt1: "Live in rhythm.", pt2: "Feel the shift.", desc: "When you align with your cycle, everything clicks into place." },
+      { pt1: "Science meets", pt2: "self-care.", desc: "Evidence-backed plans that adapt to every phase of your month." }
     ];
 
-    // Pick a stable quote based on the day of the year (deterministic, no hydration mismatch)
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
     const CURRENT_CUTE = CUTE_HEADINGS[dayOfYear % CUTE_HEADINGS.length];
 
     return (
       <div className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-[#FAF9F6] grain-overlay px-6">
-        {/* Ambient atmospheric background (Fluid Ecosystem) */}
-        <div className="absolute inset-0 z-0 flex items-center justify-center opacity-70 pointer-events-none">
+        {/* Living atmospheric background */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
           <motion.div
-            className="absolute w-[120%] h-[120%] max-w-[800px] max-h-[800px] rounded-full bg-gradient-to-br from-phase-menstrual/20 via-phase-follicular/15 to-phase-ovulatory/20 blur-[100px]"
-            animate={fluidAnimation}
-            transition={fluidTransition}
+            className="absolute w-[120%] h-[120%] max-w-[800px] max-h-[800px] rounded-full bg-gradient-to-br from-phase-menstrual/15 via-phase-follicular/12 to-phase-ovulatory/15 blur-[100px] opacity-70"
+            animate={reduceMotion ? {} : {
+              scale: [1, 1.15, 1],
+              x: [0, 20, 0],
+              y: [0, -20, 0],
+            }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" as const }}
           />
           <motion.div
-            className="absolute w-[90%] h-[90%] max-w-[600px] max-h-[600px] rounded-full bg-gradient-to-tr from-phase-luteal/30 to-transparent blur-[120px]"
-            animate={{
+            className="absolute w-[90%] h-[90%] max-w-[600px] max-h-[600px] rounded-full bg-gradient-to-tr from-phase-luteal/20 to-transparent blur-[120px] opacity-60"
+            animate={reduceMotion ? {} : {
               scale: [1, 1.2, 1],
               rotate: [0, -45, 0],
             }}
@@ -194,82 +184,100 @@ export function IntroSequence() {
           />
         </div>
 
-        {/* Foreground Content Stack */}
-        <div className="relative z-10 w-full max-w-xl flex flex-col items-center text-center">
-          
-          {/* Logo with Ripple/Halo Effect */}
-          <div className="relative mb-14 flex items-center justify-center w-24 h-24">
-            <motion.div 
-              className="absolute inset-[0px] rounded-full border border-rove-stone/20"
-              animate={reduceMotion ? {} : { scale: [1, 1.5, 1], opacity: [0, 0.4, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeOut" }}
-            />
-            <motion.div 
-              className="absolute inset-[0px] rounded-full border border-rove-charcoal/10"
-              animate={reduceMotion ? {} : { scale: [1, 2, 1], opacity: [0, 0.2, 0] }}
-              transition={{ duration: 4, delay: 1, repeat: Infinity, ease: "easeOut" }}
-            />
-            <div className="relative h-16 w-16 opacity-90 drop-shadow-xl saturate-150">
-              <Image src="/images/rove_icon_transparent.png" alt="Rove Health" fill priority className="object-contain drop-shadow-sm" unoptimized />
-            </div>
+        {/* Centered Content */}
+        <div className="relative z-10 w-full max-w-md flex flex-col items-center text-center">
+
+          {/* Logo */}
+          <div className="relative mb-12 flex items-center justify-center w-40 h-16 opacity-90 drop-shadow-lg">
+            <Image src="/images/rove_logo_final.png" alt="Rove" fill priority className="object-contain" unoptimized />
           </div>
 
-          {/* Premium editorial content card */}
+          {/* Welcome tagline */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full relative flex flex-col items-center"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-6"
           >
-            {/* Pill Badge */}
-            <div className="mb-8 overflow-hidden rounded-full border border-white/40 bg-white/30 backdrop-blur-md shadow-sm">
-              <div className="px-5 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-rove-charcoal/80">
-                  Biology First
-                </span>
-              </div>
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-rove-stone/50">Welcome to Rove</span>
+          </motion.div>
 
-            {/* High-Contrast Typography */}
-            <h1 className="font-serif text-[2.5rem] md:text-6xl leading-[1.1] text-rove-charcoal tracking-tight drop-shadow-sm">
+          {/* Editorial Quote */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-12"
+          >
+            <h1 className="font-serif text-[2.4rem] sm:text-[3rem] md:text-[3.5rem] leading-[1.08] text-rove-charcoal tracking-tight">
               {CURRENT_CUTE.pt1}
             </h1>
-            <h1 className="font-serif text-[2.75rem] md:text-[4rem] leading-[1.2] italic text-phase-menstrual mt-2 drop-shadow-sm w-full block">
+            <h1 className="font-serif text-[2.6rem] sm:text-[3.2rem] md:text-[3.8rem] leading-[1.15] italic text-phase-menstrual mt-1">
               {CURRENT_CUTE.pt2}
             </h1>
-
-            {/* Description */}
-            <p className="mx-auto mt-8 max-w-[340px] md:max-w-md text-[15px] font-medium leading-relaxed text-rove-stone/90">
+            <p className="mx-auto mt-6 max-w-xs text-[15px] font-medium leading-relaxed text-rove-stone/80">
               {CURRENT_CUTE.desc}
             </p>
+          </motion.div>
 
-            {/* CTA Buttons */}
-            <div className="mt-14 w-full flex flex-col gap-4 sm:max-w-xs mx-auto relative z-20">
-              {isLoggedIn ? (
-                <Link href="/cycle-sync" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "dashboard" })}>
-                  <Button className="group h-14 w-full rounded-full bg-rove-charcoal shadow-xl shadow-rove-charcoal/10 transition-all hover:bg-black hover:-translate-y-1">
-                    <span className="text-[15px] font-semibold text-white tracking-wide">Enter Dashboard</span>
-                    <ChevronRight className="w-4 h-4 ml-2 text-white/70 transition-transform group-hover:translate-x-1" />
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full flex flex-col items-center gap-6"
+          >
+            {isLoggedIn ? (
+              <>
+                {/* Hero Dashboard Button */}
+                <Link href="/cycle-sync" className="w-full sm:max-w-xs" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "dashboard" })}>
+                  <Button className="group relative h-[3.5rem] w-full rounded-full bg-rove-charcoal text-white shadow-[0_8px_32px_rgba(45,36,32,0.2)] hover:shadow-[0_12px_40px_rgba(45,36,32,0.3)] hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-phase-menstrual/15 via-transparent to-phase-ovulatory/15 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <span className="relative z-10 text-[15px] font-semibold tracking-wide">Enter Dashboard</span>
+                    <ChevronRight className="relative z-10 w-4 h-4 ml-2 text-white/60 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Link href="/signup" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "signup" })}>
-                    <Button className="h-12 w-full rounded-full bg-rove-charcoal text-[13px] font-semibold text-white hover:bg-black">
-                      Sign Up
-                    </Button>
+
+                {/* Elegant secondary links */}
+                <div className="flex items-center gap-6">
+                  <Link
+                    href="/cycle-sync/learn"
+                    onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "learn" })}
+                    className="group flex items-center gap-2 text-rove-stone/60 hover:text-rove-charcoal transition-colors"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-phase-follicular/60 group-hover:text-phase-follicular transition-colors" />
+                    <span className="text-[13px] font-semibold tracking-wide">Learn</span>
                   </Link>
-                  <Link href="/login" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "login" })}>
-                    <Button variant="outline" className="h-12 w-full rounded-full border-rove-charcoal/30 bg-white/60 backdrop-blur-sm text-[13px] font-semibold text-rove-charcoal hover:bg-white">
-                      Log In
-                    </Button>
+
+                  <div className="w-px h-3.5 bg-rove-stone/20" />
+
+                  <Link
+                    href="https://rovediagnostics.com"
+                    target="_blank"
+                    onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "shop" })}
+                    className="group flex items-center gap-2 text-rove-stone/60 hover:text-rove-charcoal transition-colors"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 text-phase-ovulatory/60 group-hover:text-phase-ovulatory transition-colors" />
+                    <span className="text-[13px] font-semibold tracking-wide">Shop</span>
                   </Link>
                 </div>
-              )}
-              <p className="mt-6 text-[10px] text-center text-rove-stone/60">
-                By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal">Privacy Policy</Link>.
-              </p>
-            </div>
+              </>
+            ) : (
+              <>
+                <Link href="/signup" className="w-full sm:max-w-xs" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "signup" })}>
+                  <Button className="h-[3.5rem] w-full rounded-full bg-rove-charcoal text-[15px] font-semibold text-white shadow-[0_8px_32px_rgba(45,36,32,0.2)] hover:shadow-[0_12px_40px_rgba(45,36,32,0.3)] hover:-translate-y-0.5 transition-all duration-300">
+                    Get Started
+                  </Button>
+                </Link>
+                <Link href="/login" onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "login" })} className="text-sm font-medium text-rove-stone/60 hover:text-rove-charcoal transition-colors">
+                  Already have an account? <span className="underline">Log in</span>
+                </Link>
+              </>
+            )}
+
+            <p className="mt-4 text-[10px] text-rove-stone/40">
+              By continuing, you agree to our <Link href="/privacy" className="underline hover:text-rove-charcoal/60 transition-colors">Privacy Policy</Link>.
+            </p>
           </motion.div>
         </div>
       </div>
@@ -295,7 +303,7 @@ export function IntroSequence() {
       {/* Top Bar with Safe Area */}
       <div className="absolute pl-6 pr-6 left-0 right-0 top-[max(1.5rem,env(safe-area-inset-top))] flex justify-between items-center z-50">
         <div className="w-8 h-8 relative opacity-80">
-          <Image src="/images/rove_icon_transparent.png" alt="Rove" fill className="object-contain" unoptimized />
+          <Image src="/images/rove_logo_final.png" alt="Rove" fill className="object-contain" unoptimized />
         </div>
         {currentStep < 3 && (
           <button onClick={handleSkip} className="text-[10px] font-bold uppercase tracking-[0.2em] text-rove-stone hover:text-rove-charcoal transition-colors p-2">

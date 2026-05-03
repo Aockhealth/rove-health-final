@@ -296,7 +296,7 @@ export default function OnboardingWizardV2({ userId, initialStep }: OnboardingWi
             >
               {/* Rove Icon */}
               <div className="mb-10 w-12 h-12 relative opacity-80 mix-blend-multiply">
-                 <img src="/images/rove_icon_transparent.png" alt="Rove" className="object-contain w-full h-full" />
+                 <img src="/images/rove_logo_final.png" alt="Rove" className="object-contain w-full h-full" />
               </div>
 
               {/* Pill Badge */}

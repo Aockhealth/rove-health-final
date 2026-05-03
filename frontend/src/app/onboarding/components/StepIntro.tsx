@@ -16,7 +16,7 @@ export default function StepIntro() {
                 <div className="absolute -inset-4 rounded-full border border-rove-charcoal/10" />
                 <div className="relative h-16 w-16 opacity-90 drop-shadow-sm saturate-150 transition-transform duration-700 hover:scale-105">
                     <Image
-                        src="/images/rove_icon_transparent.png"
+                        src="/images/rove_logo_final.png"
                         alt="Rove Health"
                         fill
                         priority

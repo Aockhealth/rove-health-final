@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition, useRef, useMemo, useCallback } from
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUserId } from "@/app/providers";
 import { useRouter } from "next/navigation";
-import { Calendar, Edit2, X } from "lucide-react";
+import { Calendar, Edit2, X, Activity, Smile, Zap, Heart, ChevronLeft } from "lucide-react";
 import ProfileAvatar from "@/components/cycle-sync/ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ import SexualWellnessCard from "./components/SexualWellnessCard";
 import SaveButton from "./components/SaveButton";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import PageGuide from "@/components/cycle-sync/PageGuide";
+import QuickPhaseLog from "./components/QuickPhaseLog";
 
 export type Phase = "Menstrual" | "Follicular" | "Ovulatory" | "Luteal" | null;
 
@@ -64,6 +65,9 @@ export default function TrackerPageRedesigned() {
     const [cervicalDischarge, setCervicalDischarge] = useState<string | null>(null);
     const [note, setNote] = useState("");
     const [trackMode, setTrackMode] = useState<"period" | "discharge">("discharge");
+
+    const [isLifestyleExpanded, setIsLifestyleExpanded] = useState(false);
+    const [isIntimacyExpanded, setIsIntimacyExpanded] = useState(false);
 
     const [isEditingCycle, setIsEditingCycle] = useState(false);
     const [isDischargeExpanded, setIsDischargeExpanded] = useState(false);
@@ -965,72 +969,139 @@ export default function TrackerPageRedesigned() {
 
                 {/* Tracker Cards - Only show when NOT editing cycle */}
                 {!isEditingCycle && !isPeriodLoggingMode && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                        {currentPhase === "Menstrual" ? (
-                            <FlowCard flowIntensity={flowIntensity} setFlowIntensity={setFlowIntensity} />
-                        ) : (
-                            <DischargeCard
-                                isDischargeExpanded={isDischargeExpanded}
-                                setIsDischargeExpanded={setIsDischargeExpanded}
-                                mpiqConsistency={mpiqConsistency}
-                                setMpiqConsistency={setMpiqConsistency}
-                                mpiqAppearance={mpiqAppearance}
-                                setMpiqAppearance={setMpiqAppearance}
-                                mpiqSensation={mpiqSensation}
-                                setMpiqSensation={setMpiqSensation}
-                                selectedDate={selectedDate}
-                                currentPhase={currentPhase}
-                            />
-                        )}
-
-                        <SymptomsCard selectedSymptoms={selectedSymptoms} setSelectedSymptoms={setSelectedSymptoms} currentPhase={currentPhase} />
-                        <MoodsCard selectedMoods={selectedMoods} setSelectedMoods={setSelectedMoods} currentPhase={currentPhase} />
-
-                        <ExerciseCard
-                            selectedExercise={selectedExercise}
-                            exerciseMinutes={exerciseMinutes}
-                            setSelectedExercise={setSelectedExercise}
-                            setExerciseMinutes={setExerciseMinutes}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-0">
+                        
+                        <QuickPhaseLog
                             currentPhase={currentPhase}
-                        />
-
-                        <WaterIntakeCard
-                            waterIntake={waterIntake}
-                            setWaterIntake={setWaterIntake}
-                            isPouring={isPouring}
-                            setIsPouring={setIsPouring}
-                            currentPhase={currentPhase}
-                        />
-
-                        <SleepCard
-                            selectedSleepQuality={selectedSleepQuality}
-                            sleepHours={sleepHours}
-                            sleepMinutes={sleepMinutes}
-                            setSelectedSleepQuality={setSelectedSleepQuality}
-                            setSleepHours={setSleepHours}
-                            setSleepMinutes={setSleepMinutes}
-                            currentPhase={currentPhase}
-                        />
-
-                        <SexualWellnessCard
+                            selectedSymptoms={selectedSymptoms}
+                            setSelectedSymptoms={setSelectedSymptoms}
+                            selectedMoods={selectedMoods}
+                            setSelectedMoods={setSelectedMoods}
                             selectedSexActivity={selectedSexActivity}
                             setSelectedSexActivity={setSelectedSexActivity}
-                            selectedContraception={selectedContraception}
-                            setSelectedContraception={setSelectedContraception}
-                            currentPhase={currentPhase}
+                            selectedDisruptors={selectedDisruptors}
+                            setSelectedDisruptors={setSelectedDisruptors}
                         />
 
-                        <DisruptorsCard selectedDisruptors={selectedDisruptors} setSelectedDisruptors={setSelectedDisruptors} currentPhase={currentPhase} />
+                        {/* Section: Body */}
+                        <div className="space-y-4 mt-2">
+                            {currentPhase === "Menstrual" ? (
+                                <FlowCard flowIntensity={flowIntensity} setFlowIntensity={setFlowIntensity} />
+                            ) : (
+                                <DischargeCard
+                                    isDischargeExpanded={isDischargeExpanded}
+                                    setIsDischargeExpanded={setIsDischargeExpanded}
+                                    mpiqConsistency={mpiqConsistency}
+                                    setMpiqConsistency={setMpiqConsistency}
+                                    mpiqAppearance={mpiqAppearance}
+                                    setMpiqAppearance={setMpiqAppearance}
+                                    mpiqSensation={mpiqSensation}
+                                    setMpiqSensation={setMpiqSensation}
+                                    selectedDate={selectedDate}
+                                    currentPhase={currentPhase}
+                                />
+                            )}
+                            <SymptomsCard selectedSymptoms={selectedSymptoms} setSelectedSymptoms={setSelectedSymptoms} currentPhase={currentPhase} />
+                        </div>
 
-                        <SelfLoveCard
-                            selectedSelfLove={selectedSelfLove}
-                            selfLoveOther={selfLoveOther}
-                            setSelectedSelfLove={setSelectedSelfLove}
-                            setSelfLoveOther={setSelfLoveOther}
-                            currentPhase={currentPhase}
-                        />
+                        {/* Section: Mind */}
+                        <div className="space-y-4 mt-4 pb-2">
+                            <MoodsCard selectedMoods={selectedMoods} setSelectedMoods={setSelectedMoods} currentPhase={currentPhase} />
+                            <SelfLoveCard
+                                selectedSelfLove={selectedSelfLove}
+                                selfLoveOther={selfLoveOther}
+                                setSelectedSelfLove={setSelectedSelfLove}
+                                setSelfLoveOther={setSelfLoveOther}
+                                currentPhase={currentPhase}
+                            />
+                        </div>
 
-                        <NoteCard note={note} setNote={setNote} currentPhase={currentPhase} />
+                        {/* Section: Lifestyle */}
+                        <button 
+                            onClick={() => setIsLifestyleExpanded(!isLifestyleExpanded)}
+                            className="w-full flex items-center justify-between gap-3 mt-8 mb-4 px-2 hover:bg-white/10 rounded-xl transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm bg-[#4DB6AC]/10">
+                                    <Zap className="w-4 h-4 text-[#4DB6AC]" />
+                                </div>
+                                <h3 className="text-lg font-heading font-bold text-gray-900">Lifestyle</h3>
+                            </div>
+                            <ChevronLeft className={cn("w-5 h-5 text-gray-400 transition-transform", isLifestyleExpanded ? "-rotate-90" : "rotate-180")} />
+                        </button>
+                        <AnimatePresence>
+                            {isLifestyleExpanded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="space-y-4 pb-2">
+                                        <ExerciseCard
+                                            selectedExercise={selectedExercise}
+                                            exerciseMinutes={exerciseMinutes}
+                                            setSelectedExercise={setSelectedExercise}
+                                            setExerciseMinutes={setExerciseMinutes}
+                                            currentPhase={currentPhase}
+                                        />
+                                        <WaterIntakeCard
+                                            waterIntake={waterIntake}
+                                            setWaterIntake={setWaterIntake}
+                                            isPouring={isPouring}
+                                            setIsPouring={setIsPouring}
+                                            currentPhase={currentPhase}
+                                        />
+                                        <SleepCard
+                                            selectedSleepQuality={selectedSleepQuality}
+                                            sleepHours={sleepHours}
+                                            sleepMinutes={sleepMinutes}
+                                            setSelectedSleepQuality={setSelectedSleepQuality}
+                                            setSleepHours={setSleepHours}
+                                            setSleepMinutes={setSleepMinutes}
+                                            currentPhase={currentPhase}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Section: Intimacy */}
+                        <button 
+                            onClick={() => setIsIntimacyExpanded(!isIntimacyExpanded)}
+                            className="w-full flex items-center justify-between gap-3 mt-8 mb-4 px-2 hover:bg-white/10 rounded-xl transition-colors text-left"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm bg-[#E8924E]/10">
+                                    <Heart className="w-4 h-4 text-[#E8924E]" />
+                                </div>
+                                <h3 className="text-lg font-heading font-bold text-gray-900">Intimacy</h3>
+                            </div>
+                            <ChevronLeft className={cn("w-5 h-5 text-gray-400 transition-transform", isIntimacyExpanded ? "-rotate-90" : "rotate-180")} />
+                        </button>
+                        <AnimatePresence>
+                            {isIntimacyExpanded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="space-y-4 pb-2">
+                                        <SexualWellnessCard
+                                            selectedSexActivity={selectedSexActivity}
+                                            setSelectedSexActivity={setSelectedSexActivity}
+                                            selectedContraception={selectedContraception}
+                                            setSelectedContraception={setSelectedContraception}
+                                            currentPhase={currentPhase}
+                                        />
+                                        <DisruptorsCard selectedDisruptors={selectedDisruptors} setSelectedDisruptors={setSelectedDisruptors} currentPhase={currentPhase} />
+                                        <NoteCard note={note} setNote={setNote} currentPhase={currentPhase} />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                     </motion.div>
                 )}
 
