@@ -5,7 +5,10 @@ export async function GET() {
     const articles = await fetchLearnArticles()
     return new Response(JSON.stringify(articles ?? []), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
     })
   } catch (err) {
     console.error('API /api/learn error:', err)
