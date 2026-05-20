@@ -1,0 +1,32 @@
+# Rove Health — robots.txt
+# Controls what search engine crawlers are allowed to index.
+
+User-agent: *
+
+# ── Public marketing pages (allow all) ─────────────────────────
+Allow: /
+Allow: /shop
+Allow: /science
+Allow: /story
+Allow: /ingredient-glossary
+Allow: /cycle-sync/learn
+Allow: /privacy-pledge
+
+# ── Authenticated app routes (block from crawling) ─────────────
+# These pages require login and should never appear in search results.
+Disallow: /cycle-sync/tracker
+Disallow: /cycle-sync/insights
+Disallow: /cycle-sync/plan
+Disallow: /cycle-sync/profile
+Disallow: /onboarding
+Disallow: /login
+Disallow: /signup
+
+# ── Internal API routes ─────────────────────────────────────────
+Disallow: /api/
+
+# ── Next.js internals ──────────────────────────────────────────
+Disallow: /_next/
+
+# ── Sitemap ────────────────────────────────────────────────────
+Sitemap: https://rovehealth.in/sitemap.xml

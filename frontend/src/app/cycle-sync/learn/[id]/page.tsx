@@ -1,14 +1,57 @@
 import { fetchArticleById } from "@backend/actions/cycle-sync/learn/learn-actions";
 import { getStorageUrl } from "@/lib/utils";
-import { ChevronLeft, Calendar, Clock, User } from "lucide-react";
+import { ChevronLeft, Clock, User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { ArticleTracker } from "./ArticleTracker";
+import type { Metadata } from "next";
+
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rovehealth.in";
+
+// ─── Dynamic SEO Metadata ────────────────────────────────────────────────────
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  if (!id || id === "undefined") return { title: "Article Not Found" };
+
+  const article = await fetchArticleById(id);
+  if (!article) return { title: "Article Not Found" };
+
+  const title = cleanTitle(article.title);
+  const imageUrl = getStorageUrl("learn-images", article.image_path);
+  const canonicalUrl = `${siteUrl}/cycle-sync/learn/${id}`;
+  const description =
+    article.excerpt ||
+    `${title} — expert-reviewed women's health article by Rove Health.`;
+
+  return {
+    title: `${title} | Rove Health`,
+    description,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: "article",
+      locale: "en_IN",
+      siteName: "Rove Health",
+      ...(imageUrl && {
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  };
+}
 
 const cleanTitle = (title: string) => {
     if (!title) return "";
@@ -48,8 +91,42 @@ export default async function ArticlePage({ params }: Props) {
     }
   }
 
+  // ─── Article JSON-LD (Rich Snippets) ───────────────────────────────────────
+  const canonicalUrl = `${siteUrl}/cycle-sync/learn/${id}`;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    headline: cleanTitle(article.title),
+    description:
+      article.excerpt ||
+      `${cleanTitle(article.title)} — expert-reviewed by Rove Health.`,
+    url: canonicalUrl,
+    ...(imageUrl && { image: imageUrl }),
+    author: { "@type": "Organization", name: "Rove Health", url: siteUrl },
+    reviewedBy: [
+      { "@type": "Person", name: "Dr. Aditya Oswal" },
+      { "@type": "Person", name: "Dr. Chaitanya Kalra" },
+      { "@type": "Person", name: "Dr. Harshita Pathak" },
+    ],
+    publisher: {
+      "@type": "Organization",
+      name: "Rove Health",
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/images/rove_logo_final.png`,
+      },
+    },
+    ...(article.published_date && { datePublished: article.published_date }),
+    inLanguage: "en-IN",
+  };
+
   return (
     <div className="min-h-screen bg-rove-cream pb-20">
+      {/* Article Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <ArticleTracker articleId={id} articleTitle={cleanTitle(article.title)} category={article.category} />
       {/* --- HERO SECTION --- */}
       <div className="relative h-[45vh] w-full bg-rove-stone/20">
