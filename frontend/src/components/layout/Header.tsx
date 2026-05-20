@@ -44,6 +44,18 @@ export default function Header({ user }: { user: any }) {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center space-x-8">
+                    <Link href="/shop" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Shop
+                    </Link>
+                    <Link href="/science" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Science
+                    </Link>
+                    <Link href="/ingredient-glossary" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Ingredients
+                    </Link>
+                    <Link href="/story" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
+                        Story
+                    </Link>
                     {user && (
                         <Link href="/cycle-sync" className="text-sm font-medium text-rove-stone hover:text-rove-charcoal transition-colors">
                             Dashboard
@@ -108,6 +120,34 @@ export default function Header({ user }: { user: any }) {
                         className="md:hidden bg-white border-b border-rove-stone/10 overflow-hidden"
                     >
                         <nav className="flex flex-col p-6 space-y-4">
+                            <Link
+                                href="/shop"
+                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Shop
+                            </Link>
+                            <Link
+                                href="/science"
+                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Science
+                            </Link>
+                            <Link
+                                href="/ingredient-glossary"
+                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Ingredients
+                            </Link>
+                            <Link
+                                href="/story"
+                                className="text-lg font-medium text-rove-charcoal py-2 border-b border-rove-stone/5"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Story
+                            </Link>
                             {user && (
                                 <Link
                                     href="/cycle-sync"

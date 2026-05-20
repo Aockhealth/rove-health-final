@@ -252,8 +252,7 @@ export function IntroSequence() {
                   <div className="w-px h-3.5 bg-rove-stone/20" />
 
                   <Link
-                    href="https://rovediagnostics.com"
-                    target="_blank"
+                    href="/shop"
                     onClick={() => trackOnboardingEvent("splash_cta_clicked", { cta: "shop" })}
                     className="group flex items-center gap-2 text-rove-stone/60 hover:text-rove-charcoal transition-colors"
                   >

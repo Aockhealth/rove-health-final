@@ -248,7 +248,10 @@ export function RoveChef({ phase, diet }: RoveChefProps) {
                                     />
                                     <div className="mt-6 flex justify-center">
                                         <button
-                                            onClick={() => setShowForm(true)}
+                                            onClick={() => {
+                                                setResults(prev => ({ ...prev, [activeTab]: undefined }));
+                                                setShowForm(true);
+                                            }}
                                             className={cn("text-xs font-bold flex items-center gap-2 px-5 py-2.5 rounded-full transition-all hover:scale-105 active:scale-95", theme.secondaryButton)}
                                         >
                                             <RefreshCw className="w-3.5 h-3.5" /> Regenerate {activeTabLabel}
