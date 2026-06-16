@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.rovehealth.app',
   appName: 'Rove Health',
   webDir: 'out',
-  bundledWebRuntime: false,
   server: {
     // Points to the live production web app — no static export needed
     url: 'https://rovehealth.in',
