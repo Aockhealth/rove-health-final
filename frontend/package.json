@@ -9,10 +9,17 @@
     "prebuild": "cd ../backend && npm i",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "test:e2e": "playwright test",
-    "test:simulation": "ts-node src/tests/comprehensive_cycle_logic_test.ts"
+    "test:simulation": "ts-node src/tests/comprehensive_cycle_logic_test.ts",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:assets": "npx @capacitor/assets generate --android"
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@elevenlabs/client": "^0.12.2",
     "@google/generative-ai": "^0.24.1",
     "@nivo/pie": "^0.99.0",
@@ -50,6 +57,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/dotenv": "^6.1.1",
