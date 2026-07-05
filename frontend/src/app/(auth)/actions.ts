@@ -151,6 +151,54 @@ export async function signup(formData: FormData): Promise<ActionResult> {
   return { ok: false, error: "Signup encountered an unknown error.", code: "UNKNOWN" };
 }
 
+export async function verifySignupOtp(email: string, token: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "signup",
+  });
+
+  if (error) {
+    return { ok: false, error: error.message, code: "OTP_VERIFICATION_FAILED", message: error.message };
+  }
+
+  if (data?.user) {
+    await supabase
+      .from("profiles")
+      .update({
+        onboarding_flow_version: ONBOARDING_FLOW_VERSION,
+        onboarding_status: "privacy_pending",
+      })
+      .eq("id", data.user.id);
+
+    revalidatePath("/", "layout");
+    return { ok: true, success: true, nextRoute: "/privacy-pledge" };
+  }
+
+  return { ok: false, error: "Verification failed. Please try again.", code: "UNKNOWN" };
+}
+
+export async function resendSignupOtp(email: string): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message, code: "RESEND_FAILED", message: error.message };
+  }
+
+  return {
+    ok: true,
+    success: true,
+    message: "A new verification code has been sent to your email.",
+  };
+}
+
 export async function recordPrivacyConsent(input: ConsentRecord): Promise<ActionResult> {
   if (!input.agreed) {
     return {

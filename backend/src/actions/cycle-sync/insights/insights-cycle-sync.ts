@@ -9,7 +9,7 @@ import {
     formatDate
 } from "../../../../../shared/cycle/smart-phase";
 
-const LOG_WINDOW_DAYS = 30; // Using 30 days (Monthly) as you requested
+const LOG_WINDOW_CYCLE_MULTIPLIER = 3; // Cover at least 3 cycles so pattern analysis isn't limited to the most recent one
 
 // ==========================================================
 // FETCH INSIGHTS DATA (Main Function)
@@ -19,23 +19,28 @@ export async function fetchInsightsData() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
-
-    // ✅ FIXED: Added `exercise_minutes` to the query
-    const [cycleSettingsResult, logsResult] = await Promise.all([
-        supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-        supabase.from("daily_logs")
-            .select("date, is_period, symptoms, moods, sleep_quality, sleep_minutes, water_intake, disruptors, exercise_types, exercise_minutes, notes")
-            .eq("user_id", user.id)
-            .gte("date", pastDate.toISOString().split('T')[0])
-            .order('date', { ascending: false })
-    ]);
+    const cycleSettingsResult = await supabase
+        .from("user_cycle_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
     const cycleSettings = cycleSettingsResult.data;
-    const logs = logsResult.data;
 
     if (!cycleSettings) return null;
+
+    const logWindowDays = (cycleSettings.cycle_length_days || 28) * LOG_WINDOW_CYCLE_MULTIPLIER;
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - logWindowDays);
+
+    // ✅ FIXED: Added `exercise_minutes` to the query
+    const logsResult = await supabase.from("daily_logs")
+        .select("date, is_period, symptoms, moods, sleep_quality, sleep_minutes, water_intake, disruptors, exercise_types, exercise_minutes, notes")
+        .eq("user_id", user.id)
+        .gte("date", pastDate.toISOString().split('T')[0])
+        .order('date', { ascending: false });
+
+    const logs = logsResult.data;
 
     const phases = ["Menstrual", "Follicular", "Ovulatory", "Luteal"];
     const phaseCounts: Record<string, number> = { "Menstrual": 0, "Follicular": 0, "Ovulatory": 0, "Luteal": 0 };

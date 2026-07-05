@@ -375,7 +375,7 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
             || context.dietaryPreference
             || context.dietaryPreferences
             || "none",
-        cuisine: requestHints?.cuisinePreference || context.cuisinePreference || "Global",
+        cuisine: requestHints?.cuisinePreference || context.cuisinePreference || "Indian",
         health_goals: context.fitnessGoals || "General Wellness",
         goal_focus: requestHints?.goalFocus || context.goalFocus || "Hormone balance and steady energy",
         current_symptoms_or_craving: requestHints?.currentSymptomsOrCraving
@@ -388,7 +388,7 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
         recent_output_signatures: (requestHints?.recentOutputSignatures || context.recentOutputSignatures || []).join(" | "),
         quality_feedback: requestHints?.qualityFeedback || context.qualityFeedback || ""
     };
-    const allowedFeatureOverrides = new Set(["chef_snack", "chef_smoothie", "chef_gut"]);
+    const allowedFeatureOverrides = new Set(["chef_snack", "chef_smoothie", "chef_salad"]);
     const featureKey = req.userIntent && allowedFeatureOverrides.has(req.userIntent)
         ? req.userIntent
         : "diet_coach";

@@ -873,28 +873,11 @@ function evaluateCoachQuality(
     };
 }
 
-function normalizeCuisineChoice(
-    requestedCuisine: string,
-    profileCuisine: string | undefined,
-    recentCuisines: string[]
-): string {
-    const requested = (requestedCuisine || "").trim();
-    const profile = (profileCuisine || "").trim();
-    const recentTop = recentCuisines.map((item) => item.trim()).filter(Boolean);
-    const fallbackPool = ["Indian", "Mediterranean", "Asian", "Global"];
-
-    // Precedence: request override > profile > fallback default.
-    const baseCuisine = requested || profile || "Global";
-    if (requested) return baseCuisine;
-
-    // Auto-rotation applies only when user did not explicitly request a cuisine.
-    // Avoid repeating the same style back-to-back when alternatives exist.
-    if (recentTop[0] && recentTop[0].toLowerCase() === baseCuisine.toLowerCase()) {
-        const rotationPool = Array.from(new Set([profile, ...fallbackPool].filter(Boolean)));
-        const rotated = rotationPool.find((option) => option.toLowerCase() !== baseCuisine.toLowerCase());
-        return rotated || baseCuisine;
-    }
-    return baseCuisine;
+function normalizeCuisineChoice(requestedCuisine: string): string {
+    // Only forward an explicit user request. Leave this empty otherwise so the backend
+    // can apply the user's real onboarding cuisine_preference (context.cuisinePreference)
+    // before falling back to "Indian" — see handleDietCoachSkill in orchestrator.ts.
+    return (requestedCuisine || "").trim();
 }
 
 function extractSignatures(snapshot: unknown): string[] {
@@ -1049,8 +1032,7 @@ export async function generateRoveChefProtocol(
     const recentContext = user
         ? await getRecentOutputContext(user.id, ["diet_coach", "chef"], { surface: "rove_chef_card" })
         : { signatures: [], cuisines: [] };
-    const profileCuisine = recentContext.cuisines[0];
-    const resolvedCuisine = normalizeCuisineChoice(cuisine, profileCuisine, recentContext.cuisines);
+    const resolvedCuisine = normalizeCuisineChoice(cuisine);
     const recentSignatures = personalization.recentOutputSignatures?.length
         ? personalization.recentOutputSignatures
         : recentContext.signatures;

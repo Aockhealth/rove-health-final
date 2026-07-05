@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { SegmentedDoughnut } from "@/components/ui/SegmentedDoughnut";
-import { Sparkles, Leaf, Heart, Coffee, Info, Brain, Zap, MessageCircle, Plus } from "lucide-react";
+import { Sparkles, Leaf, Heart, Coffee, Info, Brain, Zap, MessageCircle, Plus, Smile } from "lucide-react";
 
 /* ============================= */
 /* 1. PHASE CONFIGURATION */
@@ -128,7 +129,7 @@ const SYMPTOM_LEARNING: Record<string, { stat: string; help: string; phases: str
   }
 };
 
-const OPTIMIZATION_INSIGHTS = [
+const FOLLICULAR_INSIGHTS = [
   {
     title: "High Energy & Motivation",
     description: "Rising estrogen boosts dopamine and mental drive. Many women feel more energetic and proactive.",
@@ -137,29 +138,67 @@ const OPTIMIZATION_INSIGHTS = [
   },
   {
     title: "Sharper Focus & Memory",
-    description: "Estrogen improves attention, memory and verbal fluency.",
+    description: "Estrogen improves attention, memory and verbal fluency as it climbs toward ovulation.",
     actions: ["Planning", "Studying", "Decision-making"],
     icon: Brain
-  },
-  {
-    title: "Social Ease",
-    description: "Estrogen enhances bonding and communication. Many feel more expressive and confident.",
-    actions: ["Meetings", "Presentations", "Open communication"],
-    icon: MessageCircle
-  },
-  {
-    title: "Physical Strength",
-    description: "Strength and endurance often peak due to higher neuromuscular efficiency.",
-    actions: ["HIIT", "Strength training", "Challenging workouts"],
-    icon: Zap
   },
   {
     title: "Creative Spark",
     description: "Neuroplasticity is high during this phase, making it easier to connect dots and solve complex problems.",
     actions: ["Brainstorming", "Art", "Writing"],
     icon: Sparkles
+  },
+  {
+    title: "Social Curiosity",
+    description: "Rising estrogen makes you more open to new people, ideas and experiences.",
+    actions: ["Networking", "Trying new things", "Meeting people"],
+    icon: MessageCircle
+  },
+  {
+    title: "Building Endurance",
+    description: "Stamina climbs steadily through this phase, making it a good window to ramp up cardio training.",
+    actions: ["Cardio", "Dance", "Cycling"],
+    icon: Zap
   }
 ];
+
+const OVULATORY_INSIGHTS = [
+  {
+    title: "Peak Confidence & Charisma",
+    description: "Peak estrogen and testosterone boost magnetism and verbal expressiveness.",
+    actions: ["Presentations", "Dates", "Bold conversations"],
+    icon: Sparkles
+  },
+  {
+    title: "Physical Strength Peak",
+    description: "Strength and power output often peak due to hormone-driven neuromuscular efficiency.",
+    actions: ["HIIT", "Heavy lifting", "PR attempts"],
+    icon: Zap
+  },
+  {
+    title: "Social Magnetism",
+    description: "Many feel more expressive and drawn to connection right now.",
+    actions: ["Socializing", "Networking events", "Deep conversations"],
+    icon: MessageCircle
+  },
+  {
+    title: "Heightened Pain Tolerance",
+    description: "Some research shows pain sensitivity dips around ovulation, making this a good time for tougher workouts.",
+    actions: ["Challenging workouts", "Endurance events"],
+    icon: Heart
+  },
+  {
+    title: "Sharpest Communication",
+    description: "Verbal fluency and persuasion often peak alongside hormone levels.",
+    actions: ["Negotiations", "Pitches", "Interviews"],
+    icon: Brain
+  }
+];
+
+const OPTIMIZATION_INSIGHTS_BY_PHASE: Record<string, typeof FOLLICULAR_INSIGHTS> = {
+  Follicular: FOLLICULAR_INSIGHTS,
+  Ovulatory: OVULATORY_INSIGHTS,
+};
 
 /* ============================= */
 /* 3. COMPONENT */
@@ -180,7 +219,9 @@ export function AiAnalysisCard({
   selectedPhase,
   onPhaseSelect
 }: Props) {
-  
+
+  const [failedIcons, setFailedIcons] = useState<Set<string>>(new Set());
+
   // 1. Get Logged Symptoms
   const currentCounts = symptomsByPhase?.[selectedPhase] || {};
   const topSymptoms = Object.entries(currentCounts)
@@ -208,11 +249,12 @@ export function AiAnalysisCard({
   }
 
   // 4. Optimization Rotation Logic
+  const activeOptimizationInsights = OPTIMIZATION_INSIGHTS_BY_PHASE[selectedPhase] || FOLLICULAR_INSIGHTS;
   const loggedDays = phaseCounts?.[selectedPhase] || 0;
-  const rotationIndex = loggedDays % OPTIMIZATION_INSIGHTS.length;
+  const rotationIndex = loggedDays % activeOptimizationInsights.length;
   const rotatedInsights = [
-    ...OPTIMIZATION_INSIGHTS, 
-    ...OPTIMIZATION_INSIGHTS
+    ...activeOptimizationInsights,
+    ...activeOptimizationInsights
   ].slice(rotationIndex, rotationIndex + 3);
 
   return (
@@ -271,15 +313,21 @@ export function AiAnalysisCard({
                 >
                   <div className="w-16 h-16 relative mb-2">
                     <div className="absolute inset-0 bg-gradient-to-br from-stone-50 to-stone-100/50 rounded-full scale-90" />
-                    <Image
-                      src={`/assets/symptoms/${iconName}.svg`}
-                      alt={name}
-                      fill
-                      className="object-contain relative z-10"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                    {failedIcons.has(iconName) ? (
+                      <div className={cn("absolute inset-0 flex items-center justify-center", guidance.color)}>
+                        <Smile size={28} />
+                      </div>
+                    ) : (
+                      <Image
+                        src={`/assets/symptoms/${iconName}.svg`}
+                        alt={name}
+                        fill
+                        className="object-contain relative z-10"
+                        onError={() => {
+                          setFailedIcons((prev) => new Set(prev).add(iconName));
+                        }}
+                      />
+                    )}
                   </div>
 
                   <span className="text-[11px] font-medium text-center mb-1 capitalize text-rove-charcoal leading-tight h-8 flex items-center justify-center line-clamp-2">

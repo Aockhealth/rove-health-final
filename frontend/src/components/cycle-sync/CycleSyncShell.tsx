@@ -37,7 +37,7 @@ export default function CycleSyncShell({
   const queryClient = useQueryClient();
   const userId = useUserId();
   const [optimisticPathname, setOptimisticPathname] = useState<string | null>(null);
-  const [, startNavTransition] = useTransition();
+  const [isNavPending, startNavTransition] = useTransition();
 
   // Prefetch sibling tabs in the background so they are instant
   useEffect(() => {
@@ -139,6 +139,11 @@ export default function CycleSyncShell({
                   }
 
                   event.preventDefault();
+                  // Ignore taps while a previous tab navigation is still in flight —
+                  // without this guard, overlapping router.push calls can race and
+                  // resolve out of order, landing on a tab the user didn't tap.
+                  if (isNavPending) return;
+
                   setOptimisticPathname(item.href);
                   startNavTransition(() => {
                     router.push(item.href);

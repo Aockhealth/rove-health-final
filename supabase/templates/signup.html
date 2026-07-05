@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email for ROVE Health</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #FAF8F5;
+      color: #1C1917;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #FAF8F5;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      border-radius: 24px;
+      border: 1px solid #EAE6DF;
+      box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03);
+      overflow: hidden;
+    }
+    .header {
+      padding: 40px 40px 20px 40px;
+      text-align: center;
+    }
+    .logo {
+      height: 48px;
+      margin-bottom: 24px;
+    }
+    .content {
+      padding: 0 40px 40px 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1C1917;
+      margin-top: 0;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #706B64;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    .btn-container {
+      margin-top: 32px;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #1C1917;
+      color: #FFFDF9 !important;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 16px 36px;
+      border-radius: 30px;
+      box-shadow: 0 4px 12px rgba(28, 25, 23, 0.15);
+      transition: background-color 0.2s ease;
+    }
+    .footer {
+      padding: 24px 40px;
+      background-color: #FAF8F5;
+      border-top: 1px solid #EAE6DF;
+      text-align: center;
+      font-size: 12px;
+      color: #A39E95;
+    }
+    .footer a {
+      color: #706B64;
+      text-decoration: underline;
+    }
+    .otp-box {
+      display: inline-block;
+      background-color: #FAF8F5;
+      border: 1px solid #EAE6DF;
+      border-radius: 16px;
+      padding: 20px 32px;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 10px;
+      color: #1C1917;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <img src="https://saun09.github.io/rove-health/images/rove_logo_final.png" alt="ROVE Health Logo" class="logo" onerror="this.src='{{ .SiteURL }}/images/rove_logo_final.png'">
+      </div>
+      <div class="content">
+        <h1>Welcome to ROVE Health</h1>
+        <p>Thank you for starting your cycle-sync journey with us. Before we can personalize your daily recipes, exercises, and supplement routines, please verify your email address using the code below.</p>
+        <div class="btn-container">
+          <span class="otp-box">{{ .Token }}</span>
+        </div>
+        <p style="font-size: 13px; color: #A39E95; margin-bottom: 0;">Enter this code in the ROVE Health app to verify your account. This code will expire shortly, so please use it soon.</p>
+      </div>
+      <div class="footer">
+        <p style="margin: 0; font-size: 12px; color: #A39E95;">&copy; 2026 ROVE Health. All rights reserved.<br>
+        If you did not sign up for this account, you can safely ignore this email.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
