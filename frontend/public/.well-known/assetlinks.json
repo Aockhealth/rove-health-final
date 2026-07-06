@@ -5,7 +5,7 @@
       "namespace": "android_app",
       "package_name": "com.rovehealth.app",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_SHA256_FROM_PLAY_CONSOLE_APP_SIGNING_KEY"
+        "0C:01:0A:55:F6:7C:04:87:67:44:73:1B:8C:B1:2F:31:96:39:0E:5B:85:27:28:13:4F:EF:6A:38:F7:7C:FC:E8"
       ]
     }
   }
