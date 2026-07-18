@@ -28,6 +28,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config) => {
+    // Ensure Webpack can resolve dependencies (like 'zod') from the frontend's node_modules
+    // when compiling files outside the frontend directory (e.g. ../shared)
+    const path = require('path');
+    config.resolve.modules.push(path.resolve('./node_modules'));
+    return config;
+  },
 };
 
 export default withSerwist(nextConfig);
