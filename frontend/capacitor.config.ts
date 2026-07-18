@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     // Points to the live production web app — no static export needed
-    url: 'https://rovehealth.in',
+    url: 'https://www.rovehealth.in',
+    allowNavigation: ['rovehealth.in', '*.rovehealth.in'],
     cleartext: false // Enforce HTTPS only (no cleartext http)
   },
   android: {
