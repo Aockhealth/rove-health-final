@@ -10,7 +10,11 @@
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
+    }
   },
   "submit": {
     "production": {}

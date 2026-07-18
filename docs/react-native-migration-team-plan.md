@@ -33,6 +33,7 @@ _Last updated: 2026-07-19 (v4 — this is now the single source of truth; the ea
 - **iOS testing devices:** day-to-day checkpoints run on the founder's iPhone via Expo Go — same code builds both platforms. From the voice spike (Item 6) onward, custom native modules need an Apple Developer account ($99/yr — needed anyway for the App Store launch) to install on the iPhone directly; until purchased, fall back to the iOS simulator on the Mac. **Ship both Play Store and App Store at release, not iOS as an afterthought** (Phase 6 already schedules the TestFlight build as a fast-follow).
 - **Offline logging (writing new data with no signal) is explicitly out of scope for v1.** Researched how Flo and Clue handle this: Flo caches new log entries on-device and syncs when back online; Clue deliberately *removed* most offline functionality in a redesign because offline sync was their biggest source of data loss and bugs. Given that a mature, funded competitor got burned by exactly this, v1 requires a live connection to save a new log entry. Viewing already-cached data offline (Item 27) is still in scope. Revisit true offline writes as a deliberate v1.1+ project with its own conflict-resolution design if the founder wants it later.
 - **App Store internet-requirement note:** Apple has no rule against apps requiring internet — the vast majority of apps do. What reviewers check is graceful failure with no connection (a clean "no internet" message, never a crash or infinite spinner). Build this into each screen's normal loading/error states rather than as a separate checklist item — check it as part of every screen's Definition of done.
+- **Play Store signing-key verification (Item 3) moved from Phase 1 to Phase 6** — founder's explicit decision (2026-07-19). Originally scheduled for week 1 precisely so a signing problem would be caught with weeks of runway to fix it; doing it right before release instead means any issue found there has no buffer and could delay the release date directly. Accepted knowingly — do not silently move it back or forward again without asking.
 
 ## How to use this document
 
@@ -44,18 +45,20 @@ This is a **backlog of self-contained tasks**, not a roster. Nobody owns "Track 
 
 ## Verified status as of 2026-07-19 — read this before claiming anything
 
-A code audit found more already built than the last update assumed. **Do not redo any of this:**
+A code audit found more already built than the last update assumed. **Phase 1 is done except Item 3 (moved to Phase 6 — see Decisions log). Do not redo any of this:**
 
 | Done | Evidence |
 |---|---|
 | Phase 0 Expo skeleton | Committed `8720d92` |
 | Pinned to Expo SDK 54 | `mobile/package.json` — do not upgrade the SDK mid-project (Expo Go on the founder's iPhone depends on this) |
 | Login, Signup, Forgot password, Reset password, **Verify OTP** screens | `mobile/src/app/(auth)/*.tsx` — 5 screens, all genuinely wired to `supabase.auth.*` calls, not placeholders. Verify-OTP was a bonus screen not in the original inventory. |
-| 6 UI kit components | `Button`, `Card`, `Input`, `Badge`, `Avatar`, `AnimatedBackground` in `mobile/src/components/ui/` |
+| **Item 1 — Session persistence** | `mobile/src/app/index.tsx` checks `supabase.auth.getSession()`, shows a loading state, redirects to `/(app)/home` or `/(auth)/login` correctly |
+| **Item 2 — Deep links for password reset** | `mobile/src/app/(auth)/reset-password.tsx` uses `expo-linking` to parse the incoming email link and calls `supabase.auth.setSession()` |
+| **Item 4 — Rest of the UI kit** | `Accordion`, `BottomSheet`, `Dialog`, `Select`, `Skeleton`, `SegmentedControl` built, `sonner-native` added for toasts, all exercised in `mobile/src/app/gallery.tsx` |
+| **Item 5 — Theme token completeness** | All four phase colors + paper background present in `mobile/tailwind.config.js`, matching `globals.css` |
 | Brand fonts loaded | Inter, Outfit, Cormorant Garamond wired in `mobile/src/app/_layout.tsx` |
-| Deep link scheme registered | `rovehealth://` set in `mobile/app.json` — **not yet handled anywhere** (see Item 2) |
 
-**Explicitly NOT done yet** (checked directly): session persistence (`index.tsx` still hard-redirects to login with a TODO comment), any deep-link handler, the rest of the UI kit (sheets, dialogs, selects, toasts, accordion), all 26 app screens, both risk spikes, the shared-logic package, and everything in native polish / testing / release.
+**Explicitly NOT done yet** (checked directly): Item 3 (signing-key verification — deliberately deferred to Phase 6, see Decisions log), all 26 app screens, both risk spikes, the shared-logic package, and everything in native polish / testing / release.
 
 ## Ground rules (non-negotiable, unchanged)
 
@@ -72,31 +75,25 @@ A code audit found more already built than the last update assumed. **Do not red
 
 ## Phase 1 — Finish the foundation (no dependencies, start immediately)
 
-### [ ] 1. Session persistence + app entry logic
+### [x] 1. Session persistence + app entry logic
 **What:** `mobile/src/app/index.tsx` currently always redirects to `/login`. It needs to check for a real Supabase session and route accordingly.
 **Research:** `@supabase/supabase-js` session handling + `expo-secure-store` for token storage (already a dependency in `package.json`, unused so far). Look at how `frontend/src/app/providers.tsx` and `frontend/src/lib/supabase` (client) handle auth state on web for the equivalent logic.
 **Build:** wire Supabase's session storage to `expo-secure-store` (custom storage adapter), add a loading state while the session check runs, redirect to the home hub if logged in, login if not.
 **Definition of done:** log in on your phone, force-quit the app, reopen it — you land on the home stub (or a placeholder screen) without re-entering credentials. Log out — you land back on login.
 
-### [ ] 2. Deep links for password reset
+### [x] 2. Deep links for password reset
 **What:** the `rovehealth://` scheme is registered but nothing listens for the incoming link from a password-reset email.
 **Research:** Expo Router's automatic deep-link handling (file-based routes already respond to `rovehealth:///reset-password`); check what the reset-password email template actually sends (Supabase auth email templates, likely in Supabase dashboard or `supabase/` config) — the link format must match a route you have.
 **Build:** confirm `mobile/src/app/(auth)/reset-password.tsx` correctly reads the token/params from the incoming link and calls the right Supabase method.
 **Definition of done:** request a password reset on your phone, tap the email link — the app opens directly to the reset screen with the reset flow working.
 
-### [ ] 3. Play Store signing-key verification ⚠️ do this in week 1, not later
-**What:** the one irreversible risk in the whole project.
-**Research:** Play Console → your app → Setup → App signing. Determine whether Google Play App Signing is enabled (likely, since the app already ships) and locate the existing upload keystore used for `com.rovehealth.app`.
-**Build:** nothing to code — this is a verification + backup task. Back up the keystore file in two separate places (e.g. password manager + a second cloud drive).
-**Definition of done:** written confirmation (a note in this repo's `docs/` or shared with the founder) of where the keystore lives and that it's backed up twice.
-
-### [ ] 4. Rest of the UI kit
+### [x] 4. Rest of the UI kit
 **What:** the design system needs the components no screen has needed yet: Sheet/bottom-sheet, Dialog/Modal, Select/Dropdown, Toast, Accordion (the tracker screen is built from accordion cards — see `frontend/src/app/cycle-sync/tracker/components/TrackerAccordion.tsx`), Skeleton/loading states, Tabs.
 **Research:** compare against every component in `frontend/src/components/ui/` — that's the full source-of-truth list to port. Toasts → `sonner-native` per the library mapping above.
 **Build:** one file per component in `mobile/src/components/ui/`, matching the visual language of the 6 already built (check `Button.tsx`/`Card.tsx` for the established style conventions).
 **Definition of done:** a component-gallery demo screen (`mobile/src/app/gallery.tsx` or similar, removable before release) showing every component, checked side-by-side against the equivalent web component.
 
-### [ ] 5. Theme token completeness check
+### [x] 5. Theme token completeness check
 **What:** confirm every design token from the web app exists in the mobile NativeWind config, not just fonts.
 **Research:** `frontend/src/app/globals.css` — specifically the phase colors (`--phase-menstrual-rgb`, `--phase-follicular-rgb`, `--phase-ovulatory-rgb`, `--phase-luteal-rgb`) and the paper background (`--color-paper: #FAF9F6`). Compare against `mobile/tailwind.config.js`.
 **Build:** add any missing tokens (the four phase colors are the most likely gap — they drive every phase-aware screen in Phase 3 below).
@@ -122,11 +119,12 @@ A code audit found more already built than the last update assumed. **Do not red
 
 ## Phase 3 — Shared logic (start anytime; blocks nothing else, but screens should switch to it once ready)
 
-### [ ] 8. Shared-logic package extraction
-**What:** move pure TypeScript (no React, no DOM) out of `frontend/` into something both `frontend/` and `mobile/` import — cycle-phase math, Zod schemas, onboarding logic.
-**Research:** `shared/cycle/` (already partially separated) and `frontend/src/lib/schemas.ts` — anything with zero React/DOM imports is a candidate.
-**Build:** confirm/extend the `shared/` package, update `frontend/`'s imports to point at it, run the full existing test suite (`npm test` at repo root, plus `comprehensive_cycle_logic_test` if that's a named script — check `package.json`).
-**Definition of done:** the website builds and every existing test passes unchanged. Until this lands, screen-builders (Phase 4) may temporarily copy-paste the logic they need and switch the import later — don't block on this.
+### [x] 8. Shared-logic package extraction — DONE 2026-07-19
+**What it turned out to be:** cycle-phase math (`shared/cycle/phase.ts`) was already fully extracted and already used by 12 frontend files via `@shared/cycle/phase` — nothing to do there. What was still frontend-only and got moved: auth Zod schemas (`shared/schemas/auth.ts`) and onboarding Zod schemas + types + constants + date helpers (`shared/onboarding/`). `frontend/src/lib/schemas.ts` and `frontend/src/lib/onboarding/*.ts` are now thin re-export shims (same pattern as the existing `shared/cycle/smart-phase.ts` shim) so no other frontend file needed to change its imports.
+**Real bug found and fixed along the way:** `shared/` had no `node_modules` of its own, so `zod` resolution walked up the filesystem and landed on an unrelated Zod install outside the repo — a different major version than `frontend/` uses, which silently produced type errors. Fixed by adding `zod` as a pinned dependency at the **repo root** `package.json` (`^3.23.8`, matching `frontend/`), so `shared/` resolves it consistently for every consumer, on any machine.
+**Mobile wiring:** `mobile/tsconfig.json` and `mobile/metro.config.js` now resolve `@shared/*` (Metro needed `watchFolders` + `extraNodeModules` since `shared/` sits outside `mobile/`'s own root — TypeScript path mapping alone isn't enough for the bundler). Verified for real, not just type-checked: temporarily wired `@shared/cycle/phase` into `gallery.tsx` and ran a full `expo export`, confirming Metro actually bundles across the monorepo boundary, then reverted the temporary wiring.
+**Verified:** `npm test` at repo root — 45/45 real tests pass (unchanged); `npx tsc --noEmit` clean in both `frontend/` and `mobile/`; `npm run build --prefix frontend` succeeds, including the onboarding route that now imports from `@shared/`.
+**Side effect worth knowing about:** running `expo export` also auto-linked `mobile/app.json` to an EAS project (`extra.eas.projectId`) and added a memory flag to `eas.json`'s production profile — normal EAS behavior, but flagging since nobody asked for it explicitly. Review before committing.
 
 ---
 
@@ -228,6 +226,12 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 ---
 
 ## Phase 6 — Testing and release (whole team, after Phase 4 + 5 are merged — do not compress this phase)
+
+### [ ] 3. Play Store signing-key verification
+**What:** the one irreversible risk in the whole project. **Deliberately deferred to this phase by founder decision** (2026-07-19) — originally scheduled for week 1 so a problem would surface with weeks of runway left instead of none; moved here knowingly, accepting that a signing issue found now has to be resolved without that buffer, right before release.
+**Research:** Play Console → your app → Setup → App signing. Determine whether Google Play App Signing is enabled (likely, since the app already ships) and locate the existing upload keystore used for `com.rovehealth.app`.
+**Build:** nothing to code — this is a verification + backup task. Back up the keystore file in two separate places (e.g. password manager + a second cloud drive).
+**Definition of done:** written confirmation (a note in this repo's `docs/` or shared with the founder) of where the keystore lives and that it's backed up twice. **Do this before the release build below, not after.**
 
 - Write and run a full manual test script on real devices, **including at least one real Android phone**.
 - Maestro e2e tests for the critical paths: login, tracker, AI chat.
