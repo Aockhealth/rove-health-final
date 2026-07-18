@@ -47,8 +47,8 @@ export default function SignupPage() {
 
     if (!verificationEmailSentTo) return;
 
-    if (!/^\d{6}$/.test(otp)) {
-      setOtpError("Please enter the 6-digit code sent to your email.");
+    if (otp.length < 6 || otp.length > 8 || !/^\d+$/.test(otp)) {
+      setOtpError("Please enter the verification code sent to your email.");
       return;
     }
 
@@ -156,7 +156,7 @@ export default function SignupPage() {
             Verify your email
           </h1>
           <p className="text-sm text-rove-stone font-medium mb-6 leading-relaxed">
-            We have sent a 6-digit code to<br />
+            We have sent a verification code to<br />
             <span className="font-bold text-rove-charcoal">{verificationEmailSentTo}</span>.<br />
             Enter it below to activate your account.
           </p>
@@ -172,10 +172,10 @@ export default function SignupPage() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={6}
+                  maxLength={8}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  placeholder="00000000"
                   className={`w-full pl-12 pr-5 py-3.5 rounded-2xl bg-rove-cream/50 text-rove-charcoal border outline-none transition-all placeholder:text-rove-stone/30 font-semibold text-center text-2xl tracking-[0.5em]
                       ${otpError
                       ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100/50"
