@@ -132,10 +132,11 @@ A code audit found more already built than the last update assumed. **Phase 1 is
 
 For every item in this phase, the **reference is the equivalent page in `frontend/src/app/cycle-sync/`** (paths given per item) plus any component folder listed. Read the web version fully before writing any native code — that page *is* the spec.
 
-### [ ] 9. Home hub (dashboard)
-**Reference:** `frontend/src/app/cycle-sync/page.tsx` (the "Daily Flow River"), `frontend/src/components/cycle-sync/RiverTrack.tsx`, `WelcomeTour.tsx`, `ProfileAvatar.tsx`.
-**Note:** this screen was missing from the original plan entirely — it's the first thing a logged-in user sees.
-**Definition of done:** side-by-side with the website on the same account, same data — checked in **all four phases** (ground rule 5).
+### [x] 9. Home hub (dashboard) — code complete 2026-07-19, phone checkpoint still pending
+**What was built:** `mobile/src/app/(app)/home.tsx` (full dashboard: phase orb, next-period/ovulation/fertile-window stat cards, Daily Flow River, Today's Snapshot 2x2 grid with detail dialogs, empty-cycle-data state, TTC/menopause placeholder states), `mobile/src/lib/dashboard.ts` (data layer), `mobile/src/components/home/{RiverTrack,ProfileAvatar,WelcomeTour}.tsx`, `mobile/src/data/home-content.ts` (phase theme/snapshot copy, mirrored from the web page's inline constants since they aren't exported there).
+**Architecture note:** Next.js Server Actions (`fetchDashboardData` etc.) aren't reachable from React Native, so `dashboard.ts` re-implements the same Supabase queries directly via the client SDK (RLS-scoped to `auth.uid()`), then reuses `@shared/cycle/phase` for the actual phase math — same calculation, same result, different transport. Static phase content (`PHASE_CONTENT`) was moved to `shared/content/phase-content.ts` and bundled into the app rather than fetched, per the earlier decision that this content is static per-phase copy, not per-user data — `frontend/`'s original file is now a re-export shim, unchanged behavior.
+**Verified:** `npm test` (45/45 pass), `tsc --noEmit` clean in both `frontend/` and `mobile/`, `npm run build --prefix frontend` succeeds, and a real `expo export` bundle succeeds with the screen's imports resolved (not just type-checked).
+**Not yet verified — needs a human on a real phone:** the actual **Definition of done** (side-by-side against the website, same account, checked in all four phases) requires manual testing per ground rule 4, which Claude Code can't do. Someone should log into the mobile build with a test account, adjust its cycle start date to land in each of the four phases, and compare against the website before this item is fully closed out.
 
 ### [ ] 10. Tracker — shell + first 6 logging cards
 **Reference:** `frontend/src/app/cycle-sync/tracker/page.tsx` and `.../tracker/components/` — this folder has 18 card components; split across two checklist items so no single person is blocked for 4 days straight. Take: `Header`, `CalendarCard`, `CurrentPhaseBadge`, `FlowCard`, `PeriodLoggingCard`, `QuickPhaseLog`.
