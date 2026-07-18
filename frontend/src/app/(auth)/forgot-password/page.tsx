@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
 
         if (!result.success) {
             const formattedErrors: FieldErrors = {};
-            result.error.issues.forEach((issue) => {
+            result.error.issues.forEach((issue: any) => {
                 formattedErrors[issue.path[0].toString()] = issue.message;
             });
             setFieldErrors(formattedErrors);
