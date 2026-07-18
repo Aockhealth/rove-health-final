@@ -13,10 +13,20 @@ let SSRSafeStorage = {
   removeItem: (key: string) => Promise.resolve(),
 };
 
-// If we are NOT in the Node.js SSR process, safely require AsyncStorage
+// If we are NOT in the Node.js SSR process, safely require SecureStore
 if (typeof process === 'undefined' || process.release?.name !== 'node') {
-  const AsyncStorage = require('@react-native-async-storage/async-storage').default || require('@react-native-async-storage/async-storage');
-  SSRSafeStorage = AsyncStorage;
+  const SecureStore = require('expo-secure-store');
+  SSRSafeStorage = {
+    getItem: (key: string) => {
+      return SecureStore.getItemAsync(key);
+    },
+    setItem: (key: string, value: string) => {
+      return SecureStore.setItemAsync(key, value);
+    },
+    removeItem: (key: string) => {
+      return SecureStore.deleteItemAsync(key);
+    },
+  };
 }
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';

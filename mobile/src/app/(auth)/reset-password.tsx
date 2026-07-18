@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { Lock } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -12,6 +13,37 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  React.useEffect(() => {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      const parsedUrl = Linking.parse(url);
+      
+      let accessToken = parsedUrl.queryParams?.access_token as string | undefined;
+      let refreshToken = parsedUrl.queryParams?.refresh_token as string | undefined;
+
+      // Supabase often puts tokens in the hash fragment for implicit flow
+      if (parsedUrl.queryParams && typeof parsedUrl.queryParams === 'object') {
+        const queryStr = Object.keys(parsedUrl.queryParams).join('&');
+        if (queryStr.includes('access_token')) {
+          const parts = queryStr.split('&');
+          parts.forEach(part => {
+            const [key, val] = part.split('=');
+            if (key === 'access_token') accessToken = val;
+            if (key === 'refresh_token') refreshToken = val;
+          });
+        }
+      }
+
+      if (accessToken && refreshToken) {
+        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl);
+    const sub = Linking.addEventListener('url', (e) => handleUrl(e.url));
+    return () => sub.remove();
+  }, []);
 
   async function handleResetPassword() {
     setError('');

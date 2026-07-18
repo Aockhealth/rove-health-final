@@ -10,13 +10,19 @@ import { BottomSheet, BottomSheetProps } from '../components/ui/BottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { toast } from 'sonner-native';
 import { AnimatedBackground } from '../components/ui/AnimatedBackground';
+import { Accordion } from '../components/ui/Accordion';
+import { Skeleton } from '../components/ui/Skeleton';
+import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { Link } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, Activity, Calendar } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 export default function GalleryScreen() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [selectValue, setSelectValue] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('insights');
+  const router = useRouter();
 
   return (
     <SafeAreaView className="flex-1 bg-rove-paper" edges={['top']}>
@@ -24,11 +30,9 @@ export default function GalleryScreen() {
       
       {/* Header */}
       <View className="px-6 py-4 flex-row items-center border-b border-rove-stone/10">
-        <Link href="/" asChild>
-          <Button variant="ghost" size="icon" className="-ml-3 mr-2">
-            <ArrowLeft size={24} color="#333" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" className="-ml-3 mr-2" onPress={() => router.push('/')}>
+          <ArrowLeft size={24} color="#333" />
+        </Button>
         <Text className="text-2xl font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
           UI Component Gallery
         </Text>
@@ -118,6 +122,90 @@ export default function GalleryScreen() {
             <Button className="flex-1 bg-red-500" onPress={() => toast.error('Failed to save data.')}>Error</Button>
           </View>
           <Button variant="outline" onPress={() => toast('This is a neutral message.')}>Neutral Toast</Button>
+        </View>
+
+        {/* Accordion */}
+        <View className="mb-8 space-y-4">
+          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Accordion</Text>
+          <Accordion 
+            title="Daily Insights" 
+            summary="You're in your follicular phase. High energy expected."
+            icon={<Sparkles size={20} color="#8DAA9D" />}
+            themeColor="#8DAA9D"
+            defaultOpen
+          >
+            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Inter-Regular' }}>
+              Your estrogen levels are rising. This is a great time to schedule demanding tasks, try a new high-intensity workout class, or brainstorm new creative ideas. Make the most of this natural energy peak!
+            </Text>
+          </Accordion>
+          <Accordion 
+            title="Symptom Log" 
+            summary="3 symptoms logged today"
+            icon={<Activity size={20} color="#D4A25F" />}
+            themeColor="#D4A25F"
+          >
+            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Inter-Regular' }}>
+              • Cramps (Mild){'\n'}• Bloating (Moderate){'\n'}• Fatigue (Mild)
+            </Text>
+          </Accordion>
+        </View>
+
+        {/* Skeleton */}
+        <View className="mb-8 space-y-4">
+          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Skeleton Loader</Text>
+          <View className="bg-white p-5 rounded-[2rem] border border-rove-stone/10 shadow-sm flex-row items-center gap-4">
+            <Skeleton className="w-14 h-14 rounded-full" />
+            <View className="flex-1 gap-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </View>
+          </View>
+        </View>
+
+        {/* Tabs */}
+        <View className="mb-8 space-y-4">
+          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Tabs</Text>
+          <SegmentedControl 
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: 'insights', label: 'Insights' },
+              { id: 'calendar', label: 'Calendar' },
+              { id: 'log', label: 'Log Data' },
+            ]}
+          />
+          <View className="bg-white p-6 rounded-[2rem] border border-rove-stone/10 shadow-sm mt-2">
+            <Text className="text-rove-charcoal text-center" style={{ fontFamily: 'Inter-Medium' }}>
+              Currently active tab: <Text className="font-bold">{activeTab}</Text>
+            </Text>
+          </View>
+        </View>
+
+        {/* Theme Tokens Check */}
+        <View className="mb-12 space-y-4">
+          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Theme Tokens</Text>
+          <View className="flex-row flex-wrap gap-4">
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-full bg-phase-menstrual shadow-sm mb-2" />
+              <Text className="text-xs text-rove-stone font-medium">Menstrual</Text>
+            </View>
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-full bg-phase-follicular shadow-sm mb-2" />
+              <Text className="text-xs text-rove-stone font-medium">Follicular</Text>
+            </View>
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-full bg-phase-ovulatory shadow-sm mb-2" />
+              <Text className="text-xs text-rove-stone font-medium">Ovulatory</Text>
+            </View>
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-full bg-phase-luteal shadow-sm mb-2" />
+              <Text className="text-xs text-rove-stone font-medium">Luteal</Text>
+            </View>
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-full bg-paper border border-rove-stone/20 shadow-sm mb-2" />
+              <Text className="text-xs text-rove-stone font-medium">Paper</Text>
+            </View>
+          </View>
         </View>
 
       </ScrollView>

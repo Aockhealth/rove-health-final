@@ -1,7 +1,37 @@
+import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
+import { supabase } from '../lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
 export default function Index() {
-  // For Day 3 testing, we will automatically redirect the root screen to the login screen.
-  // Once we build the real Tracker dashboard, we will check the Supabase session here.
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-rove-paper justify-center items-center">
+        <ActivityIndicator size="large" color="#AF6B6B" />
+      </View>
+    );
+  }
+
+  if (session) {
+    return <Redirect href="/(app)/home" />;
+  }
+
   return <Redirect href="/(auth)/login" />;
 }
