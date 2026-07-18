@@ -1,6 +1,38 @@
 # Rove Health — React Native Migration: Day-by-Day Checklist
 
-_Last updated: 2026-07-19 (v3 — restructured from 3 named tracks into a shared checklist anyone on the team can pick up. Technical decisions (library choices, safety rules) live in [react-native-migration-plan.md](react-native-migration-plan.md) — read that first._
+_Last updated: 2026-07-19 (v4 — this is now the single source of truth; the earlier `react-native-migration-plan.md` has been folded in and deleted). Shareable Word version: `Rove-Health-RN-Migration-Intern-Plan.docx` in this same folder._
+
+## Project context
+
+- **Website:** Next.js app at rovehealth.in — 22 screens, ~110 components. Keeps running untouched throughout the migration.
+- **Current Android app:** a Capacitor shell that loads the live website in a webview (`com.rovehealth.app`, already on the Play Store). It stays live until the RN app finishes staged rollout.
+- **Backend:** Supabase (accounts, cycle data), Next.js API routes (AI chat, learn, Shopify), OpenAI/Gemini, Pinecone, Upstash. **None of this changes** — the RN app talks to the exact same backend, so existing users keep their accounts and data automatically.
+- **What "converting to React Native" means:** the ~110 UI components get rebuilt as true native UI. Reused as-is: the Supabase database, all API routes, and the pure-TypeScript business logic (cycle math, Zod schemas). Rewritten: every screen's UI, navigation (Next.js routing → Expo Router), animations (framer-motion → Reanimated), local storage, splash screen, status bar.
+
+## Library mapping (decided up front so there are no mid-project surprises)
+
+| Today (web) | React Native replacement | Risk |
+|---|---|---|
+| Next.js App Router | Expo Router (file-based, very similar) | Low |
+| Tailwind CSS | **NativeWind** (same Tailwind classes — biggest reuse win) | Low |
+| TanStack Query | Same library, works in RN | None |
+| Supabase (`@supabase/ssr`) | `@supabase/supabase-js` + SecureStore session | Low |
+| framer-motion | react-native-reanimated + moti | Medium |
+| lucide-react icons | lucide-react-native | Low |
+| sonner toasts | sonner-native | Low |
+| @nivo/pie charts | victory-native | Medium |
+| react-markdown | react-native-markdown-display | Low |
+| canvas-confetti | react-native-confetti-cannon or Lottie | Low |
+| idb-keyval (offline cache) | react-native-mmkv | Low |
+| posthog-js | posthog-react-native | Low |
+| ElevenLabs voice (`@11labs/react`) | `@elevenlabs/react-native` | **High — verify early (Item 6 spike)** |
+| Serwist PWA / service worker | Not needed (it's a native app) | — |
+
+## Decisions log (so the reasoning isn't lost)
+
+- **iOS testing devices:** day-to-day checkpoints run on the founder's iPhone via Expo Go — same code builds both platforms. From the voice spike (Item 6) onward, custom native modules need an Apple Developer account ($99/yr — needed anyway for the App Store launch) to install on the iPhone directly; until purchased, fall back to the iOS simulator on the Mac. **Ship both Play Store and App Store at release, not iOS as an afterthought** (Phase 6 already schedules the TestFlight build as a fast-follow).
+- **Offline logging (writing new data with no signal) is explicitly out of scope for v1.** Researched how Flo and Clue handle this: Flo caches new log entries on-device and syncs when back online; Clue deliberately *removed* most offline functionality in a redesign because offline sync was their biggest source of data loss and bugs. Given that a mature, funded competitor got burned by exactly this, v1 requires a live connection to save a new log entry. Viewing already-cached data offline (Item 27) is still in scope. Revisit true offline writes as a deliberate v1.1+ project with its own conflict-resolution design if the founder wants it later.
+- **App Store internet-requirement note:** Apple has no rule against apps requiring internet — the vast majority of apps do. What reviewers check is graceful failure with no connection (a clean "no internet" message, never a crash or infinite spinner). Build this into each screen's normal loading/error states rather than as a separate checklist item — check it as part of every screen's Definition of done.
 
 ## How to use this document
 
@@ -33,7 +65,8 @@ A code audit found more already built than the last update assumed. **Do not red
 4. Every checkpoint on a **real phone** — Expo Go on the founder's iPhone day-to-day; a real Android device before release, never emulator-only.
 5. **Four-phase testing rule:** Home, Plan, Plan-phase-detail, and Tracker are each *one* screen whose content/art/color swap by cycle phase. Build once, but the checkpoint must be run in **all four phases** (menstrual/follicular/ovulatory/luteal) — temporarily edit the cycle start date on a test account to land in each one.
 6. The current Capacitor app stays live on the Play Store until the RN app finishes staged rollout.
-7. Stuck more than 30 minutes → post in team chat with what you tried. Silent blocking is the only real way to fall behind on a shared checklist.
+7. **No-internet graceful failure:** every screen must show a clean "no connection" message when offline, never a crash or an infinite spinner — this is what App Store review actually checks for (Apple doesn't require offline support, but does reject apps that break with no signal). Check this as part of every screen's Definition of done, not as a separate task.
+8. Stuck more than 30 minutes → post in team chat with what you tried. Silent blocking is the only real way to fall behind on a shared checklist.
 
 ---
 
@@ -59,7 +92,7 @@ A code audit found more already built than the last update assumed. **Do not red
 
 ### [ ] 4. Rest of the UI kit
 **What:** the design system needs the components no screen has needed yet: Sheet/bottom-sheet, Dialog/Modal, Select/Dropdown, Toast, Accordion (the tracker screen is built from accordion cards — see `frontend/src/app/cycle-sync/tracker/components/TrackerAccordion.tsx`), Skeleton/loading states, Tabs.
-**Research:** compare against every component in `frontend/src/components/ui/` — that's the full source-of-truth list to port. Toasts → `sonner-native` per the library mapping in the main plan.
+**Research:** compare against every component in `frontend/src/components/ui/` — that's the full source-of-truth list to port. Toasts → `sonner-native` per the library mapping above.
 **Build:** one file per component in `mobile/src/components/ui/`, matching the visual language of the 6 already built (check `Button.tsx`/`Card.tsx` for the established style conventions).
 **Definition of done:** a component-gallery demo screen (`mobile/src/app/gallery.tsx` or similar, removable before release) showing every component, checked side-by-side against the equivalent web component.
 
@@ -138,7 +171,7 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 
 ### [ ] 17. Learn article reader
 **Reference:** `frontend/src/app/cycle-sync/learn/[id]/page.tsx`, `ArticleControls.tsx`, `ArticleTracker.tsx`.
-**Research:** `react-native-markdown-display` for rendering article body content (per the library mapping in the main plan).
+**Research:** `react-native-markdown-display` for rendering article body content (per the library mapping above).
 **Definition of done:** open an article from Item 16's screen, content renders correctly, reading-progress tracking works.
 
 ### [ ] 18. Profile
@@ -176,7 +209,7 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 **Definition of done:** a full guided session plays through correctly on device.
 
 ### [ ] 26. Marketing webviews
-**Reference:** Shop (`(marketing)/shop/`), Science, Story, Ingredient glossary, Privacy, Privacy pledge — per the main plan, these become **one reusable in-app browser screen** pointed at the live URLs, not six separate native rebuilds.
+**Reference:** Shop (`(marketing)/shop/`), Science, Story, Ingredient glossary, Privacy, Privacy pledge — these become **one reusable in-app browser screen** pointed at the live URLs, not six separate native rebuilds.
 **Definition of done:** a test shop order completes end-to-end inside the webview.
 
 ---

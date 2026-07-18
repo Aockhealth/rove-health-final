@@ -159,18 +159,23 @@ export default function LoginScreen() {
 
             {/* Footer Links */}
             <View className="mt-8 items-center space-y-3 gap-2">
-              <View className="flex-row justify-center items-center">
-                <Text className="text-sm text-rove-stone font-medium">
-                  Don't have an account? 
-                </Text>
-                <Link href="/(auth)/signup">
-                  <Text className="text-rove-charcoal font-bold ml-1">Sign up</Text>
-                </Link>
-              </View>
-              <Text className="text-[11px] text-rove-stone/60">
-                View our Privacy Policy
-              </Text>
+              <View className="flex-row justify-center mt-8">
+            <Text className="text-rove-stone text-sm" style={{ fontFamily: 'Inter-Regular' }}>Don't have an account? </Text>
+            <Link href="/(auth)/signup" asChild>
+              <Text className="text-rove-charcoal font-bold text-sm" style={{ fontFamily: 'Inter-Bold' }}>Sign up</Text>
+            </Link>
+          </View>
+          
+            {/* Temporary Link for Design System Verification */}
+            <View className="mt-8 pt-6 border-t border-rove-stone/10 items-center">
+              <Link href="/gallery" asChild>
+                <Button variant="outline" size="sm">View UI Component Gallery</Button>
+              </Link>
             </View>
+            <Text className="text-[11px] text-rove-stone/60 mt-4 text-center">
+              View our Privacy Policy
+            </Text>
+          </View>
 
           </Animated.View>
         </ScrollView>
