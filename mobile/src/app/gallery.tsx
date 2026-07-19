@@ -16,12 +16,14 @@ import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { Link } from 'expo-router';
 import { ArrowLeft, Sparkles, Activity, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { SegmentedDoughnut } from '../components/ui/SegmentedDoughnut';
 
 export default function GalleryScreen() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [selectValue, setSelectValue] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('insights');
+  const [selectedPhase, setSelectedPhase] = useState<string>('Menstrual');
   const router = useRouter();
 
   return (
@@ -177,6 +179,30 @@ export default function GalleryScreen() {
           <View className="bg-white p-6 rounded-[2rem] border border-rove-stone/10 shadow-sm mt-2">
             <Text className="text-rove-charcoal text-center" style={{ fontFamily: 'Inter-Medium' }}>
               Currently active tab: <Text className="font-bold">{activeTab}</Text>
+            </Text>
+          </View>
+        </View>
+
+        {/* Charts & Insights Spike */}
+        <View className="mb-8 space-y-4">
+          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>
+            Charts & Insights
+          </Text>
+          <View className="bg-white/85 p-6 rounded-[2rem] border border-rove-stone/10 shadow-sm items-center justify-center">
+            <Text className="text-sm font-semibold text-rove-stone mb-4 text-center" style={{ fontFamily: 'Inter-Medium' }}>
+              Interactive Phase Doughnut Chart
+            </Text>
+            
+            <View className="h-[200px] w-full items-center justify-center">
+              <SegmentedDoughnut 
+                selectedPhase={selectedPhase}
+                onPhaseSelect={setSelectedPhase}
+                size={180}
+              />
+            </View>
+            
+            <Text className="text-xs text-rove-stone text-center mt-4 max-w-[260px]" style={{ fontFamily: 'Inter-Regular' }}>
+              Tap on any segment to select the phase. Tapping triggers a smooth pop-out offset translation and scale transition natively.
             </Text>
           </View>
         </View>
