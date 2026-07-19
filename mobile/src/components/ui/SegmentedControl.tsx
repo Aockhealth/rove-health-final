@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { cn } from '../../lib/utils';
 
 export interface SegmentedControlTab {
@@ -20,7 +20,7 @@ export function SegmentedControl({ tabs, activeTab, onChange, className }: Segme
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
-          <TouchableOpacity
+          <Pressable
             key={tab.id}
             onPress={() => onChange(tab.id)}
             style={[{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 14 }, isActive ? { backgroundColor: '#fff' } : {}]}
@@ -30,7 +30,7 @@ export function SegmentedControl({ tabs, activeTab, onChange, className }: Segme
             >
               {tab.label}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>

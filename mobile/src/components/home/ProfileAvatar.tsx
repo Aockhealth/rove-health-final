@@ -12,23 +12,23 @@ async function fetchProfileInitial(): Promise<string | null> {
   return data?.full_name?.[0] || null;
 }
 
+import { Link } from 'expo-router';
+
 export default function ProfileAvatar() {
-  const router = useRouter();
   const { data: initial } = useQuery({
     queryKey: ['profile-avatar'],
     queryFn: fetchProfileInitial,
   });
 
   return (
-    <Pressable
-      onPress={() => router.push('/(app)/profile' as any)}
-      className="w-10 h-10 rounded-full bg-white/50 border border-white/60 items-center justify-center active:scale-95"
-    >
-      {initial ? (
-        <Text className="font-heading text-lg text-rove-charcoal font-bold">{initial.toUpperCase()}</Text>
-      ) : (
-        <User size={20} color="#A8A29E" />
-      )}
-    </Pressable>
+    <Link href="/profile" asChild>
+      <Pressable className="w-10 h-10 rounded-full bg-white/50 border border-white/60 items-center justify-center active:scale-95 z-50">
+        {initial ? (
+          <Text className="font-heading text-lg text-rove-charcoal font-bold">{initial.toUpperCase()}</Text>
+        ) : (
+          <User size={20} color="#A8A29E" />
+        )}
+      </Pressable>
+    </Link>
   );
 }

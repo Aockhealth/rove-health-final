@@ -53,33 +53,31 @@ export const DialogContent: React.FC<DialogContentProps> = ({ children, classNam
       onRequestClose={() => onOpenChange(false)}
       animationType="none"
     >
-      <View className="flex-1 justify-center items-center p-4">
-        {/* Backdrop */}
+      <View className="flex-1 justify-center items-center px-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
         <TouchableWithoutFeedback onPress={() => onOpenChange(false)}>
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}
-          />
+          <Animated.View style={StyleSheet.absoluteFillObject} entering={FadeIn.duration(400)} exiting={FadeOut.duration(300)} />
         </TouchableWithoutFeedback>
 
-        {/* Dialog Panel */}
         <Animated.View
-          entering={ZoomIn.duration(200).springify()}
+          entering={ZoomIn.duration(400).springify().damping(24).stiffness(180).mass(0.8)}
           exiting={ZoomOut.duration(200)}
-          className={cn("w-full bg-white shadow-xl rounded-[2rem] p-6 relative", className)}
-          style={{ shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}
+          className={cn(
+            "bg-[#FAF9F6] w-[90%] max-w-[400px] rounded-[32px] p-6 shadow-xl border border-white/50",
+            className
+          )}
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 }}
         >
           {showClose && (
             <TouchableOpacity
               onPress={() => onOpenChange(false)}
-              className="absolute right-4 top-4 z-10 w-8 h-8 items-center justify-center rounded-full bg-rove-cream"
-              activeOpacity={0.7}
+              className="absolute top-5 right-5 z-10 w-8 h-8 items-center justify-center rounded-full bg-rove-stone/10"
             >
-              <X size={16} color="#A8A29E" />
+              <X size={16} color="#7B82A8" />
             </TouchableOpacity>
           )}
-          {children}
+          <View className="pt-2 pb-1">
+            {children}
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -87,19 +85,19 @@ export const DialogContent: React.FC<DialogContentProps> = ({ children, classNam
 };
 
 export const DialogHeader: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-  <View className={cn("flex flex-col space-y-2 text-center items-center mb-4", className)}>
+  <View className={cn("mb-5 items-center", className)}>
     {children}
   </View>
 );
 
 export const DialogTitle: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-  <Text className={cn("text-xl font-bold text-rove-charcoal", className)} style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+  <Text className={cn("text-2xl font-bold text-rove-charcoal text-center mb-1", className)} style={{ fontFamily: 'CormorantGaramond-Bold' }}>
     {children}
   </Text>
 );
 
 export const DialogDescription: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-  <Text className={cn("text-sm text-rove-stone text-center", className)}>
+  <Text className={cn("text-[11px] font-semibold text-rove-stone/80 text-center uppercase tracking-widest", className)}>
     {children}
   </Text>
 );

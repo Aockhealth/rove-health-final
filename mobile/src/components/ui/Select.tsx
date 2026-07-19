@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { BottomSheetModal, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheet } from './BottomSheet';
 import { ChevronDown, Check } from 'lucide-react-native';
 import { cn } from '../../lib/utils';
@@ -42,9 +42,10 @@ export const Select: React.FC<SelectProps> = ({
         activeOpacity={0.8}
         onPress={() => bottomSheetRef.current?.present()}
         className={cn(
-          "flex-row items-center justify-between h-14 w-full rounded-[1.25rem] border border-rove-stone/20 bg-white px-5",
+          "flex-row items-center justify-between h-14 w-full rounded-[1.25rem] border border-white/60 bg-white/50 px-5 shadow-sm",
           className
         )}
+        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
       >
         <Text className={cn("text-base font-medium", selectedOption ? "text-rove-charcoal" : "text-rove-stone/70")} style={{ fontFamily: 'Inter-Medium' }}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -57,33 +58,36 @@ export const Select: React.FC<SelectProps> = ({
         title={title}
         snapPoints={['50%', '75%']}
       >
-        <ScrollView className="flex-1 mt-2" showsVerticalScrollIndicator={false}>
-          {options.map((option, index) => {
-            const isSelected = option.value === value;
+        <BottomSheetFlatList
+          data={options}
+          keyExtractor={(item) => item.value}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
+          renderItem={({ item }) => {
+            const isSelected = item.value === value;
             return (
               <TouchableOpacity
-                key={option.value}
                 activeOpacity={0.7}
-                onPress={() => handleSelect(option.value)}
+                onPress={() => handleSelect(item.value)}
                 className={cn(
-                  "flex-row items-center justify-between py-5 border-b border-rove-stone/10 px-2",
-                  index === options.length - 1 && "border-b-0"
+                  "flex-row items-center justify-between py-4 px-4 rounded-[16px] mb-1.5",
+                  isSelected ? "bg-rove-charcoal/5 border border-rove-charcoal/10" : "bg-transparent border border-transparent"
                 )}
               >
                 <Text 
                   className={cn(
-                    "text-lg", 
-                    isSelected ? "text-rove-sage font-bold" : "text-rove-charcoal font-medium"
+                    "text-[17px]", 
+                    isSelected ? "text-rove-charcoal font-bold" : "text-rove-charcoal/80 font-medium"
                   )}
                   style={{ fontFamily: isSelected ? 'Inter-Bold' : 'Inter-Medium' }}
                 >
-                  {option.label}
+                  {item.label}
                 </Text>
-                {isSelected && <Check size={20} color="#8A9A86" />}
+                {isSelected && <Check size={20} color="#37332E" />}
               </TouchableOpacity>
             );
-          })}
-        </ScrollView>
+          }}
+        />
       </BottomSheet>
     </>
   );

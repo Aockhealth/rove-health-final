@@ -6,7 +6,7 @@ import { Mail, Lock, User } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
-
+import { signInWithGoogle } from '../../lib/auth';
 import { AnimatedBackground } from '../../components/ui/AnimatedBackground';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -180,8 +180,21 @@ export default function SignupScreen() {
               </View>
             </View>
 
-            {/* Google Placeholder */}
-            <Button variant="outline" className="w-full h-14 rounded-full border-rove-stone/20 bg-white">
+            {/* Google */}
+            <Button 
+              variant="outline" 
+              className="w-full h-14 rounded-full border-rove-stone/20 bg-white"
+              onPress={async () => {
+                setLoading(true);
+                setErrors({});
+                const res = await signInWithGoogle();
+                if (!res.success && !res.cancelled) {
+                  setErrors({ server: res.error || 'Google sign up failed' });
+                }
+                setLoading(false);
+              }}
+              disabled={loading}
+            >
               <Text className="text-rove-charcoal font-semibold text-base">Continue with Google</Text>
             </Button>
 
@@ -196,7 +209,13 @@ export default function SignupScreen() {
                 </Link>
               </View>
               <Text className="text-[11px] text-rove-stone/60 text-center">
-                By joining, you agree to our Privacy Policy
+                By joining, you agree to our{' '}
+                <Text 
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/privacy')}
+                >
+                  Privacy Policy
+                </Text>
               </Text>
             </View>
 

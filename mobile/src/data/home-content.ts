@@ -7,60 +7,84 @@
 
 export type PhaseThemeTokens = {
   color: string;
-  iconColor: string;
-  iconBg: string;
+  blob: string;
+  /** Snapshot-card background tint. Mirrors the web page's actual computed value
+   * (`theme.blob` run through a `/30`→`/5` opacity swap, `/10` left unchanged for
+   * Menstrual) — NOT the same as iconBg, which is ~2-4x more saturated and meant
+   * for small icon-badge containers, not full card backgrounds. */
+  cardTint: string;
+  orbRingColors: readonly [string, string, ...string[]];
   badgeBorder: string;
-  ringFrom: string;
-  ringTo: string;
+  iconBg: string;
+  iconColor: string;
+  gradientColors: readonly [string, string, ...string[]];
+  borderColor: string;
+  bgGradient: readonly [string, string, ...string[]];
 };
 
 export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Menstrual: {
     color: '#AF6B6B',
+    blob: 'rgba(175, 107, 107, 0.1)',
+    cardTint: 'rgba(175, 107, 107, 0.15)',
+    orbRingColors: ['rgba(175, 107, 107, 0.4)', 'rgba(255, 255, 255, 1)', 'rgba(175, 107, 107, 0.2)'],
+    badgeBorder: 'rgba(175, 107, 107, 0.2)',
+    iconBg: 'rgba(175, 107, 107, 0.1)',
     iconColor: '#AF6B6B',
-    iconBg: 'rgba(175,107,107,0.1)',
-    badgeBorder: 'rgba(175,107,107,0.3)',
-    ringFrom: 'rgba(175,107,107,0.6)',
-    ringTo: 'rgba(175,107,107,0.2)',
+    gradientColors: ['#F5E1E1', '#FFFFFF'],
+    borderColor: 'rgba(175, 107, 107, 0.15)',
+    bgGradient: ['rgba(175, 107, 107, 0.05)', 'rgba(255, 255, 255, 0)'],
   },
   Follicular: {
     color: '#8DAA9D',
+    blob: 'rgba(141, 170, 157, 0.3)',
+    cardTint: 'rgba(141, 170, 157, 0.12)',
+    orbRingColors: ['rgba(141, 170, 157, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(141, 170, 157, 0.3)'],
+    badgeBorder: 'rgba(141, 170, 157, 0.3)',
+    iconBg: 'rgba(141, 170, 157, 0.2)',
     iconColor: '#8DAA9D',
-    iconBg: 'rgba(141,170,157,0.2)',
-    badgeBorder: 'rgba(141,170,157,0.3)',
-    ringFrom: 'rgba(141,170,157,0.6)',
-    ringTo: 'rgba(141,170,157,0.3)',
+    gradientColors: ['#E6F0EB', '#FFFFFF'],
+    borderColor: 'rgba(141, 170, 157, 0.15)',
+    bgGradient: ['rgba(141, 170, 157, 0.2)', 'rgba(255, 255, 255, 0)'],
   },
   Ovulatory: {
     color: '#D4A25F',
+    blob: 'rgba(212, 162, 95, 0.3)',
+    cardTint: 'rgba(212, 162, 95, 0.12)',
+    orbRingColors: ['rgba(212, 162, 95, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(212, 162, 95, 0.3)'],
+    badgeBorder: 'rgba(212, 162, 95, 0.3)',
+    iconBg: 'rgba(212, 162, 95, 0.2)',
     iconColor: '#D4A25F',
-    iconBg: 'rgba(212,162,95,0.2)',
-    badgeBorder: 'rgba(212,162,95,0.3)',
-    ringFrom: 'rgba(212,162,95,0.6)',
-    ringTo: 'rgba(212,162,95,0.3)',
+    gradientColors: ['#F9EEDD', '#FFFFFF'],
+    borderColor: 'rgba(212, 162, 95, 0.15)',
+    bgGradient: ['rgba(212, 162, 95, 0.2)', 'rgba(255, 255, 255, 0)'],
   },
   Luteal: {
     color: '#7B82A8',
+    blob: 'rgba(123, 130, 168, 0.3)',
+    cardTint: 'rgba(123, 130, 168, 0.12)',
+    orbRingColors: ['rgba(123, 130, 168, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(123, 130, 168, 0.4)'],
+    badgeBorder: 'rgba(123, 130, 168, 0.3)',
+    iconBg: 'rgba(123, 130, 168, 0.2)',
     iconColor: '#7B82A8',
-    iconBg: 'rgba(123,130,168,0.2)',
-    badgeBorder: 'rgba(123,130,168,0.3)',
-    ringFrom: 'rgba(123,130,168,0.6)',
-    ringTo: 'rgba(123,130,168,0.4)',
+    gradientColors: ['#E5E7F0', '#FFFFFF'],
+    borderColor: 'rgba(123, 130, 168, 0.15)',
+    bgGradient: ['rgba(123, 130, 168, 0.2)', 'rgba(255, 255, 255, 0)'],
   },
 };
 
 export const PHASE_KEYWORDS: Record<string, string> = {
-  Menstrual: 'Winter • Rest & Reset',
-  Follicular: 'Spring • Energy Rising',
-  Ovulatory: 'Performer • Peak Confidence',
-  Luteal: 'Reflective Phase',
+  Menstrual: 'Rest & Reset',
+  Follicular: 'Energy Rising',
+  Ovulatory: 'Peak Confidence',
+  Luteal: 'Deep Reflection',
 };
 
 export const PHASE_EXPLAINERS: Record<string, string> = {
-  Menstrual: "Why Red? 🌹 Honoring your body's sacred reset.",
-  Follicular: 'Why Green? 🌱 Just like spring, your energy is blooming!',
-  Ovulatory: "Why Gold? ✨ You're glowing with peak summer vibes!",
-  Luteal: 'Why Indigo? 🌙 Deep colors for deep thoughts & reflection.',
+  Menstrual: '"A time for inward reflection, deep rest, and honoring your body\'s sacred reset."',
+  Follicular: '"A season of renewal. Your energy blooms and creative potential awakens."',
+  Ovulatory: '"Peak vitality. You are radiant, communicative, and vibrating with confidence."',
+  Luteal: '"The inward turn. A time for nesting, deep focus, and profound intuition."',
 };
 
 type SnapshotEntry = { title: string; desc: string; detail: string; protocol: string };

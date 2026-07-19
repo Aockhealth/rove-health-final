@@ -1,3 +1,9 @@
+import 'react-native-reanimated';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+
+// Silence strict-mode warnings that flood the JS thread and freeze the UI
+configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
+
 import 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
@@ -8,6 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Toaster } from 'sonner-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SplashIntro } from '../components/ui/SplashIntro';
 
 import { 
   Inter_400Regular, 
@@ -37,6 +44,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [showIntro, setShowIntro] = useState(true);
   const [loaded, error] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
@@ -72,8 +80,12 @@ export default function RootLayout() {
               headerShown: false,
               contentStyle: { backgroundColor: '#FAF9F6' },
             }}
-          />
+          >
+            <Stack.Screen name="wellbeing/intro" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="wellbeing/assessment" options={{ presentation: 'modal' }} />
+          </Stack>
           <Toaster />
+          {showIntro && <SplashIntro onFinish={() => setShowIntro(false)} />}
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>

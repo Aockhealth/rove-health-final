@@ -6,6 +6,7 @@ import { Mail, Lock } from 'lucide-react-native';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
+import { signInWithGoogle } from '../../lib/auth';
 import { AnimatedBackground } from '../../components/ui/AnimatedBackground';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -54,20 +55,30 @@ export default function LoginScreen() {
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }} showsVerticalScrollIndicator={false}>
           
           <Animated.View 
-            entering={FadeInDown.duration(1000).springify()}
-            className="w-full bg-white/80 p-8 rounded-[2rem] border border-white shadow-sm overflow-hidden"
-            style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } }}
+            entering={FadeInDown.duration(1000).springify().damping(18)}
+            className="w-full bg-white/60 overflow-hidden"
+            style={{ 
+              borderRadius: 36,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.8)',
+              shadowColor: '#AF6B6B', 
+              shadowOpacity: 0.08, 
+              shadowRadius: 24, 
+              shadowOffset: { width: 0, height: 12 },
+              padding: 32,
+              paddingBottom: 40
+            }}
           >
             
             {/* Header & Logo */}
-            <View className="items-center mb-8">
-              <View className="w-16 h-16 mb-4">
+            <View className="items-center mb-10">
+              <View className="w-20 h-20 mb-6 bg-white rounded-[2rem] shadow-sm items-center justify-center" style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
                  <Image 
-                   source={{ uri: 'https://placehold.co/400' }}
-                   className="w-full h-full"
+                   source={require('../../../assets/images/splash-mark.png')}
+                   className="w-12 h-12"
                    resizeMode="contain"
                  />
               </View>
@@ -83,16 +94,18 @@ export default function LoginScreen() {
             <View className="space-y-6 mb-8 gap-5">
               
               <View>
-                <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px] ml-1 mb-2">
+                <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px] ml-2 mb-2">
                   Email
                 </Text>
                 <View className="relative justify-center">
-                  <View className="absolute left-4 z-10">
-                    <Mail size={18} color="#A8A29E" />
+                  <View className="absolute left-4 z-10 opacity-70">
+                    <Mail size={18} color="#78716C" />
                   </View>
                   <Input
-                    className="pl-12 bg-rove-cream/50 h-14 rounded-2xl border-transparent"
+                    className="pl-12 bg-white/70 h-[56px] rounded-2xl border border-white/50"
+                    style={{ fontSize: 15 }}
                     placeholder="hello@rove.com"
+                    placeholderTextColor="#A8A29E"
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -103,21 +116,23 @@ export default function LoginScreen() {
               </View>
 
               <View>
-                <View className="flex-row justify-between items-center ml-1 mb-2">
+                <View className="flex-row justify-between items-center ml-2 mb-2">
                   <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px]">
                     Password
                   </Text>
                   <Link href="/(auth)/forgot-password">
-                    <Text className="text-[11px] font-semibold text-rove-charcoal/60">Forgot?</Text>
+                    <Text className="text-[11px] font-semibold text-[#AF6B6B]">Forgot?</Text>
                   </Link>
                 </View>
                 <View className="relative justify-center">
-                  <View className="absolute left-4 z-10">
-                    <Lock size={18} color="#A8A29E" />
+                  <View className="absolute left-4 z-10 opacity-70">
+                    <Lock size={18} color="#78716C" />
                   </View>
                   <Input
-                    className="pl-12 bg-rove-cream/50 h-14 rounded-2xl border-transparent"
+                    className="pl-12 bg-white/70 h-[56px] rounded-2xl border border-white/50"
+                    style={{ fontSize: 15 }}
                     placeholder="••••••••"
+                    placeholderTextColor="#A8A29E"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -139,43 +154,57 @@ export default function LoginScreen() {
             <Button 
               onPress={handleLogin} 
               disabled={loading}
-              className="w-full h-14 rounded-full bg-rove-charcoal"
+              className="w-full h-[56px] rounded-2xl bg-rove-charcoal shadow-md"
+              style={{ shadowColor: '#37332E', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
             >
-              <Text className="text-rove-cream font-semibold text-lg">{loading ? "Logging in..." : "Log In"}</Text>
+              <Text className="text-rove-cream font-bold tracking-wide text-base">{loading ? "Logging in..." : "Log In"}</Text>
             </Button>
 
             {/* Separator */}
             <View className="relative mt-8 mb-6 justify-center items-center">
-              <View className="absolute w-full h-[1px] bg-rove-stone/20" />
-              <View className="bg-white px-4 z-10">
-                <Text className="text-rove-stone font-medium text-sm">Or continue with</Text>
+              <View className="absolute w-full h-[1px] bg-rove-stone/10" />
+              <View className="bg-white/60 px-4 z-10 rounded-full">
+                <Text className="text-rove-stone font-semibold text-xs tracking-wide uppercase">Or</Text>
               </View>
             </View>
 
-            {/* Google Placeholder */}
-            <Button variant="outline" className="w-full h-14 rounded-full border-rove-stone/20 bg-white">
+            {/* Google */}
+            <Button 
+              variant="outline" 
+              className="w-full h-[56px] rounded-2xl border-rove-stone/20 bg-white/80"
+              onPress={async () => {
+                setLoading(true);
+                setErrors({});
+                const res = await signInWithGoogle();
+                if (!res.success && !res.cancelled) {
+                  setErrors({ server: res.error || 'Google sign in failed' });
+                }
+                setLoading(false);
+              }}
+              disabled={loading}
+            >
               <Text className="text-rove-charcoal font-semibold text-base">Continue with Google</Text>
             </Button>
 
             {/* Footer Links */}
-            <View className="mt-8 items-center space-y-3 gap-2">
-              <View className="flex-row justify-center mt-8">
-            <Text className="text-rove-stone text-sm" style={{ fontFamily: 'Inter-Regular' }}>Don't have an account? </Text>
-            <Link href="/(auth)/signup" asChild>
-              <Text className="text-rove-charcoal font-bold text-sm" style={{ fontFamily: 'Inter-Bold' }}>Sign up</Text>
-            </Link>
-          </View>
+            <View className="mt-10 items-center gap-4">
+              <View className="flex-row justify-center items-center">
+                <Text className="text-rove-stone text-sm font-medium">Don't have an account? </Text>
+                <Link href="/(auth)/signup" asChild>
+                  <Text className="text-rove-charcoal font-bold text-sm">Sign up</Text>
+                </Link>
+              </View>
           
-            {/* Temporary Link for Design System Verification */}
-            <View className="mt-8 pt-6 border-t border-rove-stone/10 items-center">
-              <Link href="/gallery" asChild>
-                <Button variant="outline" size="sm">View UI Component Gallery</Button>
-              </Link>
+              <Text className="text-[11px] text-rove-stone/60 text-center">
+                View our{' '}
+                <Text 
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/privacy')}
+                >
+                  Privacy Policy
+                </Text>
+              </Text>
             </View>
-            <Text className="text-[11px] text-rove-stone/60 mt-4 text-center">
-              View our Privacy Policy
-            </Text>
-          </View>
 
           </Animated.View>
         </ScrollView>

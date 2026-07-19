@@ -7,7 +7,7 @@ if (typeof process === 'undefined' || process.release?.name !== 'node') {
 }
 
 // Create an SSR-safe storage adapter that completely hides Native modules from Node
-let SSRSafeStorage = {
+let SSRSafeStorage: any = {
   getItem: (key: string) => Promise.resolve(null),
   setItem: (key: string, value: string) => Promise.resolve(),
   removeItem: (key: string) => Promise.resolve(),
@@ -15,18 +15,26 @@ let SSRSafeStorage = {
 
 // If we are NOT in the Node.js SSR process, safely require SecureStore
 if (typeof process === 'undefined' || process.release?.name !== 'node') {
-  const SecureStore = require('expo-secure-store');
-  SSRSafeStorage = {
-    getItem: (key: string) => {
-      return SecureStore.getItemAsync(key);
-    },
-    setItem: (key: string, value: string) => {
-      return SecureStore.setItemAsync(key, value);
-    },
-    removeItem: (key: string) => {
-      return SecureStore.deleteItemAsync(key);
-    },
-  };
+  if (Platform.OS === 'web') {
+    SSRSafeStorage = {
+      getItem: (key: string) => Promise.resolve(window.localStorage.getItem(key)),
+      setItem: (key: string, value: string) => Promise.resolve(window.localStorage.setItem(key, value)),
+      removeItem: (key: string) => Promise.resolve(window.localStorage.removeItem(key)),
+    };
+  } else {
+    const SecureStore = require('expo-secure-store');
+    SSRSafeStorage = {
+      getItem: (key: string) => {
+        return SecureStore.getItemAsync(key);
+      },
+      setItem: (key: string, value: string) => {
+        return SecureStore.setItemAsync(key, value);
+      },
+      removeItem: (key: string) => {
+        return SecureStore.deleteItemAsync(key);
+      },
+    };
+  }
 }
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
