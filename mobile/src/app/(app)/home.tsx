@@ -21,10 +21,19 @@ export default function HomeScreen() {
       <Text className="text-base text-rove-stone text-center mb-8" style={{ fontFamily: 'Inter-Regular' }}>
         This is a placeholder for the main Cycle Sync Tracker dashboard.
       </Text>
-      
+
+      <Button onPress={() => router.push('/(tabs)/tracker' as any)} className="w-full mb-4">
+        Open Tracker 🌸
+      </Button>
+
+      <Button onPress={() => router.push('/gallery')} variant="secondary" className="w-full mb-4">
+        UI Gallery
+      </Button>
+
       <Button onPress={handleLogout} variant="outline" className="w-full">
         Log Out
       </Button>
     </SafeAreaView>
   );
 }
+

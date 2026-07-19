@@ -1,0 +1,832 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  Pressable,
+} from 'react-native';
+import {
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+  X,
+  Calendar as CalendarIcon,
+  Edit3,
+  Activity,
+  CheckCircle2,
+} from 'lucide-react-native';
+
+const DAYS_OF_WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+export type Phase = 'Menstrual' | 'Follicular' | 'Ovulatory' | 'Luteal' | null;
+
+export type CategoryKey =
+  | 'discharge'
+  | 'bodySignals'
+  | 'innerWeather'
+  | 'exerciseLog'
+  | 'hydration'
+  | 'sleepLog'
+  | 'disruptors'
+  | 'sexualWellness';
+
+export interface DayInfo {
+  phase: Phase;
+  isPeriod: boolean;
+  fertile: boolean;
+  categories: CategoryKey[];
+}
+
+export type DayInfoMap = Record<number, DayInfo>;
+
+// Visual Identity 2.0 — matches web (frontend/src/app/cycle-sync/tracker/components/PeriodLoggingCard.tsx)
+export const PHASE_COLORS: Record<'Menstrual' | 'Follicular' | 'Ovulatory' | 'Luteal', string> = {
+  Menstrual: '#AF6B6B', // Terra Rose
+  Follicular: '#8DAA9D', // Sage Dew
+  Ovulatory: '#D4A25F', // Soleil Ochre
+  Luteal: '#7B82A8', // Dusk Slate
+};
+
+export const TODAY_COLOR = '#1C1C1E';
+export const FERTILE_LEGEND_COLOR = '#FBBF24';
+
+export const CATEGORY_COLORS: Record<CategoryKey, string> = {
+  discharge: '#7CB9E8',
+  bodySignals: '#E07B7B',
+  innerWeather: '#B07FC0',
+  exerciseLog: '#E07B7B',
+  hydration: '#4DB6AC',
+  sleepLog: '#7986CB',
+  disruptors: '#D4A82A',
+  sexualWellness: '#E8924E',
+};
+
+const CATEGORY_LEGEND: { key: CategoryKey; label: string }[] = [
+  { key: 'discharge', label: 'Discharge' },
+  { key: 'bodySignals', label: 'Body Signals' },
+  { key: 'innerWeather', label: 'Inner Weather' },
+  { key: 'exerciseLog', label: 'Exercise' },
+  { key: 'hydration', label: 'Hydration' },
+  { key: 'sleepLog', label: 'Sleep' },
+  { key: 'disruptors', label: 'Disruptors' },
+  { key: 'sexualWellness', label: 'Sexual Wellness' },
+];
+
+const PHASE_LEGEND: { key: keyof typeof PHASE_COLORS; label: string }[] = [
+  { key: 'Menstrual', label: 'Menstrual' },
+  { key: 'Follicular', label: 'Follicular' },
+  { key: 'Ovulatory', label: 'Ovulatory' },
+  { key: 'Luteal', label: 'Luteal' },
+];
+
+function withAlpha(hex: string, alphaHex: string) {
+  return `${hex}${alphaHex}`;
+}
+
+export interface CycleCalendarProps {
+  month: number; // 0-indexed
+  year: number;
+  dayInfo: DayInfoMap;
+  selectedDate: number;
+  onDateTap: (day: number) => void;
+  onMonthChange: (direction: 'prev' | 'next') => void;
+
+  isPeriodLoggingMode: boolean;
+  onTogglePeriodDate: (day: number) => void;
+  onEnablePeriodLogging: () => void;
+  onExitPeriodLogging: () => void;
+  onEndPeriod: () => void;
+
+  headline: string;
+  currentPhase: Phase;
+}
+
+export function CycleCalendar({
+  month,
+  year,
+  dayInfo,
+  selectedDate,
+  onDateTap,
+  onMonthChange,
+  isPeriodLoggingMode,
+  onTogglePeriodDate,
+  onEnablePeriodLogging,
+  onExitPeriodLogging,
+  onEndPeriod,
+  headline,
+  currentPhase,
+}: CycleCalendarProps) {
+  const [gridWidth, setGridWidth] = useState(0);
+  const [showGuide, setShowGuide] = useState(false);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const cellSize = gridWidth > 0 ? gridWidth / 7 : 0;
+
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+  return (
+    <View style={styles.card}>
+      {/* Top info row / period logging banner */}
+      {!isPeriodLoggingMode ? (
+        <View style={styles.topRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headline}>{headline}</Text>
+            <Text style={styles.subtext}>Tap a date to log symptoms</Text>
+          </View>
+          <TouchableOpacity style={styles.periodBtn} onPress={onEnablePeriodLogging} activeOpacity={0.85}>
+            <Text style={styles.periodBtnText}>
+              {currentPhase === 'Menstrual' ? 'Edit Period' : 'Log Period'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.loggingBanner}>
+          <Text style={styles.loggingTitle}>Select period dates</Text>
+          <Text style={styles.loggingSub}>Tap days to mark/unmark bleeding</Text>
+          <View style={styles.loggingBtnRow}>
+            <TouchableOpacity style={styles.endPeriodBtn} onPress={onEndPeriod} activeOpacity={0.85}>
+              <Text style={styles.endPeriodText}>End Period Here</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.doneBtn} onPress={onExitPeriodLogging} activeOpacity={0.85}>
+              <Text style={styles.doneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Month header */}
+      <View style={styles.monthHeader}>
+        <View style={styles.monthTitleRow}>
+          <Text style={styles.monthTitle}>
+            {MONTHS[month].toUpperCase()} {year}
+          </Text>
+          <TouchableOpacity onPress={() => setShowGuide(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <HelpCircle size={14} color="#9CA3AF" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.navButtons}>
+          <TouchableOpacity
+            onPress={() => onMonthChange('prev')}
+            style={styles.navBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ChevronLeft size={18} color="#4B5563" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onMonthChange('next')}
+            style={styles.navBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ChevronRight size={18} color="#4B5563" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Week header */}
+      <View
+        style={styles.weekHeader}
+        onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}
+      >
+        {DAYS_OF_WEEK.map((d) => (
+          <View key={d} style={{ width: cellSize || undefined, flex: cellSize ? undefined : 1, alignItems: 'center' }}>
+            <Text style={styles.weekLabel}>{d.slice(0, 3)}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Grid */}
+      {cellSize > 0 && (
+        <View style={styles.grid}>
+          {cells.map((day, idx) => {
+            if (day === null) {
+              return <View key={idx} style={{ width: cellSize, height: cellSize }} />;
+            }
+
+            const info = dayInfo[day];
+            const phase = info?.phase ?? null;
+            const isPeriod = info?.isPeriod ?? false;
+            const fertile = info?.fertile ?? false;
+            const categories = info?.categories ?? [];
+
+            const cellDate = new Date(year, month, day);
+            cellDate.setHours(0, 0, 0, 0);
+            const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const isFuture = cellDate.getTime() > todayMidnight.getTime();
+            const isToday = isCurrentMonth && day === today.getDate();
+            const isSelected = !isPeriodLoggingMode && isCurrentMonth && day === selectedDate;
+
+            let bg = 'transparent';
+            if (isSelected) bg = TODAY_COLOR;
+            else if (isPeriod) bg = withAlpha(PHASE_COLORS.Menstrual, '30');
+            else if (phase) bg = withAlpha(PHASE_COLORS[phase], '30');
+
+            let numberColor = '#4B5563';
+            if (isFuture) numberColor = '#D1D5DB';
+            if (isPeriod && !isSelected) numberColor = PHASE_COLORS.Menstrual;
+            if (isSelected) numberColor = '#FFFFFF';
+
+            return (
+              <TouchableOpacity
+                key={idx}
+                disabled={isFuture}
+                activeOpacity={0.75}
+                onPress={() => (isPeriodLoggingMode ? onTogglePeriodDate(day) : onDateTap(day))}
+                style={{ width: cellSize, height: cellSize, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <View
+                  style={[
+                    styles.dayInner,
+                    {
+                      width: cellSize - 4,
+                      height: cellSize - 4,
+                      backgroundColor: bg,
+                      borderWidth: isToday && !isSelected ? 2 : 0,
+                      borderColor: TODAY_COLOR,
+                      opacity: isFuture ? 0.4 : 1,
+                    },
+                  ]}
+                >
+                  {isPeriod && (
+                    <View
+                      style={[styles.periodBar, { backgroundColor: withAlpha(PHASE_COLORS.Menstrual, '33') }]}
+                    />
+                  )}
+
+                  <Text
+                    style={[
+                      styles.dayNumber,
+                      {
+                        color: numberColor,
+                        fontFamily: isPeriod && !isSelected ? 'Outfit-Bold' : 'Inter-SemiBold',
+                      },
+                    ]}
+                  >
+                    {day}
+                  </Text>
+
+                  {isPeriod && <View style={styles.periodPip} />}
+
+                  {fertile && !isPeriod && phase !== 'Menstrual' && (
+                    <View style={[styles.fertileDot, { backgroundColor: PHASE_COLORS.Ovulatory }]} />
+                  )}
+
+                  {categories.length > 0 && (
+                    <View style={styles.activityBars} pointerEvents="none">
+                      {categories.slice(0, 5).map((cat) => (
+                        <View
+                          key={cat}
+                          style={[
+                            styles.activityBar,
+                            { backgroundColor: isSelected ? 'rgba(255,255,255,0.75)' : CATEGORY_COLORS[cat] },
+                          ]}
+                        />
+                      ))}
+                      {categories.length > 5 && (
+                        <View
+                          style={[
+                            styles.activityBar,
+                            { width: 2, backgroundColor: isSelected ? 'rgba(255,255,255,0.4)' : '#9CA3AF' },
+                          ]}
+                        />
+                      )}
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Phase legend */}
+      <View style={styles.phaseLegendRow}>
+        {PHASE_LEGEND.map((p) => (
+          <View key={p.key} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: PHASE_COLORS[p.key] }]} />
+            <Text style={styles.legendLabel}>{p.label}</Text>
+          </View>
+        ))}
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: FERTILE_LEGEND_COLOR }]} />
+          <Text style={styles.legendLabel}>Fertile Window</Text>
+        </View>
+      </View>
+
+      {/* Category / symptom legend */}
+      <View style={styles.categoryLegendWrap}>
+        <Text style={styles.categoryLegendTitle}>LOGGED DATA INDICATORS</Text>
+        <View style={styles.categoryLegendRow}>
+          {CATEGORY_LEGEND.map((cat) => (
+            <View key={cat.key} style={styles.categoryLegendItem}>
+              <View style={[styles.categoryLegendBar, { backgroundColor: CATEGORY_COLORS[cat.key] }]} />
+              <Text style={styles.categoryLegendLabel}>{cat.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <TrackerGuideModal visible={showGuide} onClose={() => setShowGuide(false)} />
+    </View>
+  );
+}
+
+// ─── Tracker Guide modal ────────────────────────────────────────────────────
+// Content ported from the web's tutorial modal
+// (frontend/src/app/cycle-sync/tracker/components/PeriodLoggingCard.tsx)
+const PHASE_GUIDE = [
+  { phase: 'Menstrual' as const, tint: '#F5E8E8', border: withAlpha(PHASE_COLORS.Menstrual, '33'), textColor: PHASE_COLORS.Menstrual, sub: 'Days 1-5 (Period)' },
+  { phase: 'Follicular' as const, tint: '#E0F5F0', border: '#B8E0D4', textColor: '#0F7A5C', sub: 'Pre-ovulation energy' },
+  { phase: 'Ovulatory' as const, tint: '#FDF0DC', border: '#F0D6A8', textColor: '#9A6B1E', sub: 'Highest fertility' },
+  { phase: 'Luteal' as const, tint: '#ECEEF5', border: '#CBD1E8', textColor: '#4C5590', sub: 'Winding down' },
+];
+
+function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={guideStyles.backdrop} onPress={onClose}>
+        <Pressable style={guideStyles.card} onPress={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <View style={guideStyles.header}>
+            <View style={guideStyles.headerLeft}>
+              <View style={guideStyles.headerIcon}>
+                <HelpCircle size={20} color={PHASE_COLORS.Menstrual} />
+              </View>
+              <Text style={guideStyles.headerTitle}>Tracker Guide</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={guideStyles.body} showsVerticalScrollIndicator={false}>
+            {/* Step 1 */}
+            <View style={guideStyles.step}>
+              <View style={[guideStyles.stepIcon, { backgroundColor: '#E8F0FE' }]}>
+                <CalendarIcon size={20} color="#3B82F6" />
+              </View>
+              <View style={guideStyles.stepBody}>
+                <Text style={guideStyles.stepTitle}>1. Navigate &amp; Select</Text>
+                <Text style={guideStyles.stepText}>
+                  Use the arrows at the top of the calendar to switch months. Tap any date to select
+                  it — the tracker cards below will instantly update to show your logs for that specific day.
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 2 */}
+            <View style={guideStyles.step}>
+              <View style={[guideStyles.stepIcon, { backgroundColor: withAlpha(PHASE_COLORS.Menstrual, '1A') }]}>
+                <Edit3 size={20} color={PHASE_COLORS.Menstrual} />
+              </View>
+              <View style={guideStyles.stepBody}>
+                <Text style={guideStyles.stepTitle}>2. Log Your Period</Text>
+                <Text style={guideStyles.stepText}>
+                  Tap the <Text style={guideStyles.stepTextEmphasis}>LOG PERIOD</Text> button. The
+                  calendar will highlight in pink. Tap days to toggle bleeding on or off. Tap Done to
+                  save your cycle dates.
+                </Text>
+              </View>
+            </View>
+
+            {/* Step 3 */}
+            <View style={guideStyles.step}>
+              <View style={[guideStyles.stepIcon, { backgroundColor: '#FEF3E2' }]}>
+                <Activity size={20} color="#D97706" />
+              </View>
+              <View style={guideStyles.stepBody}>
+                <Text style={guideStyles.stepTitle}>3. Log Daily Rhythm</Text>
+                <Text style={guideStyles.stepText}>
+                  Scroll down to see dynamic cards for symptoms, moods, water intake, and more. Each
+                  card is tailored to your current phase. Changes are saved automatically as you tap.
+                </Text>
+              </View>
+            </View>
+
+            {/* Cycle Phases */}
+            <View style={guideStyles.phasesHeader}>
+              <CheckCircle2 size={18} color="#22C55E" />
+              <Text style={guideStyles.phasesTitle}>Cycle Phases</Text>
+            </View>
+            <View style={guideStyles.phaseGrid}>
+              {PHASE_GUIDE.map((p) => (
+                <View
+                  key={p.phase}
+                  style={[guideStyles.phaseCard, { backgroundColor: p.tint, borderColor: p.border }]}
+                >
+                  <View style={[guideStyles.phaseDot, { backgroundColor: PHASE_COLORS[p.phase] }]} />
+                  <Text style={[guideStyles.phaseName, { color: p.textColor }]}>{p.phase}</Text>
+                  <Text style={[guideStyles.phaseSub, { color: p.textColor }]}>{p.sub}</Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity style={guideStyles.ctaBtn} onPress={onClose} activeOpacity={0.85}>
+              <Text style={guideStyles.ctaText}>Start Tracking</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const guideStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '85%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0ECE8',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 14,
+    backgroundColor: withAlpha(PHASE_COLORS.Menstrual, '26'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontFamily: 'Outfit-Bold',
+    color: '#2D2420',
+  },
+  body: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+  },
+  step: {
+    flexDirection: 'row',
+    gap: 14,
+    marginBottom: 20,
+  },
+  stepIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepBody: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#2D2420',
+    marginBottom: 4,
+  },
+  stepText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+  },
+  stepTextEmphasis: {
+    fontFamily: 'Inter-Bold',
+    color: '#2D2420',
+  },
+  phasesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0ECE8',
+  },
+  phasesTitle: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#2D2420',
+  },
+  phaseGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  phaseCard: {
+    width: '47%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+  },
+  phaseDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  phaseName: {
+    fontSize: 12,
+    fontFamily: 'Outfit-Bold',
+    marginBottom: 2,
+  },
+  phaseSub: {
+    fontSize: 10,
+    fontFamily: 'Inter-Regular',
+    opacity: 0.85,
+  },
+  ctaBtn: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ctaText: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: '#FFFFFF',
+  },
+});
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 28,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+
+  // Top info row
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  headline: {
+    fontSize: 17,
+    fontFamily: 'Outfit-Bold',
+    color: '#2D2420',
+  },
+  subtext: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  periodBtn: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 50,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  periodBtnText: {
+    fontSize: 13,
+    fontFamily: 'Outfit-SemiBold',
+    color: '#FFFFFF',
+  },
+
+  // Period logging mode banner
+  loggingBanner: {
+    backgroundColor: withAlpha(PHASE_COLORS.Menstrual, '0D'),
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: withAlpha(PHASE_COLORS.Menstrual, '1A'),
+    padding: 16,
+    marginBottom: 20,
+  },
+  loggingTitle: {
+    fontSize: 14,
+    fontFamily: 'Outfit-Bold',
+    color: PHASE_COLORS.Menstrual,
+  },
+  loggingSub: {
+    fontSize: 11,
+    fontFamily: 'Inter-Regular',
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  loggingBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  endPeriodBtn: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: withAlpha(PHASE_COLORS.Menstrual, '33'),
+    borderRadius: 50,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  endPeriodText: {
+    fontSize: 12,
+    fontFamily: 'Outfit-SemiBold',
+    color: PHASE_COLORS.Menstrual,
+  },
+  doneBtn: {
+    flex: 1,
+    backgroundColor: PHASE_COLORS.Menstrual,
+    borderRadius: 50,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  doneText: {
+    fontSize: 13,
+    fontFamily: 'Outfit-SemiBold',
+    color: '#FFFFFF',
+  },
+
+  // Month header
+  monthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  monthTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  monthTitle: {
+    fontSize: 13,
+    fontFamily: 'Outfit-Bold',
+    color: '#2D2420',
+    letterSpacing: 0.8,
+  },
+  navButtons: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  navBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#F9F9F5',
+  },
+
+  // Week header
+  weekHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  weekLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter-SemiBold',
+    color: '#A8A29E',
+    letterSpacing: 0.5,
+  },
+
+  // Grid
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 6,
+  },
+  dayInner: {
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNumber: {
+    fontSize: 13,
+  },
+  periodBar: {
+    position: 'absolute',
+    width: 3,
+    height: 18,
+    borderRadius: 2,
+  },
+  periodPip: {
+    position: 'absolute',
+    bottom: -3,
+    width: 4,
+    height: 10,
+    borderRadius: 2,
+    backgroundColor: PHASE_COLORS.Menstrual,
+  },
+  fertileDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  activityBars: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    flexDirection: 'row',
+    gap: 1.5,
+  },
+  activityBar: {
+    width: 3,
+    height: 9,
+    borderRadius: 2,
+  },
+
+  // Phase legend
+  phaseLegendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 14,
+    marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F0ECE8',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  legendLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter-Bold',
+    color: '#9CA3AF',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+
+  // Category legend
+  categoryLegendWrap: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(240,236,232,0.7)',
+  },
+  categoryLegendTitle: {
+    fontSize: 8,
+    fontFamily: 'Inter-Bold',
+    color: '#A8A29E',
+    letterSpacing: 0.8,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  categoryLegendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  categoryLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  categoryLegendBar: {
+    width: 2.5,
+    height: 11,
+    borderRadius: 2,
+    opacity: 0.9,
+  },
+  categoryLegendLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter-Regular',
+    color: '#A8A29E',
+  },
+});

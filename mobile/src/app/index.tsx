@@ -30,7 +30,7 @@ export default function Index() {
   }
 
   if (session) {
-    return <Redirect href="/(app)/home" />;
+    return <Redirect href={'/(tabs)' as any} />;
   }
 
   return <Redirect href="/(auth)/login" />;
