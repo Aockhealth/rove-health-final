@@ -154,3 +154,48 @@ export async function savePlanSettings(data: any) {
 
     return { success: true };
 }
+
+/**
+ * Mirrors updateWeightGoals in frontend/src/app/cycle-sync/profile/actions.ts —
+ * updates the weight-goal row and keeps user_lifestyle.weight_kg (the
+ * "current weight" everything else on the app reads) in sync with it. This
+ * is what the Plan page's Weight Goal widget edit pencil calls; without it
+ * there was no way to log a new current weight after initial setup.
+ */
+export async function updateWeightGoals(weightData: {
+    current_weight_kg: number;
+    target_weight_kg: number;
+    start_weight_kg?: number;
+}) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    const updateData: Record<string, any> = {
+        current_weight_kg: weightData.current_weight_kg,
+        target_weight_kg: weightData.target_weight_kg,
+        updated_at: new Date().toISOString()
+    };
+    if (weightData.start_weight_kg) {
+        updateData.start_weight_kg = weightData.start_weight_kg;
+    }
+
+    const { error: wgError } = await supabase
+        .from("user_weight_goals")
+        .update(updateData)
+        .eq("user_id", user.id);
+
+    if (wgError) {
+        return { error: "Failed to update weight goals" };
+    }
+
+    const { error: lsError } = await supabase
+        .from("user_lifestyle")
+        .update({ weight_kg: weightData.current_weight_kg, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id);
+
+    if (lsError) {
+        console.error("Error syncing lifestyle weight:", lsError);
+    }
+
+    return { success: true };
+}

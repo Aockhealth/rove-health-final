@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Pressable, TextInput, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, withTiming, withDelay, Easing, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { fetchPlanPageDataFast, savePlanSettings } from '../../../lib/plan';
+import { fetchPlanPageDataFast, savePlanSettings, updateWeightGoals } from '../../../lib/plan';
 import { phaseThemes } from '../../../data/home-content';
 import { useFocusEffect, Link } from 'expo-router';
 import { WorkoutHistory } from '../../../components/plan/WorkoutHistory';
@@ -45,6 +45,52 @@ export default function PlanScreen() {
   const [targetWeight, setTargetWeight] = useState('55');
   const [weeklyRate, setWeeklyRate] = useState('0.4');
   const [diet, setDiet] = useState('Veg');
+
+  // Weight Goal widget — edit-in-place state, mirrors the web's
+  // isEditingGoal/tempGoalData/handleSaveGoal in cycle-sync/plan/page.tsx.
+  // Without this there was no way to log a new current weight once the
+  // one-time setup wizard above was done.
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [isSavingGoal, setIsSavingGoal] = useState(false);
+  const [tempGoalData, setTempGoalData] = useState({ current: 0, target: 0, start: 0 });
+
+  useEffect(() => {
+    if (data?.weightGoal) {
+      setTempGoalData({
+        current: parseFloat(data.weightGoal.currentWeight) || 0,
+        target: parseFloat(data.weightGoal.targetWeight) || 0,
+        start: parseFloat(data.weightGoal.startWeight) || 0,
+      });
+    }
+  }, [data?.weightGoal]);
+
+  const handleSaveGoal = async () => {
+    setIsSavingGoal(true);
+    try {
+      const res = await updateWeightGoals({
+        current_weight_kg: tempGoalData.current,
+        target_weight_kg: tempGoalData.target,
+        start_weight_kg: tempGoalData.start,
+      });
+      if (res.success) {
+        setIsEditingGoal(false);
+        setData((prev: any) => ({
+          ...prev,
+          weightGoal: {
+            ...prev.weightGoal,
+            currentWeight: tempGoalData.current,
+            targetWeight: tempGoalData.target,
+            startWeight: tempGoalData.start,
+          },
+        }));
+      } else {
+        Alert.alert('Error', res.error || 'Could not update your weight goal');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not update your weight goal');
+    }
+    setIsSavingGoal(false);
+  };
 
   const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
   const [exerciseView, setExerciseView] = useState<'coach' | 'history'>('coach');
@@ -397,39 +443,102 @@ export default function PlanScreen() {
                           <Text className="text-rove-charcoal text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Your Goal</Text>
                         </View>
                       </View>
-                      <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: theme.color }}>
-                        <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
-                          {data.weightGoal.fitnessGoal?.replace('_', ' ')}
+                      <View className="flex-row items-center gap-2">
+                        {!isEditingGoal && (
+                          <TouchableOpacity
+                            onPress={() => setIsEditingGoal(true)}
+                            className="p-1.5 rounded-full"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Feather name="edit-2" size={14} color="#A8A29E" />
+                          </TouchableOpacity>
+                        )}
+                        <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: theme.color }}>
+                          <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
+                            {data.weightGoal.fitnessGoal?.replace('_', ' ')}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {isEditingGoal ? (
+                      <Animated.View entering={FadeInUp.duration(300)}>
+                        {[
+                          { label: 'Start', key: 'start' as const },
+                          { label: 'Now', key: 'current' as const },
+                          { label: 'Goal', key: 'target' as const },
+                        ].map(({ label, key }) => (
+                          <View
+                            key={key}
+                            className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60 mb-3"
+                          >
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{label}</Text>
+                            <View className="flex-row items-center gap-3">
+                              <TouchableOpacity
+                                onPress={() => setTempGoalData((p) => ({ ...p, [key]: Math.max(0, p[key] - 0.5) }))}
+                                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                              >
+                                <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>−</Text>
+                              </TouchableOpacity>
+                              <View style={{ minWidth: 56 }}>
+                                <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                                  {tempGoalData[key]}
+                                </Text>
+                              </View>
+                              <TouchableOpacity
+                                onPress={() => setTempGoalData((p) => ({ ...p, [key]: p[key] + 0.5 }))}
+                                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                              >
+                                <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>+</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        ))}
+                        <View className="flex-row justify-end gap-3 mt-2">
+                          <TouchableOpacity onPress={() => setIsEditingGoal(false)} className="px-3 py-2">
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={handleSaveGoal}
+                            disabled={isSavingGoal}
+                            className="px-5 py-2 rounded-full"
+                            style={{ backgroundColor: theme.color, opacity: isSavingGoal ? 0.6 : 1 }}
+                          >
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-white">
+                              {isSavingGoal ? '...' : 'Save'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </Animated.View>
+                    ) : (
+                      <>
+                        {/* Weight Dashboard */}
+                        <View className="flex-row items-center justify-between mb-6 p-4 rounded-[20px] border border-white/40 bg-white/30">
+                          <View className="items-center flex-1">
+                            <Text className="text-lg font-bold text-rove-charcoal/70" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Start</Text>
+                          </View>
+                          <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
+                          <View className="items-center flex-1 px-4 py-2 rounded-[14px]" style={{ backgroundColor: `${theme.color}15` }}>
+                            <Text className="text-xl font-bold" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.color, opacity: 0.7 }}>Now</Text>
+                          </View>
+                          <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
+                          <View className="items-center flex-1">
+                            <Text className="text-lg font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Goal</Text>
+                          </View>
+                        </View>
+
+                        {/* Progress Bar */}
+                        <View className="w-full h-2 rounded-full bg-white/40 overflow-hidden mb-2">
+                          <View className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: theme.color }} />
+                        </View>
+                        <Text className="text-center text-[11px] text-rove-stone font-medium">
+                          {lostText} • {togoText}
                         </Text>
-                      </View>
-                    </View>
-                    
-                    {/* Weight Dashboard */}
-                    <View className="flex-row items-center justify-between mb-6 p-4 rounded-[20px] border border-white/40 bg-white/30">
-                      <View className="items-center flex-1">
-                        <Text className="text-lg font-bold text-rove-charcoal/70" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
-                        <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Start</Text>
-                      </View>
-                      <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
-                      <View className="items-center flex-1 px-4 py-2 rounded-[14px]" style={{ backgroundColor: `${theme.color}15` }}>
-                        <Text className="text-xl font-bold" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
-                        <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.color, opacity: 0.7 }}>Now</Text>
-                      </View>
-                      <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
-                      <View className="items-center flex-1">
-                        <Text className="text-lg font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
-                        <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Goal</Text>
-                      </View>
-                    </View>
-
-                    {/* Progress Bar */}
-                    <View className="w-full h-2 rounded-full bg-white/40 overflow-hidden mb-2">
-                      <View className="h-full rounded-full" style={{ width: `${progressPct}%`, backgroundColor: theme.color }} />
-                    </View>
-                    <Text className="text-center text-[11px] text-rove-stone font-medium">
-                      {lostText} • {togoText}
-                    </Text>
-
+                      </>
+                    )}
                   </View>
                 </Animated.View>
               );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ScrollView,
   View,
@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner-native';
 import {
   Calendar,
   Activity,
@@ -33,15 +35,16 @@ import {
   Phase,
   PHASE_COLORS,
   CategoryKey,
-} from '../components/tracker/CycleCalendar';
-import { SymptomChip } from '../components/tracker/SymptomChip';
-import { LogCard } from '../components/tracker/LogCard';
-import { NumericStepper } from '../components/tracker/NumericStepper';
-import { DurationInput } from '../components/tracker/DurationInput';
-import { HydrationTracker } from '../components/tracker/HydrationTracker';
-import { DischargeQuestionnaire, DischargeAnswers } from '../components/tracker/DischargeQuestionnaire';
-import { ChatFAB } from '../components/tracker/ChatFAB';
-import { QuickPhaseLog } from '../components/tracker/QuickPhaseLog';
+} from '../../components/tracker/CycleCalendar';
+import { SymptomChip } from '../../components/tracker/SymptomChip';
+import { LogCard } from '../../components/tracker/LogCard';
+import { NumericStepper } from '../../components/tracker/NumericStepper';
+import { DurationInput } from '../../components/tracker/DurationInput';
+import { HydrationTracker } from '../../components/tracker/HydrationTracker';
+import { DischargeQuestionnaire, DischargeAnswers } from '../../components/tracker/DischargeQuestionnaire';
+import { ChatFAB } from '../../components/tracker/ChatFAB';
+import { QuickPhaseLog } from '../../components/tracker/QuickPhaseLog';
+import LoadingScreen from '../../components/ui/LoadingScreen';
 import {
   CATEGORY_COLORS,
   SYMPTOM_OPTIONS,
@@ -54,81 +57,62 @@ import {
   CONTRACEPTION_OPTIONS,
   TYPE_COLORS,
   TypedOption,
-} from '../components/tracker/constants';
+} from '../../components/tracker/constants';
+import {
+  calculatePhase,
+  getRelevantPeriodStart,
+  isInFertileWindow,
+  daysBetween,
+  parseLocalDate,
+  formatDate,
+  type CycleSettings,
+  type DailyLog,
+} from '@shared/cycle/phase';
+import {
+  fetchTrackerData,
+  fetchMonthLogs,
+  logDailySymptoms,
+  updateLastPeriodDate,
+  type TrackerLog,
+} from '../../lib/tracker';
 
-// ─── Cycle math ported from shared/cycle/phase.ts ──────────────────────────────
-// This mirrors calculatePhase()/isInFertileWindow() from the canonical
-// web/backend module (shared/cycle/phase.ts). Mobile can't import that file
-// directly yet (no cross-package Metro alias set up), so the constants and
-// branch logic below are kept in lockstep with it by hand. When real cycle
-// data gets wired in from the backend, swap buildJulyDayInfo() for the actual
-// API response and delete this local port — the shapes already match.
-const CYCLE_LENGTH_DAYS = 28; // DEFAULT_CYCLE_LENGTH
-const PERIOD_LENGTH_DAYS = 5; // DEFAULT_PERIOD_LENGTH
-const LUTEAL_LENGTH_DAYS = 14; // DEFAULT_LUTEAL_LENGTH
-const OVULATION_PHASE_WINDOW = 1; // ±1 day around ovulation counts as "Ovulatory"
-const FERTILE_WINDOW_BEFORE = 5; // days before ovulation counted as fertile
-const FERTILE_WINDOW_AFTER = 1; // days after ovulation counted as fertile
+// ─── Category derivation ────────────────────────────────────────────────────
+// Mirrors getLoggedCategories() in
+// frontend/src/app/cycle-sync/tracker/components/PeriodLoggingCard.tsx — maps
+// a saved daily_logs row onto which colored activity bars show on its
+// calendar cell.
+function getLoggedCategories(log?: TrackerLog): CategoryKey[] {
+  if (!log) return [];
+  const categories: CategoryKey[] = [];
+  if (log.cervical_discharge) categories.push('discharge');
+  if ((log.symptoms ?? []).length > 0) categories.push('bodySignals');
+  if ((log.moods ?? []).length > 0) categories.push('innerWeather');
+  if ((log.exercise_types ?? []).length > 0 || log.exercise_minutes) categories.push('exerciseLog');
+  if (log.water_intake && log.water_intake > 0) categories.push('hydration');
+  if ((log.sleep_quality ?? []).length > 0 || log.sleep_minutes) categories.push('sleepLog');
+  if ((log.disruptors ?? []).length > 0) categories.push('disruptors');
+  if ((log.sex_activity ?? []).length > 0 || (log.contraception ?? []).length > 0) categories.push('sexualWellness');
+  return categories;
+}
 
-const OVULATION_DAY = CYCLE_LENGTH_DAYS - LUTEAL_LENGTH_DAYS; // getOvulationDay()
+function monthKey(year: number, month0: number): string {
+  return `${year}-${String(month0 + 1).padStart(2, '0')}`;
+}
 
-function phaseForDayInCycle(dayInCycle: number): Exclude<Phase, null> {
-  if (dayInCycle <= PERIOD_LENGTH_DAYS) return 'Menstrual';
-  if (
-    dayInCycle >= OVULATION_DAY - OVULATION_PHASE_WINDOW &&
-    dayInCycle <= OVULATION_DAY + OVULATION_PHASE_WINDOW
-  ) {
-    return 'Ovulatory';
+function parseCervicalDischarge(raw: string | null): DischargeAnswers {
+  if (!raw) return { vaginalFluid: null, appearance: null, sensation: null };
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length >= 3) {
+      return { vaginalFluid: parsed[0] ?? null, appearance: parsed[1] ?? null, sensation: parsed[2] ?? null };
+    }
+  } catch {
+    // Not our JSON array format (e.g. a legacy web string) — no safe way to
+    // split it back into three answers, so leave the questionnaire blank
+    // rather than show something wrong.
   }
-  if (dayInCycle > OVULATION_DAY + OVULATION_PHASE_WINDOW) return 'Luteal';
-  return 'Follicular';
+  return { vaginalFluid: null, appearance: null, sensation: null };
 }
-
-function isInFertileWindow(dayInCycle: number): boolean {
-  return (
-    dayInCycle >= OVULATION_DAY - FERTILE_WINDOW_BEFORE &&
-    dayInCycle <= OVULATION_DAY + FERTILE_WINDOW_AFTER
-  );
-}
-
-// ─── Mock cycle data for July 2026 ─────────────────────────────────────────────
-// Last period start: July 1. Day-of-month == day-in-cycle for the whole
-// visible month, which keeps this table easy to reason about until real
-// cycle data is wired in from the backend.
-function buildJulyDayInfo(): DayInfoMap {
-  const map: DayInfoMap = {};
-  for (let d = 1; d <= 31; d++) {
-    const cycleDay = d <= CYCLE_LENGTH_DAYS ? d : d - CYCLE_LENGTH_DAYS; // 29,30,31 -> next cycle's day 1,2,3
-    const phase = phaseForDayInCycle(cycleDay);
-
-    map[d] = {
-      phase,
-      isPeriod: d <= PERIOD_LENGTH_DAYS,
-      fertile: isInFertileWindow(cycleDay),
-      categories: [],
-    };
-  }
-
-  const withCategories: Record<number, DayInfoMap[number]['categories']> = {
-    1: ['bodySignals'],
-    3: ['discharge'],
-    5: ['sleepLog'],
-    7: ['exerciseLog'],
-    10: ['innerWeather'],
-    12: ['discharge', 'hydration'],
-    14: ['sexualWellness'],
-    16: ['bodySignals'],
-    18: ['hydration'],
-    19: ['innerWeather', 'sleepLog'],
-  };
-  Object.entries(withCategories).forEach(([day, categories]) => {
-    map[Number(day)].categories = categories;
-  });
-
-  return map;
-}
-
-const JULY_DAY_INFO = buildJulyDayInfo();
 
 // ─── Chip toggle helper ────────────────────────────────────────────────────────
 function toggleChip(arr: string[], val: string): string[] {
@@ -264,67 +248,290 @@ function TypedChipGrid({
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function TrackerScreen() {
-  // Calendar state
-  const today = new Date();
-  const [calMonth, setCalMonth] = useState(today.getMonth());
-  const [calYear, setCalYear] = useState(today.getFullYear());
-  const [selectedDay, setSelectedDay] = useState(today.getDate());
+  const queryClient = useQueryClient();
+  const { data: trackerData, isLoading } = useQuery({
+    queryKey: ['trackerData'],
+    queryFn: fetchTrackerData,
+  });
 
-  // Cycle/day data for the currently displayed month (mock — only populated
-  // for July 2026 until real cycle data is wired in from the backend)
-  const [dayInfo, setDayInfo] = useState<DayInfoMap>(JULY_DAY_INFO);
+  // Calendar / selection state
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [calMonth, setCalMonth] = useState(selectedDate.getMonth());
+  const [calYear, setCalYear] = useState(selectedDate.getFullYear());
   const [isPeriodLoggingMode, setIsPeriodLoggingMode] = useState(false);
+  const [pendingPeriodChanges, setPendingPeriodChanges] = useState<Map<string, boolean>>(new Map());
 
-  const selectedInfo = dayInfo[selectedDay];
-  const currentPhase: Phase = selectedInfo?.phase ?? null;
-  // Self Love Log / Note cards theme by phase, defaulting to Menstrual when
-  // there's no phase data yet — matches the web's `currentPhase || "Menstrual"`.
+  // Real cycle settings + logs, seeded from the initial query then kept in
+  // sync locally as the user edits/saves/navigates months.
+  const [cycleSettings, setCycleSettings] = useState<CycleSettings>({
+    last_period_start: '',
+    cycle_length_days: 28,
+    period_length_days: 5,
+  });
+  const [monthLogs, setMonthLogs] = useState<Record<string, TrackerLog>>({});
+  const loadedMonthsRef = useRef<Set<string>>(new Set());
+  const dataReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (!trackerData) return;
+    setCycleSettings(trackerData.settings);
+    setMonthLogs(trackerData.monthLogs);
+    const now = new Date();
+    for (let offset = -1; offset <= 1; offset++) {
+      const m = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      loadedMonthsRef.current.add(monthKey(m.getFullYear(), m.getMonth()));
+    }
+    dataReadyRef.current = true;
+  }, [trackerData]);
+
+  // Fetch logs for the visible month (+ its neighbors) whenever navigation
+  // lands on a month outside the initial 90-day window — this is what makes
+  // the calendar show real data for any month instead of nothing.
+  useEffect(() => {
+    if (!dataReadyRef.current) return;
+    let cancelled = false;
+
+    const monthsToLoad = [
+      new Date(calYear, calMonth - 1, 1),
+      new Date(calYear, calMonth, 1),
+      new Date(calYear, calMonth + 1, 1),
+    ].filter((d) => !loadedMonthsRef.current.has(monthKey(d.getFullYear(), d.getMonth())));
+
+    if (monthsToLoad.length === 0) return;
+    monthsToLoad.forEach((d) => loadedMonthsRef.current.add(monthKey(d.getFullYear(), d.getMonth())));
+
+    (async () => {
+      const results = await Promise.all(
+        monthsToLoad.map((d) => fetchMonthLogs(d.getFullYear(), d.getMonth()))
+      );
+      if (cancelled) return;
+      setMonthLogs((prev) => {
+        const next = { ...prev };
+        results.flat().forEach((l) => {
+          next[l.date] = l;
+        });
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [calYear, calMonth]);
+
+  // Shared-module view of the logs (just date + is_period), what
+  // calculatePhase()/getRelevantPeriodStart() actually consume.
+  const sharedLogs: Record<string, DailyLog> = useMemo(() => {
+    const logs: Record<string, DailyLog> = {};
+    for (const [dateStr, log] of Object.entries(monthLogs)) {
+      logs[dateStr] = { date: dateStr, is_period: log.is_period ?? undefined };
+    }
+    return logs;
+  }, [monthLogs]);
+
+  // ─── Real phase calculation — same canonical module the website and every
+  // other mobile screen (dashboard/plan/insights/profile) use. ───────────────
+  const phaseResult = useMemo(
+    () => calculatePhase(selectedDate, cycleSettings, sharedLogs),
+    [selectedDate, cycleSettings, sharedLogs]
+  );
+  const currentPhase: Phase = phaseResult.phase;
+  const dayInCycle = phaseResult.day > 0 ? phaseResult.day : null;
+  const hasPhaseData = phaseResult.phase !== null;
+  const lateByDays = phaseResult.latePeriod
+    ? Math.max(1, (phaseResult.day || 0) - (cycleSettings.cycle_length_days || 28))
+    : 0;
+  const isFertileDay =
+    dayInCycle && !phaseResult.latePeriod
+      ? isInFertileWindow(dayInCycle, cycleSettings.cycle_length_days || 28) && currentPhase !== 'Menstrual'
+      : false;
+
   const phaseThemeColor = PHASE_COLORS[currentPhase ?? 'Menstrual'];
 
-  const daysUntilPeriod = useMemo(() => {
-    for (let d = selectedDay; d <= 31; d++) {
-      const info = dayInfo[d];
-      if (info?.phase === 'Menstrual' && !info.isPeriod) return d - selectedDay;
-    }
-    return null;
-  }, [dayInfo, selectedDay]);
+  const todayResult = useMemo(
+    () => calculatePhase(new Date(), cycleSettings, sharedLogs),
+    [cycleSettings, sharedLogs]
+  );
+  // Separate from `lateByDays` above — the headline reports how late
+  // *today's* period is, not the selected date's, matching the web's
+  // PeriodLoggingCard (which computes this from its own todayResult).
+  const todayLateByDays = todayResult.latePeriod
+    ? Math.max(1, (todayResult.day || 0) - (cycleSettings.cycle_length_days || 28))
+    : 0;
 
-  const headline = currentPhase === null
+  const daysUntilPeriod = useMemo(() => {
+    const cycleLength = cycleSettings.cycle_length_days || 28;
+    if (!cycleSettings.last_period_start && Object.keys(sharedLogs).length === 0) return 0;
+    if (todayResult.phase === null || todayResult.latePeriod) return 0;
+
+    const anchor = getRelevantPeriodStart(new Date(), cycleSettings, sharedLogs);
+    if (!anchor.start) return 0;
+
+    const anchorDate = parseLocalDate(anchor.start);
+    const nextStart = new Date(anchorDate);
+    nextStart.setDate(anchorDate.getDate() + cycleLength);
+    return Math.max(0, daysBetween(new Date(), nextStart));
+  }, [cycleSettings, sharedLogs, todayResult]);
+
+  const headline = todayResult.phase === null
     ? 'Log your first period'
     : currentPhase === 'Menstrual'
-      ? `Period Day ${selectedDay}`
-      : daysUntilPeriod !== null
-        ? `Period in ${daysUntilPeriod} day${daysUntilPeriod === 1 ? '' : 's'}`
-        : 'Tracking your cycle';
+      ? `Period Day ${Math.max(1, dayInCycle || 1)}`
+      : todayResult.latePeriod
+        ? `Late by ${todayLateByDays} day${todayLateByDays === 1 ? '' : 's'}`
+        : daysUntilPeriod === 0
+          ? 'Period starts today'
+          : `Period in ${daysUntilPeriod} day${daysUntilPeriod === 1 ? '' : 's'}`;
 
-  const handleTogglePeriodDate = (day: number) => {
-    setDayInfo((prev) => ({
+  // ─── Per-cell calendar data for the visible month, keyed by real date ─────
+  const dayInfo: DayInfoMap = useMemo(() => {
+    const map: DayInfoMap = {};
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(calYear, calMonth, day);
+      const dateStr = formatDate(date);
+      const result = calculatePhase(date, cycleSettings, sharedLogs);
+      const log = monthLogs[dateStr];
+      const fertile =
+        result.phase && !result.latePeriod && result.day > 0
+          ? isInFertileWindow(result.day, cycleSettings.cycle_length_days || 28)
+          : false;
+      map[dateStr] = {
+        phase: result.phase,
+        isPeriod: log?.is_period === true,
+        fertile,
+        categories: getLoggedCategories(log),
+      };
+    }
+    return map;
+  }, [calYear, calMonth, cycleSettings, sharedLogs, monthLogs]);
+
+  // ─── Period-mode toggling — staged locally, persisted on "Done" ──────────
+  const handleTogglePeriodDate = (dateStr: string) => {
+    const isCurrentlyLogged = monthLogs[dateStr]?.is_period === true;
+    setPendingPeriodChanges((prev) => {
+      const next = new Map(prev);
+      if (next.has(dateStr)) next.delete(dateStr);
+      else next.set(dateStr, !isCurrentlyLogged);
+      return next;
+    });
+    setMonthLogs((prev) => ({
       ...prev,
-      [day]: {
-        ...(prev[day] ?? { phase: null, fertile: false, categories: [] }),
-        isPeriod: !prev[day]?.isPeriod,
-      },
+      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: !isCurrentlyLogged },
     }));
   };
 
   const handleEndPeriod = () => {
-    setDayInfo((prev) => {
-      const next = { ...prev };
-      next[selectedDay] = { ...(next[selectedDay] ?? { phase: 'Menstrual', fertile: false, categories: [] }), isPeriod: true };
-      for (let i = 1; i <= 7; i++) {
-        const d = selectedDay + i;
-        if (d > 31) break;
-        next[d] = { ...(next[d] ?? { phase: null, fertile: false, categories: [] }), isPeriod: false };
+    const dateStr = formatDate(selectedDate);
+    const changed = new Map(pendingPeriodChanges);
+    const updates: Record<string, TrackerLog> = {};
+
+    if (!monthLogs[dateStr]?.is_period) {
+      updates[dateStr] = { ...(monthLogs[dateStr] ?? emptyLog(dateStr)), is_period: true };
+      changed.set(dateStr, true);
+    }
+
+    const cur = new Date(selectedDate);
+    for (let i = 1; i <= 7; i++) {
+      cur.setDate(cur.getDate() + 1);
+      const dStr = formatDate(cur);
+      if (monthLogs[dStr]?.is_period !== false) {
+        updates[dStr] = { ...(monthLogs[dStr] ?? emptyLog(dStr)), is_period: false };
+        changed.set(dStr, false);
       }
-      return next;
+    }
+
+    setMonthLogs((prev) => ({ ...prev, ...updates }));
+    setPendingPeriodChanges(changed);
+    toast.info('Period ended here. Future days cleared.');
+  };
+
+  // After a batch of period toggles, persist each changed day and re-anchor
+  // last_period_start to the most recent streak — mirrors the web's
+  // handleSavePeriodChanges in frontend/.../tracker/page.tsx.
+  const handleSavePeriodChanges = async () => {
+    if (pendingPeriodChanges.size === 0) {
+      setIsPeriodLoggingMode(false);
+      return;
+    }
+
+    const entries = Array.from(pendingPeriodChanges.entries());
+    const results = await Promise.all(
+      entries.map(([dateStr, isPeriod]) => {
+        const log = monthLogs[dateStr] ?? emptyLog(dateStr);
+        return logDailySymptoms({
+          date: dateStr,
+          symptoms: log.symptoms ?? [],
+          isPeriod,
+          flowIntensity: isPeriod ? log.flow_intensity || 'Normal' : undefined,
+          moods: log.moods ?? [],
+          notes: log.notes ?? '',
+          cervicalDischarge: log.cervical_discharge ?? undefined,
+          exerciseTypes: log.exercise_types ?? [],
+          exerciseMinutes: log.exercise_minutes ?? null,
+          waterIntake: log.water_intake ?? 0,
+          selfLoveTags: log.self_love_tags ?? [],
+          selfLoveOther: log.self_love_other ?? '',
+          sleepQuality: log.sleep_quality ?? [],
+          sleepMinutes: log.sleep_minutes ?? null,
+          disruptors: log.disruptors ?? [],
+          sexActivity: log.sex_activity ?? [],
+          contraception: log.contraception ?? [],
+        });
+      })
+    );
+
+    if (results.some((r) => !r.success)) {
+      toast.error('Failed to save some period dates', { description: 'Please try again' });
+      return;
+    }
+
+    const merged: Record<string, DailyLog> = { ...sharedLogs };
+    pendingPeriodChanges.forEach((isPeriod, dateStr) => {
+      merged[dateStr] = { date: dateStr, is_period: isPeriod };
     });
+    await reanchorLastPeriodStart(merged);
+
+    setPendingPeriodChanges(new Map());
+    setIsPeriodLoggingMode(false);
+    toast.success('Period dates updated!');
+  };
+
+  // Finds the start of the most recent logged period streak and, if it's
+  // newer than the current setting, persists it as the new anchor — ported
+  // from the web's identical streak-walk in handleSave/handleSavePeriodChanges.
+  const reanchorLastPeriodStart = async (logs: Record<string, DailyLog>) => {
+    const periodDates = Object.keys(logs)
+      .filter((d) => logs[d]?.is_period === true)
+      .sort((a, b) => b.localeCompare(a));
+    if (periodDates.length === 0) return;
+
+    const mostRecent = periodDates[0];
+    let streakStart = mostRecent;
+    const periodSet = new Set(periodDates);
+    const cur = parseLocalDate(mostRecent);
+    while (true) {
+      cur.setDate(cur.getDate() - 1);
+      const prevStr = formatDate(cur);
+      if (periodSet.has(prevStr)) streakStart = prevStr;
+      else break;
+    }
+
+    if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
+      const result = await updateLastPeriodDate(streakStart);
+      if (result.success) {
+        setCycleSettings((prev) => ({ ...prev, last_period_start: streakStart }));
+      }
+    }
   };
 
   // Section visibility
   const [lifestyleOpen, setLifestyleOpen] = useState(true);
   const [intimacyOpen, setIntimacyOpen] = useState(false);
 
-  // Log data
+  // Per-date edit state — repopulated from monthLogs whenever the selected
+  // date (or its underlying data) changes, matching the web's load-on-select
+  // effect in page.tsx.
   const [bodySignals, setBodySignals] = useState<string[]>([]);
   const [innerWeather, setInnerWeather] = useState<string[]>([]);
   const [selfLove, setSelfLove] = useState<string[]>([]);
@@ -347,6 +554,27 @@ export default function TrackerScreen() {
 
   const noteMax = 1000;
 
+  useEffect(() => {
+    const dateStr = formatDate(selectedDate);
+    const log = monthLogs[dateStr];
+
+    setBodySignals(log?.symptoms ?? []);
+    setInnerWeather(log?.moods ?? []);
+    setExerciseType(log?.exercise_types ?? []);
+    setExerciseMins(log?.exercise_minutes ?? 0);
+    setHydrationGlasses(log?.water_intake ?? 0);
+    setSelfLove(log?.self_love_tags ?? []);
+    setSelfLoveNote(log?.self_love_other ?? '');
+    setSleepQuality(log?.sleep_quality ?? []);
+    setSleepHours(log?.sleep_minutes ? Math.floor(log.sleep_minutes / 60) : 0);
+    setSleepMins(log?.sleep_minutes ? log.sleep_minutes % 60 : 0);
+    setDisruptors(log?.disruptors ?? []);
+    setSexualActivity(log?.sex_activity ?? []);
+    setContraception(log?.contraception ?? []);
+    setNote(log?.notes ?? '');
+    setDischargeAnswers(parseCervicalDischarge(log?.cervical_discharge ?? null));
+  }, [selectedDate, monthLogs]);
+
   const handleMonthChange = (dir: 'prev' | 'next') => {
     if (dir === 'next') {
       if (calMonth === 11) { setCalMonth(0); setCalYear((y) => y + 1); }
@@ -357,74 +585,100 @@ export default function TrackerScreen() {
     }
   };
 
-  const handleSaveLog = () => {
-    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+  const isFutureDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compare = new Date(date);
+    compare.setHours(0, 0, 0, 0);
+    return compare > today;
+  };
 
-    // Shape mirrors what `logDailySymptoms()` expects on the web
-    // (frontend/src/app/actions/cycle-sync.ts -> backend/src/actions/cycle-sync/cycle-sync.ts),
-    // so wiring the real backend later is a drop-in swap of the console.log
-    // below for the actual call:
-    //   const result = await logDailySymptoms(payload);
-    //   if (!result.success) { /* show an error toast, same as web */ return; }
-    //   /* then invalidate/refetch whatever local cache mirrors dashboard/insights/plan */
-    const payload = {
-      date: dateStr,                          // daily_logs.date
-      symptoms: bodySignals,                  // daily_logs.symptoms          <- "Body Signals" card (+ Quick Phase Log)
-      moods: innerWeather,                    // daily_logs.moods             <- "Inner Weather" card (+ Quick Phase Log)
-      exerciseTypes: exerciseType,             // daily_logs.exercise_types    <- "Exercise Log" card
-      exerciseMinutes: exerciseMins || null,   // daily_logs.exercise_minutes  <- "Exercise Log" card
-      waterIntake: hydrationGlasses,           // daily_logs.water_intake      <- "Hydration" card
-      selfLoveTags: selfLove,                  // daily_logs.self_love_tags    <- "Self Love Log" card
-      selfLoveOther: selfLoveNote,             // daily_logs.self_love_other   <- "Self Love Log" card
-      sleepQuality,                            // daily_logs.sleep_quality     <- "Sleep Log" card
-      sleepMinutes: (sleepHours || sleepMins) ? sleepHours * 60 + sleepMins : null, // daily_logs.sleep_minutes <- "Sleep Log" card
-      disruptors,                              // daily_logs.disruptors        <- "Disruptors" card (+ Quick Phase Log)
-      sexActivity: sexualActivity,             // daily_logs.sex_activity      <- "Sexual Wellness" card (+ Quick Phase Log)
-      contraception,                           // daily_logs.contraception     <- "Sexual Wellness" card
-      isPeriod: dayInfo[selectedDay]?.isPeriod ?? false, // daily_logs.is_period <- set via the calendar's "Log Period" mode, not this button
-      // FlowCard (flow intensity on menstrual days) hasn't been built for
-      // mobile yet — wire it here once it exists; the web only sends
-      // flowIntensity at all when currentPhase === 'Menstrual'.
-      flowIntensity: undefined as string | undefined,
-      // MPIQ-encoded the same way the web does it (see
-      // frontend/.../tracker/helpers.ts `deriveCervicalDischarge` and
-      // page.tsx's `JSON.stringify([consistency, appearance, sensation])`).
-      cervicalDischarge:
-        dischargeAnswers.vaginalFluid || dischargeAnswers.appearance || dischargeAnswers.sensation
-          ? JSON.stringify([dischargeAnswers.vaginalFluid, dischargeAnswers.appearance, dischargeAnswers.sensation])
-          : undefined,
-      notes: note,                             // daily_logs.notes             <- "Note" card
-    };
+  const [isSaving, setIsSaving] = useState(false);
 
-    // TODO(backend): swap this for the real `logDailySymptoms(payload)` call once Supabase is wired in.
-    console.log('[Tracker] Save log — placeholder until backend is wired:', payload);
+  const handleSaveLog = async () => {
+    if (isFutureDate(selectedDate)) return;
+    const dateStr = formatDate(selectedDate);
+    const existingIsPeriod = monthLogs[dateStr]?.is_period === true;
 
-    // Reflect what just got saved onto the calendar day cell — mirrors the
-    // web's getLoggedCategories() (PeriodLoggingCard.tsx), which derives the
-    // colored activity bars from the same fields. Once the backend is wired,
-    // this should instead come from refetching monthLogs after a successful
-    // save, same as web does.
-    const loggedCategories: CategoryKey[] = [];
-    if (payload.cervicalDischarge) loggedCategories.push('discharge');
-    if (bodySignals.length > 0) loggedCategories.push('bodySignals');
-    if (innerWeather.length > 0) loggedCategories.push('innerWeather');
-    if (exerciseType.length > 0 || exerciseMins > 0) loggedCategories.push('exerciseLog');
-    if (hydrationGlasses > 0) loggedCategories.push('hydration');
-    if (sleepQuality.length > 0 || sleepHours > 0 || sleepMins > 0) loggedCategories.push('sleepLog');
-    if (disruptors.length > 0) loggedCategories.push('disruptors');
-    if (sexualActivity.length > 0 || contraception.length > 0) loggedCategories.push('sexualWellness');
+    const cervicalDischarge =
+      dischargeAnswers.vaginalFluid || dischargeAnswers.appearance || dischargeAnswers.sensation
+        ? JSON.stringify([dischargeAnswers.vaginalFluid, dischargeAnswers.appearance, dischargeAnswers.sensation])
+        : undefined;
 
-    setDayInfo((prev) => ({
+    setIsSaving(true);
+    const result = await logDailySymptoms({
+      date: dateStr,
+      symptoms: bodySignals,
+      moods: innerWeather,
+      exerciseTypes: exerciseType,
+      exerciseMinutes: exerciseMins || null,
+      waterIntake: hydrationGlasses,
+      selfLoveTags: selfLove,
+      selfLoveOther: selfLoveNote,
+      sleepQuality,
+      sleepMinutes: (sleepHours || sleepMins) ? sleepHours * 60 + sleepMins : null,
+      disruptors,
+      sexActivity: sexualActivity,
+      contraception,
+      // Save doesn't change period status on its own — that's set via the
+      // calendar's "Log Period" mode — but it must preserve whatever is
+      // already logged for the day instead of silently clearing it.
+      isPeriod: existingIsPeriod,
+      flowIntensity: undefined,
+      cervicalDischarge,
+      notes: note,
+    });
+    setIsSaving(false);
+
+    if (!result.success) {
+      toast.error('Failed to save entry', { description: result.error });
+      return;
+    }
+
+    setMonthLogs((prev) => ({
       ...prev,
-      [selectedDay]: {
-        ...(prev[selectedDay] ?? { phase: currentPhase, isPeriod: false, fertile: false }),
-        categories: loggedCategories,
+      [dateStr]: {
+        ...(prev[dateStr] ?? emptyLog(dateStr)),
+        symptoms: bodySignals,
+        moods: innerWeather,
+        exercise_types: exerciseType,
+        exercise_minutes: exerciseMins || null,
+        water_intake: hydrationGlasses,
+        self_love_tags: selfLove,
+        self_love_other: selfLoveNote,
+        sleep_quality: sleepQuality,
+        sleep_minutes: (sleepHours || sleepMins) ? sleepHours * 60 + sleepMins : null,
+        disruptors,
+        sex_activity: sexualActivity,
+        contraception,
+        is_period: existingIsPeriod,
+        cervical_discharge: cervicalDischarge ?? null,
+        notes: note,
       },
     }));
+
+    toast.success('Entry Saved!', { description: 'Your daily log has been updated.' });
+
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['insights'] });
+    queryClient.invalidateQueries({ queryKey: ['plan'] });
   };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Soft vertical wash behind everything — matches the web's
+          `bg-gradient-to-b from-paper via-white-bone to-paper` instead of a
+          flat fill, so the screen has the same misty depth as every other
+          Rove screen. */}
+      <LinearGradient
+        colors={['#FAF9F6', '#FDFCFB', '#FAF9F6']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
       {/* ── Top Nav ── */}
       <View style={styles.nav}>
         <TouchableOpacity style={styles.navIcon}>
@@ -449,25 +703,51 @@ export default function TrackerScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Cycle Status Card ── */}
-        <View style={styles.statusCard}>
-          <View style={styles.statusLeft}>
-            <Text style={styles.statusDate}>
-              {new Date(calYear, calMonth, selectedDay).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </Text>
-            <View style={[styles.statusDot, currentPhase && { backgroundColor: PHASE_COLORS[currentPhase] }]} />
-            <View
-              style={[
-                styles.phaseBadge,
-                currentPhase ? { backgroundColor: `${PHASE_COLORS[currentPhase]}1A` } : styles.phaseBadgeNeutral,
-              ]}
-            >
-              <Text style={[styles.phaseBadgeText, currentPhase && { color: PHASE_COLORS[currentPhase] }]}>
-                {currentPhase ?? 'Unknown'}
+        {/* ── Cycle Status Card — phase-tinted border + shadow, matching the
+            web's getPhaseTheme()/phasePill() treatment on this same card. ── */}
+        <View
+          style={[
+            styles.statusCard,
+            currentPhase
+              ? { borderColor: `${PHASE_COLORS[currentPhase]}4D`, shadowColor: PHASE_COLORS[currentPhase], shadowOpacity: 0.12 }
+              : styles.statusCardNeutral,
+          ]}
+        >
+          <View style={styles.statusRow}>
+            <View>
+              <Text style={styles.statusDate}>
+                {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </Text>
+              {hasPhaseData && phaseResult.latePeriod && (
+                <Text style={styles.statusLateText}>Late {lateByDays}d</Text>
+              )}
+            </View>
+
+            <View style={styles.statusCenter}>
+              <View style={[styles.statusDot, currentPhase && { backgroundColor: PHASE_COLORS[currentPhase] }]} />
+              <View
+                style={[
+                  styles.phaseBadge,
+                  currentPhase ? { backgroundColor: `${PHASE_COLORS[currentPhase]}1A` } : styles.phaseBadgeNeutral,
+                ]}
+              >
+                <Text style={[styles.phaseBadgeText, currentPhase && { color: PHASE_COLORS[currentPhase] }]}>
+                  {currentPhase ?? 'Phase Unknown'}
+                </Text>
+                {isFertileDay && <Text style={styles.fertileInline}> • Fertile</Text>}
+              </View>
+            </View>
+
+            <Text style={styles.statusDay}>{dayInCycle ? `Day ${dayInCycle}` : '—'}</Text>
+          </View>
+
+          {!hasPhaseData && (
+            <View style={styles.statusHint}>
+              <Text style={styles.statusHintText}>
+                Log your first period to unlock phase tracking and fertile window predictions.
               </Text>
             </View>
-          </View>
-          <Text style={styles.statusDay}>Day {selectedDay}</Text>
+          )}
         </View>
 
         {/* ── Calendar ── */}
@@ -475,13 +755,16 @@ export default function TrackerScreen() {
           month={calMonth}
           year={calYear}
           dayInfo={dayInfo}
-          selectedDate={selectedDay}
-          onDateTap={setSelectedDay}
+          selectedDate={selectedDate}
+          onDateTap={setSelectedDate}
           onMonthChange={handleMonthChange}
           isPeriodLoggingMode={isPeriodLoggingMode}
           onTogglePeriodDate={handleTogglePeriodDate}
-          onEnablePeriodLogging={() => setIsPeriodLoggingMode(true)}
-          onExitPeriodLogging={() => setIsPeriodLoggingMode(false)}
+          onEnablePeriodLogging={() => {
+            setPendingPeriodChanges(new Map());
+            setIsPeriodLoggingMode(true);
+          }}
+          onExitPeriodLogging={handleSavePeriodChanges}
           onEndPeriod={handleEndPeriod}
           headline={headline}
           currentPhase={currentPhase}
@@ -774,16 +1057,39 @@ export default function TrackerScreen() {
           screen, stays put while the content above scrolls ── */}
       <View style={styles.floatingBar} pointerEvents="box-none">
         <TouchableOpacity
-          style={styles.saveBtn}
+          style={[styles.saveBtn, isSaving && { opacity: 0.6 }]}
           onPress={handleSaveLog}
+          disabled={isSaving}
           activeOpacity={0.85}
         >
-          <Text style={styles.saveBtnText}>Save Log</Text>
+          <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
         </TouchableOpacity>
         <ChatFAB hasNotification />
       </View>
     </SafeAreaView>
   );
+}
+
+function emptyLog(dateStr: string): TrackerLog {
+  return {
+    date: dateStr,
+    is_period: null,
+    flow_intensity: null,
+    symptoms: [],
+    moods: [],
+    exercise_types: [],
+    exercise_minutes: null,
+    water_intake: 0,
+    self_love_tags: [],
+    self_love_other: '',
+    sleep_quality: [],
+    sleep_minutes: null,
+    disruptors: [],
+    sex_activity: [],
+    contraception: [],
+    cervical_discharge: null,
+    notes: '',
+  };
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -811,8 +1117,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navTitle: {
-    fontSize: 16,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 19,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   navSubtitle: {
@@ -842,29 +1148,41 @@ const styles = StyleSheet.create({
 
   // Status Card
   statusCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  statusCardNeutral: {
+    borderColor: '#F3F4F6',
+  },
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
   },
-  statusLeft: {
+  statusCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   statusDate: {
-    fontSize: 15,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 17,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
+  },
+  statusLateText: {
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
+    color: PHASE_COLORS.Menstrual,
+    marginTop: 1,
   },
   statusDot: {
     width: 7,
@@ -873,9 +1191,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#9CA3AF',
   },
   phaseBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 50,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  fertileInline: {
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
+    color: '#B45309',
+    opacity: 0.8,
+  },
+  statusHint: {
+    marginTop: 12,
+    backgroundColor: '#F9F9F5',
+    borderWidth: 1,
+    borderColor: '#F0ECE8',
+    borderRadius: 16,
+    padding: 12,
+  },
+  statusHintText: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
   },
   phaseBadgeNeutral: {
     backgroundColor: '#F3F4F6',
@@ -886,9 +1226,9 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   statusDay: {
-    fontSize: 13,
-    fontFamily: 'Inter-Regular',
-    color: '#A8A29E',
+    fontSize: 15,
+    fontFamily: 'CormorantGaramond-SemiBold',
+    color: '#78716C',
   },
 
   // Floating Save Log + Chat bar (pinned to bottom of screen, stays fixed
@@ -923,8 +1263,8 @@ const styles = StyleSheet.create({
 
   // Section groups (Lifestyle / Intimacy)
   sectionGroup: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 24,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -949,8 +1289,8 @@ const styles = StyleSheet.create({
   },
   sectionGroupTitle: {
     flex: 1,
-    fontSize: 15,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 18,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   sectionGroupBody: {

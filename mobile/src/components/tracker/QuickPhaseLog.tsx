@@ -151,8 +151,8 @@ export function QuickPhaseLog({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    borderRadius: 24,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
@@ -175,10 +175,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 13,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
-    letterSpacing: 0.3,
+    letterSpacing: 0.1,
   },
   subtitle: {
     fontSize: 10,

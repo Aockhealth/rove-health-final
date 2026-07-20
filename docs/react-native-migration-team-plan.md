@@ -109,11 +109,8 @@ A code audit found more already built than the last update assumed. **Phase 1 is
 **Build:** a throwaway test screen that records/streams and plays back one exchange.
 **Definition of done:** works on a real phone. **If it fails, write the fallback decision here in this doc** (most likely: the voice/chat screen ships as an in-app webview of the live site instead of native) — flag to the founder for sign-off before Item 19 (AI chat) is claimed.
 
-### [ ] 7. Chart spike — victory-native
-**What:** prove one chart from Insights can be rebuilt natively before claiming the full Insights screen.
-**Research:** `frontend/src/components/cycle-sync/insights/` — pick the simplest card (e.g. `CycleOverviewCard.tsx`) as the one to rebuild.
-**Build:** the same chart, same data shape, in `victory-native`.
-**Definition of done:** visually matches the web version side-by-side on device.
+### [x] 7. Chart spike — resolved by avoiding victory-native entirely
+**What happened:** `victory-native` is not in `package.json` and was never added. Item 15 (Insights) built its visuals as custom `react-native-svg` components instead — `SegmentedDoughnut.tsx` for the segmented/gapped donut, plus `ExerciseOrb.tsx` and `MacroFuelGauge.tsx` on the Plan screen — because the per-segment tap-to-select interaction didn't map cleanly onto a charting library anyway. This satisfies the item's actual goal (prove Insights' visuals are buildable natively) without the dependency; the original library-mapping table's "victory-native" row is superseded by this approach.
 
 ---
 
@@ -138,22 +135,14 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 **Verified:** `npm test` (45/45 pass), `tsc --noEmit` clean in both `frontend/` and `mobile/`, `npm run build --prefix frontend` succeeds, and a real `expo export` bundle succeeds with the screen's imports resolved (not just type-checked).
 **Not yet verified — needs a human on a real phone:** the actual **Definition of done** (side-by-side against the website, same account, checked in all four phases) requires manual testing per ground rule 4, which Claude Code can't do. Someone should log into the mobile build with a test account, adjust its cycle start date to land in each of the four phases, and compare against the website before this item is fully closed out.
 
-### [ ] 9b. App tab navigation shell
-**What:** there is currently no tab bar anywhere in `mobile/` — `mobile/src/app/(app)/_layout.tsx` is a plain `Stack`, so once a screen is open there's no way to navigate to any other screen. This is app-shell infrastructure, not part of any single screen, and everything from item 10 onward depends on it existing.
-**Reference:** `frontend/src/components/cycle-sync/CycleSyncShell.tsx` — the web equivalent. Its `navItems` array is the spec: 5 tabs — Home, Tracker, Insights, Plan, Learn (in that order). Profile is deliberately **not** a tab; it's reached via the avatar tap in the header, matching `ProfileAvatar.tsx` (already built).
-**Research:** Expo Router's tab navigation (`expo-router`'s `(tabs)` layout convention, or `@react-navigation/bottom-tabs` if more control is needed over styling to match the web version's rounded/floating nav bar look).
-**Build:** restructure `mobile/src/app/(app)/` into a tab group so all 5 tabs are reachable; wire icons (lucide-react-native, matching web's Home/Calendar/BarChart2/List/BookOpen) and active-state styling per phase theme if desired. Screens that don't exist yet (Tracker, Insights, Plan, Learn) can point at placeholder stubs until their own checklist items land — this item is just the shell, not the destination screens.
-**Definition of done:** all 5 tabs are tappable and switch screens correctly on a real phone; the active tab is visually distinct; navigating away from Home and back preserves scroll position / doesn't lose state unexpectedly.
+### [x] 9b. App tab navigation shell — built, done
+**What's there:** `mobile/src/app/(app)/_layout.tsx` is a proper 5-tab `Tabs` navigator (Home, Tracker, Insights, Plan, Learn, in that order — matches `CycleSyncShell.tsx`'s `navItems`), phase-themed active color pulled live from dashboard data, blurred floating tab bar. Profile is correctly excluded from the tab bar (`href: null`) and reached via the header avatar instead, matching the web. This entry was stale — the shell has existed since early in the project; whoever wrote items 10/11 against a since-replaced placeholder file didn't come back and update this one.
 
-### [ ] 10. Tracker — shell + first 6 logging cards — confirmed NOT built (2026-07-19 audit)
-**Checked directly:** `mobile/src/app/(app)/tracker.tsx` is an 11-line placeholder ("Tracker — Coming soon..."), not a partial implementation. Genuinely open, unlike several other items on this list that turned out to be further along than their `[ ]` suggested.
-**Reference:** `frontend/src/app/cycle-sync/tracker/page.tsx` and `.../tracker/components/` — this folder has 18 card components; split across two checklist items so no single person is blocked for 4 days straight. Take: `Header`, `CalendarCard`, `CurrentPhaseBadge`, `FlowCard`, `PeriodLoggingCard`, `QuickPhaseLog`.
-**Definition of done:** these 6 cards render and save data correctly against a real account, in all four phases.
-
-### [ ] 11. Tracker — remaining 12 logging cards
-**Reference:** same folder as Item 10 — the rest: `MoodsCard`, `SleepCard`, `SymptomsCard`, `WaterIntakeCard`, `ExerciseCard`, `DischargeCard`, `DisruptorsCard`, `NoteCard`, `SelfLoveCard`, `SexualWellnessCard`, `EditCycleBanner`, `SaveButton`, plus wiring them into `TrackerAccordion`.
-**Depends on:** Item 10 (shares the same screen shell).
-**Definition of done:** full tracker screen matches the website card-for-card, in all four phases, and a save persists correctly.
+### [x] 10 & 11. Tracker — full screen, all logging cards, real backend — built 2026-07-20
+**What's there:** `mobile/src/app/(app)/tracker.tsx` (~1100 lines) + `mobile/src/components/tracker/*` — status card (phase badge, fertile indicator, late-period badge, first-period hint), full month calendar with period-logging mode, Quick Phase Log, Discharge questionnaire (MPIQ, video/photo previews), Body Signals, Inner Weather, Self Love, collapsible Lifestyle group (Exercise/Hydration/Sleep), collapsible Intimacy group (Sexual Wellness/Disruptors), Note card, floating Save + Chat FAB — all 18 web cards accounted for, some combined/reorganized rather than 1:1 file-for-file.
+**Backend, real as of 2026-07-20:** `mobile/src/lib/tracker.ts` mirrors `fetchTrackerPageDataFast`/`fetchMonthLogs`/`logDailySymptoms`/`updateLastPeriodDate` from `frontend/src/app/actions/cycle-sync.ts` via direct RLS-scoped Supabase queries. Phase/period math runs through the canonical `calculatePhase()` from `@shared/cycle/phase` (previously the screen had its own simplified hand-rolled copy with no late-period handling and a day-of-month-keyed calendar that showed the same coloring for every month regardless of which one was open — both fixed). Calendar navigation fetches real logs per month; period-logging mode persists via `logDailySymptoms` and re-anchors `last_period_start` off the real streak, same algorithm as web.
+**Known gap carried over intentionally:** no Flow Card / period-vs-discharge mode toggle yet (web's `FlowCard` for flow intensity on menstrual days) — `flowIntensity` is sent as `undefined` in every save. Worth its own small follow-up item if flow-intensity tracking matters for v1.
+**Not yet verified — needs a human on a real phone:** side-by-side against the website, in all four phases including a "late period" test case, per ground rule 4.
 
 ### [x] 12. Plan (overview) — found already built during 2026-07-19 audit, phone checkpoint still pending
 **What's there:** `mobile/src/app/(app)/plan/index.tsx` (790 lines) — Guide/Nourish/Move tab bar, wired to real Supabase data via `mobile/src/lib/plan.ts` (`fetchPlanPageDataFast` queries `user_cycle_settings`, `daily_logs`, `user_lifestyle`, `user_weight_goals`, `user_onboarding` in parallel; `savePlanSettings` persists changes). Not a stub — genuinely pulls and computes real account data, same shape as the web reference.
@@ -172,6 +161,7 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 **Real bug found and fixed along the way:** `PhaseInsightCard.tsx` had a stray `h-full` class on a View whose parent has no fixed height (it's sized by its own content inside a ScrollView). React Native's layout engine mis-measured that as a huge/undefined height, which silently made every sibling rendered after it in the same ScrollView unreachable by scrolling — not a crash, just a hard-to-diagnose "content quietly stops here" bug. Root-caused via a bisection test (bright test blocks placed at different positions in the list) rather than guessing. Worth checking for the same `h-full`-on-auto-height-parent pattern if a future screen has content that mysteriously won't scroll into view.
 **Also fixed:** the wellbeing modal's `Done` button was looping back into the questionnaire instead of returning to Insights — caused by `wellbeing/` having its own nested Stack navigator, so `router.dismissTo('/insights')` couldn't cross into the tab navigator's stack. Fixed by removing `wellbeing/_layout.tsx` and declaring `wellbeing/intro` and `wellbeing/assessment` directly as modal-presented screens in the root `_layout.tsx`'s Stack instead, so both live in the same navigator Insights does.
 **Verified:** `tsc --noEmit` clean, `expo export` / live Metro bundle fetch confirms all new modules resolve with no bundling errors.
+**Gap found 2026-07-20, not yet fixed:** the "Generate Insight" AI button (`handleGenerateInsight` in `insights.tsx`) is fully fake — a `setTimeout` returning one hardcoded string, not wired to anything. The web equivalent (`frontend/src/app/cycle-sync/insights/page.tsx`) calls real actions, `generatePhaseAIInsight` (hits the AI backend) and `getCachedPhaseInsight` (checks for a cached result first). Needs its own small item: port those two calls the same way `dashboard.ts`/`tracker.ts` port their web actions.
 **Not yet verified — needs a human on a real phone:** side-by-side against the website with a real account, in all four phases, per ground rule 4.
 
 ### [x] 20. Wellbeing intro — code complete 2026-07-19, phone checkpoint still pending
@@ -207,14 +197,6 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 **Depends on:** Item 6 (voice spike) resolved — including its fallback decision if voice failed.
 **Definition of done:** a full conversation round-trips correctly, matches web behavior, voice works (or the agreed webview fallback is in place).
 
-### [ ] 20. Wellbeing intro
-**Reference:** `frontend/src/app/cycle-sync/wellbeing/intro/page.tsx`.
-**Definition of done:** matches website.
-
-### [ ] 21. Wellbeing assessment
-**Reference:** `frontend/src/app/cycle-sync/wellbeing/assessment/page.tsx` — a question-by-question flow with a progress bar.
-**Definition of done:** completing the assessment on a test account saves the same result the website would.
-
 ### [x] 22. Rove Chef — found already built during 2026-07-19 audit, phone checkpoint still pending
 **What's there:** `mobile/src/components/plan/RoveChef.tsx` (187 lines) + `DietCheatSheet.tsx` (98), `SymptomDecoder.tsx` (172), `MacroFuelGauge.tsx` (307), wired into the Plan screen's "Nourish" tab, backed by `mobile/src/data/diet-recommendations.ts`.
 **Not yet verified — needs a human on a real phone:** matches website functionality for a test account.
@@ -248,9 +230,10 @@ For every item in this phase, the **reference is the equivalent page in `fronten
 **Build:** splash + status bar parity (verify, don't just assume, against the reference), offline caching of learn content and last-known cycle data via MMKV + TanStack Query persist, push-notification scaffolding for phase reminders.
 **Definition of done:** airplane-mode test — app opens and shows cached data.
 
-### [ ] 28. EAS build profiles + analytics/error reporting
-**Build:** EAS build profiles (dev/preview/production), PostHog wired in (`posthog-react-native` per the library mapping), crash/error reporting.
-**Definition of done:** a preview build installs via EAS on a real device; a test event shows up in PostHog.
+### [ ] 28. EAS build profiles + analytics/error reporting — build profiles done, analytics/crash reporting not started
+**What's already there:** `eas.json` has `development`/`preview`/`production` profiles configured and `app.json` is linked to a real EAS project (`extra.eas.projectId`, auto-linked during Item 8's `expo export` verification).
+**What's still missing:** no `posthog-react-native` dependency, no crash/error reporting (Sentry or similar) — neither has been started.
+**Definition of done (remaining):** a test event shows up in PostHog; a forced crash shows up in the crash-reporting dashboard.
 
 ### [x] 29. Post-signup onboarding wizard — built 2026-07-19, phone checkpoint still pending
 **What's there:** `mobile/src/app/onboarding.tsx` (5-step wizard: Intro → Welcome/DOB → Period History calendar → About You → Goals + privacy consent) wired to `mobile/src/components/onboarding/Step*.tsx`, state in `mobile/src/lib/onboarding-state.ts` (reducer ported from the website's `state.ts`), and saves through `mobile/src/lib/onboarding.ts` → the same `complete_onboarding_v2` Supabase RPC the website uses. Draft auto-saves to `AsyncStorage` (web used `localStorage`). `mobile/src/app/index.tsx` now checks `profiles.onboarding_completed` and redirects un-onboarded users to `/onboarding` before `/(app)/home`. Since this file was first drafted, the team has iterated further on `StepWelcome`/`StepGoals` (swapped the DOB inputs for a `DateSelect` component, expanded the privacy/disclaimer copy, linked the consent line to the new native Privacy screen from Item 26) — check the current files rather than assuming this description is exact.

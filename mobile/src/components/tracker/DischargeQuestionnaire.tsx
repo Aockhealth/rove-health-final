@@ -61,7 +61,7 @@ function VideoOption({
   isSelected: boolean;
   onPress: () => void;
 }) {
-  const player = useVideoPlayer(source, (p) => {
+  const player = useVideoPlayer(source, (p: any) => {
     p.loop = true;
     p.muted = true;
     p.play();
@@ -320,8 +320,8 @@ export function DischargeQuestionnaire({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 24,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 15,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 18,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   headerSubtitle: {
@@ -402,8 +402,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   questionNum: {
-    fontSize: 14,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 16,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
     marginBottom: 4,
     marginTop: 4,
@@ -450,8 +450,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   mediaLabel: {
-    fontSize: 13,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 14,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
     marginTop: 2,
   },
@@ -486,8 +486,8 @@ const styles = StyleSheet.create({
     backgroundColor: `${ACCENT}14`,
   },
   pillLabel: {
-    fontSize: 14,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 15,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   pillLabelSelected: {

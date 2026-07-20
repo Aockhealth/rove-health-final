@@ -44,7 +44,11 @@ export interface DayInfo {
   categories: CategoryKey[];
 }
 
-export type DayInfoMap = Record<number, DayInfo>;
+// Keyed by full "YYYY-MM-DD" date string (not day-of-month) — a day-of-month
+// key can't tell July 5th apart from August 5th, which used to make every
+// month show the same coloring. Use formatDate() from @shared/cycle/phase to
+// build keys.
+export type DayInfoMap = Record<string, DayInfo>;
 
 // Visual Identity 2.0 — matches web (frontend/src/app/cycle-sync/tracker/components/PeriodLoggingCard.tsx)
 export const PHASE_COLORS: Record<'Menstrual' | 'Follicular' | 'Ovulatory' | 'Luteal', string> = {
@@ -93,19 +97,26 @@ function withAlpha(hex: string, alphaHex: string) {
 export interface CycleCalendarProps {
   month: number; // 0-indexed
   year: number;
-  dayInfo: DayInfoMap;
-  selectedDate: number;
-  onDateTap: (day: number) => void;
+  dayInfo: DayInfoMap; // keyed by "YYYY-MM-DD"
+  selectedDate: Date;
+  onDateTap: (date: Date) => void;
   onMonthChange: (direction: 'prev' | 'next') => void;
 
   isPeriodLoggingMode: boolean;
-  onTogglePeriodDate: (day: number) => void;
+  onTogglePeriodDate: (dateStr: string) => void;
   onEnablePeriodLogging: () => void;
   onExitPeriodLogging: () => void;
   onEndPeriod: () => void;
 
   headline: string;
   currentPhase: Phase;
+}
+
+function formatDateStr(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function CycleCalendar({
@@ -137,7 +148,8 @@ export function CycleCalendar({
   const cellSize = gridWidth > 0 ? gridWidth / 7 : 0;
 
   const today = new Date();
-  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  const todayStr = formatDateStr(today);
+  const selectedDateStr = formatDateStr(selectedDate);
 
   return (
     <View style={styles.card}>
@@ -217,18 +229,19 @@ export function CycleCalendar({
               return <View key={idx} style={{ width: cellSize, height: cellSize }} />;
             }
 
-            const info = dayInfo[day];
+            const cellDate = new Date(year, month, day);
+            const dateStr = formatDateStr(cellDate);
+            const info = dayInfo[dateStr];
             const phase = info?.phase ?? null;
             const isPeriod = info?.isPeriod ?? false;
             const fertile = info?.fertile ?? false;
             const categories = info?.categories ?? [];
 
-            const cellDate = new Date(year, month, day);
             cellDate.setHours(0, 0, 0, 0);
             const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const isFuture = cellDate.getTime() > todayMidnight.getTime();
-            const isToday = isCurrentMonth && day === today.getDate();
-            const isSelected = !isPeriodLoggingMode && isCurrentMonth && day === selectedDate;
+            const isToday = dateStr === todayStr;
+            const isSelected = !isPeriodLoggingMode && dateStr === selectedDateStr;
 
             let bg = 'transparent';
             if (isSelected) bg = TODAY_COLOR;
@@ -245,7 +258,7 @@ export function CycleCalendar({
                 key={idx}
                 disabled={isFuture}
                 activeOpacity={0.75}
-                onPress={() => (isPeriodLoggingMode ? onTogglePeriodDate(day) : onDateTap(day))}
+                onPress={() => (isPeriodLoggingMode ? onTogglePeriodDate(dateStr) : onDateTap(cellDate))}
                 style={{ width: cellSize, height: cellSize, alignItems: 'center', justifyContent: 'center' }}
               >
                 <View
@@ -484,8 +497,8 @@ const guideStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 17,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 20,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   body: {
@@ -508,8 +521,8 @@ const guideStyles = StyleSheet.create({
     flex: 1,
   },
   stepTitle: {
-    fontSize: 14,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
     marginBottom: 4,
   },
@@ -534,8 +547,8 @@ const guideStyles = StyleSheet.create({
     borderTopColor: '#F0ECE8',
   },
   phasesTitle: {
-    fontSize: 14,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   phaseGrid: {
@@ -601,8 +614,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headline: {
-    fontSize: 17,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 20,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   subtext: {
@@ -633,8 +646,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   loggingTitle: {
-    fontSize: 14,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 16,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: PHASE_COLORS.Menstrual,
   },
   loggingSub: {
@@ -687,8 +700,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   monthTitle: {
-    fontSize: 13,
-    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
     letterSpacing: 0.8,
   },

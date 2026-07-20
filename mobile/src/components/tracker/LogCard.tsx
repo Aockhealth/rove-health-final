@@ -146,8 +146,8 @@ export function LogCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 24,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 15,
-    fontFamily: 'Outfit-SemiBold',
+    fontSize: 18,
+    fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
   },
   subtitle: {
