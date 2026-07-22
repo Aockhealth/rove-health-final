@@ -1,0 +1,32 @@
+import { NextResponse } from 'next/server';
+import { generateChefOptions } from '@/app/actions/ai-actions';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { phase, mealType, dietary_preferences, cuisine, symptoms, recentChosen, recentShown, preferenceSummary } = body;
+
+    if (!phase) {
+      return NextResponse.json({ error: 'Missing required field: phase' }, { status: 400 });
+    }
+    if (!['snack', 'smoothie', 'salad'].includes(mealType)) {
+      return NextResponse.json({ error: 'Invalid mealType' }, { status: 400 });
+    }
+
+    const result = await generateChefOptions({
+      phase,
+      mealType,
+      dietary_preferences,
+      cuisine,
+      symptoms,
+      recentChosen,
+      recentShown,
+      preferenceSummary,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('API /api/rove-chef-options error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

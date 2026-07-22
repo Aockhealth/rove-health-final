@@ -51,7 +51,12 @@ function mergeContext(
         equipment: pickFirstNonEmpty(primary?.equipment, fallback?.equipment),
         workoutFocus: pickFirstNonEmpty(primary?.workoutFocus, fallback?.workoutFocus),
         sessionDuration: pickFirstNonEmpty(primary?.sessionDuration, fallback?.sessionDuration),
-        limitations: pickFirstNonEmpty(primary?.limitations, fallback?.limitations)
+        limitations: pickFirstNonEmpty(primary?.limitations, fallback?.limitations),
+        mealType: pickFirstNonEmpty(primary?.mealType, fallback?.mealType),
+        preferenceSummary: pickFirstNonEmpty(primary?.preferenceSummary, fallback?.preferenceSummary),
+        recentChosen: pickFirstNonEmpty(primary?.recentChosen, fallback?.recentChosen),
+        dishName: pickFirstNonEmpty(primary?.dishName, fallback?.dishName),
+        keyIngredients: pickFirstNonEmpty(primary?.keyIngredients, fallback?.keyIngredients)
     };
 }
 
@@ -386,9 +391,15 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
             || (context.recentSymptoms || []).join(", "),
         avoid_ingredients: (requestHints?.avoidIngredients || context.avoidIngredients || []).join(", "),
         recent_output_signatures: (requestHints?.recentOutputSignatures || context.recentOutputSignatures || []).join(" | "),
-        quality_feedback: requestHints?.qualityFeedback || context.qualityFeedback || ""
+        quality_feedback: requestHints?.qualityFeedback || context.qualityFeedback || "",
+        // Chef v2 ("pick your plate") variables
+        meal_type: requestHints?.mealType || context.mealType || "snack",
+        preference_summary: requestHints?.preferenceSummary || context.preferenceSummary || "No picks recorded yet — offer a balanced spread.",
+        recent_chosen: (requestHints?.recentChosen || context.recentChosen || []).join(" | ") || "none",
+        dish_name: requestHints?.dishName || context.dishName || "",
+        key_ingredients: (requestHints?.keyIngredients || context.keyIngredients || []).join(", ")
     };
-    const allowedFeatureOverrides = new Set(["chef_snack", "chef_smoothie", "chef_salad"]);
+    const allowedFeatureOverrides = new Set(["chef_snack", "chef_smoothie", "chef_salad", "chef_options", "chef_detail"]);
     const featureKey = req.userIntent && allowedFeatureOverrides.has(req.userIntent)
         ? req.userIntent
         : "diet_coach";
