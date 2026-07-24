@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Zap, Clock, Activity } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { phaseThemes } from '../../data/home-content';
 
 export type ProfileTheme = {
   accentColor: string;
@@ -18,11 +19,14 @@ interface CycleSignatureProps {
   theme: ProfileTheme;
 }
 
+// Reuses the app's single real phase palette (phaseThemes) instead of a
+// second hand-typed color list — this dot row is a summary of the same
+// phases shown everywhere else (Tracker, Home, Insights) and needs to match.
 const PHASES = [
-  { name: 'Menstrual', label: 'Men', color: '#AF6B6B' },
-  { name: 'Follicular', label: 'Fol', color: '#2DD4BF' },
-  { name: 'Ovulatory', label: 'Ovu', color: '#FBBF24' },
-  { name: 'Luteal', label: 'Lut', color: '#818CF8' },
+  { name: 'Menstrual', label: 'Men', color: phaseThemes.Menstrual.color },
+  { name: 'Follicular', label: 'Fol', color: phaseThemes.Follicular.color },
+  { name: 'Ovulatory', label: 'Ovu', color: phaseThemes.Ovulatory.color },
+  { name: 'Luteal', label: 'Lut', color: phaseThemes.Luteal.color },
 ];
 
 export function CycleSignature({
@@ -44,6 +48,13 @@ export function CycleSignature({
     <Animated.View
       entering={FadeInDown.duration(400)}
       className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/70 p-6"
+      style={{
+        shadowColor: '#000',
+        shadowOpacity: 0.07,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 3,
+      }}
     >
       <View className="mb-8 flex-row items-start justify-between">
         <View className="flex-1">

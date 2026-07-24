@@ -3,25 +3,38 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Svg, { Defs, RadialGradient as SvgRadialGradient, Stop, Rect } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import Reanimated, { useSharedValue, useAnimatedStyle, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import { phaseThemes } from '../../data/home-content';
 import { PhaseOrbRing } from '../home/PhaseOrbRing';
 
 interface ExerciseOrbProps {
     phase: string;
+    /** Phase-level stats from the blueprint (bp.exercise); falls back to the
+     * local table below if the blueprint doesn't have them for some reason,
+     * so the orb never ends up with blank stats. */
+    metrics?: { time?: string; unit?: string; intensity?: string; type?: string };
+    /** Scrolls the parent screen down to the Rove Coach section. */
+    onPressCoach?: () => void;
 }
 
-export function ExerciseOrb({ phase }: ExerciseOrbProps) {
+export function ExerciseOrb({ phase, metrics, onPressCoach }: ExerciseOrbProps) {
     const theme = phaseThemes[phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
 
-    const metrics: Record<string, any> = {
+    const FALLBACK_METRICS: Record<string, any> = {
         "Menstrual": { time: "20", unit: "mins", intensity: "Low", type: "Restorative movement" },
         "Follicular": { time: "45", unit: "mins", intensity: "Moderate", type: "Cardio" },
         "Ovulatory": { time: "60", unit: "mins", intensity: "High", type: "HIIT" },
         "Luteal": { time: "40", unit: "mins", intensity: "Mod-High", type: "Strength" }
     };
 
-    const current = metrics[phase] || metrics["Follicular"];
+    const fallback = FALLBACK_METRICS[phase] || FALLBACK_METRICS["Follicular"];
+    const current = {
+        time: metrics?.time || fallback.time,
+        unit: metrics?.unit || fallback.unit,
+        intensity: metrics?.intensity || fallback.intensity,
+        type: metrics?.type || fallback.type,
+    };
 
     // One-shot light sweep across the Rove Coach button, shortly after it appears
     const coachShimmerX = useSharedValue(-70);
@@ -83,7 +96,10 @@ export function ExerciseOrb({ phase }: ExerciseOrbProps) {
                 {/* Floating ROVE COACH Button */}
                 <View className="absolute right-0 bottom-4">
                     <TouchableOpacity
-                        onPress={() => {}}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            onPressCoach?.();
+                        }}
                         style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }}
                     >
                         <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden', borderWidth: 3, borderColor: '#FAF9F6' }}>

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight, RotateCcw, Minus, Plus } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { compareDateStrings, formatLocalDate, monthLabel } from '@shared/onboarding/date';
 import type { PeriodRangeDraft, AutoStats } from '../../lib/onboarding-state';
 
@@ -73,21 +74,27 @@ function Stepper({
       <Text className="text-xs font-semibold text-rove-stone">{label}</Text>
       <View className="flex-row items-center justify-between rounded-2xl border border-rove-charcoal/10 bg-white px-2 py-2">
         <TouchableOpacity
-          onPress={() => onChange(Math.max(min, value - 1))}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onChange(Math.max(min, value - 1));
+          }}
           disabled={value <= min}
           className="h-9 w-9 items-center justify-center rounded-xl bg-rove-charcoal/5"
           style={{ opacity: value <= min ? 0.3 : 1 }}
         >
-          <Minus size={16} color="#37332E" />
+          <Minus size={16} color="#2D2420" />
         </TouchableOpacity>
         <Text className="text-base font-semibold text-rove-charcoal">{value}d</Text>
         <TouchableOpacity
-          onPress={() => onChange(Math.min(max, value + 1))}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onChange(Math.min(max, value + 1));
+          }}
           disabled={value >= max}
           className="h-9 w-9 items-center justify-center rounded-xl bg-rove-charcoal/5"
           style={{ opacity: value >= max ? 0.3 : 1 }}
         >
-          <Plus size={16} color="#37332E" />
+          <Plus size={16} color="#2D2420" />
         </TouchableOpacity>
       </View>
     </View>
@@ -164,12 +171,21 @@ export function StepHistory({
         className="rounded-3xl border border-rove-charcoal/10 bg-white/60 p-4"
       >
         <View className="mb-4 flex-row items-center justify-between">
-          <TouchableOpacity onPress={onPreviousMonth} className="rounded-full p-2">
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onPreviousMonth();
+            }}
+            className="rounded-full p-2"
+          >
             <ChevronLeft size={20} color="#78716C" />
           </TouchableOpacity>
           <Text className="text-sm font-semibold text-rove-charcoal">{monthLabel(viewDate)}</Text>
           <TouchableOpacity
-            onPress={onNextMonth}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onNextMonth();
+            }}
             disabled={isCurrentOrFutureMonth}
             className="rounded-full p-2"
             style={{ opacity: isCurrentOrFutureMonth ? 0.3 : 1 }}
@@ -220,7 +236,10 @@ export function StepHistory({
               <View key={dateString} style={{ width: `${100 / 7}%` }} className="p-[1.5px]">
                 <Pressable
                   disabled={disabled}
-                  onPress={() => onSelectDay(dateString)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onSelectDay(dateString);
+                  }}
                   className={`h-10 items-center justify-center ${cellClass}`}
                   style={{ opacity: disabled ? 0.3 : 1 }}
                 >
@@ -237,7 +256,10 @@ export function StepHistory({
         {canClearMonth ? (
           <View className="mt-3 items-center">
             <TouchableOpacity
-              onPress={onClearMonth}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onClearMonth();
+              }}
               className="flex-row items-center gap-1.5 rounded-full border border-rove-charcoal/10 px-3 py-1.5"
             >
               <RotateCcw size={12} color="#78716C" />

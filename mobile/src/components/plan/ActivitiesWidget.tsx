@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 interface ActivitiesWidgetProps {
   practices: any[];
@@ -33,6 +35,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
   }, []);
 
   const toggleCheck = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newState = { ...checkedState, [id]: !checkedState[id] };
     setCheckedState(newState);
     await AsyncStorage.setItem('rove_activity_checks', JSON.stringify(newState));
@@ -40,6 +43,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
 
   const addCustom = async () => {
     if (!newItem.trim()) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const item = {
       title: newItem,
       desc: "Personal Goal",
@@ -53,6 +57,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
   };
 
   const removeCustom = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = customItems.filter(i => i.id !== id);
     setCustomItems(next);
     await AsyncStorage.setItem('rove_custom_activities', JSON.stringify(next));
@@ -64,8 +69,14 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
   ];
 
   return (
-    <View className="bg-white rounded-3xl overflow-hidden border border-rove-stone/10 shadow-sm">
-      <View className="flex-row items-center p-5 border-b border-rove-stone/5 bg-[#FAF9F6]">
+    <View
+      className="rounded-[28px] overflow-hidden relative border border-white/40"
+      style={{ shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}
+    >
+      <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: `${themeColor}0D` }]} />
+
+      <View className="flex-row items-center p-5 border-b border-white/40">
         <View className="w-8 h-8 rounded-xl items-center justify-center mr-3" style={{ backgroundColor: `${themeColor}15` }}>
           <Feather name="check-circle" size={14} color={themeColor} />
         </View>
@@ -75,13 +86,14 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
       </View>
 
       <View>
-        {mergedList.map((item, index) => {
+        {mergedList.map((item) => {
           const isChecked = checkedState[item.id];
           return (
             <TouchableOpacity
               key={item.id}
               onPress={() => toggleCheck(item.id)}
-              className={`flex-row items-center p-4 border-b border-rove-stone/5 ${index % 2 === 0 ? 'bg-white' : 'bg-rove-stone/5'}`}
+              activeOpacity={0.7}
+              className="flex-row items-center p-4 border-b border-white/40"
             >
               <View
                 className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-4 ${
@@ -108,7 +120,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
 
               {item.isCustom && (
                 <TouchableOpacity onPress={() => removeCustom(item.id)} className="p-2">
-                  <Feather name="trash-2" size={14} color="#EF4444" opacity={0.5} />
+                  <Feather name="trash-2" size={14} color="#C97B7B" style={{ opacity: 0.6 }} />
                 </TouchableOpacity>
               )}
             </TouchableOpacity>

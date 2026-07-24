@@ -27,68 +27,76 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
             <View className="flex-row mx-[-6px]">
                 {/* Focus Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{ 
+                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
-                        shadowColor: '#1E7E34',
+                        shadowColor: '#5B9A8B',
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
                         shadowRadius: 12,
                         elevation: 2,
                     }}>
                         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
-                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#E6F4EA', opacity: 0.3 }]} />
+                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#5B9A8B', opacity: 0.05 }]} />
                         
-                        <View className="flex-row items-center mb-4 border-b border-[#1E7E34]/10 pb-3">
-                            <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#1E7E34]/10">
-                                <Feather name="check" size={14} color="#1E7E34" />
+                        <View className="flex-row items-center mb-4 border-b border-[#5B9A8B]/10 pb-3">
+                            <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#5B9A8B]/15">
+                                <Feather name="check" size={14} color="#5B9A8B" />
                             </View>
-                            <Text className="font-extrabold text-[11px] uppercase text-[#1E7E34] tracking-[2px]">{data.focus.title}</Text>
+                            <Text className="font-extrabold text-[11px] uppercase text-[#5B9A8B] tracking-[2px]">{data.focus.title}</Text>
                         </View>
                         
                         <View className="flex-col gap-3">
-                            {data.focus.items.map((item: any, i: number) => {
-                                const label = typeof item === 'string' ? item : item.title;
-                                return (
-                                    <View key={i} className="flex-row items-start">
-                                        <View className="w-1 h-1 rounded-full bg-[#1E7E34]/40 mt-1.5 mr-2" />
-                                        <Text className="text-rove-charcoal/80 text-sm font-semibold flex-1 leading-tight">{label}</Text>
-                                    </View>
-                                );
-                            })}
+                            {data.focus.items.length > 0 ? (
+                                data.focus.items.map((item: any, i: number) => {
+                                    const label = typeof item === 'string' ? item : item.title;
+                                    return (
+                                        <View key={i} className="flex-row items-start">
+                                            <View className="w-1.5 h-1.5 rounded-full bg-[#5B9A8B]/40 mt-1.5 mr-2.5" />
+                                            <Text className="text-rove-charcoal/80 text-sm font-semibold flex-1 leading-tight">{label}</Text>
+                                        </View>
+                                    );
+                                })
+                            ) : (
+                                <Text className="text-rove-charcoal/40 text-xs italic">Nothing specific for this phase.</Text>
+                            )}
                         </View>
                     </View>
                 </View>
 
                 {/* Avoid Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{ 
+                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
-                        shadowColor: '#D93025',
+                        shadowColor: '#AF6B6B',
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
                         shadowRadius: 12,
                         elevation: 2,
                     }}>
                         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
-                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#FCE8E6', opacity: 0.4 }]} />
+                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#AF6B6B', opacity: 0.05 }]} />
                         
-                        <View className="flex-row items-center mb-4 border-b border-[#D93025]/10 pb-3">
-                            <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#D93025]/10">
-                                <Feather name="x" size={14} color="#D93025" />
+                        <View className="flex-row items-center mb-4 border-b border-[#AF6B6B]/10 pb-3">
+                            <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#AF6B6B]/15">
+                                <Feather name="x" size={14} color="#AF6B6B" />
                             </View>
-                            <Text className="font-extrabold text-[11px] uppercase text-[#D93025] tracking-[2px]">{data.avoid.title}</Text>
+                            <Text className="font-extrabold text-[11px] uppercase text-[#AF6B6B] tracking-[2px]">{data.avoid.title}</Text>
                         </View>
                         
                         <View className="flex-col gap-3">
-                            {data.avoid.items.map((item: any, i: number) => {
-                                const label = typeof item === 'string' ? item : item.title;
-                                return (
-                                    <View key={i} className="flex-row items-start">
-                                        <View className="w-1 h-1 rounded-full bg-[#D93025]/40 mt-1.5 mr-2" />
-                                        <Text className="text-rove-charcoal/80 text-sm font-semibold flex-1 leading-tight">{label}</Text>
-                                    </View>
-                                );
-                            })}
+                            {data.avoid.items.length > 0 ? (
+                                data.avoid.items.map((item: any, i: number) => {
+                                    const label = typeof item === 'string' ? item : item.title;
+                                    return (
+                                        <View key={i} className="flex-row items-start">
+                                            <View className="w-1.5 h-1.5 rounded-full bg-[#AF6B6B]/40 mt-1.5 mr-2.5" />
+                                            <Text className="text-rove-charcoal/80 text-sm font-semibold flex-1 leading-tight">{label}</Text>
+                                        </View>
+                                    );
+                                })
+                            ) : (
+                                <Text className="text-rove-charcoal/40 text-xs italic">Nothing specific for this phase.</Text>
+                            )}
                         </View>
                     </View>
                 </View>

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import {
   Calendar,
   BarChart3,
@@ -64,7 +65,10 @@ export function StepGoals({
               className="p-1.5"
             >
               <TouchableOpacity
-                onPress={() => onToggleGoal(goal.id)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onToggleGoal(goal.id);
+                }}
                 activeOpacity={0.85}
                 className={`rounded-2xl border p-4 ${
                   selected ? 'border-rove-charcoal bg-rove-charcoal' : 'border-rove-charcoal/10 bg-white/60'
@@ -105,7 +109,10 @@ export function StepGoals({
       >
         <View className="flex-row items-start gap-3">
           <TouchableOpacity
-            onPress={() => onPrivacyConsentChange(!privacyConsented)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onPrivacyConsentChange(!privacyConsented);
+            }}
             className={`mt-0.5 h-5 w-5 items-center justify-center rounded-md border-2 ${
               privacyConsented ? 'border-rove-charcoal bg-rove-charcoal' : 'border-rove-stone/40 bg-white'
             }`}
@@ -121,6 +128,13 @@ export function StepGoals({
               <Text className="text-xs leading-relaxed text-rove-stone">
                 <Text className="font-bold text-rove-charcoal">• </Text>
                 I agree to the{' '}
+                <Text
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/terms')}
+                >
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
                 <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/privacy')}

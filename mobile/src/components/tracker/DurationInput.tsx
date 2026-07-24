@@ -100,14 +100,14 @@ const styles = StyleSheet.create({
   },
   fieldInput: {
     fontSize: 22,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
     minWidth: 40,
     textAlign: 'center',
   },
   colon: {
     fontSize: 22,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#A8A29E',
     marginTop: 12,
   },

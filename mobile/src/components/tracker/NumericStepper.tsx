@@ -53,16 +53,17 @@ export function NumericStepper({
 
   return (
     <View style={styles.row}>
-      {/* Minus */}
+      {/* Minus — smaller and outlined, matching web's secondary/quiet
+          treatment (`w-10 h-10 rounded-full border`, no fill). */}
       <Animated.View style={minusStyle}>
         <TouchableOpacity
           onPress={() => tap(minusScale, () => {
             onDecrement?.();
             onChange(Math.max(min, value - 1));
           })}
-          style={[styles.btn, styles.btnMinus]}
+          style={[styles.btn, styles.btnMinus, { borderColor: `${accentColor}33` }]}
         >
-          <Minus size={18} color="#2D2420" />
+          <Minus size={17} color="#78716C" />
         </TouchableOpacity>
       </Animated.View>
 
@@ -72,16 +73,21 @@ export function NumericStepper({
         {unit && <Text style={styles.unit}>{unit}</Text>}
       </View>
 
-      {/* Plus */}
+      {/* Plus — larger and solid-filled, the primary action, matching web's
+          `w-12 h-12` filled button with a colored shadow. */}
       <Animated.View style={plusStyle}>
         <TouchableOpacity
           onPress={() => tap(plusScale, () => {
             onIncrement?.();
             onChange(Math.min(max, value + 1));
           })}
-          style={[styles.btn, { backgroundColor: accentColor }]}
+          style={[
+            styles.btn,
+            styles.btnPlus,
+            { backgroundColor: accentColor, shadowColor: accentColor },
+          ]}
         >
-          <Plus size={18} color="#FFFFFF" />
+          <Plus size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -95,14 +101,24 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   btn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
   },
   btnMinus: {
-    backgroundColor: '#F0ECE8',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+  },
+  btnPlus: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   valueWrap: {
     flexDirection: 'row',
@@ -113,7 +129,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 32,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
   },
   unit: {

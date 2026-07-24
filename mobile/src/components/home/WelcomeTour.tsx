@@ -93,7 +93,7 @@ export default function WelcomeTour() {
               </Text>
             )}
             <Button onPress={handleNext} className="rounded-full px-6">
-              {currentStep === TOUR_STEPS.length - 1 ? 'Got it ✨' : 'Next'}
+              {currentStep === TOUR_STEPS.length - 1 ? 'Got it' : 'Next'}
             </Button>
           </View>
         </View>

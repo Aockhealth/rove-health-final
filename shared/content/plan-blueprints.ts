@@ -38,6 +38,10 @@ export const BLUEPRINTS: any = {
         },
         exercise: {
             summary: "Low-intensity restorative movement improves wellbeing without stressing the system.",
+            time: "20",
+            unit: "mins",
+            intensity: "Low",
+            type: "Restorative movement",
             best: [
                 { title: "Gentle Yoga", desc: "Focuses on opening the hips and releasing lower back tension. Poses like Child's Pose and Butterfly help alleviate uterine cramping and soothe the nervous system.", time: "10–20 mins" },
                 { title: "Walking", desc: "Light, unhurried walking promotes gentle blood circulation without spiking cortisol. It naturally reduces pelvic congestion and clears mental fog.", time: "20–30 mins" },
@@ -121,6 +125,10 @@ export const BLUEPRINTS: any = {
         },
         exercise: {
             summary: "Ramp up intensity. Try new classes and build cardio endurance.",
+            time: "45",
+            unit: "mins",
+            intensity: "Moderate",
+            type: "Cardio",
             best: [
                 { title: "Cardio / Hikes", desc: "Rising estrogen boosts your stamina and pain tolerance. This is the perfect time to push your cardiovascular endurance with running, cycling, or brisk outdoor hikes.", time: "30-45 mins" },
                 { title: "Flow Yoga", desc: "Dynamic, faster-paced Vinyasa flows match your increasing energy levels. Great for building heat, flexibility, and mind-body connection.", time: "45 mins" },
@@ -204,6 +212,10 @@ export const BLUEPRINTS: any = {
         },
         exercise: {
             summary: "Peak performance. Go for your PRs and high-intensity workouts.",
+            time: "60",
+            unit: "mins",
+            intensity: "High",
+            type: "HIIT",
             best: [
                 { title: "HIIT", desc: "Estrogen and testosterone are at their absolute peak, giving you maximum power output. High-intensity intervals and bootcamps yield the best results right now.", time: "20-30 mins" },
                 { title: "Spin Class", desc: "Capitalize on your peak cardiovascular capacity and high energy. Fast-paced, music-driven spin classes perfectly match your social and physical buzz.", time: "45 mins" },
@@ -287,6 +299,10 @@ export const BLUEPRINTS: any = {
         },
         exercise: {
             summary: "Scale back intensity. Focus on strength maintenance and steady state cardio.",
+            time: "40",
+            unit: "mins",
+            intensity: "Mod-High",
+            type: "Strength",
             best: [
                 { title: "Pilates", desc: "As energy begins to taper, shift focus to core control, alignment, and stability. Pilates provides a deep burn without drastically spiking cortisol.", time: "30-40 mins" },
                 { title: "Strength", desc: "Maintain your muscle mass with moderate weights and lower reps. Avoid training to failure, focusing instead on form and steady progression.", time: "30 mins" },

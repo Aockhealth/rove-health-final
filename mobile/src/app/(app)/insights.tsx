@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, SafeAreaView, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { phaseThemes } from '../../data/home-content';
 import { fetchInsightsData } from '../../lib/insights';
+import { fetchRoveInsight } from '../../lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { CycleOverviewCard } from '../../components/insights/CycleOverviewCard';
 import { HabitsOverviewCard } from '../../components/insights/HabitsOverviewCard';
@@ -25,7 +26,8 @@ export default function InsightsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'cycle' | 'patterns' | 'health'>('cycle');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiInsight, setAiInsight] = useState<{ insight: string } | null>(null);
+  const [aiInsight, setAiInsight] = useState<{ title?: string; insight: string } | null>(null);
+  const [insightError, setInsightError] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
   // Animation values for tab bar
@@ -43,21 +45,36 @@ export default function InsightsScreen() {
     setActiveTab(tabId);
   }, [activeTab]);
 
-  const { data: stats, isPending: loading } = useQuery({
-    queryKey: ['insights-mobile'],
+  // Query key must be exactly 'insights' — tracker.tsx and profile.tsx both
+  // call `queryClient.invalidateQueries({ queryKey: ['insights'] })` after
+  // saving a log entry or updating cycle settings, expecting this screen to
+  // refetch. It was previously keyed 'insights-mobile', so those
+  // invalidations silently matched nothing and hydration/sleep/cycle-length
+  // averages here never updated after a save — only ever refreshing if the
+  // screen happened to fully unmount and remount.
+  const { data: stats, isPending: loading, refetch, isRefetching } = useQuery({
+    queryKey: ['insights'],
     queryFn: fetchInsightsData,
   });
 
-  const handleGenerateInsight = useCallback(() => {
+  const handleGenerateInsight = useCallback(async () => {
     setIsGenerating(true);
-    // Mock the backend generation delay for the UI
-    setTimeout(() => {
-      setAiInsight({
-        insight: "Your body is showing classic signs of rising estrogen. It's totally normal to feel a sudden burst of mental clarity right now. Make sure to stay hydrated, as your water intake is slightly below average for this phase!"
-      });
+    setInsightError(false);
+    try {
+      const phaseName = stats?.phase?.name || 'Menstrual';
+      const moodCounts = stats?.moodsByPhase?.[phaseName] || {};
+      const result = await fetchRoveInsight({ phase: phaseName, moodCounts });
+      if (result.insight) {
+        setAiInsight({ title: result.title, insight: result.insight });
+      } else {
+        setInsightError(true);
+      }
+    } catch (e) {
+      setInsightError(true);
+    } finally {
       setIsGenerating(false);
-    }, 2500);
-  }, []);
+    }
+  }, [stats]);
 
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler({
@@ -87,7 +104,7 @@ export default function InsightsScreen() {
   const activePatternsPhase = selectedPhase || phaseName;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FAF9F6]">
+    <SafeAreaView className="flex-1 bg-rove-cream">
       {/* HEADER */}
       <View className="px-5 pb-2 pt-2 flex-row items-center justify-between z-50 mb-2">
         <View>
@@ -102,6 +119,14 @@ export default function InsightsScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={theme.color}
+            colors={[theme.color]}
+          />
+        }
       >
         {/* TAB BAR */}
         <View
@@ -159,6 +184,7 @@ export default function InsightsScreen() {
                 insight={aiInsight}
                 theme={theme}
                 isGenerating={isGenerating}
+                hasError={insightError}
                 onGenerateInsight={handleGenerateInsight}
               />
             </Animated.View>
@@ -181,12 +207,17 @@ export default function InsightsScreen() {
         )}
 
         {activeTab === 'health' && (
-          <Animated.View entering={FadeInUp.duration(500).springify()} className="items-center mt-12">
+          <Animated.View
+            entering={FadeInUp.duration(500).springify()}
+            className="items-center mt-4 p-8 rounded-[28px] border border-rove-stone/10 bg-white/80"
+          >
             <View className="w-16 h-16 rounded-full bg-white shadow-sm items-center justify-center mb-4" style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 10 }}>
-              <Feather name="zap" size={24} color={theme.color} />
+              <Feather name="file-text" size={24} color={theme.color} />
             </View>
             <Text className="text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Health Report</Text>
-            <Text className="text-rove-stone text-center max-w-[200px]">Generate a PDF report for your doctor (Coming Soon).</Text>
+            <Text className="text-rove-stone text-center max-w-[220px]">
+              A shareable PDF summary for your doctor isn't built yet — it's on the roadmap, not available right now.
+            </Text>
           </Animated.View>
         )}
       </Animated.ScrollView>

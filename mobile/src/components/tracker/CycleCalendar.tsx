@@ -8,6 +8,12 @@ import {
   ScrollView,
   Pressable,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
+import { phaseThemes } from '../../data/home-content';
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,7 +21,7 @@ import {
   X,
   Calendar as CalendarIcon,
   Edit3,
-  Activity,
+  NotebookPen,
   CheckCircle2,
 } from 'lucide-react-native';
 
@@ -151,8 +157,40 @@ export function CycleCalendar({
   const todayStr = formatDateStr(today);
   const selectedDateStr = formatDateStr(selectedDate);
 
+  const changeMonth = (dir: 'prev' | 'next') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onMonthChange(dir);
+  };
+
+  // Swipe left/right across the grid to change months, in addition to the
+  // arrow buttons. Requires 20px of horizontal movement before activating so
+  // plain taps on a day cell still pass straight through to it.
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
+    .onEnd((e) => {
+      if (e.translationX < -50) {
+        runOnJS(changeMonth)('next');
+      } else if (e.translationX > 50) {
+        runOnJS(changeMonth)('prev');
+      }
+    });
+
+  const cardTint = phaseThemes[currentPhase ?? 'Menstrual']?.cardTint ?? 'rgba(168,162,158,0.12)';
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, currentPhase && { shadowColor: PHASE_COLORS[currentPhase] }]}>
+      {/* Frosted-glass fill, matching every other card on the tracker
+          screen (and Home/Plan app-wide) instead of a flat tinted fill. */}
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint }]} />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.7, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
       {/* Top info row / period logging banner */}
       {!isPeriodLoggingMode ? (
         <View style={styles.topRow}>
@@ -160,7 +198,14 @@ export function CycleCalendar({
             <Text style={styles.headline}>{headline}</Text>
             <Text style={styles.subtext}>Tap a date to log symptoms</Text>
           </View>
-          <TouchableOpacity style={styles.periodBtn} onPress={onEnablePeriodLogging} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.periodBtn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onEnablePeriodLogging();
+            }}
+            activeOpacity={0.85}
+          >
             <Text style={styles.periodBtnText}>
               {currentPhase === 'Menstrual' ? 'Edit Period' : 'Log Period'}
             </Text>
@@ -171,10 +216,24 @@ export function CycleCalendar({
           <Text style={styles.loggingTitle}>Select period dates</Text>
           <Text style={styles.loggingSub}>Tap days to mark/unmark bleeding</Text>
           <View style={styles.loggingBtnRow}>
-            <TouchableOpacity style={styles.endPeriodBtn} onPress={onEndPeriod} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.endPeriodBtn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onEndPeriod();
+              }}
+              activeOpacity={0.85}
+            >
               <Text style={styles.endPeriodText}>End Period Here</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.doneBtn} onPress={onExitPeriodLogging} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.doneBtn}
+              onPress={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                onExitPeriodLogging();
+              }}
+              activeOpacity={0.85}
+            >
               <Text style={styles.doneText}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -193,14 +252,14 @@ export function CycleCalendar({
         </View>
         <View style={styles.navButtons}>
           <TouchableOpacity
-            onPress={() => onMonthChange('prev')}
+            onPress={() => changeMonth('prev')}
             style={styles.navBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <ChevronLeft size={18} color="#4B5563" />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onMonthChange('next')}
+            onPress={() => changeMonth('next')}
             style={styles.navBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -209,6 +268,8 @@ export function CycleCalendar({
         </View>
       </View>
 
+      <GestureDetector gesture={swipeGesture}>
+      <View>
       {/* Week header */}
       <View
         style={styles.weekHeader}
@@ -258,7 +319,14 @@ export function CycleCalendar({
                 key={idx}
                 disabled={isFuture}
                 activeOpacity={0.75}
-                onPress={() => (isPeriodLoggingMode ? onTogglePeriodDate(dateStr) : onDateTap(cellDate))}
+                onPress={() => {
+                  if (isPeriodLoggingMode) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onTogglePeriodDate(dateStr);
+                  } else {
+                    onDateTap(cellDate);
+                  }
+                }}
                 style={{ width: cellSize, height: cellSize, alignItems: 'center', justifyContent: 'center' }}
               >
                 <View
@@ -285,7 +353,7 @@ export function CycleCalendar({
                       styles.dayNumber,
                       {
                         color: numberColor,
-                        fontFamily: isPeriod && !isSelected ? 'Outfit-Bold' : 'Inter-SemiBold',
+                        fontFamily: isPeriod && !isSelected ? 'Inter-Bold' : 'Inter-SemiBold',
                       },
                     ]}
                   >
@@ -325,6 +393,8 @@ export function CycleCalendar({
           })}
         </View>
       )}
+      </View>
+      </GestureDetector>
 
       {/* Phase legend */}
       <View style={styles.phaseLegendRow}>
@@ -419,7 +489,7 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
             {/* Step 3 */}
             <View style={guideStyles.step}>
               <View style={[guideStyles.stepIcon, { backgroundColor: '#FEF3E2' }]}>
-                <Activity size={20} color="#D97706" />
+                <NotebookPen size={20} color="#D97706" />
               </View>
               <View style={guideStyles.stepBody}>
                 <Text style={guideStyles.stepTitle}>3. Log Daily Rhythm</Text>
@@ -571,7 +641,7 @@ const guideStyles = StyleSheet.create({
   },
   phaseName: {
     fontSize: 12,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Inter-Bold',
     marginBottom: 2,
   },
   phaseSub: {
@@ -588,22 +658,24 @@ const guideStyles = StyleSheet.create({
   },
   ctaText: {
     fontSize: 14,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Inter-Bold',
     color: '#FFFFFF',
   },
 });
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
   },
 
   // Top info row
@@ -632,7 +704,7 @@ const styles = StyleSheet.create({
   },
   periodBtnText: {
     fontSize: 13,
-    fontFamily: 'Outfit-SemiBold',
+    fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
   },
 
@@ -672,7 +744,7 @@ const styles = StyleSheet.create({
   },
   endPeriodText: {
     fontSize: 12,
-    fontFamily: 'Outfit-SemiBold',
+    fontFamily: 'Inter-SemiBold',
     color: PHASE_COLORS.Menstrual,
   },
   doneBtn: {
@@ -684,7 +756,7 @@ const styles = StyleSheet.create({
   },
   doneText: {
     fontSize: 13,
-    fontFamily: 'Outfit-SemiBold',
+    fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
   },
 
@@ -746,6 +818,9 @@ const styles = StyleSheet.create({
     width: 3,
     height: 18,
     borderRadius: 2,
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -1.5 }, { translateY: -9 }],
   },
   periodPip: {
     position: 'absolute',
@@ -754,19 +829,23 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 2,
     backgroundColor: PHASE_COLORS.Menstrual,
+    left: '50%',
+    marginLeft: -2,
   },
   fertileDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 6,
+    right: 6,
     width: 5,
     height: 5,
     borderRadius: 3,
   },
   activityBars: {
     position: 'absolute',
-    top: 3,
-    left: 3,
+    top: 4,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
     flexDirection: 'row',
     gap: 1.5,
   },

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
-import { Scale, Ruler, Activity, X, Plus } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { Scale, Ruler, HeartPulse, X, Plus } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Select } from '../ui/Select';
 import type { ProfileFormData } from '../../lib/profile';
@@ -45,13 +46,22 @@ export function HealthPassport({ formData, setFormData, onSave, isPending, theme
   };
 
   return (
-    <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
+    <View
+      className="rounded-[2rem] border border-white/60 bg-white/70 p-6"
+      style={{
+        shadowColor: '#000',
+        shadowOpacity: 0.07,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 3,
+      }}
+    >
       <View className="mb-8 flex-row items-center gap-3">
         <View
           className="h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: theme.badgeBg }}
         >
-          <Activity size={20} color={theme.accentColor} />
+          <HeartPulse size={20} color={theme.accentColor} />
         </View>
         <View>
           <Text className="text-xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
@@ -174,7 +184,10 @@ export function HealthPassport({ formData, setFormData, onSave, isPending, theme
         </View>
 
         <TouchableOpacity
-          onPress={onSave}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onSave();
+          }}
           disabled={isPending}
           className="items-center rounded-xl bg-stone-900 py-4"
           style={{ opacity: isPending ? 0.5 : 1 }}

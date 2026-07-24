@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -14,10 +16,16 @@ export interface LogCardProps {
   subtitle?: string;
   icon: React.ReactNode;
   iconBgColor?: string;
-  /** Category/phase color for a themed card border + shadow tint, matching
-   * the web's per-card `border-[#HEX]/30` treatment. Omit for the plain
-   * neutral card border. */
+  /** Category color for the icon badge + a soft shadow glow — NOT the card
+   * fill. Every card shares one `cardTint` (the current phase color) for
+   * its frosted background; tinting each card's whole background by its
+   * own category color instead made the page look like clashing color
+   * blocks rather than one cohesive screen. */
   accentColor?: string;
+  /** Shared frosted-fill tint, passed the same value (the page's current
+   * phase color) by every card on the screen so they all read as one
+   * consistent wash, matching Home/Plan's single-tint-per-page recipe. */
+  cardTint?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
   showInfoIcon?: boolean;
@@ -38,6 +46,7 @@ export function LogCard({
   icon,
   iconBgColor = '#F5E8E8',
   accentColor,
+  cardTint,
   collapsible = true,
   defaultOpen = true,
   showInfoIcon = false,
@@ -70,9 +79,25 @@ export function LogCard({
       layout={Layout.duration(220)}
       style={[
         styles.card,
-        accentColor && { borderWidth: 1, borderColor: `${accentColor}4D`, shadowColor: accentColor },
+        accentColor && { shadowColor: accentColor },
       ]}
     >
+      {/* Frosted-glass fill — Blur + soft gradient sheen + the page's shared
+          phase tint, the same recipe Home/Plan build their cards from. */}
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: cardTint ?? 'rgba(168,162,158,0.12)' },
+        ]}
+      />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.7, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
       <TouchableOpacity
         activeOpacity={collapsible ? 0.8 : 1}
         onPress={collapsible ? () => setIsOpen((o) => !o) : undefined}
@@ -146,14 +171,17 @@ export function LogCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 24,
-    marginBottom: 12,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    marginBottom: 16,
+    // Matches Home/Plan's card shadow recipe (soft, wide lift) instead of
+    // the tighter/darker shadow this used to have on its own.
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
     overflow: 'hidden',
   },
   header: {
@@ -164,9 +192,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconContainer: {
+    // Web's per-card icon badges (Body Signals, Moods, Hydration, Sleep,
+    // Self Love, Disruptors...) are all `rounded-full` — every one of them,
+    // checked directly. A rounded-square badge here was a systemic mismatch
+    // across nearly every card on the screen.
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },

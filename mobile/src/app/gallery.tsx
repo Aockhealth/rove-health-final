@@ -14,7 +14,7 @@ import { Accordion } from '../components/ui/Accordion';
 import { Skeleton } from '../components/ui/Skeleton';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { Link } from 'expo-router';
-import { ArrowLeft, Sparkles, Activity, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Star, Activity, Calendar } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { SegmentedDoughnut } from '../components/ui/SegmentedDoughnut';
 
@@ -132,7 +132,7 @@ export default function GalleryScreen() {
           <Accordion 
             title="Daily Insights" 
             summary="You're in your follicular phase. High energy expected."
-            icon={<Sparkles size={20} color="#8DAA9D" />}
+            icon={<Star size={20} color="#8DAA9D" />}
             themeColor="#8DAA9D"
             defaultOpen
           >

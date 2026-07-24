@@ -8,11 +8,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner-native';
+import * as Haptics from 'expo-haptics';
 import {
-  Calendar,
   Activity,
   Smile,
   Heart,
@@ -25,10 +27,11 @@ import {
   PenLine,
   ZapOff,
   Check,
-  User,
   ChevronRight,
 } from 'lucide-react-native';
 
+import ProfileAvatar from '../../components/home/ProfileAvatar';
+import { phaseThemes } from '../../data/home-content';
 import {
   CycleCalendar,
   DayInfoMap,
@@ -42,8 +45,10 @@ import { NumericStepper } from '../../components/tracker/NumericStepper';
 import { DurationInput } from '../../components/tracker/DurationInput';
 import { HydrationTracker } from '../../components/tracker/HydrationTracker';
 import { DischargeQuestionnaire, DischargeAnswers } from '../../components/tracker/DischargeQuestionnaire';
+import { FlowCard } from '../../components/tracker/FlowCard';
 import { ChatFAB } from '../../components/tracker/ChatFAB';
 import { QuickPhaseLog } from '../../components/tracker/QuickPhaseLog';
+import { SectionJumpBar, JumpSection } from '../../components/tracker/SectionJumpBar';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import {
   CATEGORY_COLORS,
@@ -61,6 +66,7 @@ import {
 import {
   calculatePhase,
   getRelevantPeriodStart,
+  findStreakStart,
   isInFertileWindow,
   daysBetween,
   parseLocalDate,
@@ -124,6 +130,8 @@ function SectionGroup({
   icon,
   title,
   iconBgColor,
+  accentColor,
+  cardTint,
   open,
   onToggle,
   children,
@@ -131,12 +139,32 @@ function SectionGroup({
   icon: React.ReactNode;
   title: string;
   iconBgColor: string;
+  /** Small icon-badge glow color only — the fill itself uses the shared
+   * `cardTint`, same reasoning as LogCard. */
+  accentColor?: string;
+  cardTint?: string;
   open: boolean;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.sectionGroup}>
+    <View style={[styles.sectionGroup, accentColor && { shadowColor: accentColor }]}>
+      {/* Same frosted-glass fill as LogCard, so Lifestyle/Intimacy match the
+          individual cards inside them instead of looking like a plainer
+          wrapper. */}
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { backgroundColor: cardTint ?? 'rgba(168,162,158,0.12)' },
+        ]}
+      />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.7, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
       <TouchableOpacity
         style={styles.sectionGroupHeader}
         onPress={onToggle}
@@ -249,6 +277,11 @@ function TypedChipGrid({
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function TrackerScreen() {
   const queryClient = useQueryClient();
+  // The tab bar is absolutely positioned over screen content (see
+  // (app)/_layout.tsx), so a fixed `bottom` on the floating Save bar left it
+  // hidden behind the blurred tab bar — this reads its real rendered height
+  // so the bar always clears it.
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: trackerData, isLoading } = useQuery({
     queryKey: ['trackerData'],
     queryFn: fetchTrackerData,
@@ -347,6 +380,10 @@ export default function TrackerScreen() {
       : false;
 
   const phaseThemeColor = PHASE_COLORS[currentPhase ?? 'Menstrual'];
+  // Frosted-card tint — same token Home/Plan pull from for their
+  // BlurView+gradient card fills, so tracker's cards match that recipe
+  // instead of the flat opaque fill they used to have.
+  const phaseCardTint = phaseThemes[currentPhase ?? 'Menstrual']?.cardTint ?? 'rgba(168,162,158,0.12)';
 
   const todayResult = useMemo(
     () => calculatePhase(new Date(), cycleSettings, sharedLogs),
@@ -507,15 +544,7 @@ export default function TrackerScreen() {
     if (periodDates.length === 0) return;
 
     const mostRecent = periodDates[0];
-    let streakStart = mostRecent;
-    const periodSet = new Set(periodDates);
-    const cur = parseLocalDate(mostRecent);
-    while (true) {
-      cur.setDate(cur.getDate() - 1);
-      const prevStr = formatDate(cur);
-      if (periodSet.has(prevStr)) streakStart = prevStr;
-      else break;
-    }
+    const streakStart = findStreakStart(mostRecent, logs);
 
     if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
       const result = await updateLastPeriodDate(streakStart);
@@ -526,8 +555,33 @@ export default function TrackerScreen() {
   };
 
   // Section visibility
-  const [lifestyleOpen, setLifestyleOpen] = useState(true);
+  // Both start collapsed — not everyone tracks Lifestyle/Intimacy day to
+  // day, and they sit far enough down the page that leaving them open by
+  // default just adds scroll distance for people who skip them. The jump
+  // bar above the fold opens + scrolls to whichever one someone does want.
+  const [lifestyleOpen, setLifestyleOpen] = useState(false);
   const [intimacyOpen, setIntimacyOpen] = useState(false);
+
+  // Scroll-to-section — refs the ScrollView and remembers where Lifestyle
+  // and Intimacy land so the jump bar can animate straight to them instead
+  // of making people scroll past everything in between.
+  const trackerScrollRef = useRef<ScrollView>(null);
+  const [lifestyleSectionY, setLifestyleSectionY] = useState(0);
+  const [intimacySectionY, setIntimacySectionY] = useState(0);
+
+  const handleJumpToSection = (section: JumpSection) => {
+    if (section === 'daily') {
+      trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
+      return;
+    }
+    if (section === 'lifestyle') {
+      setLifestyleOpen(true);
+      trackerScrollRef.current?.scrollTo({ y: Math.max(0, lifestyleSectionY - 12), animated: true });
+      return;
+    }
+    setIntimacyOpen(true);
+    trackerScrollRef.current?.scrollTo({ y: Math.max(0, intimacySectionY - 12), animated: true });
+  };
 
   // Per-date edit state — repopulated from monthLogs whenever the selected
   // date (or its underlying data) changes, matching the web's load-on-select
@@ -552,28 +606,81 @@ export default function TrackerScreen() {
     sensation: null,
   });
 
+  const [flowIntensity, setFlowIntensity] = useState<string | null>(null);
+
   const noteMax = 1000;
 
-  useEffect(() => {
-    const dateStr = formatDate(selectedDate);
-    const log = monthLogs[dateStr];
+  // Autosave — debounced background save of whatever's been entered so far,
+  // so nothing is lost if she never taps "Save Log". `skipNextAutosaveRef`
+  // suppresses the run that fires when fields are reset by loading a day's
+  // data (switching dates, or the reflow after a save) rather than by an
+  // actual edit.
+  const skipNextAutosaveRef = useRef(true);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The exact log object a save just wrote into monthLogs, so the
+  // field-reset effect below can recognize "this selectedLog change is just
+  // an echo of my own save" and skip re-deriving fields entirely — see the
+  // comment at its use for why that distinction matters.
+  const justSavedLogRef = useRef<TrackerLog | null>(null);
 
-    setBodySignals(log?.symptoms ?? []);
-    setInnerWeather(log?.moods ?? []);
-    setExerciseType(log?.exercise_types ?? []);
-    setExerciseMins(log?.exercise_minutes ?? 0);
-    setHydrationGlasses(log?.water_intake ?? 0);
-    setSelfLove(log?.self_love_tags ?? []);
-    setSelfLoveNote(log?.self_love_other ?? '');
-    setSleepQuality(log?.sleep_quality ?? []);
-    setSleepHours(log?.sleep_minutes ? Math.floor(log.sleep_minutes / 60) : 0);
-    setSleepMins(log?.sleep_minutes ? log.sleep_minutes % 60 : 0);
-    setDisruptors(log?.disruptors ?? []);
-    setSexualActivity(log?.sex_activity ?? []);
-    setContraception(log?.contraception ?? []);
-    setNote(log?.notes ?? '');
-    setDischargeAnswers(parseCervicalDischarge(log?.cervical_discharge ?? null));
-  }, [selectedDate, monthLogs]);
+  // Deliberately keyed on the *specific day's* log entry (`selectedLog`), not
+  // the whole `monthLogs` object. Depending on `monthLogs` directly was a
+  // real bug: that object gets a new reference on every mutation — toggling
+  // a period day, a background month fetch landing — even for a completely
+  // different date, which re-ran this effect and silently overwrote whatever
+  // the user had typed/toggled but not yet saved. Individual `TrackerLog`
+  // entries keep their same reference when unrelated keys change (every
+  // `setMonthLogs` call spreads `{...prev, ...updates}`), so `selectedLog`
+  // only changes when this exact day's data actually changes.
+  const selectedDateStr = formatDate(selectedDate);
+  const selectedLog = monthLogs[selectedDateStr];
+
+  useEffect(() => {
+    // This selectedLog change is just the echo of a save this same screen
+    // just performed (autosave or the manual button) — fields already match
+    // it exactly, so resetting them would be a no-op at best. It was worse
+    // than a no-op: when every field happens to already match (the normal
+    // case right after a save), React skips re-rendering for all of them,
+    // which meant the effect below that's supposed to *consume*
+    // `skipNextAutosaveRef` never ran again — leaving it stuck `true` and
+    // silently swallowing the next real edit's autosave (e.g. selecting a
+    // symptom worked, but deselecting it right after didn't). Bailing out
+    // here before touching any state or the flag avoids that trap entirely.
+    if (selectedLog && selectedLog === justSavedLogRef.current) {
+      return;
+    }
+    setBodySignals(selectedLog?.symptoms ?? []);
+    setInnerWeather(selectedLog?.moods ?? []);
+    setExerciseType(selectedLog?.exercise_types ?? []);
+    setExerciseMins(selectedLog?.exercise_minutes ?? 0);
+    setHydrationGlasses(selectedLog?.water_intake ?? 0);
+    setSelfLove(selectedLog?.self_love_tags ?? []);
+    setSelfLoveNote(selectedLog?.self_love_other ?? '');
+    setSleepQuality(selectedLog?.sleep_quality ?? []);
+    setSleepHours(selectedLog?.sleep_minutes ? Math.floor(selectedLog.sleep_minutes / 60) : 0);
+    setSleepMins(selectedLog?.sleep_minutes ? selectedLog.sleep_minutes % 60 : 0);
+    setDisruptors(selectedLog?.disruptors ?? []);
+    setSexualActivity(selectedLog?.sex_activity ?? []);
+    setContraception(selectedLog?.contraception ?? []);
+    setNote(selectedLog?.notes ?? '');
+    setFlowIntensity(selectedLog?.flow_intensity ?? null);
+    // parseCervicalDischarge always builds a fresh object, which would
+    // otherwise look like a "change" to the autosave effect below on every
+    // reload even when nothing's different — compare fields and keep the
+    // existing object when they match so autosave doesn't re-fire forever.
+    const nextDischarge = parseCervicalDischarge(selectedLog?.cervical_discharge ?? null);
+    setDischargeAnswers((prev) =>
+      prev.vaginalFluid === nextDischarge.vaginalFluid &&
+      prev.appearance === nextDischarge.appearance &&
+      prev.sensation === nextDischarge.sensation
+        ? prev
+        : nextDischarge
+    );
+    // This reload just happened because the date (or its underlying data)
+    // changed — not because the person edited anything — so the autosave
+    // effect below should skip the run it's about to see from these resets.
+    skipNextAutosaveRef.current = true;
+  }, [selectedDate, selectedLog]);
 
   const handleMonthChange = (dir: 'prev' | 'next') => {
     if (dir === 'next') {
@@ -595,17 +702,28 @@ export default function TrackerScreen() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSaveLog = async () => {
+  // Shared by the manual "Save Log" button and the autosave effect below.
+  // `silent` skips the spinner/toast/haptic so background autosaves stay
+  // quiet — errors still surface (softly), since silently losing an entry
+  // would be worse than a small interruption.
+  const performSave = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false;
     if (isFutureDate(selectedDate)) return;
     const dateStr = formatDate(selectedDate);
     const existingIsPeriod = monthLogs[dateStr]?.is_period === true;
 
-    const cervicalDischarge =
-      dischargeAnswers.vaginalFluid || dischargeAnswers.appearance || dischargeAnswers.sensation
+    // Which card was showing determines which field gets saved — matches the
+    // web's FlowCard/DischargeCard split (only one is ever relevant for a
+    // given day).
+    const showingFlowCard = currentPhase === 'Menstrual';
+    const resolvedFlowIntensity = showingFlowCard ? flowIntensity || 'Normal' : undefined;
+    const cervicalDischarge = showingFlowCard
+      ? undefined
+      : dischargeAnswers.vaginalFluid || dischargeAnswers.appearance || dischargeAnswers.sensation
         ? JSON.stringify([dischargeAnswers.vaginalFluid, dischargeAnswers.appearance, dischargeAnswers.sensation])
         : undefined;
 
-    setIsSaving(true);
+    if (!silent) setIsSaving(true);
     const result = await logDailySymptoms({
       date: dateStr,
       symptoms: bodySignals,
@@ -624,20 +742,23 @@ export default function TrackerScreen() {
       // calendar's "Log Period" mode — but it must preserve whatever is
       // already logged for the day instead of silently clearing it.
       isPeriod: existingIsPeriod,
-      flowIntensity: undefined,
+      flowIntensity: resolvedFlowIntensity,
       cervicalDischarge,
       notes: note,
     });
-    setIsSaving(false);
+    if (!silent) setIsSaving(false);
 
     if (!result.success) {
-      toast.error('Failed to save entry', { description: result.error });
+      toast.error(silent ? "Couldn't auto-save" : 'Failed to save entry', {
+        description: silent ? 'Tap Save Log to try again.' : result.error,
+      });
       return;
     }
 
-    setMonthLogs((prev) => ({
-      ...prev,
-      [dateStr]: {
+    if (!silent) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    setMonthLogs((prev) => {
+      const updatedLog: TrackerLog = {
         ...(prev[dateStr] ?? emptyLog(dateStr)),
         symptoms: bodySignals,
         moods: innerWeather,
@@ -652,17 +773,76 @@ export default function TrackerScreen() {
         sex_activity: sexualActivity,
         contraception,
         is_period: existingIsPeriod,
+        flow_intensity: resolvedFlowIntensity ?? null,
         cervical_discharge: cervicalDischarge ?? null,
         notes: note,
-      },
-    }));
+      };
+      // Recorded so the field-reset effect can tell this exact update apart
+      // from a real external change once it shows up as the new selectedLog.
+      justSavedLogRef.current = updatedLog;
+      return { ...prev, [dateStr]: updatedLog };
+    });
 
-    toast.success('Entry Saved!', { description: 'Your daily log has been updated.' });
+    if (silent) {
+      toast.success('Noted, thanks 💛', { duration: 1500 });
+    } else {
+      toast.success('Entry Saved!', { description: 'Your daily log has been updated.' });
+    }
 
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['insights'] });
     queryClient.invalidateQueries({ queryKey: ['plan'] });
   };
+
+  const handleSaveLog = () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    performSave({ silent: false });
+  };
+
+  // Debounced autosave — waits for a pause in editing, then quietly persists
+  // whatever's currently entered so an entry never gets lost just because
+  // she closed the app without tapping Save Log.
+  useEffect(() => {
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false;
+      return;
+    }
+    if (isPeriodLoggingMode || isFutureDate(selectedDate)) return;
+
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      performSave({ silent: true });
+    }, 2000);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    bodySignals,
+    innerWeather,
+    selfLove,
+    selfLoveNote,
+    exerciseType,
+    exerciseMins,
+    hydrationGlasses,
+    sleepQuality,
+    sleepHours,
+    sleepMins,
+    sexualActivity,
+    contraception,
+    disruptors,
+    note,
+    dischargeAnswers,
+    flowIntensity,
+  ]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -670,49 +850,42 @@ export default function TrackerScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Soft vertical wash behind everything — matches the web's
-          `bg-gradient-to-b from-paper via-white-bone to-paper` instead of a
-          flat fill, so the screen has the same misty depth as every other
-          Rove screen. */}
-      <LinearGradient
-        colors={['#FAF9F6', '#FDFCFB', '#FAF9F6']}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* ── Top Nav ── */}
+      {/* ── Top Nav — left-aligned eyebrow + serif title, phase-tinted,
+          matching Home/Insights/Plan's header instead of the centered,
+          bordered bar this screen used to have on its own. ── */}
       <View style={styles.nav}>
-        <TouchableOpacity style={styles.navIcon}>
-          <Calendar size={22} color="#2D2420" />
-        </TouchableOpacity>
-
-        <View style={styles.navCenter}>
-          <Text style={styles.navTitle}>Rove Tracker</Text>
-          <Text style={styles.navSubtitle}>Log your daily rhythm</Text>
+        <View>
+          <Text style={styles.navEyebrow}>Log Your Daily Rhythm</Text>
+          <Text style={[styles.navTitle, { color: phaseThemeColor }]}>Tracker</Text>
         </View>
-
-        <TouchableOpacity style={styles.avatarBtn}>
-          <View style={styles.avatar}>
-            <User size={16} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
+        <ProfileAvatar />
       </View>
 
       <ScrollView
+        ref={trackerScrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Cycle Status Card — phase-tinted border + shadow, matching the
-            web's getPhaseTheme()/phasePill() treatment on this same card. ── */}
+        {/* ── Cycle Status Card — frosted glass (Blur + gradient sheen +
+            phase tint) matching Home/Plan's card recipe, phase-tinted
+            shadow glow like before. ── */}
         <View
           style={[
             styles.statusCard,
-            currentPhase
-              ? { borderColor: `${PHASE_COLORS[currentPhase]}4D`, shadowColor: PHASE_COLORS[currentPhase], shadowOpacity: 0.12 }
-              : styles.statusCardNeutral,
+            currentPhase && { shadowColor: PHASE_COLORS[currentPhase], shadowOpacity: 0.1 },
           ]}
         >
+          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: phaseCardTint }]} />
+          <LinearGradient
+            colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.7, y: 0.7 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.statusCardInner}>
           <View style={styles.statusRow}>
             <View>
               <Text style={styles.statusDate}>
@@ -748,6 +921,7 @@ export default function TrackerScreen() {
               </Text>
             </View>
           )}
+          </View>
         </View>
 
         {/* ── Calendar ── */}
@@ -771,8 +945,19 @@ export default function TrackerScreen() {
         />
 
         {/* ────────────────────────────────
-            Logging Sections
+            Logging Sections — hidden while the calendar is in period-logging
+            mode, matching the web (`{!isEditingCycle && !isPeriodLoggingMode
+            && (...)}`). Mobile previously kept these visible and editable at
+            the same time, which is what let unsaved edits collide with the
+            monthLogs mutations period-toggling makes (see the effect above).
         ──────────────────────────────── */}
+        {!isPeriodLoggingMode && (
+        <>
+        {/* 6.5 Section jump bar — Lifestyle and Intimacy both start
+            collapsed and sit far down the page, so this jumps straight to
+            (and opens) whichever one someone actually wants, instead of
+            making them scroll past everything else first. */}
+        <SectionJumpBar onJump={handleJumpToSection} accentColor={phaseThemeColor} />
 
         {/* 7. Quick Phase Log — dynamic per currentPhase, matching the web's
             QuickPhaseLog.tsx. Title/suggestions change with the selected
@@ -792,11 +977,20 @@ export default function TrackerScreen() {
           onToggleDisruptor={(label) => setDisruptors(toggleChip(disruptors, label))}
         />
 
-        {/* 8. Discharge */}
-        <DischargeQuestionnaire
-          answers={dischargeAnswers}
-          onAnswersChange={setDischargeAnswers}
-        />
+        {/* 8. Flow (menstrual days) / Discharge (every other day) — mirrors
+            the web's `currentPhase === "Menstrual" ? <FlowCard/> :
+            <DischargeCard/>` swap. Mobile previously always showed the
+            Discharge questionnaire regardless of phase, since FlowCard was
+            never built. */}
+        {currentPhase === 'Menstrual' ? (
+          <FlowCard flowIntensity={flowIntensity} onFlowIntensityChange={setFlowIntensity} cardTint={phaseCardTint} />
+        ) : (
+          <DischargeQuestionnaire
+            answers={dischargeAnswers}
+            onAnswersChange={setDischargeAnswers}
+            cardTint={phaseCardTint}
+          />
+        )}
 
         {/* 9. Body Signals */}
         <LogCard
@@ -804,6 +998,7 @@ export default function TrackerScreen() {
           icon={<Activity size={18} color={CATEGORY_COLORS.bodySignals} />}
           iconBgColor={`${CATEGORY_COLORS.bodySignals}1A`}
           accentColor={CATEGORY_COLORS.bodySignals}
+          cardTint={phaseCardTint}
         >
           <ChipGrid
             items={SYMPTOM_OPTIONS}
@@ -819,6 +1014,7 @@ export default function TrackerScreen() {
           icon={<Smile size={18} color={CATEGORY_COLORS.innerWeather} />}
           iconBgColor={`${CATEGORY_COLORS.innerWeather}1A`}
           accentColor={CATEGORY_COLORS.innerWeather}
+          cardTint={phaseCardTint}
         >
           <ChipGrid
             items={MOODS_LIST.map((m) => m.label)}
@@ -836,7 +1032,9 @@ export default function TrackerScreen() {
           icon={<Heart size={18} color={phaseThemeColor} fill={phaseThemeColor} />}
           iconBgColor={`${phaseThemeColor}1A`}
           accentColor={phaseThemeColor}
+          cardTint={phaseCardTint}
           infoText="Dedicate at least 15-30 mins daily to activities that recharge your soul, reduce stress, and improve mental well-being."
+          defaultOpen={false}
         >
           <ChipGrid
             items={SELF_LOVE_OPTIONS}
@@ -855,10 +1053,13 @@ export default function TrackerScreen() {
         </LogCard>
 
         {/* 12. Lifestyle (collapsible group) */}
+        <View onLayout={(e) => setLifestyleSectionY(e.nativeEvent.layout.y)}>
         <SectionGroup
           icon={<Zap size={18} color="#4DB6AC" />}
           title="Lifestyle"
           iconBgColor="#4DB6AC1A"
+          accentColor="#4DB6AC"
+          cardTint={phaseCardTint}
           open={lifestyleOpen}
           onToggle={() => setLifestyleOpen((o) => !o)}
         >
@@ -868,7 +1069,9 @@ export default function TrackerScreen() {
             icon={<Dumbbell size={16} color={CATEGORY_COLORS.exerciseLog} />}
             iconBgColor={`${CATEGORY_COLORS.exerciseLog}1A`}
             accentColor={CATEGORY_COLORS.exerciseLog}
+            cardTint={phaseCardTint}
             infoText="Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health."
+            defaultOpen={false}
           >
             <ChipGrid
               items={EXERCISE_OPTIONS}
@@ -919,7 +1122,9 @@ export default function TrackerScreen() {
             icon={<Droplet size={16} color={CATEGORY_COLORS.hydration} fill={CATEGORY_COLORS.hydration} />}
             iconBgColor={`${CATEGORY_COLORS.hydration}1A`}
             accentColor={CATEGORY_COLORS.hydration}
+            cardTint={phaseCardTint}
             infoText="Drink at least 2L of water (8 glasses) daily to stay hydrated, support detoxification, and maintain healthy cognitive function."
+            defaultOpen={false}
           >
             <HydrationTracker
               glasses={hydrationGlasses}
@@ -934,7 +1139,9 @@ export default function TrackerScreen() {
             icon={<Moon size={16} color={CATEGORY_COLORS.sleepLog} fill={CATEGORY_COLORS.sleepLog} />}
             iconBgColor={`${CATEGORY_COLORS.sleepLog}1A`}
             accentColor={CATEGORY_COLORS.sleepLog}
+            cardTint={phaseCardTint}
             infoText="7-9 hours of quality sleep is recommended for optimal hormonal balance, mood regulation, and physical recovery."
+            defaultOpen={false}
           >
             <TypedChipGrid
               items={SLEEP_OPTIONS}
@@ -954,12 +1161,16 @@ export default function TrackerScreen() {
             </View>
           </LogCard>
         </SectionGroup>
+        </View>
 
         {/* 13. Intimacy (collapsible group) */}
+        <View onLayout={(e) => setIntimacySectionY(e.nativeEvent.layout.y)}>
         <SectionGroup
           icon={<Heart size={18} color="#E8924E" />}
           title="Intimacy"
           iconBgColor="#E8924E1A"
+          accentColor="#E8924E"
+          cardTint={phaseCardTint}
           open={intimacyOpen}
           onToggle={() => setIntimacyOpen((o) => !o)}
         >
@@ -970,6 +1181,8 @@ export default function TrackerScreen() {
             icon={<Flame size={16} color={CATEGORY_COLORS.sexualWellness} fill={CATEGORY_COLORS.sexualWellness} />}
             iconBgColor={`${CATEGORY_COLORS.sexualWellness}1A`}
             accentColor={CATEGORY_COLORS.sexualWellness}
+            cardTint={phaseCardTint}
+            defaultOpen={false}
           >
             <SubSectionLabel
               icon={<Heart size={12} color={CATEGORY_COLORS.sexualWellness} />}
@@ -1009,6 +1222,7 @@ export default function TrackerScreen() {
             />
           </LogCard>
         </SectionGroup>
+        </View>
 
         {/* 14. Disruptors */}
         <LogCard
@@ -1016,6 +1230,8 @@ export default function TrackerScreen() {
           icon={<ZapOff size={18} color={CATEGORY_COLORS.disruptors} />}
           iconBgColor={`${CATEGORY_COLORS.disruptors}1A`}
           accentColor={CATEGORY_COLORS.disruptors}
+          cardTint={phaseCardTint}
+          defaultOpen={false}
         >
           <TypedChipGrid
             items={DISRUPTORS_LIST}
@@ -1031,6 +1247,7 @@ export default function TrackerScreen() {
           icon={<PenLine size={18} color={phaseThemeColor} />}
           iconBgColor={`${phaseThemeColor}1A`}
           accentColor={phaseThemeColor}
+          cardTint={phaseCardTint}
           collapsible={false}
         >
           <View style={[styles.noteContainer, { borderColor: `${phaseThemeColor}33` }]}>
@@ -1048,22 +1265,27 @@ export default function TrackerScreen() {
             </Text>
           </View>
         </LogCard>
+        </>
+        )}
 
         {/* Spacer so content can scroll clear of the floating bar below */}
         <View style={{ height: 96 }} />
       </ScrollView>
 
       {/* ── Floating Save Log + Chat bar — pinned to the bottom of the
-          screen, stays put while the content above scrolls ── */}
-      <View style={styles.floatingBar} pointerEvents="box-none">
-        <TouchableOpacity
-          style={[styles.saveBtn, isSaving && { opacity: 0.6 }]}
-          onPress={handleSaveLog}
-          disabled={isSaving}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
-        </TouchableOpacity>
+          screen, stays put while the content above scrolls. Save hides
+          along with the rest of the log cards during period-logging mode. ── */}
+      <View style={[styles.floatingBar, { bottom: tabBarHeight + 12 }]} pointerEvents="box-none">
+        {!isPeriodLoggingMode && (
+          <TouchableOpacity
+            style={[styles.saveBtn, (isSaving || isFutureDate(selectedDate)) && { opacity: 0.5 }]}
+            onPress={handleSaveLog}
+            disabled={isSaving || isFutureDate(selectedDate)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
+          </TouchableOpacity>
+        )}
         <ChatFAB hasNotification />
       </View>
     </SafeAreaView>
@@ -1099,69 +1321,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F6',
   },
 
-  // Nav
+  // Nav — matches Home/Insights/Plan's header recipe: small uppercase
+  // eyebrow label, larger phase-tinted serif title, no divider line.
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
-    backgroundColor: '#FAF9F6',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
-  navIcon: {
-    padding: 6,
-  },
-  navCenter: {
-    flex: 1,
-    alignItems: 'center',
+  navEyebrow: {
+    fontSize: 10,
+    fontFamily: 'Inter-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: 'rgba(45, 36, 32, 0.65)',
+    marginBottom: 2,
   },
   navTitle: {
-    fontSize: 19,
-    fontFamily: 'CormorantGaramond-SemiBold',
+    fontSize: 24,
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
-  },
-  navSubtitle: {
-    fontSize: 11,
-    fontFamily: 'Inter-Regular',
-    color: '#A8A29E',
-  },
-  avatarBtn: {
-    padding: 4,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#A8A29E',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   // Scroll
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 40,
   },
 
-  // Status Card
+  // Status Card — frosted-glass recipe (Blur + gradient sheen, layered on
+  // in JSX) matching Home/Plan's cards instead of a flat tinted fill.
   statusCard: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 22,
+    borderRadius: 24,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+  statusCardInner: {
     paddingHorizontal: 18,
     paddingVertical: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  statusCardNeutral: {
-    borderColor: '#F3F4F6',
   },
   statusRow: {
     flexDirection: 'row',
@@ -1233,12 +1441,12 @@ const styles = StyleSheet.create({
 
   // Floating Save Log + Chat bar (pinned to bottom of screen, stays fixed
   // while the ScrollView content behind it scrolls — mirrors the web's
-  // `position: fixed` SaveButton)
+  // `position: fixed` SaveButton). `bottom` is set inline from
+  // useBottomTabBarHeight() so it always clears the tab bar.
   floatingBar: {
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -1257,20 +1465,23 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Inter-Bold',
     color: '#FFFFFF',
   },
 
-  // Section groups (Lifestyle / Intimacy)
+  // Section groups (Lifestyle / Intimacy) — same frosted-glass recipe as
+  // LogCard (borderRadius/border/shadow), the Blur+tint+gradient fill is
+  // layered on in the SectionGroup component itself.
   sectionGroup: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 24,
-    marginBottom: 12,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
     overflow: 'hidden',
   },
   sectionGroupHeader: {
@@ -1283,7 +1494,7 @@ const styles = StyleSheet.create({
   sectionGroupIcon: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1318,6 +1529,10 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    // Without this, RN's default `alignItems: 'stretch'` stretches every
+    // chip on a wrapped row to match the tallest one in that row (icon vs.
+    // no-icon chips, longer labels) — the "misaligned pills" look.
+    alignItems: 'flex-start',
   },
 
   // Free text
@@ -1357,7 +1572,7 @@ const styles = StyleSheet.create({
   },
   exerciseDurationNum: {
     fontSize: 28,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
     minWidth: 44,
     padding: 0,

@@ -32,6 +32,36 @@ export const RoveChefProtocolSchema = z.object({
 });
 
 // ============================================
+// ROVE CHEF V2 — "PICK YOUR PLATE" SCHEMAS
+// ============================================
+// Options are deliberately lightweight (no full instructions) so the first
+// response is short and fast; the full recipe is generated only for the one
+// dish the user actually picks (ChefDetailSchema below).
+export const ChefOptionSchema = z.object({
+    name: z.string(),
+    description: z.string(),
+    prep_time_minutes: z.number(),
+    key_ingredients: z.array(z.string()),
+    why: z.string(),
+    // How the dish is served — drives the hard phase rules (e.g. no "cold"
+    // options during the Menstrual phase) in the quality gate.
+    serving_style: z.enum(["warm", "room", "cold"])
+});
+
+export const ChefOptionsResponseSchema = z.object({
+    options: z.array(ChefOptionSchema).min(3).max(4)
+});
+
+export const ChefDetailSchema = z.object({
+    name: z.string(),
+    description: z.string(),
+    prep_time_minutes: z.number(),
+    ingredients: z.array(z.string()),
+    instructions: z.array(z.string()),
+    why: z.string()
+});
+
+// ============================================
 // ROVE COACH SCHEMAS
 // ============================================
 export const WorkoutSetSchema = z.object({
@@ -153,6 +183,9 @@ export const RoveChatResponseSchema = z.object({
 // EXPORT TYPES
 // ============================================
 export type RoveChefProtocol = z.infer<typeof RoveChefProtocolSchema>;
+export type ChefOption = z.infer<typeof ChefOptionSchema>;
+export type ChefOptionsResponse = z.infer<typeof ChefOptionsResponseSchema>;
+export type ChefDetail = z.infer<typeof ChefDetailSchema>;
 export type RoveCoachPlan = z.infer<typeof RoveCoachPlanSchema>;
 export type MoodInsight = z.infer<typeof MoodInsightSchema>;
 export type RoveChatResponse = z.infer<typeof RoveChatResponseSchema>;

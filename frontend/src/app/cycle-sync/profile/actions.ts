@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { calculatePhase, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
+import { calculatePhase, getRelevantPeriodStart, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -50,6 +50,9 @@ export async function fetchProfilePageData() {
 
     // Calculate phase
     let smartPhase = "Menstrual";
+    // Prefer the streak-corrected start over the raw stored column — see
+    // matching comment in mobile/src/lib/profile.ts fetchProfilePageData.
+    let resolvedLastPeriodStart = cycleSettings?.last_period_start || "";
     if (cycleSettings?.last_period_start) {
         const settings: CycleSettings = {
             last_period_start: cycleSettings.last_period_start,
@@ -58,6 +61,9 @@ export async function fetchProfilePageData() {
         };
         const result = calculatePhase(new Date(), settings, monthLogs);
         smartPhase = result.phase || "Menstrual";
+
+        const { start } = getRelevantPeriodStart(new Date(), settings, monthLogs);
+        if (start) resolvedLastPeriodStart = start;
     }
 
     return {
@@ -75,7 +81,7 @@ export async function fetchProfilePageData() {
             phone_number: profile?.phone_number || "",
         },
         cycleData: {
-            last_period_start: cycleSettings?.last_period_start || "",
+            last_period_start: resolvedLastPeriodStart,
             cycle_length_days: cycleSettings?.cycle_length_days || 28,
             period_length_days: cycleSettings?.period_length_days || 5,
         },

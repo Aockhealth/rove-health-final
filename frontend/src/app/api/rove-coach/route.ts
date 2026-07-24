@@ -4,12 +4,12 @@ import { generateRoveCoachPlan } from '@/app/actions/ai-actions';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phase, energyLevel, goal, equipment, injuries, fitnessLevel, workoutFocus, sessionDuration } = body;
-    
+    const { phase, energyLevel, goal, equipment, injuries, fitnessLevel, workoutFocus, sessionDuration, recentChosen, preferenceSummary } = body;
+
     if (!phase) {
       return NextResponse.json({ error: 'Missing required field: phase' }, { status: 400 });
     }
-    
+
     const result = await generateRoveCoachPlan(
       phase,
       energyLevel || 'Medium',
@@ -18,7 +18,12 @@ export async function POST(request: Request) {
       injuries || 'None',
       fitnessLevel || 'Intermediate',
       workoutFocus || 'Full Body',
-      sessionDuration || '30m'
+      sessionDuration || '30m',
+      undefined, // progressionPreference — use the function's own default
+      undefined, // goalFocus — use the function's own default
+      undefined, // recentOutputSignatures — use the function's own default
+      recentChosen,
+      preferenceSummary
     );
     
     return NextResponse.json(result);

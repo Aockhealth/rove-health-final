@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import Markdown from 'react-native-markdown-display';
+import FitImage from 'react-native-fit-image';
 import { ChevronLeft, Clock, User, Share2 } from 'lucide-react-native';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import { fetchArticleById, fetchArticleMarkdown, getStorageUrl, cleanTitle } from '../../lib/learn';
@@ -138,7 +139,26 @@ export default function ArticleScreen() {
             </View>
           </View>
 
-          <Markdown style={markdownStyles}>{markdownContent || ''}</Markdown>
+          <Markdown 
+            style={markdownStyles}
+            rules={{
+              image: (node: any, children: any, parent: any, styles: any) => {
+                const { src, alt } = node.attributes;
+                return (
+                  <FitImage
+                    key={node.key}
+                    indicator={true}
+                    style={styles._VIEW_SAFE_image}
+                    source={{ uri: src }}
+                    accessible={!!alt}
+                    accessibilityLabel={alt}
+                  />
+                );
+              }
+            }}
+          >
+            {(markdownContent || '').trimStart().replace(/^#\s+[^\n]+(\r?\n)*/, "")}
+          </Markdown>
         </View>
       </ScrollView>
 
@@ -157,20 +177,20 @@ export default function ArticleScreen() {
 }
 
 const markdownStyles = {
-  body: { color: '#2D242099' },
-  heading1: { fontFamily: 'CormorantGaramond-SemiBold', fontSize: 26, color: '#2D2420', marginTop: 24, marginBottom: 12 },
-  heading2: { fontFamily: 'CormorantGaramond-SemiBold', fontSize: 22, color: '#2D2420', marginTop: 20, marginBottom: 10 },
-  heading3: { fontFamily: 'CormorantGaramond-Medium', fontSize: 19, color: '#2D2420', marginTop: 16, marginBottom: 8 },
-  heading4: { fontSize: 15, fontWeight: 'bold' as const, color: '#2D2420', textTransform: 'uppercase' as const, marginTop: 16, marginBottom: 8 },
-  paragraph: { fontSize: 15, lineHeight: 24, color: 'rgba(45,36,32,0.8)', marginBottom: 14 },
+  body: { color: '#2D2420CC' },
+  heading1: { fontFamily: 'CormorantGaramond-Bold', fontSize: 28, color: '#2D2420', marginTop: 24, marginBottom: 16, lineHeight: 34 },
+  heading2: { fontFamily: 'CormorantGaramond-Bold', fontSize: 24, color: '#2D2420', marginTop: 28, marginBottom: 12, lineHeight: 30 },
+  heading3: { fontFamily: 'CormorantGaramond-Bold', fontSize: 20, color: '#2D2420', marginTop: 24, marginBottom: 12, lineHeight: 26 },
+  heading4: { fontSize: 15, fontWeight: 'bold' as const, color: '#2D2420', textTransform: 'uppercase' as const, marginTop: 20, marginBottom: 10, letterSpacing: 0.5 },
+  paragraph: { fontSize: 16, lineHeight: 26, color: '#2D2420CC', marginBottom: 20 },
   strong: { fontWeight: 'bold' as const, color: '#2D2420' },
-  bullet_list: { marginBottom: 14 },
-  ordered_list: { marginBottom: 14 },
-  list_item: { marginBottom: 8 },
-  blockquote: { backgroundColor: 'rgba(212, 162, 95, 0.06)', borderLeftColor: '#D4A25F', borderLeftWidth: 4, paddingHorizontal: 16, paddingVertical: 12, marginVertical: 12, borderRadius: 8 },
+  bullet_list: { marginBottom: 20 },
+  ordered_list: { marginBottom: 20 },
+  list_item: { marginBottom: 12, fontSize: 16, lineHeight: 26, color: '#2D2420CC' },
+  blockquote: { backgroundColor: 'rgba(212, 162, 95, 0.08)', borderLeftColor: '#D4A25F', borderLeftWidth: 4, paddingHorizontal: 16, paddingVertical: 14, marginVertical: 20, borderRadius: 8, fontStyle: 'italic' as const },
   link: { color: '#AF6B6B', textDecorationLine: 'underline' as const },
-  hr: { backgroundColor: '#E7E5E4', height: 1, marginVertical: 20 },
-  code_inline: { backgroundColor: '#F5F5F4', color: '#2D2420', fontSize: 13 },
-  code_block: { backgroundColor: '#FAFAF9', borderColor: '#E7E5E4' },
-  fence: { backgroundColor: '#FAFAF9', borderColor: '#E7E5E4' },
+  hr: { backgroundColor: '#E7E5E4', height: 1, marginVertical: 24 },
+  code_inline: { backgroundColor: '#F5F5F4', color: '#2D2420', fontSize: 14, borderRadius: 4, paddingHorizontal: 4 },
+  code_block: { backgroundColor: '#FAFAF9', borderColor: '#E7E5E4', padding: 12, borderRadius: 8 },
+  fence: { backgroundColor: '#FAFAF9', borderColor: '#E7E5E4', padding: 12, borderRadius: 8 },
 };

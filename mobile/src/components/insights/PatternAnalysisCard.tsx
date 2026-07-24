@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { Sparkles, Leaf, Heart, Coffee, Info, Brain, Zap, MessageCircle, Plus, Smile } from 'lucide-react-native';
-import { SegmentedDoughnut } from './SegmentedDoughnut';
+import { Star, Leaf, Heart, Coffee, Info, Brain, Zap, MessageCircle, Plus, Smile, Sun, Crown, Lightbulb, TrendingUp } from 'lucide-react-native';
+import { SegmentedDoughnut } from '../ui/SegmentedDoughnut';
 
 const SYMPTOM_ICONS: Record<string, any> = {
   acne: require('../../../assets/images/symptoms/acne.png'),
@@ -23,7 +24,7 @@ const SYMPTOM_ICONS: Record<string, any> = {
 const PHASE_GUIDANCE: Record<string, { color: string; bg: string; blob: string; icon: any }> = {
   Menstrual: { color: '#AF6B6B', bg: 'rgba(175, 107, 107, 0.1)', blob: 'rgba(175, 107, 107, 0.25)', icon: Coffee },
   Follicular: { color: '#8DAA9D', bg: 'rgba(141, 170, 157, 0.1)', blob: 'rgba(141, 170, 157, 0.25)', icon: Leaf },
-  Ovulatory: { color: '#D4A25F', bg: 'rgba(212, 162, 95, 0.1)', blob: 'rgba(212, 162, 95, 0.25)', icon: Sparkles },
+  Ovulatory: { color: '#D4A25F', bg: 'rgba(212, 162, 95, 0.1)', blob: 'rgba(212, 162, 95, 0.25)', icon: Sun },
   Luteal: { color: '#7B82A8', bg: 'rgba(123, 130, 168, 0.1)', blob: 'rgba(123, 130, 168, 0.25)', icon: Heart },
 };
 
@@ -97,13 +98,13 @@ const SYMPTOM_LEARNING: Record<string, { stat: string; help: string }> = {
 const FOLLICULAR_INSIGHTS = [
   { title: 'High Energy & Motivation', description: 'Rising estrogen boosts dopamine and mental drive. Many women feel more energetic and proactive.', actions: ['Start new tasks', 'Strength workouts', 'Protein-forward meals'], icon: Zap },
   { title: 'Sharper Focus & Memory', description: 'Estrogen improves attention, memory and verbal fluency as it climbs toward ovulation.', actions: ['Planning', 'Studying', 'Decision-making'], icon: Brain },
-  { title: 'Creative Spark', description: 'Neuroplasticity is high during this phase, making it easier to connect dots and solve complex problems.', actions: ['Brainstorming', 'Art', 'Writing'], icon: Sparkles },
+  { title: 'Creative Spark', description: 'Neuroplasticity is high during this phase, making it easier to connect dots and solve complex problems.', actions: ['Brainstorming', 'Art', 'Writing'], icon: Lightbulb },
   { title: 'Social Curiosity', description: 'Rising estrogen makes you more open to new people, ideas and experiences.', actions: ['Networking', 'Trying new things', 'Meeting people'], icon: MessageCircle },
   { title: 'Building Endurance', description: 'Stamina climbs steadily through this phase, making it a good window to ramp up cardio training.', actions: ['Cardio', 'Dance', 'Cycling'], icon: Zap },
 ];
 
 const OVULATORY_INSIGHTS = [
-  { title: 'Peak Confidence & Charisma', description: 'Peak estrogen and testosterone boost magnetism and verbal expressiveness.', actions: ['Presentations', 'Dates', 'Bold conversations'], icon: Sparkles },
+  { title: 'Peak Confidence & Charisma', description: 'Peak estrogen and testosterone boost magnetism and verbal expressiveness.', actions: ['Presentations', 'Dates', 'Bold conversations'], icon: Crown },
   { title: 'Physical Strength Peak', description: 'Strength and power output often peak due to hormone-driven neuromuscular efficiency.', actions: ['HIIT', 'Heavy lifting', 'PR attempts'], icon: Zap },
   { title: 'Social Magnetism', description: 'Many feel more expressive and drawn to connection right now.', actions: ['Socializing', 'Networking events', 'Deep conversations'], icon: MessageCircle },
   { title: 'Heightened Pain Tolerance', description: 'Some research shows pain sensitivity dips around ovulation, making this a good time for tougher workouts.', actions: ['Challenging workouts', 'Endurance events'], icon: Heart },
@@ -152,22 +153,26 @@ export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhas
   const rotatedInsights = [...activeOptimizationInsights, ...activeOptimizationInsights].slice(rotationIndex, rotationIndex + 3);
 
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 32, borderWidth: 1, borderColor: '#E7E5E4', padding: 24, overflow: 'hidden' }}>
+    <View
+      className="relative rounded-[32px] border border-white/60 overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', padding: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+    >
       {/* Background Blob */}
       <View style={{ position: 'absolute', top: -48, right: -48, width: 192, height: 192, borderRadius: 96, backgroundColor: guidance.blob, opacity: 0.5 }} />
+      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
 
       {/* Header */}
       <View className="flex-row items-center justify-between mb-6">
         <View className="flex-row items-center gap-2">
-          <Text style={{ fontSize: 16 }}>✨</Text>
+          <TrendingUp size={16} color={guidance.color} />
           <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Pattern Analysis</Text>
         </View>
 
         <Pressable
           onPress={() => router.push('/(app)/tracker' as any)}
-          className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-200 bg-white"
+          className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/60 bg-white/70"
         >
-          <Plus size={14} color="#F59E0B" />
+          <Plus size={14} color={guidance.color} />
           <Text className="text-xs font-bold text-rove-charcoal">Track</Text>
         </Pressable>
       </View>
@@ -241,7 +246,7 @@ export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhas
         })}
 
         {isOptimizationPhase && rotatedInsights.map((item) => {
-          const Icon = item.icon || Sparkles;
+          const Icon = item.icon || Star;
           return (
             <View key={item.title} style={{ backgroundColor: guidance.bg, borderRadius: 16, padding: 20 }}>
               <View className="flex-row items-start gap-3">

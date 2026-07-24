@@ -133,11 +133,14 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
   );
 }
 
+// On-brand palette tokens (tailwind.config.js) instead of generic Tailwind
+// defaults (rose-400/slate-500/emerald-500/amber-500) — these are topic
+// categories, not cycle phases, so they intentionally don't reuse phaseThemes.
 const SNAPSHOT_META = [
-  { key: 'hormones' as const, label: 'Hormones', Icon: HormoneWave, color: '#FB7185' },
-  { key: 'mind' as const, label: 'Mind', Icon: MindSynapse, color: '#64748B' },
-  { key: 'body' as const, label: 'Body', Icon: BodyDNA, color: '#10B981' },
-  { key: 'skin' as const, label: 'Skin', Icon: GlowHalo, color: '#F59E0B' },
+  { key: 'hormones' as const, label: 'Hormones', Icon: HormoneWave, color: '#C97B7B' },
+  { key: 'mind' as const, label: 'Mind', Icon: MindSynapse, color: '#7B82A8' },
+  { key: 'body' as const, label: 'Body', Icon: BodyDNA, color: '#5B9A8B' },
+  { key: 'skin' as const, label: 'Skin', Icon: GlowHalo, color: '#D4A25F' },
 ];
 
 export default function HomeScreen() {

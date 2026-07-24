@@ -23,7 +23,7 @@ const ML_PER_GLASS = 250;
 // of the card's teal category color — only the glass border/buttons/stepper
 // use the category accent). Match that split here.
 const WATER_COLOR = '#60A5FA';
-const GLASS_HEIGHT = 96; // matches glassOuter's height minus its border, used to size the pour stream in px
+const GLASS_HEIGHT = 101; // matches glassOuter's height minus its (bottom-only) border, used to size the pour stream in px
 
 export interface HydrationTrackerProps {
   glasses: number;
@@ -230,16 +230,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   glassOuter: {
-    width: 64,
-    height: 100,
-    borderWidth: 2,
-    borderRadius: 8,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
+    // Web's glass is a genuine open-top silhouette — no top border, flat top
+    // corners, a big rounded bottom (`border-4 border-t-0 rounded-b-3xl`).
+    // The previous version had a border on all four sides with only a slight
+    // top rounding, which read as a rounded rectangle rather than a glass.
+    width: 68,
+    height: 104,
+    borderWidth: 3,
+    borderTopWidth: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     overflow: 'hidden',
     marginBottom: 16,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   glassInner: {
     flex: 1,
@@ -288,7 +294,7 @@ const styles = StyleSheet.create({
   },
   goalText: {
     fontSize: 10,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Inter-Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -298,7 +304,7 @@ const styles = StyleSheet.create({
   },
   mlNum: {
     fontSize: 28,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'CormorantGaramond-Bold',
     color: '#2D2420',
   },
   mlUnit: {

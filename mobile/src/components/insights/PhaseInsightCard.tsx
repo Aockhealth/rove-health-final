@@ -7,9 +7,10 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Eas
 type PhaseInsightCardProps = {
   phase: string;
   day: number;
-  insight?: { insight: string } | null;
+  insight?: { title?: string; insight: string } | null;
   theme: any;
   isGenerating?: boolean;
+  hasError?: boolean;
   onGenerateInsight?: () => void;
 };
 
@@ -73,6 +74,7 @@ export function PhaseInsightCard({
   insight,
   theme,
   isGenerating,
+  hasError,
   onGenerateInsight
 }: PhaseInsightCardProps) {
   const getPhaseIcon = (p: string) => {
@@ -107,7 +109,7 @@ export function PhaseInsightCard({
               DAY {day} INSIGHT
             </Text>
             <Text className="text-2xl mt-1 text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-              Personalized AI Analysis
+              {insight?.title || 'Personalized AI Analysis'}
             </Text>
           </View>
 
@@ -133,16 +135,18 @@ export function PhaseInsightCard({
             ) : (
               <View className="flex-col gap-4">
                 <Text className="text-sm leading-relaxed text-rove-stone">
-                  No analysis available yet for this phase. Generate one based on your recent logs.
+                  {hasError
+                    ? "Couldn't generate an insight — log a few moods for this phase, then try again."
+                    : 'No analysis available yet for this phase. Generate one based on your recent logs.'}
                 </Text>
                 <Pressable
                   onPress={onGenerateInsight}
                   className="self-start px-5 py-2.5 rounded-xl border border-white/60 flex-row items-center justify-center mt-1 bg-white/70 shadow-sm"
                   style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
                 >
-                  <Feather name="cpu" size={14} color={theme.color} style={{ marginRight: 6 }} />
+                  <Feather name="aperture" size={14} color={theme.color} style={{ marginRight: 6 }} />
                   <Text className="text-xs font-bold uppercase tracking-wider text-rove-charcoal">
-                    Generate Insight
+                    {hasError ? 'Try Again' : 'Generate Insight'}
                   </Text>
                 </Pressable>
               </View>

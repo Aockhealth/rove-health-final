@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
 import {
   Shield,
   Mail,
@@ -67,6 +68,7 @@ export function AccountSettings({
   onClearLocalData,
   isPending,
 }: AccountSettingsProps) {
+  const router = useRouter();
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editEmail, setEditEmail] = useState(email);
   const [editPhone, setEditPhone] = useState(phone || '');
@@ -251,7 +253,7 @@ export function AccountSettings({
         <Text className="text-[10px] font-medium uppercase tracking-[3px] text-stone-300">
           Rove Health v1.0.2
         </Text>
-        <TouchableOpacity onPress={() => Linking.openURL('https://rovehealth.in/privacy')}>
+        <TouchableOpacity onPress={() => router.push('/privacy')}>
           <Text className="text-[10px] text-stone-400">Terms & Privacy</Text>
         </TouchableOpacity>
       </View>

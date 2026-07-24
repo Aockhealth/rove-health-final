@@ -46,6 +46,12 @@ export const UnifiedAIContextEnvelopeSchema = z.object({
     workoutFocus: z.string().optional(),
     sessionDuration: z.string().optional(),
     limitations: z.string().optional(),
+    // Chef v2 ("pick your plate") fields
+    mealType: z.string().optional(),            // snack | smoothie | salad
+    preferenceSummary: z.string().optional(),   // short taste profile built from user_food_choices
+    recentChosen: z.array(z.string()).optional(), // dish names the user recently picked (avoid repeats)
+    dishName: z.string().optional(),            // detail step: the dish the user picked
+    keyIngredients: z.array(z.string()).optional(), // detail step: option's key ingredients
 });
 
 export type UnifiedAIContextEnvelope = z.infer<typeof UnifiedAIContextEnvelopeSchema>;

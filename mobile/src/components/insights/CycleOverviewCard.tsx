@@ -108,7 +108,7 @@ export function CycleOverviewCard({
           <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
             <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-wider mb-1">Rhythm</Text>
             <View className="flex-row items-center mt-1">
-              <Feather name="activity" size={12} color={theme.color} />
+              <Feather name="repeat" size={12} color={theme.color} />
               <Text className="text-sm text-rove-charcoal leading-none ml-1" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
                 {isRegular ? "Reg" : "Irreg"}
               </Text>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import type { SymptomInput } from '@shared/onboarding/types';
 import { Input } from '../ui/Input';
 
@@ -86,7 +87,10 @@ export function StepAboutYou({
             return (
               <TouchableOpacity
                 key={condition}
-                onPress={() => onToggleCondition(condition)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onToggleCondition(condition);
+                }}
                 className={`flex-row items-center gap-1.5 rounded-full border px-4 py-2 ${
                   isSelected
                     ? 'border-rove-charcoal bg-rove-charcoal'
@@ -107,7 +111,10 @@ export function StepAboutYou({
 
       <Animated.View entering={FadeInDown.delay(300).duration(400)} className="gap-3">
         <TouchableOpacity
-          onPress={() => setShowSymptoms(!showSymptoms)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSymptoms(!showSymptoms);
+          }}
           className="flex-row items-center justify-between rounded-2xl border border-rove-charcoal/10 bg-white/60 px-4 py-3.5"
         >
           <View>
@@ -132,7 +139,10 @@ export function StepAboutYou({
               return (
                 <TouchableOpacity
                   key={name}
-                  onPress={() => onToggleSymptom({ name, category, severity: 5 })}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onToggleSymptom({ name, category, severity: 5 });
+                  }}
                   className={`rounded-xl border px-3 py-2 ${
                     isSelected
                       ? 'border-rove-charcoal bg-rove-charcoal'
@@ -191,7 +201,10 @@ export function StepAboutYou({
               return (
                 <View key={diet.id} style={{ width: '33.33%' }} className="p-1">
                   <TouchableOpacity
-                    onPress={() => onDietChange(isSelected ? '' : diet.id)}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      onDietChange(isSelected ? '' : diet.id);
+                    }}
                     className={`items-center rounded-2xl border px-2 py-3 ${
                       isSelected
                         ? 'border-rove-charcoal bg-rove-charcoal'

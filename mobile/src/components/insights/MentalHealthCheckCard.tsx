@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Brain, Activity } from 'lucide-react-native';
+import { Brain, Wind } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 type MentalHealthCheckCardProps = {
@@ -73,7 +73,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
               className="w-10 h-10 rounded-full items-center justify-center shadow-sm bg-white"
               style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
             >
-              <Activity size={18} color={themeColor} />
+              <Wind size={18} color={themeColor} />
             </View>
             <View className="flex-1">
               <Text className="text-base text-rove-charcoal mb-0.5" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>

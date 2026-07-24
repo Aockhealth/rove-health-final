@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Dumbbell } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 import { phaseThemes } from '../../data/home-content';
 
@@ -49,89 +51,98 @@ function completionPct(session: WorkoutSession) {
     return Math.round((session.exercises_completed / session.exercises_total) * 100);
 }
 
+import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
+
 function SessionCard({ session }: { session: WorkoutSession }) {
     const [expanded, setExpanded] = useState(false);
     const t = phaseThemes[session.phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     const pct = completionPct(session);
 
     return (
-        <View className="rounded-[18px] overflow-hidden mb-3 bg-white/40 border border-white/50"
-            style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
-            <TouchableOpacity onPress={() => setExpanded(!expanded)} className="p-4 flex-row" activeOpacity={0.7}>
+        <Animated.View layout={Layout} className="rounded-[18px] overflow-hidden mb-3 bg-white border border-white/50"
+            style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}>
+            <TouchableOpacity
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setExpanded(!expanded);
+                }}
+                className="p-4 flex-row"
+                activeOpacity={0.7}
+            >
                 <View className="w-10 h-10 rounded-[14px] items-center justify-center mr-3 border border-white/40"
-                    style={{ backgroundColor: `${t.color}12` }}>
-                    <Feather name="activity" size={16} color={t.color} />
+                    style={{ backgroundColor: `${t.color}15` }}>
+                    <Dumbbell size={16} color={t.color} />
                 </View>
-                <View className="flex-1">
-                    <Text className="font-bold text-[13px] text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                <View className="flex-1 justify-center">
+                    <Text className="font-bold text-[14px] text-rove-charcoal leading-tight">
                         {session.plan_title || `${session.focus} Workout`}
                     </Text>
                     <View className="flex-row items-center mt-1.5 flex-wrap gap-x-3 gap-y-1">
                         <View className="flex-row items-center">
-                            <Feather name="calendar" size={9} color="#A8A29E" />
-                            <Text className="text-[10px] text-rove-stone font-medium ml-1">{formatDate(session.date)}</Text>
+                            <Feather name="calendar" size={10} color="#A8A29E" />
+                            <Text className="text-[11px] text-rove-stone font-medium ml-1.5">{formatDate(session.date)}</Text>
                         </View>
                         <View className="flex-row items-center">
-                            <Feather name="clock" size={9} color="#A8A29E" />
-                            <Text className="text-[10px] text-rove-stone font-medium ml-1">{formatDuration(session.duration_seconds)}</Text>
+                            <Feather name="clock" size={10} color="#A8A29E" />
+                            <Text className="text-[11px] text-rove-stone font-medium ml-1.5">{formatDuration(session.duration_seconds)}</Text>
                         </View>
                     </View>
                     {/* Progress bar */}
-                    <View className="flex-row items-center mt-2.5">
-                        <View className="flex-1 h-1.5 bg-white/50 rounded-full overflow-hidden mr-2 border border-white/30">
+                    <View className="flex-row items-center mt-3">
+                        <View className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden mr-2.5 border border-stone-200/50">
                             <View className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: t.color }} />
                         </View>
-                        <Text className="text-[9px] font-bold text-rove-stone">{session.exercises_completed}/{session.exercises_total}</Text>
+                        <Text className="text-[10px] font-bold text-rove-stone">{session.exercises_completed}/{session.exercises_total}</Text>
                     </View>
                 </View>
                 <View className="items-end justify-between ml-2">
-                    <View className="px-2 py-0.5 rounded-full" style={{ backgroundColor: `${t.color}12` }}>
-                        <Text className="text-[8px] font-bold" style={{ color: t.color }}>{session.phase}</Text>
+                    <View className="px-2.5 py-1 rounded-full border border-white" style={{ backgroundColor: `${t.color}15` }}>
+                        <Text className="text-[9px] font-bold uppercase tracking-wider text-rove-charcoal">{session.phase}</Text>
                     </View>
-                    <Feather name={expanded ? "chevron-up" : "chevron-down"} size={14} color="#D6D3D1" />
+                    <Feather name={expanded ? "chevron-up" : "chevron-down"} size={16} color="#A8A29E" />
                 </View>
             </TouchableOpacity>
 
             {expanded && (
-                <View className="px-4 pb-4 pt-2 border-t border-white/30">
+                <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} className="px-4 pb-4 pt-3 border-t border-stone-100/80 bg-[#FAFAF9]">
                     <View className="flex-row flex-wrap gap-2 mb-3">
                         {[
                             { icon: 'zap' as const, label: session.energy_level },
                             { icon: 'target' as const, label: session.focus },
                             { icon: 'bar-chart-2' as const, label: session.plan_intensity }
                         ].filter(b => b.label).map((b, i) => (
-                            <View key={i} className="bg-white/40 rounded-lg px-2.5 py-1.5 flex-row items-center border border-white/50">
+                            <View key={i} className="bg-white rounded-lg px-2.5 py-1.5 flex-row items-center border border-stone-200/50 shadow-sm">
                                 <Feather name={b.icon} size={10} color="#A8A29E" />
-                                <Text className="text-[10px] font-bold text-rove-charcoal ml-1">{b.label}</Text>
+                                <Text className="text-[11px] font-bold text-rove-charcoal ml-1.5">{b.label}</Text>
                             </View>
                         ))}
                     </View>
 
                     {session.warmup?.length > 0 && (
                         <View className="mb-2">
-                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5" style={{ color: t.color }}>Warmup</Text>
+                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">Warmup</Text>
                             {session.warmup.map((item, i) => (
-                                <View key={i} className="flex-row items-center py-0.5">
-                                    <View className="w-1 h-1 rounded-full mr-2" style={{ backgroundColor: t.color, opacity: 0.5 }} />
-                                    <Text className="text-[11px] text-rove-charcoal">{item}</Text>
+                                <View key={i} className="flex-row items-center py-1">
+                                    <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: t.color, opacity: 0.6 }} />
+                                    <Text className="text-[12px] text-rove-charcoal leading-snug">{item}</Text>
                                 </View>
                             ))}
                         </View>
                     )}
                     {session.cooldown?.length > 0 && (
-                        <View className="mt-1">
-                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5" style={{ color: t.color }}>Cooldown</Text>
+                        <View className="mt-2">
+                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">Cooldown</Text>
                             {session.cooldown.map((item, i) => (
-                                <View key={i} className="flex-row items-center py-0.5">
-                                    <View className="w-1 h-1 rounded-full mr-2" style={{ backgroundColor: t.color, opacity: 0.4 }} />
-                                    <Text className="text-[11px] text-rove-charcoal">{item}</Text>
+                                <View key={i} className="flex-row items-center py-1">
+                                    <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: t.color, opacity: 0.5 }} />
+                                    <Text className="text-[12px] text-rove-charcoal leading-snug">{item}</Text>
                                 </View>
                             ))}
                         </View>
                     )}
-                </View>
+                </Animated.View>
             )}
-        </View>
+        </Animated.View>
     );
 }
 
@@ -186,7 +197,10 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                 {(["history", "insights"] as const).map((tab) => (
                     <TouchableOpacity
                         key={tab}
-                        onPress={() => setActiveTab(tab)}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab(tab);
+                        }}
                         className={`flex-1 py-2.5 rounded-lg items-center justify-center flex-row`}
                         style={activeTab === tab ? { backgroundColor: 'rgba(255,255,255,0.6)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } } : {}}
                     >
@@ -256,7 +270,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                     ) : (
                         <View className="rounded-[18px] bg-white/40 border border-white/50 p-5"
                             style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
-                            <Text className="text-[9px] font-bold uppercase tracking-widest mb-4" style={{ color: theme.color }}>Completion by Phase</Text>
+                            <Text className="text-[9px] font-bold uppercase tracking-widest mb-4 text-rove-charcoal">Completion by Phase</Text>
                             {stats.map(s => {
                                 const t = phaseThemes[s.phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
                                 const pct = Math.round((s.completion_rate || 0) * 100);
@@ -267,7 +281,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                                         <View className="flex-1 h-2 bg-white/40 rounded-full mx-3 overflow-hidden border border-white/30">
                                             <View className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: t.color }} />
                                         </View>
-                                        <Text className="text-[10px] font-bold w-8 text-right" style={{ color: t.color }}>{pct}%</Text>
+                                        <Text className="text-[10px] font-bold w-8 text-right text-rove-charcoal">{pct}%</Text>
                                     </View>
                                 );
                             })}

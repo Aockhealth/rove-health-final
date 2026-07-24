@@ -110,7 +110,11 @@ export async function fetchPlanPageDataFast() {
           exercise: {
               summary: blueprintContent.exercise?.summary || "",
               best: blueprintContent.exercise?.best || [],
-              avoid: blueprintContent.exercise?.avoid || []
+              avoid: blueprintContent.exercise?.avoid || [],
+              time: blueprintContent.exercise?.time || "45",
+              unit: blueprintContent.exercise?.unit || "mins",
+              intensity: blueprintContent.exercise?.intensity || "Moderate",
+              type: blueprintContent.exercise?.type || "Cardio"
           },
           supplements: blueprintContent.supplements || [],
           daily_flow: blueprintContent.daily_flow || [],

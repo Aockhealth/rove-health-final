@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Zap, Activity, Smile, Heart, Check } from 'lucide-react-native';
 import { SymptomChip } from './SymptomChip';
 import { Phase, PHASE_COLORS } from './CycleCalendar';
+import { phaseThemes } from '../../data/home-content';
 
 // Ported from frontend/src/app/cycle-sync/tracker/components/QuickPhaseLog.tsx —
 // keep the suggestion sets and phase copy in sync with that file if it changes.
@@ -116,9 +119,18 @@ export function QuickPhaseLog({
   };
 
   const accent = PHASE_COLORS[currentPhase];
+  const cardTint = phaseThemes[currentPhase]?.cardTint ?? `${accent}26`;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { shadowColor: accent }]}>
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint }]} />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.7, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View style={styles.header}>
         <View style={[styles.iconBox, { backgroundColor: `${accent}26` }]}>
           <Zap size={16} color={accent} />
@@ -151,15 +163,17 @@ export function QuickPhaseLog({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderRadius: 24,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
     padding: 16,
     marginBottom: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
@@ -170,7 +184,7 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 30,
     height: 30,
-    borderRadius: 12,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -189,5 +203,6 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'flex-start',
   },
 });

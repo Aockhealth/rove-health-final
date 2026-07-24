@@ -15,7 +15,7 @@ import {
     updateLastPeriodDate,
     fetchMonthLogs,
 } from "@/app/actions/cycle-sync";
-import { calculatePhase as sharedCalculatePhase, isInFertileWindow, type CycleSettings, type DailyLog as SharedDailyLog } from "@shared/cycle/phase";
+import { calculatePhase as sharedCalculatePhase, findStreakStart, isInFertileWindow, type CycleSettings, type DailyLog as SharedDailyLog } from "@shared/cycle/phase";
 import confetti from "canvas-confetti";
 import { toast, Toaster } from "sonner";
 import { usePostHog } from 'posthog-js/react';
@@ -403,18 +403,7 @@ export default function TrackerPageRedesigned() {
 
                 if (allPeriodDates.length > 0) {
                     const mostRecentPeriodDay = allPeriodDates[0];
-                    let streakStart = mostRecentPeriodDay;
-                    const allPeriodSet = new Set(allPeriodDates);
-                    const cur = new Date(mostRecentPeriodDay);
-                    while (true) {
-                        cur.setDate(cur.getDate() - 1);
-                        const prevStr = formatDate(cur);
-                        if (allPeriodSet.has(prevStr)) {
-                            streakStart = prevStr;
-                        } else {
-                            break;
-                        }
-                    }
+                    const streakStart = findStreakStart(mostRecentPeriodDay, mergedLogs as Record<string, SharedDailyLog>);
                     if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
                         const updateResult = await updateLastPeriodDate(streakStart);
                         if (updateResult.success) {
@@ -546,23 +535,8 @@ export default function TrackerPageRedesigned() {
 
                 if (allPeriodDates.length > 0) {
                     // Find the start of the most recent period streak
-                    // Start from the most recent period day and walk backwards
                     const mostRecentPeriodDay = allPeriodDates[0];
-                    let streakStart = mostRecentPeriodDay;
-
-                    const allPeriodSet = new Set(allPeriodDates);
-                    const cur = new Date(mostRecentPeriodDay);
-
-                    // Walk backwards to find the start of this streak
-                    while (true) {
-                        cur.setDate(cur.getDate() - 1);
-                        const prevStr = formatDate(cur);
-                        if (allPeriodSet.has(prevStr)) {
-                            streakStart = prevStr;
-                        } else {
-                            break;
-                        }
-                    }
+                    const streakStart = findStreakStart(mostRecentPeriodDay, mergedLogs as Record<string, SharedDailyLog>);
 
                     // Only update last_period_start if this streak is MORE RECENT
                     // than the current setting. This prevents editing old months

@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
+// Dumbbell (lucide) reads as "exercise" far more specifically than the
+// generic activity/pulse icon, which was overused across the app.
+import { Dumbbell } from 'lucide-react-native';
 
 type WellnessAverages = {
   water: number;
@@ -70,7 +73,7 @@ export function HabitsOverviewCard({
           <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
             <View className="flex-row items-center gap-3">
               <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}>
-                <Feather name="activity" size={16} color={theme.color} />
+                <Dumbbell size={16} color={theme.color} />
               </View>
               <Text className="text-sm font-medium text-rove-charcoal">Avg Workout</Text>
             </View>

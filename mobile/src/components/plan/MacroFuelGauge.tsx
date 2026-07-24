@@ -31,6 +31,8 @@ interface MacroFuelGaugeProps {
     /** Shared scroll offset from the parent screen, used to give the ring a
      * subtle parallax drift — same treatment as the phase orb on Home. */
     scrollY?: SharedValue<number>;
+    /** Scrolls the parent screen down to the Rove Chef section. */
+    onScrollToChef?: () => void;
 }
 
 const phaseGuidance: Record<string, any[]> = {
@@ -61,7 +63,7 @@ const phaseGuidance: Record<string, any[]> = {
     ]
 };
 
-export function MacroFuelGauge({ data, phase, scrollY }: MacroFuelGaugeProps) {
+export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFuelGaugeProps) {
     if (!data) return null;
 
     const currentPhase = phase || "Menstrual";
@@ -137,7 +139,8 @@ export function MacroFuelGauge({ data, phase, scrollY }: MacroFuelGaugeProps) {
         });
 
     const handleScrollToChef = () => {
-        // Ignored for now, scroll view ref needed in parent.
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onScrollToChef?.();
     };
 
     // One-shot light sweep across the Rove Chef button, shortly after it appears

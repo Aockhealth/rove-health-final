@@ -15,6 +15,8 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeOut, Layout, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ChevronUp, ChevronDown, Info, X } from 'lucide-react-native';
@@ -45,6 +47,10 @@ export interface DischargeAnswers {
 export interface DischargeQuestionnaireProps {
   answers: DischargeAnswers;
   onAnswersChange: (a: DischargeAnswers) => void;
+  /** Shared page-level phase tint (same value every other tracker card
+   * uses) — keeps this card's fill consistent with the rest of the page
+   * instead of its own fixed blue tint. */
+  cardTint?: string;
 }
 
 // ─── Video preview option (Q1: Vaginal Fluid) ─────────────────────────────────
@@ -138,6 +144,7 @@ function PillOption({
 export function DischargeQuestionnaire({
   answers,
   onAnswersChange,
+  cardTint,
 }: DischargeQuestionnaireProps) {
   const [expanded, setExpanded] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -155,7 +162,15 @@ export function DischargeQuestionnaire({
   };
 
   return (
-    <Animated.View layout={Layout.duration(220)} style={styles.card}>
+    <Animated.View layout={Layout.duration(220)} style={[styles.card, { shadowColor: ACCENT }]}>
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint ?? `${ACCENT}26` }]} />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.7, y: 0.7 }}
+        style={StyleSheet.absoluteFillObject}
+      />
       {/* Wave progress bar */}
       <View style={styles.waveTrack}>
         <Animated.View style={[styles.waveFill, waveStyle]} />
@@ -320,14 +335,14 @@ export function DischargeQuestionnaire({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 24,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    marginBottom: 16,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
     overflow: 'hidden',
   },
   waveTrack: {
@@ -348,7 +363,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 19,
     backgroundColor: `${ACCENT}1A`,
     alignItems: 'center',
     justifyContent: 'center',
@@ -470,6 +485,7 @@ const styles = StyleSheet.create({
   pillGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'flex-start',
     gap: 10,
   },
   pillOption: {

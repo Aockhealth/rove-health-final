@@ -197,7 +197,14 @@ export default function LoginScreen() {
           
               <Text className="text-[11px] text-rove-stone/60 text-center">
                 View our{' '}
-                <Text 
+                <Text
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/terms')}
+                >
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/privacy')}
                 >

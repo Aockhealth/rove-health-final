@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -50,6 +51,7 @@ export function SymptomChip({
     scale.value = withSpring(0.92, { damping: 12, stiffness: 400 }, () => {
       scale.value = withSpring(1, { damping: 12, stiffness: 400 });
     });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle();
   };
 
@@ -100,7 +102,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 50,
+    // Web's chips are all `rounded-xl` (~12px), never a full pill — a
+    // uniform borderRadius: 50 here read as noticeably more "generic app"
+    // than the softer, more considered shape the rest of the app uses.
+    borderRadius: 14,
     marginRight: 8,
     marginBottom: 8,
   },

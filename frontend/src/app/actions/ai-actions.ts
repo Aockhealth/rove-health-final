@@ -2,7 +2,17 @@
 import { unstable_noStore as noStore } from 'next/cache';
 
 import { createClient } from "@/utils/supabase/server";
-import { ChefItemSchema, ChefSaladItemSchema, RoveChefProtocolSchema, RoveCoachPlanSchema } from "@/lib/ai/schemas";
+import {
+    ChefItemSchema,
+    ChefSaladItemSchema,
+    RoveChefProtocolSchema,
+    RoveCoachPlanSchema,
+    ChefOptionsResponseSchema,
+    ChefDetailSchema,
+    type ChefOption,
+    type ChefOptionsResponse,
+    type ChefDetail
+} from "@/lib/ai/schemas";
 import { AIService } from "@/lib/ai/service";
 import { executeUnifiedAI } from "../../../../backend/src/actions/ai-orchestrator/orchestrator";
 import { logAIGenerationEvent } from "../../../../backend/src/actions/ai-orchestrator/telemetry";
@@ -1099,7 +1109,13 @@ export async function generateRoveChefProtocol(
                 reasons: ["invalid_payload_or_safety_flag"]
             };
 
-        if (qualityGateEnabled && !quality.quality_passed && retryEnabled) {
+        // Only retry on a genuinely broken/unsafe result (invalid payload, safety
+        // flag, or an actual phase-rule violation) — a valid, phase-appropriate
+        // response that merely scores as "a bit generic" is not worth doubling
+        // total latency for. `phase_rule_passed` is false in both the hard-failure
+        // fallback quality objects above and on a real rule violation, so it's
+        // the right single signal to gate on instead of the softer `quality_passed`.
+        if (qualityGateEnabled && !quality.phase_rule_passed && retryEnabled) {
             retryCount = 1;
             lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`, true);
             lastResponse = await executeUnifiedAI(lastRequest);
@@ -1118,21 +1134,267 @@ export async function generateRoveChefProtocol(
                 };
         }
 
-        if (!candidate || (qualityGateEnabled && !quality.quality_passed)) {
+        if (!candidate || (qualityGateEnabled && !quality.phase_rule_passed)) {
             const fallbackResult = type ? { [type]: fallback[type] } : fallback;
+            // Fire-and-forget: logging is analytics-only and was previously
+            // blocking the response the user is waiting on for no user-facing
+            // benefit.
             if (lastRequest && lastResponse) {
-                await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+                logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality).catch((e) =>
+                    console.error("[Rove Chef] Quality logging failed:", e)
+                );
             }
             return fallbackResult;
         }
 
         if (lastRequest && lastResponse) {
-            await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+            logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality).catch((e) =>
+                console.error("[Rove Chef] Quality logging failed:", e)
+            );
         }
         return candidate;
     } catch (error) {
         console.error("Rove Chef Unexpected Error:", error);
         return type ? { [type]: fallback[type] } : fallback;
+    }
+}
+
+// ============================================
+// ROVE CHEF V2 — "PICK YOUR PLATE"
+// Two-step flow: a fast options call (4 real dishes, no instructions) and a
+// detail call for the one dish the user actually picks. The pick itself is
+// logged client-side to user_food_choices and fed back in as
+// preferenceSummary/recentChosen on future options calls.
+// ============================================
+
+export interface ChefOptionsInput {
+    phase: string;
+    mealType: "snack" | "smoothie" | "salad";
+    dietary_preferences?: string;
+    cuisine?: string;
+    symptoms?: string;
+    /** Dish names the user recently PICKED (strongest do-not-repeat signal). */
+    recentChosen?: string[];
+    /** Dish names recently SHOWN (softer variety signal). */
+    recentShown?: string[];
+    /** Short taste profile built from user_food_choices, e.g. "prefers savory, peanut-based, under 10 min". */
+    preferenceSummary?: string;
+}
+
+export interface ChefDetailInput {
+    dishName: string;
+    mealType: "snack" | "smoothie" | "salad";
+    phase: string;
+    dietary_preferences?: string;
+    keyIngredients?: string[];
+}
+
+// Vegetarian, warm/room-only dishes so the fallback is safe for every diet
+// preference and every phase's serving rules.
+const CHEF_OPTIONS_FALLBACK: Record<ChefOptionsInput["mealType"], ChefOption[]> = {
+    snack: [
+        { name: "Roasted Makhana", description: "Ghee-roasted foxnuts with rock salt and pepper.", prep_time_minutes: 5, key_ingredients: ["Makhana", "Ghee", "Black pepper"], why: "Magnesium in makhana eases muscle tension common in this phase.", serving_style: "warm" },
+        { name: "Roasted Chana Chaat", description: "Crunchy roasted chana with onion, lemon and chaat masala.", prep_time_minutes: 5, key_ingredients: ["Roasted chana", "Onion", "Lemon", "Chaat masala"], why: "Iron in chana supports steady energy through the cycle.", serving_style: "room" },
+        { name: "Peanut Jaggery Ladoo", description: "Two-ingredient ladoos, sweet and grounding.", prep_time_minutes: 10, key_ingredients: ["Peanuts", "Jaggery"], why: "Iron in jaggery helps replenish stores while peanuts add B6.", serving_style: "room" },
+        { name: "Masala Sweet Potato", description: "Warm boiled sweet potato tossed in lemon and cumin.", prep_time_minutes: 15, key_ingredients: ["Sweet potato", "Lemon", "Cumin"], why: "Complex carbs in sweet potato steady mood and cravings.", serving_style: "warm" }
+    ],
+    smoothie: [
+        { name: "Banana Date Shake", description: "Thick banana shake sweetened with dates.", prep_time_minutes: 5, key_ingredients: ["Banana", "Dates", "Milk"], why: "B6 in banana supports mood regulation in this phase.", serving_style: "room" },
+        { name: "Sattu Nimbu Drink", description: "Savory sattu cooler with lemon and roasted cumin.", prep_time_minutes: 5, key_ingredients: ["Sattu", "Lemon", "Roasted cumin"], why: "Plant protein in sattu keeps energy steady between meals.", serving_style: "room" },
+        { name: "Haldi Doodh", description: "Warm turmeric milk with a pinch of pepper.", prep_time_minutes: 5, key_ingredients: ["Milk", "Turmeric", "Black pepper"], why: "Curcumin in turmeric helps calm phase-related inflammation.", serving_style: "warm" },
+        { name: "Papaya Ginger Blend", description: "Smooth papaya blend with fresh ginger.", prep_time_minutes: 5, key_ingredients: ["Papaya", "Ginger", "Water"], why: "Vitamin C in papaya improves iron absorption from meals.", serving_style: "room" }
+    ],
+    salad: [
+        { name: "Sprouted Moong Salad", description: "Lightly steamed sprouts with onion, tomato and lemon.", prep_time_minutes: 10, key_ingredients: ["Moong sprouts", "Onion", "Tomato", "Lemon"], why: "Folate in sprouts supports the follicle-building work of this phase.", serving_style: "room" },
+        { name: "Kachumber", description: "Classic cucumber-onion-tomato salad with lemon.", prep_time_minutes: 5, key_ingredients: ["Cucumber", "Onion", "Tomato", "Lemon"], why: "Water-rich cucumber supports the extra hydration this phase needs.", serving_style: "room" },
+        { name: "Warm Beetroot Salad", description: "Steamed beetroot with peanuts and curry-leaf tempering.", prep_time_minutes: 15, key_ingredients: ["Beetroot", "Peanuts", "Curry leaves"], why: "Iron in beetroot helps rebuild what the period draws down.", serving_style: "warm" },
+        { name: "Fruit Chaat", description: "Seasonal fruit tossed with chaat masala and lemon.", prep_time_minutes: 10, key_ingredients: ["Seasonal fruit", "Chaat masala", "Lemon"], why: "Vitamin C across the fruit mix boosts iron uptake.", serving_style: "room" }
+    ]
+};
+
+function evaluateChefOptionsQuality(
+    candidate: ChefOptionsResponse,
+    phase: string,
+    recentChosen: string[],
+    retryCount: number
+): GenerationQualityMetadata {
+    const normalizedPhase = phase.toLowerCase();
+    const reasons: string[] = [];
+
+    // Hard phase serving rule: no cold options during Menstrual/Luteal.
+    const coldRestricted = normalizedPhase === "menstrual" || normalizedPhase === "luteal";
+    const servingViolation = coldRestricted && candidate.options.some((o) => o.serving_style === "cold");
+    if (servingViolation) reasons.push("cold_option_in_warm_only_phase");
+
+    // Options must be distinct dishes.
+    const names = candidate.options.map((o) => sanitizeSignature(o.name));
+    const distinct = new Set(names).size === names.length;
+    if (!distinct) reasons.push("duplicate_options_in_set");
+
+    // Repeating a dish the user recently PICKED is a hard fail — it defeats
+    // the whole "help her discover what to eat today" premise.
+    const chosenSet = new Set(recentChosen.map(sanitizeSignature));
+    const repeatsChosen = names.some((name) => chosenSet.has(name));
+    if (repeatsChosen) reasons.push("repeats_recently_chosen_dish");
+
+    const phaseRulePassed = !servingViolation && distinct && !repeatsChosen;
+    const genericScore = computeGenericScore(
+        candidate.options.flatMap((o) => [o.name, o.description, o.why])
+    );
+    if (genericScore > 0.50) reasons.push("generic_score_too_high");
+
+    return {
+        quality_passed: phaseRulePassed && genericScore <= 0.50,
+        retry_count: retryCount,
+        generic_score: genericScore,
+        duplicate_detected: repeatsChosen,
+        phase_rule_passed: phaseRulePassed,
+        reasons
+    };
+}
+
+export async function generateChefOptions(input: ChefOptionsInput): Promise<ChefOptionsResponse> {
+    noStore();
+
+    const fallback: ChefOptionsResponse = { options: CHEF_OPTIONS_FALLBACK[input.mealType] };
+    const qualityGateEnabled = isFlagEnabled("AI_QUALITY_GATE_ENABLED", true);
+    const retryEnabled = isFlagEnabled("AI_QUALITY_RETRY_ENABLED", true);
+    const recentChosen = normalizeList(input.recentChosen);
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    let lastRequest: UnifiedAIRequest | null = null;
+    let lastResponse: UnifiedAIResponse | null = null;
+    let retryCount = 0;
+
+    const buildRequest = (qualityFeedback = ""): UnifiedAIRequest => ({
+        skill: "diet_coach",
+        userIntent: "chef_options",
+        contextHints: {
+            phase: input.phase,
+            dayInCycle: null,
+            mealType: input.mealType,
+            dietaryPreferences: input.dietary_preferences || "none",
+            cuisinePreference: normalizeCuisineChoice(input.cuisine || "Indian"),
+            currentSymptomsOrCraving: input.symptoms || "",
+            preferenceSummary: input.preferenceSummary || "",
+            recentChosen,
+            recentOutputSignatures: normalizeList(input.recentShown),
+            qualityFeedback: qualityFeedback ? qualityFeedback + ` [Seed: ${Date.now()}]` : `[Seed: ${Date.now()}]`
+        },
+        clientSurface: "rove_chef_options",
+        memoryMode: "isolated",
+        deferTelemetry: true
+    });
+
+    const parseCandidate = (payload: unknown): ChefOptionsResponse | null => {
+        const parsed = ChefOptionsResponseSchema.safeParse(payload);
+        return parsed.success ? parsed.data : null;
+    };
+
+    try {
+        lastRequest = buildRequest();
+        lastResponse = await executeUnifiedAI(lastRequest);
+
+        let candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+            ? parseCandidate(lastResponse.structuredPayload)
+            : null;
+        let quality = candidate
+            ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+            : {
+                quality_passed: false,
+                retry_count: retryCount,
+                generic_score: 1,
+                duplicate_detected: false,
+                phase_rule_passed: false,
+                reasons: ["invalid_payload_or_safety_flag"]
+            };
+
+        // Same retry policy as v1 after the latency fix: retry only on a
+        // genuinely broken result (bad payload / safety flag / phase-rule
+        // violation), never on soft genericness.
+        if (qualityGateEnabled && !quality.phase_rule_passed && retryEnabled) {
+            retryCount = 1;
+            lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`);
+            lastResponse = await executeUnifiedAI(lastRequest);
+            candidate = (!lastResponse.safety?.flagged && lastResponse.structuredPayload)
+                ? parseCandidate(lastResponse.structuredPayload)
+                : null;
+            quality = candidate
+                ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+                : {
+                    quality_passed: false,
+                    retry_count: retryCount,
+                    generic_score: 1,
+                    duplicate_detected: false,
+                    phase_rule_passed: false,
+                    reasons: ["retry_invalid_payload_or_safety_flag"]
+                };
+        }
+
+        const result = (candidate && (!qualityGateEnabled || quality.phase_rule_passed)) ? candidate : fallback;
+        if (lastRequest && lastResponse) {
+            logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality).catch((e) =>
+                console.error("[Chef Options] Quality logging failed:", e)
+            );
+        }
+        return result;
+    } catch (error) {
+        console.error("Chef Options Unexpected Error:", error);
+        return fallback;
+    }
+}
+
+export async function generateChefDetail(input: ChefDetailInput): Promise<ChefDetail> {
+    noStore();
+
+    const fallback: ChefDetail = {
+        name: input.dishName,
+        description: "A simple, phase-friendly preparation.",
+        prep_time_minutes: 15,
+        ingredients: (input.keyIngredients || []).map((item) => `${item} — as needed`),
+        instructions: [
+            "Prep the listed ingredients.",
+            "Combine and cook the base ingredients until done.",
+            "Season to taste and serve."
+        ],
+        why: "Built around everyday ingredients that suit your current phase."
+    };
+
+    const request: UnifiedAIRequest = {
+        skill: "diet_coach",
+        userIntent: "chef_detail",
+        contextHints: {
+            phase: input.phase,
+            dayInCycle: null,
+            mealType: input.mealType,
+            dishName: input.dishName,
+            keyIngredients: normalizeList(input.keyIngredients),
+            dietaryPreferences: input.dietary_preferences || "none"
+        },
+        clientSurface: "rove_chef_detail",
+        memoryMode: "isolated",
+        deferTelemetry: true
+    };
+
+    try {
+        const response = await executeUnifiedAI(request);
+        const parsed = (!response.safety?.flagged && response.structuredPayload)
+            ? ChefDetailSchema.safeParse(response.structuredPayload)
+            : null;
+
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        logAIGenerationEvent(user?.id, request, response, {
+            phase: input.phase,
+            dayInCycle: null
+        }).catch((e) => console.error("[Chef Detail] Telemetry failed:", e));
+
+        return parsed?.success ? parsed.data : fallback;
+    } catch (error) {
+        console.error("Chef Detail Unexpected Error:", error);
+        return fallback;
     }
 }
 
@@ -1168,7 +1430,9 @@ export async function generateRoveCoachPlan(
     sessionDuration = "30m",
     progressionPreference: "steady" | "push" | "deload" = "steady",
     goalFocus = goal,
-    recentOutputSignatures: string[] = []
+    recentOutputSignatures: string[] = [],
+    recentChosen: string[] = [],
+    preferenceSummary = ""
 ): Promise<RoveCoachPlan | null> {
     noStore(); // Prevent Next.js from caching AI actions
 
@@ -1215,6 +1479,8 @@ export async function generateRoveCoachPlan(
             sessionDuration,
             limitations: injuries,
             recentOutputSignatures: signatures,
+            preferenceSummary: preferenceSummary || "",
+            recentChosen,
             qualityFeedback: qualityFeedback ? qualityFeedback + ` [Seed: ${Date.now()}]` : `[Seed: ${Date.now()}]`
         },
         clientSurface: "rove_coach_card",
@@ -1262,7 +1528,13 @@ export async function generateRoveCoachPlan(
             phaseRulePassed: quality.phase_rule_passed
         });
 
-        if (qualityGateEnabled && !quality.quality_passed && retryEnabled) {
+        // Only retry on a genuinely broken/unsafe result (invalid payload, safety
+        // flag, or an actual phase-rule violation) — a valid, phase-appropriate
+        // plan that merely scores as "a bit generic" is not worth doubling total
+        // latency for. `phase_rule_passed` is false in both the hard-failure
+        // fallback quality objects above and on a real rule violation, so it's
+        // the right single signal to gate on instead of the softer `quality_passed`.
+        if (qualityGateEnabled && !quality.phase_rule_passed && retryEnabled) {
             console.log("[Rove Coach] Quality gate failed. Retrying with feedback...");
             retryCount = 1;
             lastRequest = buildRequest(`Fix these issues: ${(quality.reasons || []).join(", ")}`, true);
@@ -1287,18 +1559,25 @@ export async function generateRoveCoachPlan(
             });
         }
 
-        if (!parsedPlan || (qualityGateEnabled && !quality.quality_passed)) {
-            console.log("[Rove Coach] RETURNING FALLBACK - parsedPlan:", parsedPlan ? "exists" : "null", "qualityGateEnabled:", qualityGateEnabled, "qualityPassed:", quality.quality_passed);
+        if (!parsedPlan || (qualityGateEnabled && !quality.phase_rule_passed)) {
+            console.log("[Rove Coach] RETURNING FALLBACK - parsedPlan:", parsedPlan ? "exists" : "null", "qualityGateEnabled:", qualityGateEnabled, "phaseRulePassed:", quality.phase_rule_passed);
             console.log("[Rove Coach] Fallback plan: Squats & Pushups");
+            // Fire-and-forget: logging is analytics-only and was previously
+            // blocking the response the user is waiting on for no user-facing
+            // benefit.
             if (lastRequest && lastResponse) {
-                await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+                logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality).catch((e) =>
+                    console.error("[Rove Coach] Quality logging failed:", e)
+                );
             }
             return fallback;
         }
 
         console.log("[Rove Coach] SUCCESS - Returning parsed plan:", parsedPlan?.title);
         if (lastRequest && lastResponse) {
-            await logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality);
+            logGenerationWithQuality(user?.id, lastRequest, lastResponse, quality).catch((e) =>
+                console.error("[Rove Coach] Quality logging failed:", e)
+            );
         }
         return parsedPlan;
     } catch (error) {

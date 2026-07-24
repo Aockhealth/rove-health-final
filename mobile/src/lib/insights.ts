@@ -26,7 +26,17 @@ export async function fetchInsightsData() {
 
     if (!cycleSettings) return null;
 
-    const logWindowDays = (cycleSettings.cycle_length_days || 28) * LOG_WINDOW_CYCLE_MULTIPLIER;
+    const { data: latestCycleSummaries } = await supabase
+        .from("cycle_summary")
+        .select("cycle_length, phase_data")
+        .eq("user_id", user.id)
+        .order("cycle_start_date", { ascending: false })
+        .limit(1);
+
+    const latestCycle = latestCycleSummaries?.[0];
+    const computedAvgCycle = latestCycle?.phase_data?.avg_length_used || latestCycle?.cycle_length || cycleSettings.cycle_length_days || 28;
+
+    const logWindowDays = (computedAvgCycle) * LOG_WINDOW_CYCLE_MULTIPLIER;
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - logWindowDays);
 
@@ -190,7 +200,7 @@ export async function fetchInsightsData() {
             dataSource: currentStatus.dataSource
         } : null,
         averages: {
-            cycle: cycleSettings.cycle_length_days,
+            cycle: computedAvgCycle,
             period: cycleSettings.period_length_days,
             lastPeriodStart: cycleSettings.last_period_start,
             nextPeriodDate,
@@ -204,6 +214,7 @@ export async function fetchInsightsData() {
         },
         phaseCounts,
         symptomsByPhase,
+        moodsByPhase,
         tipsByPhase,
         emotionalBaselines,
         symptoms: Array.from(allSymptoms).map(name => ({ name, count: 1 })),

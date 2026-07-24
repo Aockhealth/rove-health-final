@@ -12,7 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner-native';
-import { ChevronLeft, Crown, Minus, Plus } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { ChevronLeft, Minus, Plus } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { supabase } from '../../lib/supabase';
 import {
@@ -27,8 +28,10 @@ import {
 } from '../../lib/profile';
 import { CycleSignature, type ProfileTheme } from '../../components/profile/CycleSignature';
 import { HealthPassport } from '../../components/profile/HealthPassport';
+import { FocusGoals } from '../../components/profile/FocusGoals';
 import { AccountSettings } from '../../components/profile/AccountSettings';
-import { Select } from '../../components/ui/Select';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const PROFILE_THEMES: Record<string, ProfileTheme> = {
   Menstrual: { accentColor: '#AF6B6B', badgeBg: 'rgba(175,107,107,0.10)', badgeText: '#AF6B6B' },
@@ -36,15 +39,6 @@ const PROFILE_THEMES: Record<string, ProfileTheme> = {
   Ovulatory: { accentColor: '#B45309', badgeBg: 'rgba(251,191,36,0.12)', badgeText: '#B45309' },
   Luteal: { accentColor: '#4338CA', badgeBg: 'rgba(129,140,248,0.12)', badgeText: '#4338CA' },
 };
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
-}
 
 function Stepper({
   label,
@@ -117,6 +111,7 @@ export default function ProfileScreen() {
     period_length_days: 5,
   });
   const [unifiedPhase, setUnifiedPhase] = useState('Menstrual');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,8 +149,32 @@ export default function ProfileScreen() {
       toast.error('Failed to save profile', { description: res.error });
       return;
     }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success('Profile updated');
     invalidateAppData();
+  };
+
+  // Autosaves a single field the moment it changes (goal chips, tracker mode)
+  // rather than waiting for the unrelated "Save Passport Data" button below.
+  const saveProfileFields = async (overrides: Partial<ProfileFormData>) => {
+    const next = { ...formData, ...overrides };
+    setFormData(next);
+    setIsPending(true);
+    const res = await updateUserProfile(next);
+    setIsPending(false);
+    if (res.error) {
+      toast.error('Failed to save', { description: res.error });
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    invalidateAppData();
+  };
+
+  const handleToggleGoal = (goalId: string) => {
+    const nextGoals = formData.goals.includes(goalId)
+      ? formData.goals.filter((g) => g !== goalId)
+      : [...formData.goals, goalId];
+    saveProfileFields({ goals: nextGoals });
   };
 
   const handleSaveCycle = async () => {
@@ -171,6 +190,7 @@ export default function ProfileScreen() {
       toast.error('Failed to update cycle', { description: res.error });
       return;
     }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success('Cycle settings updated');
     invalidateAppData();
   };
@@ -220,33 +240,24 @@ export default function ProfileScreen() {
     router.replace('/(auth)/login');
   };
 
-  // Last period date pieces for the select trio
-  const [lpYear, lpMonth, lpDay] = cycleData.last_period_start
-    ? cycleData.last_period_start.split('-').map(Number)
-    : [0, 0, 0];
-  const currentYear = new Date().getFullYear();
-  const yearOptions = useMemo(
-    () =>
-      [currentYear, currentYear - 1].map((y) => ({ label: String(y), value: String(y) })),
-    [currentYear]
-  );
-  const monthOptions = useMemo(() => MONTHS.map((label, i) => ({ label, value: String(i + 1) })), []);
-  const dayCount = lpYear && lpMonth ? daysInMonth(lpYear, lpMonth) : 31;
-  const dayOptions = useMemo(
-    () => Array.from({ length: dayCount }, (_, i) => ({ label: String(i + 1), value: String(i + 1) })),
-    [dayCount]
-  );
+  let parsedDate = new Date();
+  if (cycleData.last_period_start) {
+    const [y, m, d] = cycleData.last_period_start.split('-').map(Number);
+    if (y && m && d) {
+      parsedDate = new Date(y, m - 1, d);
+    }
+  }
 
-  function updateLastPeriod(part: 'year' | 'month' | 'day', value: string) {
-    const year = part === 'year' ? Number(value) : lpYear || currentYear;
-    const month = part === 'month' ? Number(value) : lpMonth || 1;
-    let day = part === 'day' ? Number(value) : lpDay || 1;
-    day = Math.min(day, daysInMonth(year, month));
+  const handleDateConfirm = (selectedDate: Date) => {
+    setShowDatePicker(false);
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
     setCycleData((p) => ({
       ...p,
-      last_period_start: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      last_period_start: `${year}-${month}-${day}`,
     }));
-  }
+  };
 
   if (loading) {
     return (
@@ -282,9 +293,10 @@ export default function ProfileScreen() {
                   borderWidth: 8,
                   borderColor: theme.badgeBg,
                   shadowColor: '#000',
-                  shadowOpacity: 0.1,
-                  shadowRadius: 20,
-                  shadowOffset: { width: 0, height: 10 },
+                  shadowOpacity: 0.07,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 3,
                 }}
               >
                 <Text
@@ -293,9 +305,6 @@ export default function ProfileScreen() {
                 >
                   {formData.full_name?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || 'U'}
                 </Text>
-              </View>
-              <View className="absolute bottom-0 right-0 rounded-full border border-stone-100 bg-white p-2">
-                <Crown size={16} color={theme.accentColor} />
               </View>
             </View>
 
@@ -346,35 +355,41 @@ export default function ProfileScreen() {
                   <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">
                     Last Period Start
                   </Text>
-                  <View className="flex-row gap-2">
-                    <View className="flex-1">
-                      <Select
-                        title="Day"
-                        placeholder="Day"
-                        options={dayOptions}
-                        value={lpDay ? String(lpDay) : undefined}
-                        onValueChange={(v) => updateLastPeriod('day', v)}
-                      />
-                    </View>
-                    <View className="flex-[1.4]">
-                      <Select
-                        title="Month"
-                        placeholder="Month"
-                        options={monthOptions}
-                        value={lpMonth ? String(lpMonth) : undefined}
-                        onValueChange={(v) => updateLastPeriod('month', v)}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Select
-                        title="Year"
-                        placeholder="Year"
-                        options={yearOptions}
-                        value={lpYear ? String(lpYear) : undefined}
-                        onValueChange={(v) => updateLastPeriod('year', v)}
-                      />
-                    </View>
-                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setShowDatePicker(true)}
+                    className="flex-row items-center h-14 w-full rounded-[20px] border border-stone-100 bg-stone-50/50 px-5"
+                  >
+                    <Text className="flex-1 text-[15px] font-bold text-stone-800">
+                      {cycleData.last_period_start ? parsedDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select Date'}
+                    </Text>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={showDatePicker}
+                    mode="date"
+                    date={parsedDate}
+                    maximumDate={new Date()}
+                    onConfirm={handleDateConfirm}
+                    onCancel={() => setShowDatePicker(false)}
+                    confirmTextIOS="Confirm"
+                  />
+                </View>
+
+                <View className="gap-2">
+                  <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                    Cycle Regularity
+                  </Text>
+                  <SegmentedControl
+                    tabs={[
+                      { id: 'regular', label: 'Regular' },
+                      { id: 'irregular', label: 'Irregular' },
+                    ]}
+                    activeTab={formData.is_irregular ? 'irregular' : 'regular'}
+                    onChange={(id) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setFormData((p) => ({ ...p, is_irregular: id === 'irregular' }));
+                    }}
+                  />
                 </View>
 
                 <TouchableOpacity
@@ -387,6 +402,14 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            <FocusGoals
+              goals={formData.goals}
+              trackerMode={formData.tracker_mode}
+              onToggleGoal={handleToggleGoal}
+              onTrackerModeChange={(mode) => saveProfileFields({ tracker_mode: mode })}
+              theme={theme}
+            />
 
             <HealthPassport
               formData={formData}

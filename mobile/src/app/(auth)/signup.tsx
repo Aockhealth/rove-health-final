@@ -78,10 +78,10 @@ export default function SignupScreen() {
             
             {/* Header & Logo */}
             <View className="items-center mb-8">
-              <View className="w-16 h-16 mb-4">
-                 <Image 
-                   source={{ uri: 'https://placehold.co/400' }}
-                   className="w-full h-full"
+              <View className="w-16 h-16 mb-4 bg-white rounded-[2rem] shadow-sm items-center justify-center" style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
+                 <Image
+                   source={require('../../../assets/images/splash-mark.png')}
+                   className="w-10 h-10"
                    resizeMode="contain"
                  />
               </View>
@@ -210,7 +210,14 @@ export default function SignupScreen() {
               </View>
               <Text className="text-[11px] text-rove-stone/60 text-center">
                 By joining, you agree to our{' '}
-                <Text 
+                <Text
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/terms')}
+                >
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/privacy')}
                 >

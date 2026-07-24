@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Pressable, TextInput, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, withTiming, withDelay, Easing, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -18,6 +18,7 @@ import { SymptomDecoder } from '../../../components/plan/SymptomDecoder';
 import { DietCheatSheet } from '../../../components/plan/DietCheatSheet';
 import { ActivitiesWidget } from '../../../components/plan/ActivitiesWidget';
 import { SectionHeader } from '../../../components/plan/SectionHeader';
+import { FocusForYou } from '../../../components/plan/FocusForYou';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { RiverTrack } from '../../../components/home/RiverTrack';
 import ProfileAvatar from '../../../components/home/ProfileAvatar';
@@ -95,6 +96,16 @@ export default function PlanScreen() {
   const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
   const [exerciseView, setExerciseView] = useState<'coach' | 'history'>('coach');
   const [expandedExerciseIndex, setExpandedExerciseIndex] = useState<number | null>(null);
+  // Bumped whenever the orb's floating Rove Coach button is pressed, so
+  // ExerciseBuilder can jump straight into its fullscreen builder instead of
+  // just scrolling to the (about to be covered) card.
+  const [coachOpenSignal, setCoachOpenSignal] = useState(0);
+
+  // Lets the "Rove Chef"/"Rove Coach" floating buttons actually scroll to
+  // their sections instead of doing nothing — each target's Y offset is
+  // captured via onLayout since content is conditionally rendered per tab.
+  const scrollRef = useRef<any>(null);
+  const [chefSectionY, setChefSectionY] = useState(0);
 
   // Animated sliding indicator for the Guide/Nourish/Move tab bar
   const [tabBarWidth, setTabBarWidth] = useState(0);
@@ -381,6 +392,7 @@ export default function PlanScreen() {
 
       {/* Scrollable Tab Content */}
       <Animated.ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 120 }}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -620,13 +632,24 @@ export default function PlanScreen() {
             <Animated.View entering={FadeInUp.delay(300).duration(500)} className="mb-16">
               <ActivitiesWidget practices={bp?.rituals?.practices || []} themeColor={theme.color} />
             </Animated.View>
+
+            <FocusForYou
+              goals={data?.onboarding?.goals || []}
+              hasWeightGoal={!!data?.weightGoal}
+              themeColor={theme.color}
+            />
           </View>
         )}
 
         {activeTab === 'diet' && (
           <View>
             <Animated.View entering={FadeInUp.delay(50).duration(500)}>
-              <MacroFuelGauge phase={phaseName} data={bp?.nutrition_guide?.macro_fuel} scrollY={scrollY} />
+              <MacroFuelGauge
+                phase={phaseName}
+                data={bp?.nutrition_guide?.macro_fuel}
+                scrollY={scrollY}
+                onScrollToChef={() => scrollRef.current?.scrollTo({ y: chefSectionY, animated: true })}
+              />
             </Animated.View>
             {/* River Tracks for Recommended Fuel */}
             {(() => {
@@ -687,7 +710,11 @@ export default function PlanScreen() {
             </Animated.View>
 
             {/* The Rove Chef */}
-            <Animated.View entering={FadeInUp.delay(450).duration(500)} className="pb-16">
+            <Animated.View
+              entering={FadeInUp.delay(450).duration(500)}
+              className="pb-16"
+              onLayout={(e) => setChefSectionY(e.nativeEvent.layout.y)}
+            >
               <RoveChef phase={phaseName} diet={data?.lifestyle?.diet_preference || "Veg"} />
             </Animated.View>
           </View>
@@ -697,7 +724,19 @@ export default function PlanScreen() {
           <View>
             {/* Exercise Orb */}
             <Animated.View entering={FadeInUp.duration(500)}>
-              <ExerciseOrb phase={phaseName} />
+              <ExerciseOrb
+                phase={phaseName}
+                metrics={{
+                  time: bp?.exercise?.time,
+                  unit: bp?.exercise?.unit,
+                  intensity: bp?.exercise?.intensity,
+                  type: bp?.exercise?.type,
+                }}
+                onPressCoach={() => {
+                  setExerciseView('coach');
+                  setCoachOpenSignal((s) => s + 1);
+                }}
+              />
             </Animated.View>
 
             {/* Best For This Phase — Snapshot Card Grid */}
@@ -790,7 +829,10 @@ export default function PlanScreen() {
             )}
 
             {/* Rove Coach + Session Log — Tabbed Card */}
-            <Animated.View entering={FadeInUp.delay(300).duration(500)} className="mb-16">
+            <Animated.View
+              entering={FadeInUp.delay(300).duration(500)}
+              className="mb-16"
+            >
               <SectionHeader icon="barbell" iconFamily="Ionicons" title="Rove Coach" color={theme.color} />
 
               <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
@@ -823,7 +865,7 @@ export default function PlanScreen() {
 
                   {/* Conditional View */}
                   {exerciseView === 'coach' ? (
-                    <ExerciseBuilder phase={phaseName} />
+                    <ExerciseBuilder phase={phaseName} openSignal={coachOpenSignal} />
                   ) : (
                     <WorkoutHistory phase={phaseName} />
                   )}
@@ -867,7 +909,7 @@ export default function PlanScreen() {
                     <Text className="text-[10px] text-rove-stone font-bold uppercase tracking-widest">{bp.exercise.best[expandedExerciseIndex].time}</Text>
                   </View>
                   <View className="px-3 py-1 rounded-full flex-row items-center" style={{ backgroundColor: `${theme.color}15` }}>
-                    <Feather name="activity" size={10} color={theme.color} style={{ marginRight: 4 }} />
+                    <Feather name="zap" size={10} color={theme.color} style={{ marginRight: 4 }} />
                     <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>
                       {bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('hiit') || bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('strength') ? 'High Intensity' : 'Mod Intensity'}
                     </Text>

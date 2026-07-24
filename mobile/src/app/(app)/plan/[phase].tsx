@@ -42,7 +42,7 @@ export default function PhaseDeepDiveScreen() {
                 <View className="bg-white rounded-3xl p-6 mb-6 border border-rove-stone/10 shadow-sm">
                     <View className="flex-row items-center mb-4">
                         <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: `${theme.color}15` }}>
-                            <Feather name="activity" size={14} color={theme.color} />
+                            <Feather name="zap" size={14} color={theme.color} />
                         </View>
                         <Text className="font-bold text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Hormonal State</Text>
                     </View>
