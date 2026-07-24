@@ -46,7 +46,7 @@ const AI_ASSISTANT_CONFIG = {
    * 'route'    → Navigate to an internal Expo Router screen
    * 'stub'     → No-op placeholder (current default)
    */
-  mode: 'stub' as 'webview' | 'native' | 'route' | 'stub',
+  mode: 'route' as 'webview' | 'native' | 'route' | 'stub',
 
   /**
    * [mode = 'webview'] Your assistant's web embed URL

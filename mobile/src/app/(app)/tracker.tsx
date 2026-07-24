@@ -42,7 +42,6 @@ import { NumericStepper } from '../../components/tracker/NumericStepper';
 import { DurationInput } from '../../components/tracker/DurationInput';
 import { HydrationTracker } from '../../components/tracker/HydrationTracker';
 import { DischargeQuestionnaire, DischargeAnswers } from '../../components/tracker/DischargeQuestionnaire';
-import { ChatFAB } from '../../components/tracker/ChatFAB';
 import { QuickPhaseLog } from '../../components/tracker/QuickPhaseLog';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import {
@@ -702,6 +701,13 @@ export default function TrackerScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        // Without this, a focused TextInput near the bottom of this long
+        // form (Note, discharge, exercise duration...) can end up entirely
+        // hidden behind the keyboard with no way to see what's being typed —
+        // this makes the ScrollView auto-inset and scroll the focused field
+        // into view above the keyboard (iOS; Android resizes by default).
+        automaticallyAdjustKeyboardInsets
+        contentInsetAdjustmentBehavior="automatic"
       >
         {/* ── Cycle Status Card — phase-tinted border + shadow, matching the
             web's getPhaseTheme()/phasePill() treatment on this same card. ── */}
@@ -1053,8 +1059,10 @@ export default function TrackerScreen() {
         <View style={{ height: 96 }} />
       </ScrollView>
 
-      {/* ── Floating Save Log + Chat bar — pinned to the bottom of the
-          screen, stays put while the content above scrolls ── */}
+      {/* ── Floating Save Log bar — pinned to the bottom of the screen,
+          stays put while the content above scrolls. The chat FAB that used
+          to sit here is now rendered once, globally, in (app)/_layout.tsx
+          so it's consistent across every tab instead of tracker-only. ── */}
       <View style={styles.floatingBar} pointerEvents="box-none">
         <TouchableOpacity
           style={[styles.saveBtn, isSaving && { opacity: 0.6 }]}
@@ -1064,7 +1072,6 @@ export default function TrackerScreen() {
         >
           <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
         </TouchableOpacity>
-        <ChatFAB hasNotification />
       </View>
     </SafeAreaView>
   );

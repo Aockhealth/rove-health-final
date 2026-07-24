@@ -28,6 +28,7 @@ import {
 import { CycleSignature, type ProfileTheme } from '../../components/profile/CycleSignature';
 import { HealthPassport } from '../../components/profile/HealthPassport';
 import { AccountSettings } from '../../components/profile/AccountSettings';
+import { NotificationDebugCard } from '../../components/profile/NotificationDebugCard';
 import { Select } from '../../components/ui/Select';
 
 const PROFILE_THEMES: Record<string, ProfileTheme> = {
@@ -273,6 +274,8 @@ export default function ProfileScreen() {
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 140 }}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          contentInsetAdjustmentBehavior="automatic"
         >
           <Animated.View entering={FadeIn.duration(400)} className="mb-12 items-center">
             <View className="relative mb-6">
@@ -395,6 +398,8 @@ export default function ProfileScreen() {
               isPending={isPending}
               theme={theme}
             />
+
+            <NotificationDebugCard />
 
             <AccountSettings
               email={userEmail}

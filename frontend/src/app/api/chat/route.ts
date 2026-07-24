@@ -18,10 +18,21 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();
+
+        // The web client authenticates via cookies (handled by createClient()
+        // above). The mobile app has no cookie jar — its Supabase session
+        // lives in AsyncStorage/SecureStore as a JWT, sent as a Bearer token
+        // instead. supabase.auth.getUser(jwt) validates that token directly
+        // when present, falling back to the cookie session otherwise, so
+        // this one route serves both clients without changing the request/
+        // response contract either of them uses.
+        const authHeader = req.headers.get("authorization");
+        const bearerToken = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
+
         const {
             data: { user },
             error: authError,
-        } = await supabase.auth.getUser();
+        } = await supabase.auth.getUser(bearerToken);
 
         if (authError || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

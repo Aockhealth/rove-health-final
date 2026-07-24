@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Pressable, TextInput, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, withTiming, withDelay, Easing, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -121,6 +121,10 @@ export default function PlanScreen() {
       scrollY.value = event.contentOffset.y;
     },
   });
+
+  // Lets "Start Session" (in the exercise detail dialog) auto-scroll down to
+  // the Rove Coach card, which is the last section on the Move tab.
+  const scrollRef = useRef<any>(null);
 
   const tabIndicatorStyle = useAnimatedStyle(() => {
     const slotWidth = tabBarWidth / 3;
@@ -381,9 +385,18 @@ export default function PlanScreen() {
 
       {/* Scrollable Tab Content */}
       <Animated.ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 120 }}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        // Rove Chef's "Avoid Ingredients" input, the exercise "Anything to
+        // keep in mind?" input, and the custom-activity input can all sit
+        // far enough down this ScrollView that the keyboard fully covers
+        // them with nothing scrolled into view — this auto-insets/scrolls
+        // whichever field is focused back above the keyboard (iOS; Android
+        // resizes by default).
+        automaticallyAdjustKeyboardInsets
+        contentInsetAdjustmentBehavior="automatic"
       >
         {/* Tabs Content */}
         {activeTab === 'guide' && (
@@ -697,7 +710,7 @@ export default function PlanScreen() {
           <View>
             {/* Exercise Orb */}
             <Animated.View entering={FadeInUp.duration(500)}>
-              <ExerciseOrb phase={phaseName} />
+              <ExerciseOrb phase={phaseName} onPressCoach={() => setExerciseView('coach')} />
             </Animated.View>
 
             {/* Best For This Phase — Snapshot Card Grid */}
@@ -885,7 +898,14 @@ export default function PlanScreen() {
               <View className="flex-row gap-3">
                 <Button className="flex-1" style={{ backgroundColor: theme.color }} onPress={() => {
                   setExpandedExerciseIndex(null);
-                  setTimeout(() => setExerciseView('coach'), 300);
+                  setTimeout(() => {
+                    setExerciseView('coach');
+                    // Rove Coach sits at the very bottom of the Move tab —
+                    // scrollToEnd is more robust here than measuring an
+                    // offset, since it still lands in the right place
+                    // regardless of how tall the content above it is.
+                    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+                  }, 300);
                 }}>
                   Start Session
                 </Button>

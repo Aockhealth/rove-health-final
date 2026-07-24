@@ -27,7 +27,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
             <View className="flex-row mx-[-6px]">
                 {/* Focus Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{ 
+                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
                         shadowColor: '#1E7E34',
                         shadowOffset: { width: 0, height: 4 },
@@ -61,7 +61,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
 
                 {/* Avoid Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{ 
+                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
                         shadowColor: '#D93025',
                         shadowOffset: { width: 0, height: 4 },

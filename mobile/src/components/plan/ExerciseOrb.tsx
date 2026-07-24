@@ -9,9 +9,10 @@ import { PhaseOrbRing } from '../home/PhaseOrbRing';
 
 interface ExerciseOrbProps {
     phase: string;
+    onPressCoach?: () => void;
 }
 
-export function ExerciseOrb({ phase }: ExerciseOrbProps) {
+export function ExerciseOrb({ phase, onPressCoach }: ExerciseOrbProps) {
     const theme = phaseThemes[phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
 
     const metrics: Record<string, any> = {
@@ -83,7 +84,7 @@ export function ExerciseOrb({ phase }: ExerciseOrbProps) {
                 {/* Floating ROVE COACH Button */}
                 <View className="absolute right-0 bottom-4">
                     <TouchableOpacity
-                        onPress={() => {}}
+                        onPress={onPressCoach}
                         style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }}
                     >
                         <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden', borderWidth: 3, borderColor: '#FAF9F6' }}>
