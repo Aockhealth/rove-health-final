@@ -65,7 +65,7 @@ function AnimatedWatermark({ icon: Icon, color, itemKey }: { icon: any, color: s
   }));
 
   return (
-    <Animated.View style={[{ position: 'absolute', top: -10, right: -15, opacity: 0.18 }, style]}>
+    <Animated.View style={[{ position: 'absolute', top: -10, right: -15, opacity: 0.3 }, style]}>
       <Icon size={85} color={color} strokeWidth={1.5} />
     </Animated.View>
   );

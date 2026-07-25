@@ -2,6 +2,13 @@ import { supabase } from './supabase';
 import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
 import { BLUEPRINTS } from '@shared/content/plan-blueprints';
+import { calculateAge, calculateTDEE, applyGoalAdjustment, getPhaseMacros } from './calorieCalculator';
+import {
+    scaleDurationForActivity,
+    capIntensityForActivity,
+    reorderBestByGoal,
+    recommendActiveDaysPerWeek,
+} from './exercisePersonalization';
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -30,7 +37,7 @@ export async function fetchPlanPageDataFast() {
       supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
       supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
       supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_onboarding").select("goals, conditions").eq("user_id", user.id).maybeSingle()
+      supabase.from("user_onboarding").select("goals, conditions, date_of_birth").eq("user_id", user.id).maybeSingle()
   ]);
 
   const settings = settingsResult.data;
@@ -62,6 +69,60 @@ export async function fetchPlanPageDataFast() {
       return arr.sort(() => 0.5 - Math.random()).slice(0, count);
   };
 
+  // Personalizes the phase's static macro_fuel numbers with this person's real
+  // biometrics/activity/goal when we have enough data to do so; otherwise falls
+  // back to the same fixed per-phase figures the blueprint always shipped with.
+  const staticMacroFuel = blueprintContent.nutrition_guide?.macro_fuel;
+  let macroFuel = staticMacroFuel;
+  if (lifestyle?.weight_kg && lifestyle?.height_cm) {
+      const age = calculateAge(onboarding?.date_of_birth);
+      const maintenanceCalories = calculateTDEE(
+          lifestyle.weight_kg,
+          lifestyle.height_cm,
+          age,
+          phase,
+          lifestyle.activity_level
+      );
+      const targetCalories = applyGoalAdjustment(
+          maintenanceCalories,
+          lifestyle.fitness_goal,
+          weightGoal?.weekly_rate_kg
+      );
+      const macros = getPhaseMacros(phase, targetCalories);
+      macroFuel = {
+          ...staticMacroFuel,
+          calories: targetCalories,
+          protein: macros.protein.g,
+          fats: macros.fats.g,
+          carbs: macros.carbs.g,
+      };
+  }
+
+  // Personalizes the phase's static exercise blueprint the same way — duration
+  // scaled to activity level, intensity capped for beginners, "best for you"
+  // cards reprioritized by goal, plus a rough active-days-per-week guide tied
+  // to the pace chosen in the Nourish setup.
+  const baseExercise = blueprintContent.exercise || {};
+  const cappedIntensity = capIntensityForActivity(
+      baseExercise.intensity || 'Moderate',
+      baseExercise.type || 'Cardio',
+      lifestyle?.activity_level
+  );
+  const personalizedExercise = {
+      summary: baseExercise.summary || '',
+      best: reorderBestByGoal(baseExercise.best || [], lifestyle?.fitness_goal),
+      avoid: baseExercise.avoid || [],
+      time: scaleDurationForActivity(baseExercise.time || '45', lifestyle?.activity_level),
+      unit: baseExercise.unit || 'mins',
+      intensity: cappedIntensity.intensity,
+      type: cappedIntensity.type,
+      activeDaysPerWeek: recommendActiveDaysPerWeek(
+          lifestyle?.fitness_goal,
+          lifestyle?.activity_level,
+          weightGoal?.weekly_rate_kg
+      ),
+  };
+
   return {
       phase,
       day,
@@ -76,7 +137,8 @@ export async function fetchPlanPageDataFast() {
       } : null,
       onboarding: onboarding ? {
           goals: onboarding.goals || [],
-          conditions: onboarding.conditions || []
+          conditions: onboarding.conditions || [],
+          dateOfBirth: onboarding.date_of_birth || null
       } : null,
       weightGoal: weightGoal ? {
           currentWeight: lifestyle?.weight_kg || weightGoal.current_weight_kg,
@@ -107,18 +169,10 @@ export async function fetchPlanPageDataFast() {
               cramp_relief: blueprintContent.diet?.cramp_relief || [],
               avoid: blueprintContent.diet?.avoid || []
           },
-          exercise: {
-              summary: blueprintContent.exercise?.summary || "",
-              best: blueprintContent.exercise?.best || [],
-              avoid: blueprintContent.exercise?.avoid || [],
-              time: blueprintContent.exercise?.time || "45",
-              unit: blueprintContent.exercise?.unit || "mins",
-              intensity: blueprintContent.exercise?.intensity || "Moderate",
-              type: blueprintContent.exercise?.type || "Cardio"
-          },
+          exercise: personalizedExercise,
           supplements: blueprintContent.supplements || [],
           daily_flow: blueprintContent.daily_flow || [],
-          nutrition_guide: blueprintContent.nutrition_guide || {}
+          nutrition_guide: { ...blueprintContent.nutrition_guide, macro_fuel: macroFuel }
       },
       biometrics: {
           reason: `Phase specific adjustments based on ${phase} phase`,

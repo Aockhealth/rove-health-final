@@ -73,6 +73,8 @@ export async function fetchChefOptions(input: {
     recentChosen?: string[];
     recentShown?: string[];
     preferenceSummary?: string;
+    /** Descriptive goal (e.g. "Fat Loss" / "Build Muscle") — biases 1 of the 4 options toward it. */
+    fitnessGoal?: string;
 }) {
     const res = await fetch(`${API_URL}/api/rove-chef-options`, {
         method: 'POST',
@@ -89,6 +91,7 @@ export async function fetchChefOptions(input: {
             recentChosen: input.recentChosen,
             recentShown: input.recentShown,
             preferenceSummary: input.preferenceSummary,
+            fitnessGoal: input.fitnessGoal,
         }),
     });
 

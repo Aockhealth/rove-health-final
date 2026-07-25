@@ -129,7 +129,7 @@ function SymptomCard({ card, idx, theme }: { card: any, idx: number, theme: any 
                         </View>
                         <View 
                             className="flex-row items-start p-4 rounded-[20px] border border-white/50" 
-                            style={{ backgroundColor: `${theme.color}15` }}
+                            style={{ backgroundColor: `${theme.color}30` }}
                         >
                             <View className="mt-0.5 w-6 h-6 rounded-full items-center justify-center mr-3 bg-white border border-white/60 shadow-sm">
                                 <Check size={12} color={theme.color} strokeWidth={3} />

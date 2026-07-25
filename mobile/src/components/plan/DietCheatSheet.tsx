@@ -27,7 +27,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
             <View className="flex-row mx-[-6px]">
                 {/* Focus Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
+                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
                         shadowColor: '#5B9A8B',
                         shadowOffset: { width: 0, height: 4 },
@@ -36,7 +36,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
                         elevation: 2,
                     }}>
                         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
-                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#5B9A8B', opacity: 0.05 }]} />
+                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#5B9A8B', opacity: 0.18 }]} />
                         
                         <View className="flex-row items-center mb-4 border-b border-[#5B9A8B]/10 pb-3">
                             <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#5B9A8B]/15">
@@ -65,7 +65,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
 
                 {/* Avoid Column */}
                 <View className="flex-1 px-[6px]">
-                    <View className="rounded-[24px] p-5 border relative overflow-hidden" style={{
+                    <View className="flex-1 rounded-[24px] p-5 border relative overflow-hidden" style={{
                         borderColor: 'rgba(255,255,255,0.6)',
                         shadowColor: '#AF6B6B',
                         shadowOffset: { width: 0, height: 4 },
@@ -74,7 +74,7 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
                         elevation: 2,
                     }}>
                         <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
-                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#AF6B6B', opacity: 0.05 }]} />
+                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#AF6B6B', opacity: 0.18 }]} />
                         
                         <View className="flex-row items-center mb-4 border-b border-[#AF6B6B]/10 pb-3">
                             <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-[#AF6B6B]/15">

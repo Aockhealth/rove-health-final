@@ -26,7 +26,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Menstrual: {
     color: '#AF6B6B',
     blob: 'rgba(175, 107, 107, 0.1)',
-    cardTint: 'rgba(175, 107, 107, 0.15)',
+    cardTint: 'rgba(175, 107, 107, 0.28)',
     orbRingColors: ['rgba(175, 107, 107, 0.4)', 'rgba(255, 255, 255, 1)', 'rgba(175, 107, 107, 0.2)'],
     badgeBorder: 'rgba(175, 107, 107, 0.2)',
     iconBg: 'rgba(175, 107, 107, 0.1)',
@@ -38,7 +38,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Follicular: {
     color: '#8DAA9D',
     blob: 'rgba(141, 170, 157, 0.3)',
-    cardTint: 'rgba(141, 170, 157, 0.12)',
+    cardTint: 'rgba(141, 170, 157, 0.24)',
     orbRingColors: ['rgba(141, 170, 157, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(141, 170, 157, 0.3)'],
     badgeBorder: 'rgba(141, 170, 157, 0.3)',
     iconBg: 'rgba(141, 170, 157, 0.2)',
@@ -50,7 +50,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Ovulatory: {
     color: '#D4A25F',
     blob: 'rgba(212, 162, 95, 0.3)',
-    cardTint: 'rgba(212, 162, 95, 0.12)',
+    cardTint: 'rgba(212, 162, 95, 0.24)',
     orbRingColors: ['rgba(212, 162, 95, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(212, 162, 95, 0.3)'],
     badgeBorder: 'rgba(212, 162, 95, 0.3)',
     iconBg: 'rgba(212, 162, 95, 0.2)',
@@ -62,7 +62,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Luteal: {
     color: '#7B82A8',
     blob: 'rgba(123, 130, 168, 0.3)',
-    cardTint: 'rgba(123, 130, 168, 0.12)',
+    cardTint: 'rgba(123, 130, 168, 0.24)',
     orbRingColors: ['rgba(123, 130, 168, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(123, 130, 168, 0.4)'],
     badgeBorder: 'rgba(123, 130, 168, 0.3)',
     iconBg: 'rgba(123, 130, 168, 0.2)',

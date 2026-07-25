@@ -169,7 +169,7 @@ function RiverCard({ item, onPress, direction = 'left', hideIcon = false }: { it
             className="w-10 h-10 rounded-xl items-center justify-center border border-white/60 shadow-sm"
             style={{ backgroundColor: item.bg }}
           >
-            <Icon size={16} color={item.color} style={{ opacity: 0.55 }} />
+            <Icon size={16} color={item.color} />
           </View>
         )}
         <View className="flex-1">

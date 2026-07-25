@@ -31,6 +31,7 @@ import { HealthPassport } from '../../components/profile/HealthPassport';
 import { FocusGoals } from '../../components/profile/FocusGoals';
 import { AccountSettings } from '../../components/profile/AccountSettings';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import LoadingScreen from '../../components/ui/LoadingScreen';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const PROFILE_THEMES: Record<string, ProfileTheme> = {
@@ -260,11 +261,7 @@ export default function ProfileScreen() {
   };
 
   if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-rove-cream items-center justify-center">
-        <Text className="text-xs font-bold uppercase tracking-widest text-stone-300">Loading...</Text>
-      </SafeAreaView>
-    );
+    return <LoadingScreen />;
   }
 
   return (

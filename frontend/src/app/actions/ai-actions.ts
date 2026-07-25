@@ -1179,6 +1179,9 @@ export interface ChefOptionsInput {
     recentShown?: string[];
     /** Short taste profile built from user_food_choices, e.g. "prefers savory, peanut-based, under 10 min". */
     preferenceSummary?: string;
+    /** Descriptive fitness goal from user_lifestyle.fitness_goal, e.g. "Fat Loss" /
+     * "Build Muscle" / "General Fitness" — biases 1 option, doesn't turn this into a diet plan. */
+    fitnessGoal?: string;
 }
 
 export interface ChefDetailInput {
@@ -1279,6 +1282,7 @@ export async function generateChefOptions(input: ChefOptionsInput): Promise<Chef
             cuisinePreference: normalizeCuisineChoice(input.cuisine || "Indian"),
             currentSymptomsOrCraving: input.symptoms || "",
             preferenceSummary: input.preferenceSummary || "",
+            goalFocus: input.fitnessGoal || "",
             recentChosen,
             recentOutputSignatures: normalizeList(input.recentShown),
             qualityFeedback: qualityFeedback ? qualityFeedback + ` [Seed: ${Date.now()}]` : `[Seed: ${Date.now()}]`

@@ -22,6 +22,7 @@ import Animated, {
 import { phaseThemes } from '../../data/home-content';
 import { fetchChefOptions, fetchChefDetail } from '../../lib/api';
 import { logFoodChoice, fetchFoodChoiceContext, type ChefOption } from '../../lib/foodChoices';
+import { mapGoalToCoachGoal } from '../../lib/exercisePersonalization';
 import { BottomSheet } from '../ui/BottomSheet';
 import { AIGeneratingIndicator } from './AIGeneratingIndicator';
 
@@ -332,7 +333,7 @@ function BreathingIcon({ color, icon }: { color: string; icon: any }) {
     );
 }
 
-export function RoveChef({ phase, diet }: { phase: string, diet: string }) {
+export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: string, fitnessGoal?: string | null }) {
     const currentPhase = phase || "Menstrual";
     const theme = phaseThemes[currentPhase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     // RN's native <Modal> renders in a separate native window on iOS, and
@@ -385,6 +386,7 @@ export function RoveChef({ phase, diet }: { phase: string, diet: string }) {
                 recentChosen: context.recentChosen,
                 recentShown: context.recentShown,
                 preferenceSummary: context.preferenceSummary,
+                fitnessGoal: mapGoalToCoachGoal(fitnessGoal),
             });
             if (data?.options?.length) {
                 setOptions(prev => ({ ...prev, [activeTab]: data.options }));

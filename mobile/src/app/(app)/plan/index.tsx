@@ -4,7 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, w
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { fetchPlanPageDataFast, savePlanSettings, updateWeightGoals } from '../../../lib/plan';
+import { fetchPlanPageDataFast, savePlanSettings } from '../../../lib/plan';
 import { phaseThemes } from '../../../data/home-content';
 import { useFocusEffect, Link } from 'expo-router';
 import { WorkoutHistory } from '../../../components/plan/WorkoutHistory';
@@ -23,6 +23,24 @@ import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { RiverTrack } from '../../../components/home/RiverTrack';
 import ProfileAvatar from '../../../components/home/ProfileAvatar';
 import { DIET_RECOMMENDATIONS } from '../../../data/diet-recommendations';
+
+// Standard safe weight-loss pace guidance (CDC/NHS): losing faster than this
+// isn't offered as a selectable outcome — the wizard clamps to it instead.
+const MIN_SAFE_WEEKLY_RATE_KG = 0.5;
+const MAX_SAFE_WEEKLY_RATE_KG = 1.0;
+const AVG_WEEKS_PER_MONTH = 4.345;
+const GOAL_MONTH_OPTIONS = [1, 2, 3, 6, 9, 12];
+
+// Older records (e.g. written from a different entry point, like the profile
+// page's "moderate" default) may not exactly match one of the three chip
+// labels below — map anything unrecognized to the closest tier instead of
+// leaving every chip unselected.
+function normalizeActivityLevel(raw?: string | null): 'Sedentary' | 'Active' | 'Highly Active' {
+  const v = (raw || '').toLowerCase();
+  if (v.includes('sedentary') || v.includes('inactive') || v.includes('low')) return 'Sedentary';
+  if (v.includes('high') || v.includes('very')) return 'Highly Active';
+  return 'Active';
+}
 
 const PLAN_TABS = [
   { id: 'guide' as const, label: 'Guide', icon: 'compass' as const },
@@ -44,7 +62,7 @@ export default function PlanScreen() {
   const [activity, setActivity] = useState('Active');
   const [fitnessGoal, setFitnessGoal] = useState('weight_loss');
   const [targetWeight, setTargetWeight] = useState('55');
-  const [weeklyRate, setWeeklyRate] = useState('0.4');
+  const [desiredMonths, setDesiredMonths] = useState(3);
   const [diet, setDiet] = useState('Veg');
 
   // Weight Goal widget — edit-in-place state, mirrors the web's
@@ -54,6 +72,13 @@ export default function PlanScreen() {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
   const [tempGoalData, setTempGoalData] = useState({ current: 0, target: 0, start: 0 });
+  // Everything else the one-time setup wizard collects, editable from the
+  // same pencil icon instead of only the three weight numbers.
+  const [tempHeight, setTempHeight] = useState('165');
+  const [tempActivity, setTempActivity] = useState('Active');
+  const [tempFitnessGoal, setTempFitnessGoal] = useState('weight_loss');
+  const [tempDiet, setTempDiet] = useState('Veg');
+  const [tempDesiredMonths, setTempDesiredMonths] = useState(3);
 
   useEffect(() => {
     if (data?.weightGoal) {
@@ -63,32 +88,40 @@ export default function PlanScreen() {
         start: parseFloat(data.weightGoal.startWeight) || 0,
       });
     }
-  }, [data?.weightGoal]);
+    if (data?.lifestyle) {
+      setTempHeight(String(data.lifestyle.height_cm || '165'));
+      setTempActivity(normalizeActivityLevel(data.lifestyle.activity_level));
+      setTempDiet(data.lifestyle.diet_preference || 'Veg');
+      setTempFitnessGoal(data.lifestyle.fitness_goal || 'weight_loss');
+    }
+  }, [data?.weightGoal, data?.lifestyle]);
+
+  // Same safe-pace derivation as the setup wizard (see MAX_SAFE_WEEKLY_RATE_KG
+  // above) — kept in sync here since this edit form now also sets the pace.
+  const editTotalToLoseKg = Math.abs(tempGoalData.current - tempGoalData.target);
+  const editWeeksAvailable = tempDesiredMonths * AVG_WEEKS_PER_MONTH;
+  const editRawWeeklyRateKg = editWeeksAvailable > 0 ? editTotalToLoseKg / editWeeksAvailable : 0;
+  const editSafeWeeklyRateKg = Math.min(Math.max(editRawWeeklyRateKg, 0), MAX_SAFE_WEEKLY_RATE_KG);
+  const editPaceTooFast = editRawWeeklyRateKg > MAX_SAFE_WEEKLY_RATE_KG;
+  const editPaceIsGentle = editRawWeeklyRateKg > 0 && editRawWeeklyRateKg < MIN_SAFE_WEEKLY_RATE_KG;
+  const editSafeMonthsNeeded = editTotalToLoseKg > 0 ? (editTotalToLoseKg / MAX_SAFE_WEEKLY_RATE_KG) / AVG_WEEKS_PER_MONTH : 0;
 
   const handleSaveGoal = async () => {
     setIsSavingGoal(true);
     try {
-      const res = await updateWeightGoals({
-        current_weight_kg: tempGoalData.current,
+      await savePlanSettings({
+        height_cm: parseFloat(tempHeight),
+        weight_kg: tempGoalData.current,
+        activity_level: tempActivity,
+        diet_preference: tempDiet,
+        fitness_goal: tempFitnessGoal,
         target_weight_kg: tempGoalData.target,
-        start_weight_kg: tempGoalData.start,
+        weekly_rate_kg: editSafeWeeklyRateKg,
       });
-      if (res.success) {
-        setIsEditingGoal(false);
-        setData((prev: any) => ({
-          ...prev,
-          weightGoal: {
-            ...prev.weightGoal,
-            currentWeight: tempGoalData.current,
-            targetWeight: tempGoalData.target,
-            startWeight: tempGoalData.start,
-          },
-        }));
-      } else {
-        Alert.alert('Error', res.error || 'Could not update your weight goal');
-      }
+      setIsEditingGoal(false);
+      await loadData(true);
     } catch (e) {
-      Alert.alert('Error', 'Could not update your weight goal');
+      Alert.alert('Error', 'Could not update your plan settings');
     }
     setIsSavingGoal(false);
   };
@@ -171,6 +204,18 @@ export default function PlanScreen() {
     }, [])
   );
 
+  // Derives a safe weekly pace from "how much" (target vs. current weight) and
+  // "by when" (desiredMonths), instead of letting someone type in any rate —
+  // capped at the standard 0.5-1 kg/week safe range so the wizard can never
+  // save/display an unsafe goal.
+  const totalToLoseKg = Math.abs((parseFloat(weight) || 0) - (parseFloat(targetWeight) || 0));
+  const weeksAvailable = desiredMonths * AVG_WEEKS_PER_MONTH;
+  const rawWeeklyRateKg = weeksAvailable > 0 ? totalToLoseKg / weeksAvailable : 0;
+  const safeWeeklyRateKg = Math.min(Math.max(rawWeeklyRateKg, 0), MAX_SAFE_WEEKLY_RATE_KG);
+  const paceTooFast = rawWeeklyRateKg > MAX_SAFE_WEEKLY_RATE_KG;
+  const paceIsGentle = rawWeeklyRateKg > 0 && rawWeeklyRateKg < MIN_SAFE_WEEKLY_RATE_KG;
+  const safeMonthsNeeded = totalToLoseKg > 0 ? (totalToLoseKg / MAX_SAFE_WEEKLY_RATE_KG) / AVG_WEEKS_PER_MONTH : 0;
+
   const handleSaveSetup = async () => {
     setIsSaving(true);
     try {
@@ -181,7 +226,7 @@ export default function PlanScreen() {
         diet_preference: diet,
         fitness_goal: fitnessGoal,
         target_weight_kg: parseFloat(targetWeight),
-        weekly_rate_kg: parseFloat(weeklyRate)
+        weekly_rate_kg: safeWeeklyRateKg
       });
       await loadData(true);
     } catch (e) {
@@ -277,15 +322,37 @@ export default function PlanScreen() {
                   className="bg-white px-4 py-3 rounded-xl border border-rove-stone/20 text-rove-charcoal font-medium text-lg"
                 />
               </View>
-              <View className="mb-4">
-                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Weekly Goal (kg)</Text>
-                <TextInput
-                  value={weeklyRate}
-                  onChangeText={setWeeklyRate}
-                  keyboardType="numeric"
-                  className="bg-white px-4 py-3 rounded-xl border border-rove-stone/20 text-rove-charcoal font-medium text-lg"
-                />
-              </View>
+              {totalToLoseKg > 0 && (
+                <View className="mb-4">
+                  <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Desired Month — Reach it by</Text>
+                  <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
+                    {GOAL_MONTH_OPTIONS.map((m) => (
+                      <TouchableOpacity
+                        key={m}
+                        onPress={() => setDesiredMonths(m)}
+                        className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${desiredMonths === m ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
+                      >
+                        <Text className={`font-bold ${desiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{m} {m === 1 ? 'month' : 'months'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Safety feedback — 0.5-1 kg/week is the standard safe weight-loss
+                      range; anything faster gets clamped and the person is told the
+                      realistic, safe timeline instead. */}
+                  <View className={`mt-2 p-4 rounded-xl border ${paceTooFast ? 'bg-rove-red/5 border-rove-red/20' : 'bg-[#5B9A8B]/10 border-[#5B9A8B]/20'}`}>
+                    {paceTooFast ? (
+                      <Text className="text-rove-charcoal text-sm font-semibold leading-relaxed">
+                        Losing {totalToLoseKg.toFixed(1)}kg in {desiredMonths} {desiredMonths === 1 ? 'month' : 'months'} needs ~{rawWeeklyRateKg.toFixed(2)}kg/week — faster than the safe 0.5–1kg/week limit. We've capped your plan at 1kg/week; at that pace it'll realistically take about {Math.ceil(safeMonthsNeeded)} months.
+                      </Text>
+                    ) : (
+                      <Text className="text-rove-charcoal text-sm font-semibold leading-relaxed">
+                        That's about {safeWeeklyRateKg.toFixed(2)}kg/week{paceIsGentle ? ' — a gentle, safe pace.' : ', within the safe 0.5–1kg/week range.'}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
             </View>
           )}
 
@@ -506,6 +573,102 @@ export default function PlanScreen() {
                             </View>
                           </View>
                         ))}
+
+                        {/* Height */}
+                        <View className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60 mb-3">
+                          <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Height (cm)</Text>
+                          <View className="flex-row items-center gap-3">
+                            <TouchableOpacity
+                              onPress={() => setTempHeight((h) => String(Math.max(100, (parseFloat(h) || 0) - 1)))}
+                              className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                            >
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>−</Text>
+                            </TouchableOpacity>
+                            <View style={{ minWidth: 56 }}>
+                              <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                                {tempHeight}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => setTempHeight((h) => String((parseFloat(h) || 0) + 1))}
+                              className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                            >
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>+</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        {/* Activity Level */}
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Activity Level</Text>
+                        <View className="flex-row flex-wrap mb-3" style={{ marginHorizontal: -4 }}>
+                          {['Sedentary', 'Active', 'Highly Active'].map((opt) => (
+                            <TouchableOpacity
+                              key={opt}
+                              onPress={() => setTempActivity(opt)}
+                              className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempActivity === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
+                            >
+                              <Text className={`font-bold text-xs ${tempActivity === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Fitness Goal */}
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Primary Goal</Text>
+                        <View className="flex-row flex-wrap mb-3" style={{ marginHorizontal: -4 }}>
+                          {[{ id: 'weight_loss', label: 'Fat Loss' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'muscle_gain', label: 'Build Muscle' }].map((opt) => (
+                            <TouchableOpacity
+                              key={opt.id}
+                              onPress={() => setTempFitnessGoal(opt.id)}
+                              className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempFitnessGoal === opt.id ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
+                            >
+                              <Text className={`font-bold text-xs ${tempFitnessGoal === opt.id ? 'text-white' : 'text-rove-charcoal'}`}>{opt.label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Desired Month / safe pace — same 0.5-1kg/week clamp as the setup wizard */}
+                        {editTotalToLoseKg > 0 && (
+                          <View className="mb-3">
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Desired Month — Reach it by</Text>
+                            <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
+                              {GOAL_MONTH_OPTIONS.map((m) => (
+                                <TouchableOpacity
+                                  key={m}
+                                  onPress={() => setTempDesiredMonths(m)}
+                                  className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempDesiredMonths === m ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
+                                >
+                                  <Text className={`font-bold text-xs ${tempDesiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{m} {m === 1 ? 'month' : 'months'}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                            <View className={`mt-2 p-3 rounded-xl border ${editPaceTooFast ? 'bg-rove-red/5 border-rove-red/20' : 'bg-[#5B9A8B]/10 border-[#5B9A8B]/20'}`}>
+                              {editPaceTooFast ? (
+                                <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
+                                  That needs ~{editRawWeeklyRateKg.toFixed(2)}kg/week — faster than the safe 0.5–1kg/week limit. Capped at 1kg/week, so it'll realistically take about {Math.ceil(editSafeMonthsNeeded)} months.
+                                </Text>
+                              ) : (
+                                <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
+                                  About {editSafeWeeklyRateKg.toFixed(2)}kg/week{editPaceIsGentle ? ' — a gentle, safe pace.' : ', within the safe 0.5–1kg/week range.'}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                        )}
+
+                        {/* Dietary Preference */}
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Dietary Preference</Text>
+                        <View className="flex-row flex-wrap mb-1" style={{ marginHorizontal: -4 }}>
+                          {['Veg', 'Non-Veg', 'Vegan', 'Jain'].map((opt) => (
+                            <TouchableOpacity
+                              key={opt}
+                              onPress={() => setTempDiet(opt)}
+                              className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempDiet === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
+                            >
+                              <Text className={`font-bold text-xs ${tempDiet === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
                         <View className="flex-row justify-end gap-3 mt-2">
                           <TouchableOpacity onPress={() => setIsEditingGoal(false)} className="px-3 py-2">
                             <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Cancel</Text>
@@ -715,7 +878,7 @@ export default function PlanScreen() {
               className="pb-16"
               onLayout={(e) => setChefSectionY(e.nativeEvent.layout.y)}
             >
-              <RoveChef phase={phaseName} diet={data?.lifestyle?.diet_preference || "Veg"} />
+              <RoveChef phase={phaseName} diet={data?.lifestyle?.diet_preference || "Veg"} fitnessGoal={data?.lifestyle?.fitness_goal} />
             </Animated.View>
           </View>
         )}
@@ -738,6 +901,23 @@ export default function PlanScreen() {
                 }}
               />
             </Animated.View>
+
+            {/* Active-days guide — ties the pace chosen in Nourish's goal setup
+                to a rough weekly workout frequency, capped by activity level. */}
+            {!!bp?.exercise?.activeDaysPerWeek && (
+              <Animated.View
+                entering={FadeInUp.delay(50).duration(500)}
+                className="flex-row items-center p-4 rounded-[20px] border border-white/40 mb-8"
+                style={{ backgroundColor: theme.cardTint }}
+              >
+                <View className="w-10 h-10 rounded-xl items-center justify-center mr-3 border border-white/50 bg-white/50">
+                  <Feather name="calendar" size={16} color={theme.color} />
+                </View>
+                <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
+                  Aim for about <Text style={{ color: theme.color, fontWeight: '800' }}>{bp.exercise.activeDaysPerWeek} active days</Text> this week to support your pace and goal.
+                </Text>
+              </Animated.View>
+            )}
 
             {/* Best For This Phase — Snapshot Card Grid */}
             <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-8">
@@ -865,7 +1045,13 @@ export default function PlanScreen() {
 
                   {/* Conditional View */}
                   {exerciseView === 'coach' ? (
-                    <ExerciseBuilder phase={phaseName} openSignal={coachOpenSignal} />
+                    <ExerciseBuilder
+                      phase={phaseName}
+                      openSignal={coachOpenSignal}
+                      activityLevel={data?.lifestyle?.activity_level}
+                      fitnessGoal={data?.lifestyle?.fitness_goal}
+                      defaultDuration={`${bp?.exercise?.time || 30}m`}
+                    />
                   ) : (
                     <WorkoutHistory phase={phaseName} />
                   )}

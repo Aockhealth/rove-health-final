@@ -19,6 +19,8 @@ Fill this in under **App Store Connect → App Privacy → Get Started**. Based 
 
 Not collected (confirmed no SDK present in `mobile/package.json` as of this check): Location, Financial Info, Contacts, Browsing History, Search History, Photos/Videos, Audio Data, Purchases, Advertising Data.
 
+**Update (2026-07-25):** `@react-native-google-signin/google-signin` and `expo-dev-client` were added to `mobile/package.json` since this worksheet was first written. Google Sign-In doesn't add a new Apple privacy category beyond what's already listed — signing in with Google still just gives you an email + name, already covered under "Contact Info" above. `expo-dev-client` is a build tool, not a data-collecting SDK, so it changes nothing here. No worksheet edits needed from this addition, but flag it if the Google Sign-In integration starts requesting Google profile photo or other scopes beyond basic email/name.
+
 ## "Used for Tracking" question
 Answer **No**. There is no advertising/analytics SDK (no PostHog, Mixpanel, Amplitude, ad-network SDK, etc.) in the mobile app — only the web frontend uses PostHog. This means you can also answer **No** to needing an App Tracking Transparency (ATT) prompt.
 

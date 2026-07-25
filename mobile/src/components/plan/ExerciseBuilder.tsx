@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { phaseThemes } from '../../data/home-content';
 import { generateRoveCoachPlan } from '../../lib/api';
 import { fetchWorkoutChoiceContext } from '../../lib/workoutChoices';
+import { mapActivityToFitnessLevel, mapGoalToCoachGoal } from '../../lib/exercisePersonalization';
 import { AIGeneratingIndicator } from './AIGeneratingIndicator';
 import { WorkoutHistory } from './WorkoutHistory';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
@@ -25,7 +26,24 @@ const EXERCISE_PROMPT_COUNT_KEY = "rove_exercise_prompt_count";
 const EXERCISE_LAST_PREFS_KEY = "rove_exercise_last_prefs";
 const STORAGE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-export function ExerciseBuilder({ phase, openSignal }: { phase: string; openSignal?: number }) {
+export function ExerciseBuilder({
+    phase,
+    openSignal,
+    activityLevel,
+    fitnessGoal,
+    defaultDuration,
+}: {
+    phase: string;
+    openSignal?: number;
+    /** Real profile data (user_lifestyle) — drives the AI prompt's fitness
+     * level and goal instead of the previous hardcoded "Intermediate" /
+     * focus-area-as-goal values. */
+    activityLevel?: string | null;
+    fitnessGoal?: string | null;
+    /** The phase's activity-scaled duration (e.g. "45m"), same number shown
+     * on the Move tab's orb — falls back to "30m" if not provided. */
+    defaultDuration?: string;
+}) {
     const theme = phaseThemes[phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     // RN's native <Modal> renders in a separate native window on iOS, and
     // SafeAreaView's auto-detected insets are unreliable there (often report
@@ -37,6 +55,10 @@ export function ExerciseBuilder({ phase, openSignal }: { phase: string; openSign
     const [setting, setSetting] = useState<"Home" | "Gym" | null>(null);
     const [focus, setFocus] = useState<"Full Body" | "Upper Body" | "Lower Body" | "Cardio" | "Core" | "Mobility">("Full Body");
     const [symptoms, setSymptoms] = useState("");
+    // Real, asked-each-time signal instead of the previous hardcoded "Medium"
+    // — the AI prompt's safety rule (low energy → intensity must be Low) only
+    // means something if this reflects how the person actually feels today.
+    const [energyLevel, setEnergyLevel] = useState<"Low" | "Medium" | "High">("Medium");
     const [isGenerating, setIsGenerating] = useState(false);
     const [result, setResult] = useState<any>(null);
 
@@ -132,13 +154,13 @@ export function ExerciseBuilder({ phase, openSignal }: { phase: string; openSign
             const { recentChosen, preferenceSummary } = await fetchWorkoutChoiceContext();
             const plan = await generateRoveCoachPlan(
                 phase,
-                "Medium",
-                `${focus} workout`,
+                energyLevel,
+                mapGoalToCoachGoal(fitnessGoal),
                 setting === "Home" ? "Bodyweight / Mat" : "Full Gym",
                 symptoms,
-                "Intermediate",
+                mapActivityToFitnessLevel(activityLevel),
                 focus,
-                "30m",
+                defaultDuration || "30m",
                 recentChosen,
                 preferenceSummary
             );
@@ -637,6 +659,39 @@ export function ExerciseBuilder({ phase, openSignal }: { phase: string; openSign
                     );
                 })}
             </ScrollView>
+
+                                {/* Energy Level — real signal instead of a hardcoded "Medium",
+                                    since the AI plan's intensity is safety-gated on this. */}
+                                <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
+                                    How's your energy today?
+                                </Text>
+                                <View className="flex-row gap-3 mb-6">
+                                    {(["Low", "Medium", "High"] as const).map(level => {
+                                        const isSelected = energyLevel === level;
+                                        return (
+                                            <TouchableOpacity
+                                                key={level}
+                                                onPress={() => { Haptics.selectionAsync(); setEnergyLevel(level); }}
+                                                activeOpacity={0.7}
+                                                className="flex-1 p-3 rounded-[16px] border items-center justify-center"
+                                                style={isSelected ? {
+                                                    backgroundColor: 'white',
+                                                    borderColor: 'white',
+                                                    shadowColor: theme.color,
+                                                    shadowOpacity: 0.1,
+                                                    shadowRadius: 8,
+                                                    shadowOffset: { width: 0, height: 4 },
+                                                    elevation: 2
+                                                } : {
+                                                    backgroundColor: 'rgba(255,255,255,0.4)',
+                                                    borderColor: 'rgba(255,255,255,0.6)'
+                                                }}
+                                            >
+                                                <Text className="font-bold text-[13px] text-rove-charcoal">{level}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
 
                                 {/* Symptoms Input */}
                                 <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">

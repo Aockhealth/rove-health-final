@@ -4,7 +4,7 @@ import { generateChefOptions } from '@/app/actions/ai-actions';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phase, mealType, dietary_preferences, cuisine, symptoms, recentChosen, recentShown, preferenceSummary } = body;
+    const { phase, mealType, dietary_preferences, cuisine, symptoms, recentChosen, recentShown, preferenceSummary, fitnessGoal } = body;
 
     if (!phase) {
       return NextResponse.json({ error: 'Missing required field: phase' }, { status: 400 });
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
       recentChosen,
       recentShown,
       preferenceSummary,
+      fitnessGoal,
     });
 
     return NextResponse.json(result);

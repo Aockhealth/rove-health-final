@@ -222,7 +222,7 @@ export const BLUEPRINTS: any = {
                 { title: "Heavy Lifting", desc: "Testosterone spikes make this your strongest phase of the month. Focus on heavy compound lifts and aim for new personal records.", time: "45 mins" },
                 { title: "Group Sports", desc: "Your verbal and social skills are peaking alongside your physical energy. Team sports or group fitness classes will feel highly rewarding.", time: "Variable" }
             ],
-            avoid: ["Overheating without hydration", "Sleep deprivation"]
+            avoid: ["Explosive/high-impact moves without a proper warm-up — ligaments are looser this week", "Overheating without hydration", "Sleep deprivation"]
         },
         supplements: [
             { name: "NAC", dose: "600mg", why: "Liver support (estrogen detox)" },
