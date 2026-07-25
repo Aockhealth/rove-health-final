@@ -68,7 +68,8 @@ export const WorkoutSetSchema = z.object({
     name: z.string(),
     reps: z.string(),
     sets: z.string(),
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    description: z.string().describe("A brief 1-2 sentence description of how to perform the exercise").optional()
 });
 
 export const RoveCoachPlanSchema = z.object({

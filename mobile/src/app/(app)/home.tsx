@@ -11,6 +11,7 @@ import { Droplets, Baby, Heart, Flower2, CalendarPlus, ChevronRight } from 'luci
 import Svg, { Defs, RadialGradient as SvgRadialGradient, Stop, Rect } from 'react-native-svg';
 
 import { fetchDashboardData, type DashboardData } from '../../lib/dashboard';
+import { schedulePeriodReminder } from '../../lib/notifications';
 import { phaseThemes, PHASE_KEYWORDS, PHASE_EXPLAINERS, PHASE_SNAPSHOTS } from '../../data/home-content';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
@@ -158,6 +159,14 @@ export default function HomeScreen() {
       router.replace('/onboarding' as any);
     }
   }, [data, isPending]);
+
+  // Re-schedules the "period in 2 days" reminder against the latest
+  // prediction whenever fresh dashboard data lands.
+  useEffect(() => {
+    if (data?.phase.nextPeriodDate) {
+      schedulePeriodReminder(data.phase.nextPeriodDate);
+    }
+  }, [data?.phase.nextPeriodDate]);
 
   const scrollY = useSharedValue(0);
 

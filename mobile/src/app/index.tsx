@@ -4,6 +4,8 @@ import { View, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { fetchOnboardingCompleted } from '../lib/onboarding';
+import { scheduleDailyTrackerReminder } from '../lib/notifications';
+import { identifyUser } from '../lib/analytics';
 
 export default function Index() {
   const [session, setSession] = useState<Session | null>(null);
@@ -15,6 +17,8 @@ export default function Index() {
       setSession(session);
       if (session) {
         setOnboarded(await fetchOnboardingCompleted(session.user.id));
+        identifyUser(session.user.id, { email: session.user.email });
+        scheduleDailyTrackerReminder();
       }
       setLoading(false);
     });

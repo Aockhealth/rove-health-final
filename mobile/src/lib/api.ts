@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { supabase } from './supabase';
 
 const getBaseUrl = () => {
     // Allow overriding the local API URL in development (useful for ngrok or forcing prod)
@@ -34,6 +35,14 @@ const getBaseUrl = () => {
 
 export const API_URL = getBaseUrl();
 
+// These AI routes now require a logged-in user (see api-auth-guard.ts on the
+// server side) — the mobile app has no cookie jar, so it must attach the
+// current Supabase session's access token as a Bearer header instead.
+async function getAuthHeader(): Promise<Record<string, string>> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
+
 export async function generateRoveCoachPlan(
     phase: string,
     energyLevel: string,
@@ -50,7 +59,8 @@ export async function generateRoveCoachPlan(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true'
+            'Bypass-Tunnel-Reminder': 'true',
+            ...(await getAuthHeader()),
         },
         body: JSON.stringify({ phase, energyLevel, goal, equipment, injuries, fitnessLevel, workoutFocus, sessionDuration, recentChosen, preferenceSummary })
     });
@@ -78,9 +88,10 @@ export async function fetchChefOptions(input: {
 }) {
     const res = await fetch(`${API_URL}/api/rove-chef-options`, {
         method: 'POST',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true'
+            'Bypass-Tunnel-Reminder': 'true',
+            ...(await getAuthHeader()),
         },
         body: JSON.stringify({
             phase: input.phase,
@@ -111,9 +122,10 @@ export async function fetchChefDetail(input: {
 }) {
     const res = await fetch(`${API_URL}/api/rove-chef-detail`, {
         method: 'POST',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true'
+            'Bypass-Tunnel-Reminder': 'true',
+            ...(await getAuthHeader()),
         },
         body: JSON.stringify({
             dishName: input.dishName,
@@ -137,7 +149,7 @@ export async function fetchChefDetail(input: {
 export async function fetchRoveInsight(input: { phase: string; moodCounts: Record<string, number> }) {
     const res = await fetch(`${API_URL}/api/rove-insight`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeader()) },
         body: JSON.stringify({ phase: input.phase, moodCounts: input.moodCounts }),
     });
 
@@ -157,9 +169,10 @@ export async function generateRoveChefProtocol(
 ) {
     const res = await fetch(`${API_URL}/api/rove-chef`, {
         method: 'POST',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true'
+            'Bypass-Tunnel-Reminder': 'true',
+            ...(await getAuthHeader()),
         },
         body: JSON.stringify({ phase, dietary_preferences, cuisine, type, personalization })
     });

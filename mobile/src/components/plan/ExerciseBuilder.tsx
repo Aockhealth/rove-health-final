@@ -10,7 +10,7 @@ import { fetchWorkoutChoiceContext } from '../../lib/workoutChoices';
 import { mapActivityToFitnessLevel, mapGoalToCoachGoal } from '../../lib/exercisePersonalization';
 import { AIGeneratingIndicator } from './AIGeneratingIndicator';
 import { WorkoutHistory } from './WorkoutHistory';
-import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { CharLimitIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION, PromptCountIndicator } from '../ui/PromptLimitIndicator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +24,7 @@ const COACH_LOADING_MESSAGES = [
 
 const EXERCISE_PROMPT_COUNT_KEY = "rove_exercise_prompt_count";
 const EXERCISE_LAST_PREFS_KEY = "rove_exercise_last_prefs";
+const ACTIVE_WORKOUT_KEY = "rove_active_workout_session";
 const STORAGE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export function ExerciseBuilder({
@@ -114,6 +115,47 @@ export function ExerciseBuilder({
         };
         loadLastPrefs();
     }, []);
+
+    // Restore active workout session (e.g. if app was closed mid-workout)
+    useEffect(() => {
+        const loadActiveSession = async () => {
+            try {
+                const stored = await AsyncStorage.getItem(ACTIVE_WORKOUT_KEY);
+                if (stored) {
+                    const session = JSON.parse(stored);
+                    if (session.result) {
+                        setResult(session.result);
+                        setSessionMode(session.sessionMode || false);
+                        setCompletedSets(session.completedSets || {});
+                        setSessionTimer(session.sessionTimer || 0);
+                        setIsFullscreen(true);
+                    }
+                }
+            } catch {}
+        };
+        loadActiveSession();
+    }, []);
+
+    // Save active session state whenever it meaningfully changes
+    useEffect(() => {
+        const saveSessionState = async () => {
+            try {
+                if (result) {
+                    await AsyncStorage.setItem(ACTIVE_WORKOUT_KEY, JSON.stringify({
+                        result,
+                        sessionMode,
+                        completedSets,
+                        sessionTimer
+                    }));
+                }
+            } catch {}
+        };
+        // To avoid thrashing AsyncStorage every second, only save when timer is a multiple of 5
+        // or if not in session mode (e.g. just generated the plan or checking off sets)
+        if (result && (!sessionMode || sessionTimer % 5 === 0)) {
+            saveSessionState();
+        }
+    }, [result, sessionMode, completedSets, sessionTimer]);
 
     // The floating Rove Coach button on the orb bumps this to jump straight
     // into the fullscreen builder instead of just scrolling to the card.
@@ -238,7 +280,16 @@ export function ExerciseBuilder({
         } finally {
             setIsSaving(false);
             setSessionMode(false);
+            await AsyncStorage.removeItem(ACTIVE_WORKOUT_KEY);
         }
+    };
+
+    const handleClearSession = async () => {
+        setResult(null);
+        setSessionMode(false);
+        setCompletedSets({});
+        setSessionTimer(0);
+        await AsyncStorage.removeItem(ACTIVE_WORKOUT_KEY);
     };
 
     const toggleSet = (i: number) => {
@@ -264,8 +315,8 @@ export function ExerciseBuilder({
                     <TouchableOpacity
                         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsFullscreen(true); }}
                         activeOpacity={0.85}
-                        className="flex-row items-center bg-white/70 rounded-[16px] border border-white p-4"
-                        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}
+                        className="flex-row items-center rounded-[16px] border border-white p-4"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.70)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }}
                     >
                         <View
                             className="w-11 h-11 rounded-xl items-center justify-center mr-3"
@@ -323,7 +374,7 @@ export function ExerciseBuilder({
                     </Text>
                     <TouchableOpacity
                         onPress={openBuilder}
-                        className="w-full py-4 rounded-[16px] items-center justify-center flex-row shadow-lg"
+                        className="w-full py-4 rounded-[16px] items-center justify-center flex-row"
                         style={{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                     >
                         <Feather name="zap" size={16} color="white" />
@@ -340,7 +391,7 @@ export function ExerciseBuilder({
             <Modal
                 visible={isFullscreen}
                 animationType="slide"
-                presentationStyle="fullScreen"
+                presentationStyle="overFullScreen"
                 onRequestClose={() => setIsFullscreen(false)}
             >
                 <View style={{ flex: 1, backgroundColor: '#FAF9F6' }}>
@@ -363,20 +414,20 @@ export function ExerciseBuilder({
                         <View className="w-9" />
                     </View>
 
-                    <View className="flex-row bg-white/40 p-1 rounded-xl border border-white/60 mx-5 mb-4" style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+                    <View className="flex-row p-1 rounded-xl border mx-5 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.40)', borderColor: 'rgba(255, 255, 255, 0.60)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
                         <Pressable
                             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFullscreenTab('coach'); }}
                             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(fullscreenTab === 'coach' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                         >
                             <Feather name="zap" size={13} color={fullscreenTab === 'coach' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                            <Text className={`text-[11px] font-bold ${fullscreenTab === 'coach' ? 'text-white' : 'text-rove-stone'}`}>Workout Coach</Text>
+                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'coach' ? '#FFFFFF' : '#78716C' }}>Workout Coach</Text>
                         </Pressable>
                         <Pressable
                             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFullscreenTab('history'); }}
                             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(fullscreenTab === 'history' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                         >
                             <Feather name="bar-chart-2" size={13} color={fullscreenTab === 'history' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                            <Text className={`text-[11px] font-bold ${fullscreenTab === 'history' ? 'text-white' : 'text-rove-stone'}`}>Session Log</Text>
+                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'history' ? '#FFFFFF' : '#78716C' }}>Session Log</Text>
                         </Pressable>
                     </View>
 
@@ -394,9 +445,9 @@ export function ExerciseBuilder({
                     >
                         {sessionMode && result ? (
                             /* ── Session Mode ── */
-                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={Layout}>
+                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={LinearTransition}>
                                 {/* Session Header */}
-                                <View className="flex-row justify-between items-center mb-5 p-4 rounded-[18px] bg-white/60 border border-white/80 shadow-[0_4px_16px_rgba(0,0,0,0.02)]">
+                                <View className="flex-row justify-between items-center mb-5 p-4 rounded-[18px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
                                     <View className="flex-1">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Live Session</Text>
                                         <Text className="font-bold text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
@@ -421,7 +472,7 @@ export function ExerciseBuilder({
                                             ✦ Warmup
                                         </Text>
                                         {result.warmup.map((item: string, i: number) => (
-                                            <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] bg-white/40 border border-white/50">
+                                            <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.40)', borderColor: 'rgba(255, 255, 255, 0.50)' }}>
                                                 <View className="w-5 h-5 rounded-full items-center justify-center mr-3" style={{ backgroundColor: theme.color }}>
                                                     <Text className="text-[9px] font-bold text-white">{i + 1}</Text>
                                                 </View>
@@ -444,31 +495,41 @@ export function ExerciseBuilder({
                                             activeOpacity={0.7}
                                             className="mb-2.5"
                                         >
-                                            <View className={`p-4 rounded-[16px] border transition-all ${isDone ? 'bg-white/30 border-white/40' : 'bg-white/80 border-white shadow-sm'}`}
-                                                style={isDone ? {} : { shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}>
+                                            <View
+                                                className="p-4 rounded-[16px]"
+                                                style={isDone
+                                                    ? { borderWidth: 1, backgroundColor: 'rgba(255,255,255,0.3)', borderColor: 'rgba(255,255,255,0.4)' }
+                                                    : { borderWidth: 1, backgroundColor: 'rgba(255,255,255,0.8)', borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}>
 
                                                 <View className="flex-row items-start justify-between">
                                                     <View className="flex-1 pr-3">
-                                                        <Text className={`font-bold text-[14px] ${isDone ? 'text-rove-stone line-through' : 'text-rove-charcoal'}`}
-                                                            style={isDone ? { textDecorationLine: 'line-through' } : {}}>
+                                                        <Text
+                                                            className="font-bold text-[14px]"
+                                                            style={isDone ? { color: '#78716C', textDecorationLine: 'line-through' } : { color: '#37332E' }}>
                                                             {ex.name}
                                                         </Text>
+                                                        {ex.description && !isDone && (
+                                                            <Text className="text-[12px] text-rove-stone mt-1 leading-snug">{ex.description}</Text>
+                                                        )}
                                                         <View className="flex-row gap-2 mt-1.5">
-                                                            <View className="bg-stone-100/80 px-2 py-0.5 rounded flex-row items-center">
-                                                                <Text className={`text-[10px] font-bold uppercase tracking-widest ${isDone ? 'text-rove-stone/50' : 'text-rove-stone'}`}>
+                                                            <View className="px-2 py-0.5 rounded flex-row items-center" style={{ backgroundColor: 'rgba(245, 245, 244, 0.80)' }}>
+                                                                <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isDone ? 'rgba(120,113,108,0.5)' : '#78716C' }}>
                                                                     {ex.sets} Sets
                                                                 </Text>
                                                             </View>
-                                                            <View className="bg-stone-100/80 px-2 py-0.5 rounded flex-row items-center">
-                                                                <Text className={`text-[10px] font-bold uppercase tracking-widest ${isDone ? 'text-rove-stone/50' : 'text-rove-stone'}`}>
+                                                            <View className="px-2 py-0.5 rounded flex-row items-center" style={{ backgroundColor: 'rgba(245, 245, 244, 0.80)' }}>
+                                                                <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isDone ? 'rgba(120,113,108,0.5)' : '#78716C' }}>
                                                                     {ex.reps} Reps
                                                                 </Text>
                                                             </View>
                                                         </View>
                                                     </View>
                                                     {/* Checkbox */}
-                                                    <View className={`w-7 h-7 rounded-full border-2 items-center justify-center mt-1 ${isDone ? 'border-transparent' : 'border-rove-stone/25'}`}
-                                                        style={isDone ? { backgroundColor: '#22c55e' } : {}}>
+                                                    <View
+                                                        className="w-7 h-7 rounded-full items-center justify-center mt-1"
+                                                        style={isDone
+                                                            ? { borderWidth: 2, borderColor: 'transparent', backgroundColor: '#22c55e' }
+                                                            : { borderWidth: 2, borderColor: 'rgba(168,162,158,0.25)' }}>
                                                         {isDone && <Feather name="check" size={14} color="white" />}
                                                     </View>
                                                 </View>
@@ -491,7 +552,7 @@ export function ExerciseBuilder({
                                             ✦ Cooldown
                                         </Text>
                                         {result.cooldown.map((item: string, i: number) => (
-                                            <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] bg-white/40 border border-white/50">
+                                            <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.40)', borderColor: 'rgba(255, 255, 255, 0.50)' }}>
                                                 <View className="w-5 h-5 rounded-full items-center justify-center mr-3" style={{ backgroundColor: theme.color, opacity: 0.6 }}>
                                                     <Text className="text-[9px] font-bold text-white">{i + 1}</Text>
                                                 </View>
@@ -505,7 +566,7 @@ export function ExerciseBuilder({
                                 <TouchableOpacity
                                     onPress={saveSession}
                                     disabled={isSaving}
-                                    className="mt-4 py-4 rounded-[16px] items-center justify-center flex-row shadow-lg"
+                                    className="mt-4 py-4 rounded-[16px] items-center justify-center flex-row"
                                     style={{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                                 >
                                     {isSaving ? <ActivityIndicator color="white" /> : (
@@ -518,21 +579,21 @@ export function ExerciseBuilder({
                             </Animated.View>
                         ) : result ? (
                             /* ── Result View ── */
-                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={Layout}>
+                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={LinearTransition}>
                                 {/* Title + Refresh */}
                                 <View className="flex-row justify-between items-start mb-4">
                                     <View className="flex-1 mr-3">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.color }}>AI Generated Plan</Text>
                                         <Text className="font-bold text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{result.title}</Text>
                                     </View>
-                                    <TouchableOpacity onPress={() => setResult(null)} className="w-9 h-9 rounded-full items-center justify-center bg-white/70 border border-white shadow-sm">
+                                    <TouchableOpacity onPress={handleClearSession} className="w-9 h-9 rounded-full items-center justify-center border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                                         <Feather name="refresh-ccw" size={14} color="#A8A29E" />
                                     </TouchableOpacity>
                                 </View>
 
                                 {/* Reasoning */}
                                 {result.reasoning && (
-                                    <View className="mb-4 bg-white/60 p-4 rounded-xl border border-white flex-row overflow-hidden">
+                                    <View className="mb-4 p-4 rounded-xl border border-white flex-row overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)' }}>
                                         <View className="w-1 absolute left-0 top-0 bottom-0 opacity-40" style={{ backgroundColor: theme.color }} />
                                         <Text className="text-[12px] text-rove-stone leading-5 italic ml-2">"{result.reasoning}"</Text>
                                     </View>
@@ -540,18 +601,18 @@ export function ExerciseBuilder({
 
                                 {/* Badges */}
                                 <View className="flex-row mb-5">
-                                    <View className="px-3 py-1.5 rounded-full border border-white shadow-sm bg-white mr-2 flex-row items-center">
+                                    <View className="px-3 py-1.5 rounded-full border border-white bg-white mr-2 flex-row items-center" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                                         <Feather name="clock" size={10} color="#78716C" style={{ marginRight: 4 }} />
                                         <Text className="text-[10px] font-bold text-rove-charcoal uppercase tracking-widest">{result.duration}</Text>
                                     </View>
-                                    <View className="px-3 py-1.5 rounded-full border border-white/60 bg-white mr-2 flex-row items-center shadow-sm" style={{ backgroundColor: `${theme.color}15` }}>
+                                    <View className="px-3 py-1.5 rounded-full border bg-white mr-2 flex-row items-center" style={{ borderColor: 'rgba(255, 255, 255, 0.60)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, backgroundColor: `${theme.color}15` }}>
                                         <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>{result.intensity} Intensity</Text>
                                     </View>
                                 </View>
 
                                 {/* Warmup */}
                                 {result.warmup?.length > 0 && (
-                                    <View className="mb-5 p-4 rounded-[16px] bg-white/50 border border-white/80 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                                    <View className="mb-5 p-4 rounded-[16px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.50)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
                                         <Text className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: theme.color }}>✦ Warmup</Text>
                                         {result.warmup.map((item: string, i: number) => (
                                             <View key={i} className="flex-row items-center py-1.5">
@@ -567,12 +628,17 @@ export function ExerciseBuilder({
                                     ✦ Main Circuit · {totalExercises} exercises
                                 </Text>
                                 {result.main_set?.map((ex: any, i: number) => (
-                                    <View key={i} className="flex-row items-center p-3.5 mb-2 rounded-[14px] bg-white/70 border border-white shadow-sm">
+                                    <View key={i} className="flex-row items-center p-3.5 mb-2 rounded-[14px] border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.70)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                                         <View className="w-7 h-7 rounded-full items-center justify-center mr-3" style={{ backgroundColor: theme.color }}>
                                             <Text className="text-[10px] font-bold text-white">{i + 1}</Text>
                                         </View>
-                                        <Text className="text-[13px] font-bold text-rove-charcoal flex-1">{ex.name}</Text>
-                                        <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: `${theme.color}10` }}>
+                                        <View className="flex-1 mr-2">
+                                            <Text className="text-[13px] font-bold text-rove-charcoal">{ex.name}</Text>
+                                            {ex.description && (
+                                                <Text className="text-[11px] text-rove-stone mt-0.5 leading-snug">{ex.description}</Text>
+                                            )}
+                                        </View>
+                                        <View className="px-2.5 py-1 rounded-lg self-start" style={{ backgroundColor: `${theme.color}10` }}>
                                             <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: theme.color }}>{ex.sets}×{ex.reps}</Text>
                                         </View>
                                     </View>
@@ -581,7 +647,7 @@ export function ExerciseBuilder({
                                 {/* Start Session CTA */}
                                 <TouchableOpacity
                                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setSessionMode(true); }}
-                                    className="mt-5 py-4 rounded-[16px] items-center justify-center flex-row shadow-lg"
+                                    className="mt-5 py-4 rounded-[16px] items-center justify-center flex-row"
                                     style={{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                                 >
                                     <Feather name="play" size={16} color="white" style={{ fill: 'white' } as any} />
@@ -590,7 +656,7 @@ export function ExerciseBuilder({
                             </Animated.View>
                         ) : (
                             /* ── Builder View ── */
-                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={Layout}>
+                            <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={LinearTransition}>
                                 {/* Setting Selector */}
                                 <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
                                     Where?
@@ -702,15 +768,15 @@ export function ExerciseBuilder({
                                     onChangeText={setSymptoms}
                                     placeholder="e.g. cramps, sore knees..."
                                     placeholderTextColor="#A8A29E"
-                                    className="bg-white/60 border border-white/80 rounded-[16px] p-4 text-rove-charcoal text-[14px] leading-5 mb-6 font-medium"
-                                    style={{ minHeight: 56, shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                                    className="border rounded-[16px] p-4 text-rove-charcoal text-[14px] leading-5 mb-6 font-medium"
+                                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', minHeight: 56, shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
                                 />
 
                                 {/* Generate CTA */}
                                 <TouchableOpacity
                                     onPress={handleGenerate}
                                     disabled={!setting || isGenerating}
-                                    className="py-4 rounded-[16px] items-center justify-center flex-row shadow-lg"
+                                    className="py-4 rounded-[16px] items-center justify-center flex-row"
                                     style={{
                                         backgroundColor: !setting || isGenerating ? '#D6D3D1' : theme.color,
                                         shadowColor: !setting || isGenerating ? '#000' : theme.color,

@@ -4,12 +4,15 @@ import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, w
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { fetchPlanPageDataFast, savePlanSettings } from '../../../lib/plan';
 import { phaseThemes } from '../../../data/home-content';
 import { useFocusEffect, Link } from 'expo-router';
 import { WorkoutHistory } from '../../../components/plan/WorkoutHistory';
 import { ExerciseOrb } from '../../../components/plan/ExerciseOrb';
 import { ExerciseBuilder } from '../../../components/plan/ExerciseBuilder';
+import { GuidedSessionPlayer } from '../../../components/plan/GuidedSessionPlayer';
+import { getPhaseData } from '@shared/content/phase-data';
 import { Button } from '../../../components/ui/Button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ui/Dialog';
 import { RoveChef } from '../../../components/plan/RoveChef';
@@ -133,6 +136,7 @@ export default function PlanScreen() {
   // ExerciseBuilder can jump straight into its fullscreen builder instead of
   // just scrolling to the (about to be covered) card.
   const [coachOpenSignal, setCoachOpenSignal] = useState(0);
+  const [guidedSessionOpen, setGuidedSessionOpen] = useState(false);
 
   // Lets the "Rove Chef"/"Rove Coach" floating buttons actually scroll to
   // their sections instead of doing nothing — each target's Y offset is
@@ -981,6 +985,15 @@ export default function PlanScreen() {
                   );
                 })}
               </View>
+
+              <TouchableOpacity
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setGuidedSessionOpen(true); }}
+                className="flex-row items-center justify-center py-3.5 rounded-2xl mt-3"
+                style={{ backgroundColor: theme.color }}
+              >
+                <Feather name="play" size={14} color="white" style={{ marginRight: 8 }} />
+                <Text className="text-white font-bold text-sm">Start Guided Session</Text>
+              </TouchableOpacity>
             </Animated.View>
 
             {/* Avoid This Phase */}
@@ -1113,7 +1126,7 @@ export default function PlanScreen() {
               <View className="flex-row gap-3">
                 <Button className="flex-1" style={{ backgroundColor: theme.color }} onPress={() => {
                   setExpandedExerciseIndex(null);
-                  setTimeout(() => setExerciseView('coach'), 300);
+                  setGuidedSessionOpen(true);
                 }}>
                   Start Session
                 </Button>
@@ -1122,6 +1135,14 @@ export default function PlanScreen() {
           )}
         </DialogContent>
       </Dialog>
+
+      <GuidedSessionPlayer
+        visible={guidedSessionOpen}
+        onClose={() => setGuidedSessionOpen(false)}
+        exercises={getPhaseData(phaseName).exercise.recommended}
+        phaseName={phaseName}
+        accentColor={theme.color}
+      />
     </SafeAreaView>
   );
 }

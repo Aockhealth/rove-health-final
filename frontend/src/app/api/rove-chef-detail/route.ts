@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { generateChefDetail } from '@/app/actions/ai-actions';
+import { requireAuthenticatedAndRateLimited } from '@/lib/api-auth-guard';
 
 export async function POST(request: Request) {
   try {
+    const guard = await requireAuthenticatedAndRateLimited(request, 'rove_chef_detail');
+    if (!guard.ok) return guard.response;
+
     const body = await request.json();
     const { dishName, mealType, phase, dietary_preferences, keyIngredients } = body;
 

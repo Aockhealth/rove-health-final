@@ -40,12 +40,23 @@ import {
   CormorantGaramond_700Bold 
 } from '@expo-google-fonts/cormorant-garamond';
 
+import * as Sentry from '@sentry/react-native';
+import { trackEvent } from '../lib/analytics';
+
 import '../global.css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+// No-ops safely with an empty DSN (see .env comment) — enable() only flips on
+// once a real Sentry project exists and EXPO_PUBLIC_SENTRY_DSN is set.
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !!process.env.EXPO_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
+
+function RootLayout() {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -78,6 +89,10 @@ export default function RootLayout() {
     }
   }, [loaded, error]);
 
+  useEffect(() => {
+    trackEvent('app_opened');
+  }, []);
+
   if (!loaded && !error) {
     return null;
   }
@@ -103,3 +118,5 @@ export default function RootLayout() {
     </PersistQueryClientProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);
