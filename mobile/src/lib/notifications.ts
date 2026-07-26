@@ -53,11 +53,13 @@ export async function scheduleDailyTrackerReminder() {
       title: "Don't forget to log today",
       body: 'A quick tracker entry helps Rove learn your patterns.',
     },
+    // CALENDAR triggers are iOS-only — DAILY is the cross-platform equivalent
+    // for a repeating same-time-every-day notification (confirmed via a real
+    // Sentry crash: "Trigger of type: calendar is not supported on Android").
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: DAILY_REMINDER_HOUR,
       minute: DAILY_REMINDER_MINUTE,
-      repeats: true,
     },
   });
 }
