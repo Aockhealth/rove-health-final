@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { Platform,  View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ShieldAlert, CheckCircle2, ArrowLeft } from 'lucide-react-native';
@@ -13,7 +13,7 @@ export default function WellbeingIntroScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#FAFAF9]" edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View className="bg-white rounded-[2rem] border border-stone-200 shadow-sm p-6">
+        <View className={`bg-white rounded-[2rem] border border-stone-200 p-6 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
           {/* Header */}
           <View className="items-center mb-6">
             <View className="w-12 h-12 rounded-full items-center justify-center mb-4" style={{ backgroundColor: 'rgba(123, 130, 168, 0.1)' }}>

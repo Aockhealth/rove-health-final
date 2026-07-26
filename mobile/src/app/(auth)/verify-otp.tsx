@@ -91,7 +91,7 @@ export default function VerifyOtpScreen() {
           
           <Animated.View 
             entering={FadeInDown.duration(1000).springify()}
-            className="w-full bg-white/80 p-8 rounded-[2rem] border border-white shadow-sm overflow-hidden"
+            className={`w-full bg-white/80 p-8 rounded-[2rem] border border-white overflow-hidden ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
             style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } }}
           >
             

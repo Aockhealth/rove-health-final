@@ -53,7 +53,7 @@ export function HealthPassport({ formData, setFormData, onSave, isPending, theme
         shadowOpacity: 0.07,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
+        elevation: 0,
       }}
     >
       <View className="mb-8 flex-row items-center gap-3">

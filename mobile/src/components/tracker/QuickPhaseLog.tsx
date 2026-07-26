@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Zap, Activity, Smile, Heart, Check } from 'lucide-react-native';
@@ -123,7 +123,11 @@ export function QuickPhaseLog({
 
   return (
     <View style={[styles.card, { shadowColor: accent }]}>
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint }]} />
       <LinearGradient
         colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
   },
   header: {
     flexDirection: 'row',

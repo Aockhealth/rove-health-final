@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, Dimensions, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInRight } from 'react-native-reanimated';
@@ -68,11 +68,15 @@ function SymptomCard({ card, idx, theme }: { card: any, idx: number, theme: any 
                         shadowOffset: { width: 0, height: 12 },
                         shadowOpacity: 0.1,
                         shadowRadius: 20,
-                        elevation: 5,
+                        elevation: Platform.OS === 'ios' ? 5 : 0,
                     }, animatedStyle]}
                 >
                     {/* Glass Background */}
-                    <BlurView intensity={50} tint="light" style={StyleSheet.absoluteFillObject} />
+                    {Platform.OS === 'ios' ? (
+                      <BlurView intensity={50} tint="light" style={StyleSheet.absoluteFillObject} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                    )}
                     <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                     <LinearGradient
                         colors={['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.05)']}

@@ -8,13 +8,18 @@ export async function POST(request: Request) {
     if (!guard.ok) return guard.response;
 
     const body = await request.json();
-    const { phase, moodCounts } = body;
+    const { phase, moodCounts, symptoms, wellness, cycle, totalLogs } = body;
 
     if (!phase) {
       return NextResponse.json({ error: 'Missing required field: phase' }, { status: 400 });
     }
 
-    const result = await generateMoodInsight(phase, moodCounts || {});
+    const result = await generateMoodInsight(phase, moodCounts || {}, guard.userId, {
+      symptoms,
+      wellness,
+      cycle,
+      totalLogs,
+    });
 
     if (!result) {
       return NextResponse.json({ insight: null });

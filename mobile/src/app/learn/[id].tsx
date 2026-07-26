@@ -166,7 +166,7 @@ export default function ArticleScreen() {
         <Pressable
           onPress={handleShare}
           className="absolute bottom-6 right-6 flex-row items-center gap-2 bg-white px-5 py-3 rounded-full"
-          style={{ shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
+          style={{ shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 0 }}
         >
           <Share2 size={16} color="#2D2420" />
           <Text style={{ fontWeight: 'bold', color: '#2D2420', fontSize: 13 }}>Share</Text>

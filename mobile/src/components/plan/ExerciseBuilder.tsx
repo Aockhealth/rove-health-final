@@ -499,7 +499,7 @@ export function ExerciseBuilder({
                                                 className="p-4 rounded-[16px]"
                                                 style={isDone
                                                     ? { borderWidth: 1, backgroundColor: 'rgba(255,255,255,0.3)', borderColor: 'rgba(255,255,255,0.4)' }
-                                                    : { borderWidth: 1, backgroundColor: 'rgba(255,255,255,0.8)', borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}>
+                                                    : { borderWidth: 1, backgroundColor: 'rgba(0,0,0,0.04)', borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}>
 
                                                 <View className="flex-row items-start justify-between">
                                                     <View className="flex-1 pr-3">
@@ -680,7 +680,7 @@ export function ExerciseBuilder({
                                 shadowOpacity: 0.1, 
                                 shadowRadius: 8, 
                                 shadowOffset: { width: 0, height: 4 },
-                                elevation: 2
+                                elevation: 0
                             } : {
                                 backgroundColor: 'rgba(255,255,255,0.4)',
                                 borderColor: 'rgba(255,255,255,0.6)'
@@ -714,7 +714,7 @@ export function ExerciseBuilder({
                                     shadowOpacity: 0.1, 
                                     shadowRadius: 6, 
                                     shadowOffset: { width: 0, height: 2 },
-                                    elevation: 2
+                                    elevation: 0
                                 } : {
                                     backgroundColor: 'rgba(255,255,255,0.4)',
                                     borderColor: 'rgba(255,255,255,0.4)'
@@ -747,7 +747,7 @@ export function ExerciseBuilder({
                                                     shadowOpacity: 0.1,
                                                     shadowRadius: 8,
                                                     shadowOffset: { width: 0, height: 4 },
-                                                    elevation: 2
+                                                    elevation: 0
                                                 } : {
                                                     backgroundColor: 'rgba(255,255,255,0.4)',
                                                     borderColor: 'rgba(255,255,255,0.6)'

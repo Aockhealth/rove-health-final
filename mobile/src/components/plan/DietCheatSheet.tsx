@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text , Platform} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,9 +33,13 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
                         shadowRadius: 12,
-                        elevation: 2,
+                        elevation: Platform.OS === 'ios' ? 2 : 0,
                     }}>
-                        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                        {Platform.OS === 'ios' ? (
+                          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                        ) : (
+                          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                        )}
                         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#5B9A8B', opacity: 0.18 }]} />
                         
                         <View className="flex-row items-center mb-4 border-b border-[#5B9A8B]/10 pb-3">
@@ -71,9 +75,13 @@ export function DietCheatSheet({ data, phase }: DietCheatSheetProps) {
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
                         shadowRadius: 12,
-                        elevation: 2,
+                        elevation: Platform.OS === 'ios' ? 2 : 0,
                     }}>
-                        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                        {Platform.OS === 'ios' ? (
+                          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                        ) : (
+                          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                        )}
                         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#AF6B6B', opacity: 0.18 }]} />
                         
                         <View className="flex-row items-center mb-4 border-b border-[#AF6B6B]/10 pb-3">

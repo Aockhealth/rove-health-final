@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { Star, Leaf, Heart, Coffee, Info, Brain, Zap, MessageCircle, Plus, Smile, Sun, Crown, Lightbulb, TrendingUp } from 'lucide-react-native';
@@ -155,11 +155,15 @@ export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhas
   return (
     <View
       className="relative rounded-[32px] border border-white/60 overflow-hidden"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', padding: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', padding: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
     >
       {/* Background Blob */}
       <View style={{ position: 'absolute', top: -48, right: -48, width: 192, height: 192, borderRadius: 96, backgroundColor: guidance.blob, opacity: 0.5 }} />
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+      )}
 
       {/* Header */}
       <View className="flex-row items-center justify-between mb-6">

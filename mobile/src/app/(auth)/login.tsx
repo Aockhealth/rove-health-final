@@ -75,7 +75,7 @@ export default function LoginScreen() {
             
             {/* Header & Logo */}
             <View className="items-center mb-10">
-              <View className="w-20 h-20 mb-6 bg-white rounded-[2rem] shadow-sm items-center justify-center" style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
+              <View className={`w-20 h-20 mb-6 bg-white rounded-[2rem] items-center justify-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
                  <Image 
                    source={require('../../../assets/images/splash-mark.png')}
                    className="w-12 h-12"
@@ -154,7 +154,7 @@ export default function LoginScreen() {
             <Button 
               onPress={handleLogin} 
               disabled={loading}
-              className="w-full h-[56px] rounded-2xl bg-rove-charcoal shadow-md"
+              className={`w-full h-[56px] rounded-2xl bg-rove-charcoal ${Platform.OS === 'ios' ? 'shadow-md' : ''}`}
               style={{ shadowColor: '#37332E', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
             >
               <Text className="text-rove-cream font-bold tracking-wide text-base">{loading ? "Logging in..." : "Log In"}</Text>

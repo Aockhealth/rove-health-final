@@ -17,6 +17,7 @@ import { AIService } from "@/lib/ai/service";
 import { executeUnifiedAI } from "../../../../backend/src/actions/ai-orchestrator/orchestrator";
 import { logAIGenerationEvent } from "../../../../backend/src/actions/ai-orchestrator/telemetry";
 import { UnifiedAIRequest, UnifiedAIResponse } from "@/lib/ai/unified-schemas";
+import { getNutritionRules, getExerciseRules, getInjuryContraindicationTerms } from "@/lib/ai/rules/rules-loader";
 
 // ============================================
 // EDGE FUNCTION TYPES
@@ -337,27 +338,54 @@ export async function getSymptomInsights(
 
 // ============================================
 // ============================================
-// MOOD INSIGHT GENERATOR (Direct Groq Call)
+// AI ANALYSIS GENERATOR (whole-picture phase insight)
 // ============================================
 
+export interface MoodInsightContext {
+    /** Symptom names logged during the current phase (not counts — just which ones showed up). */
+    symptoms?: string[];
+    wellness?: {
+        water: number;
+        sleep: number | string;
+        exerciseMinutes: number;
+        waterLogCount: number;
+        sleepLogCount: number;
+        exerciseLogCount: number;
+    };
+    cycle?: { length?: number; isIrregular?: boolean };
+    /** Total daily logs in the lookback window — used only to decide whether there's enough to analyze. */
+    totalLogs?: number;
+}
+
 /**
- * Generates or retrieves a cached AI insight for emotional baselines.
- * Cache Key Format: "mood_insight_{userId}_{phase}_{month}_{year}"
+ * Generates or retrieves a cached AI analysis that weighs mood, symptoms,
+ * sleep, hydration, exercise, cycle regularity, and (if set) a weight goal
+ * together — and calls out whichever of those aren't being tracked yet.
+ * Cache Key Format: "ai_insight_v2_{userId}_{phase}_{date}" (daily — the
+ * inputs here change day to day, unlike the old mood-only version which
+ * could get away with a monthly cache).
  */
 export async function generateMoodInsight(
     phase: string,
-    moodCounts: Record<string, number>
+    moodCounts: Record<string, number>,
+    overrideUserId?: string,
+    context: MoodInsightContext = {}
 ): Promise<MoodInsight | null> {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
 
-    // 1. Create a Unique Cache Key for THIS month
+    let userId = overrideUserId;
+    if (!userId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        userId = user.id;
+    }
+
+    // 1. Create a Unique Cache Key for TODAY
     const date = new Date();
-    const cacheKey = `mood_insight_${user.id}_${phase}_${date.getMonth()}_${date.getFullYear()}`;
+    const dayKey = date.toISOString().split("T")[0];
+    const cacheKey = `ai_insight_v2_${userId}_${phase}_${dayKey}`;
 
     // 2. Check Cache First (Fast Path)
-    // Ensure your 'ai_cache_keys' table exists and has a 'user_id' column
     const { data: cached } = await supabase
         .from("ai_cache_keys")
         .select("response")
@@ -374,14 +402,51 @@ export async function generateMoodInsight(
         .map(([mood, count]) => `${mood} (${count}x)`)
         .join(", ");
 
-    if (!sortedMoods) return null; // No data, no insight
+    const symptoms = context.symptoms || [];
+    const wellness = context.wellness;
+    const sleepLogged = (wellness?.sleepLogCount ?? 0) > 0;
+    const waterLogged = (wellness?.waterLogCount ?? 0) > 0;
+    const exerciseLogged = (wellness?.exerciseLogCount ?? 0) > 0;
+
+    // Bail only if there is truly nothing to work with — otherwise let the AI
+    // speak to whatever IS logged and flag the gaps for the rest.
+    const hasAnyData = Boolean(sortedMoods) || symptoms.length > 0 || sleepLogged || waterLogged || exerciseLogged || (context.totalLogs ?? 0) > 0;
+    if (!hasAnyData) return null;
+
+    const moodSummary = sortedMoods || "Not logged yet this phase";
+    const symptomSummary = symptoms.length > 0 ? symptoms.join(", ") : "None logged this phase";
+    const sleepSummary = sleepLogged ? `Averaging ${wellness!.sleep} hrs/night` : "NOT LOGGED — gently suggest tracking sleep";
+    const hydrationSummary = waterLogged ? `Averaging ${wellness!.water} glasses/day` : "NOT LOGGED — gently suggest tracking hydration";
+    const exerciseSummary = exerciseLogged ? `Averaging ${wellness!.exerciseMinutes} min/day` : "NOT LOGGED — gently suggest tracking exercise";
+    const cycleSummary = context.cycle?.length
+        ? `${context.cycle.length}-day average cycle${context.cycle.isIrregular ? " (irregular pattern)" : ""}`
+        : "Cycle length not established yet";
+
+    // Weight is sensitive — only surface it when the user has opted into a
+    // goal (user_weight_goals row); never introduce weight talk otherwise.
+    const { data: weightGoal } = await supabase
+        .from("user_weight_goals")
+        .select("current_weight_kg, target_weight_kg")
+        .eq("user_id", userId)
+        .maybeSingle();
+    const weightSummary = weightGoal?.current_weight_kg && weightGoal?.target_weight_kg
+        ? `Currently ${weightGoal.current_weight_kg}kg, working toward ${weightGoal.target_weight_kg}kg`
+        : "No weight goal set — do not bring up weight";
 
     try {
         const response = await AIService.generate<MoodInsight>({
             feature: "insights_mood",
             variables: {
                 phase,
-                mood_counts: sortedMoods
+                mood_counts: moodSummary,
+                symptom_summary: symptomSummary,
+                sleep_summary: sleepSummary,
+                hydration_summary: hydrationSummary,
+                exercise_summary: exerciseSummary,
+                cycle_summary: cycleSummary,
+                weight_summary: weightSummary,
+                goals: weightSummary, // mapping to prompt expectations
+                typical_symptoms: symptomSummary // mapping to prompt expectations
             }
         });
 
@@ -393,12 +458,14 @@ export async function generateMoodInsight(
         const result = response.data;
 
         // 4. Save to Cache
+        const expiresAt = new Date(date);
+        expiresAt.setDate(expiresAt.getDate() + 1);
         await supabase.from("ai_cache_keys").insert({
-            user_id: user.id,
+            user_id: userId,
             cache_key: cacheKey,
             cache_type: "mood_insight",
             response: result,
-            expires_at: new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString()
+            expires_at: expiresAt.toISOString()
         });
 
         return result;
@@ -407,8 +474,8 @@ export async function generateMoodInsight(
         console.error("AI Generation Error:", error);
         // Fallback safe return
         return {
-            title: "Mood Pattern",
-            insight: "Not enough data to generate a personalized insight right now."
+            title: "Keep Logging",
+            insight: "Not enough data to generate a personalized analysis right now — log a few more days across mood, symptoms, sleep, hydration, and exercise to unlock one."
         };
     }
 }
@@ -817,12 +884,15 @@ function evaluateCoachQuality(
     phase: string,
     requestedEnergy: "Low" | "Medium" | "High",
     recentSignatures: string[],
-    retryCount: number
+    retryCount: number,
+    equipment: string = "",
+    limitations: string = ""
 ): GenerationQualityMetadata {
     const normalizedPhase = phase.toLowerCase();
     const normalizedIntensity = candidate.intensity.toLowerCase();
     const titleSignature = sanitizeSignature(candidate.title || "");
     const duplicateDetected = recentSignatures.map(sanitizeSignature).includes(titleSignature);
+    const reasons: string[] = [];
 
     let phaseRulePassed = true;
     if (normalizedPhase === "menstrual" && normalizedIntensity === "high") {
@@ -844,6 +914,25 @@ function evaluateCoachQuality(
     if (!Array.isArray(candidate.main_set) || candidate.main_set.length < 3) {
         console.log("[Quality] main_set check failed. Is array:", Array.isArray(candidate.main_set), "Length:", candidate.main_set?.length);
         phaseRulePassed = false;
+    }
+
+    // Curated domain-rules backstop (see frontend/src/lib/ai/rules/exercise-rules.json):
+    // hard exercise rules with a machine-checkable `detection` block get verified
+    // against every main_set exercise name, same pattern as the chef gate.
+    const exerciseNames = (candidate.main_set || []).map((set) => (set.name || "").toLowerCase());
+    const curatedExerciseRules = getExerciseRules({ phase, equipment, limitations });
+    for (const rule of curatedExerciseRules) {
+        if (rule.severity !== "hard" || !rule.detection) continue;
+        const terms = rule.id === "injury-avoidance-swap"
+            ? getInjuryContraindicationTerms(limitations)
+            : (rule.detection.terms || []);
+        const violated = terms.length > 0 && exerciseNames.some((name) =>
+            terms.some((term) => name.includes(term.toLowerCase()))
+        );
+        if (violated) {
+            phaseRulePassed = false;
+            reasons.push(rule.detection.failReason);
+        }
     }
 
     const textChunks = [
@@ -869,8 +958,7 @@ function evaluateCoachQuality(
         mainSetCount: candidate.main_set?.length
     });
 
-    const reasons: string[] = [];
-    if (!phaseRulePassed) reasons.push("phase_rule_failed");
+    if (!phaseRulePassed && reasons.length === 0) reasons.push("phase_rule_failed");
     if (genericScore > 0.50) reasons.push("generic_score_too_high");
 
     return {
@@ -1193,33 +1281,42 @@ export interface ChefDetailInput {
 }
 
 // Vegetarian, warm/room-only dishes so the fallback is safe for every diet
-// preference and every phase's serving rules.
+// preference and every phase's serving rules. Mirrors the fixed 2 protein /
+// 1 fruit / 1 traditional split the chef_options prompt enforces, so a
+// fallback set looks identical in structure to a real generation.
 const CHEF_OPTIONS_FALLBACK: Record<ChefOptionsInput["mealType"], ChefOption[]> = {
     snack: [
-        { name: "Roasted Makhana", description: "Ghee-roasted foxnuts with rock salt and pepper.", prep_time_minutes: 5, key_ingredients: ["Makhana", "Ghee", "Black pepper"], why: "Magnesium in makhana eases muscle tension common in this phase.", serving_style: "warm" },
-        { name: "Roasted Chana Chaat", description: "Crunchy roasted chana with onion, lemon and chaat masala.", prep_time_minutes: 5, key_ingredients: ["Roasted chana", "Onion", "Lemon", "Chaat masala"], why: "Iron in chana supports steady energy through the cycle.", serving_style: "room" },
-        { name: "Peanut Jaggery Ladoo", description: "Two-ingredient ladoos, sweet and grounding.", prep_time_minutes: 10, key_ingredients: ["Peanuts", "Jaggery"], why: "Iron in jaggery helps replenish stores while peanuts add B6.", serving_style: "room" },
-        { name: "Masala Sweet Potato", description: "Warm boiled sweet potato tossed in lemon and cumin.", prep_time_minutes: 15, key_ingredients: ["Sweet potato", "Lemon", "Cumin"], why: "Complex carbs in sweet potato steady mood and cravings.", serving_style: "warm" }
+        { name: "Paneer Tikka Bites", description: "Pan-seared paneer cubes in a smoky tikka marinade.", prep_time_minutes: 10, key_ingredients: ["Paneer", "Tikka masala", "Capsicum", "Lemon"], why: "Protein in paneer keeps energy steady between meals.", serving_style: "warm", category: "protein" },
+        { name: "Sprouts Peanut Chaat", description: "Crunchy sprouts and peanuts tossed with onion and lemon.", prep_time_minutes: 5, key_ingredients: ["Moong sprouts", "Peanuts", "Onion", "Lemon"], why: "Plant protein in sprouts and peanuts supports steady energy.", serving_style: "room", category: "protein" },
+        { name: "Seasonal Fruit Chaat", description: "Fresh seasonal fruit tossed with chaat masala and lemon.", prep_time_minutes: 5, key_ingredients: ["Seasonal fruit", "Chaat masala", "Lemon"], why: "Vitamin C across the fruit mix boosts iron absorption from meals.", serving_style: "room", category: "fruit" },
+        { name: "Roasted Makhana", description: "Ghee-roasted foxnuts with rock salt and pepper.", prep_time_minutes: 5, key_ingredients: ["Makhana", "Ghee", "Black pepper"], why: "Magnesium in makhana eases muscle tension common in this phase.", serving_style: "warm", category: "traditional" }
     ],
     smoothie: [
-        { name: "Banana Date Shake", description: "Thick banana shake sweetened with dates.", prep_time_minutes: 5, key_ingredients: ["Banana", "Dates", "Milk"], why: "B6 in banana supports mood regulation in this phase.", serving_style: "room" },
-        { name: "Sattu Nimbu Drink", description: "Savory sattu cooler with lemon and roasted cumin.", prep_time_minutes: 5, key_ingredients: ["Sattu", "Lemon", "Roasted cumin"], why: "Plant protein in sattu keeps energy steady between meals.", serving_style: "room" },
-        { name: "Haldi Doodh", description: "Warm turmeric milk with a pinch of pepper.", prep_time_minutes: 5, key_ingredients: ["Milk", "Turmeric", "Black pepper"], why: "Curcumin in turmeric helps calm phase-related inflammation.", serving_style: "warm" },
-        { name: "Papaya Ginger Blend", description: "Smooth papaya blend with fresh ginger.", prep_time_minutes: 5, key_ingredients: ["Papaya", "Ginger", "Water"], why: "Vitamin C in papaya improves iron absorption from meals.", serving_style: "room" }
+        { name: "Banana Whey Protein Shake", description: "Thick banana shake blended with whey protein.", prep_time_minutes: 5, key_ingredients: ["Banana", "Milk", "Whey protein powder"], why: "Protein powder here steadies energy and supports recovery.", serving_style: "room", category: "protein" },
+        { name: "Chocolate Whey Protein Milkshake", description: "Cocoa milkshake blended with whey protein for a post-workout treat.", prep_time_minutes: 5, key_ingredients: ["Milk", "Whey protein powder", "Cocoa powder"], why: "Protein powder here supports muscle recovery through the cycle.", serving_style: "room", category: "protein" },
+        { name: "Fresh Mosambi Juice", description: "Freshly squeezed sweet lime juice.", prep_time_minutes: 5, key_ingredients: ["Mosambi", "Water"], why: "Vitamin C in mosambi improves iron absorption from meals.", serving_style: "room", category: "fruit" },
+        { name: "Masala Chaas", description: "Spiced buttermilk with roasted cumin and mint.", prep_time_minutes: 5, key_ingredients: ["Curd", "Water", "Roasted cumin", "Mint"], why: "Probiotics in curd support digestion through the cycle.", serving_style: "room", category: "traditional" }
     ],
     salad: [
-        { name: "Sprouted Moong Salad", description: "Lightly steamed sprouts with onion, tomato and lemon.", prep_time_minutes: 10, key_ingredients: ["Moong sprouts", "Onion", "Tomato", "Lemon"], why: "Folate in sprouts supports the follicle-building work of this phase.", serving_style: "room" },
-        { name: "Kachumber", description: "Classic cucumber-onion-tomato salad with lemon.", prep_time_minutes: 5, key_ingredients: ["Cucumber", "Onion", "Tomato", "Lemon"], why: "Water-rich cucumber supports the extra hydration this phase needs.", serving_style: "room" },
-        { name: "Warm Beetroot Salad", description: "Steamed beetroot with peanuts and curry-leaf tempering.", prep_time_minutes: 15, key_ingredients: ["Beetroot", "Peanuts", "Curry leaves"], why: "Iron in beetroot helps rebuild what the period draws down.", serving_style: "warm" },
-        { name: "Fruit Chaat", description: "Seasonal fruit tossed with chaat masala and lemon.", prep_time_minutes: 10, key_ingredients: ["Seasonal fruit", "Chaat masala", "Lemon"], why: "Vitamin C across the fruit mix boosts iron uptake.", serving_style: "room" }
+        { name: "Paneer Cucumber Salad", description: "Cubed paneer tossed with cucumber, onion and lemon.", prep_time_minutes: 10, key_ingredients: ["Paneer", "Cucumber", "Onion", "Lemon"], why: "Protein in paneer supports the follicle-building work of this phase.", serving_style: "room", category: "protein" },
+        { name: "Sprouted Moong Salad", description: "Lightly steamed sprouts with onion, tomato and lemon.", prep_time_minutes: 10, key_ingredients: ["Moong sprouts", "Onion", "Tomato", "Lemon"], why: "Plant protein and folate in sprouts support steady energy.", serving_style: "room", category: "protein" },
+        { name: "Fruit Chaat Bowl", description: "Seasonal fruit tossed with chaat masala and lemon.", prep_time_minutes: 10, key_ingredients: ["Seasonal fruit", "Chaat masala", "Lemon"], why: "Vitamin C across the fruit mix boosts iron uptake.", serving_style: "room", category: "fruit" },
+        { name: "Kachumber", description: "Classic cucumber-onion-tomato salad with lemon.", prep_time_minutes: 5, key_ingredients: ["Cucumber", "Onion", "Tomato", "Lemon"], why: "Water-rich cucumber supports the extra hydration this phase needs.", serving_style: "room", category: "traditional" }
     ]
 };
+
+// Real dish names that mean "you drink this" — never valid for a snack or
+// salad option regardless of category, even though the prompt allows (and
+// for smoothie, requires) these formats. Word-bounded so "chaat" (a valid
+// solid snack format) doesn't collide with "chaas" (a drink).
+const LIQUID_FORMAT_PATTERN = /\b(juice|smoothie|shake|milkshake|chaas|lassi|kadha)\b/i;
 
 function evaluateChefOptionsQuality(
     candidate: ChefOptionsResponse,
     phase: string,
     recentChosen: string[],
-    retryCount: number
+    retryCount: number,
+    mealType: ChefOptionsInput["mealType"]
 ): GenerationQualityMetadata {
     const normalizedPhase = phase.toLowerCase();
     const reasons: string[] = [];
@@ -1240,7 +1337,51 @@ function evaluateChefOptionsQuality(
     const repeatsChosen = names.some((name) => chosenSet.has(name));
     if (repeatsChosen) reasons.push("repeats_recently_chosen_dish");
 
-    const phaseRulePassed = !servingViolation && distinct && !repeatsChosen;
+    // Fixed composition rule: regardless of cuisine (including Indian), the
+    // 4 options must split exactly 2 protein / 1 fruit / 1 traditional —
+    // see the chef_options prompt's FIXED CATEGORY COMPOSITION RULE.
+    const categoryCounts = candidate.options.reduce<Record<string, number>>((acc, o) => {
+        acc[o.category] = (acc[o.category] || 0) + 1;
+        return acc;
+    }, {});
+    const compositionValid = categoryCounts.protein === 2 && categoryCounts.fruit === 1 && categoryCounts.traditional === 1;
+    if (!compositionValid) reasons.push("category_composition_violation");
+
+    // Format lock backstop: the prompt's FIXED CATEGORY COMPOSITION RULE
+    // spells this out, but the model has slipped and returned a drink (a
+    // protein shake, a fruit juice) for the snack/salad tabs, where every
+    // option must be something you eat, not drink. Smoothie is exempt —
+    // there, drink names are correct and expected.
+    const formatLockViolation = mealType !== "smoothie"
+        && candidate.options.some((o) => LIQUID_FORMAT_PATTERN.test(o.name));
+    if (formatLockViolation) reasons.push("liquid_format_in_snack_or_salad");
+
+    // Curated domain-rules backstop: hard nutrition rules (see
+    // frontend/src/lib/ai/rules/nutrition-rules.json) with a machine-checkable
+    // `detection` block get verified here the same way formatLockViolation is —
+    // the prompt's CURATED RULES section is the first line of defense, this is
+    // the deterministic one that actually blocks a bad result.
+    const curatedRuleViolation = getNutritionRules({ mealType, phase })
+        .filter((rule) => rule.severity === "hard" && rule.detection)
+        .some((rule) => {
+            const detection = rule.detection!;
+            const optionsToCheck = detection.scope === "protein_category_options"
+                ? candidate.options.filter((o) => o.category === "protein")
+                : candidate.options;
+            const violated = optionsToCheck.some((o) => {
+                const text = o.key_ingredients.join(" ").toLowerCase();
+                if (detection.kind === "banned_pair_in_field") {
+                    const hasA = (detection.termsA || []).some((t) => text.includes(t.toLowerCase()));
+                    const hasB = (detection.termsB || []).some((t) => text.includes(t.toLowerCase()));
+                    return hasA && hasB;
+                }
+                return (detection.terms || []).some((t) => text.includes(t.toLowerCase()));
+            });
+            if (violated) reasons.push(detection.failReason);
+            return violated;
+        });
+
+    const phaseRulePassed = !servingViolation && distinct && !repeatsChosen && compositionValid && !formatLockViolation && !curatedRuleViolation;
     const genericScore = computeGenericScore(
         candidate.options.flatMap((o) => [o.name, o.description, o.why])
     );
@@ -1305,7 +1446,7 @@ export async function generateChefOptions(input: ChefOptionsInput): Promise<Chef
             ? parseCandidate(lastResponse.structuredPayload)
             : null;
         let quality = candidate
-            ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+            ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount, input.mealType)
             : {
                 quality_passed: false,
                 retry_count: retryCount,
@@ -1326,7 +1467,7 @@ export async function generateChefOptions(input: ChefOptionsInput): Promise<Chef
                 ? parseCandidate(lastResponse.structuredPayload)
                 : null;
             quality = candidate
-                ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+                ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount, input.mealType)
                 : {
                     quality_passed: false,
                     retry_count: retryCount,
@@ -1516,7 +1657,7 @@ export async function generateRoveCoachPlan(
 
         let parsedPlan = candidate && candidate.success ? candidate.data : null;
         let quality = parsedPlan
-            ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount)
+            ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount, equipment, injuries)
             : {
                 quality_passed: false,
                 retry_count: retryCount,
@@ -1548,7 +1689,7 @@ export async function generateRoveCoachPlan(
                 : null;
             parsedPlan = candidate && candidate.success ? candidate.data : null;
             quality = parsedPlan
-                ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount)
+                ? evaluateCoachQuality(parsedPlan, phase, energyLevel, signatures, retryCount, equipment, injuries)
                 : {
                     quality_passed: false,
                     retry_count: retryCount,

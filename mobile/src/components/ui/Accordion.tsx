@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, LayoutChangeEvent } from 'react-native';
+import { Platform,  View, Text, TouchableOpacity, LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, useDerivedValue, Easing } from 'react-native-reanimated';
 import { ChevronDown } from 'lucide-react-native';
 import { cn } from '../../lib/utils';
@@ -48,7 +48,7 @@ export const Accordion: React.FC<AccordionProps> = ({
   };
 
   return (
-    <View className="bg-white/80 rounded-[2rem] border border-rove-stone/10 shadow-sm overflow-hidden mb-4" style={{ shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10 }}>
+    <View className={`bg-white/80 rounded-[2rem] border border-rove-stone/10 overflow-hidden mb-4 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 10 }}>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => setIsOpen(!isOpen)}

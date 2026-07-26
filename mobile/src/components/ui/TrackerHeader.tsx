@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { View, Text } from "react-native";
+import { Platform,  View, Text } from "react-native";
 import { SegmentedDoughnut } from "./SegmentedDoughnut";
 
 interface TrackerHeaderProps {
@@ -9,7 +9,7 @@ interface TrackerHeaderProps {
 
 export function TrackerHeader({ selectedPhase, onPhaseSelect }: TrackerHeaderProps) {
   return (
-    <View className="bg-white/30 rounded-2xl p-6 items-center shadow-sm">
+    <View className={`bg-white/30 rounded-2xl p-6 items-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
       <Text className="text-xl font-bold text-rove-stone mb-1" style={{ fontFamily: "Outfit-Bold" }}>
         Current Cycle Phase
       </Text>

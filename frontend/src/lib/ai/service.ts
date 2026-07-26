@@ -50,7 +50,10 @@ const ENV_KEYS: Record<AIProvider, string> = {
     azure: 'AZURE_OPENAI_API_KEY'
 };
 
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+// Pinned rather than the "-latest" alias: Google can (and did) shift what
+// "-latest" resolves to, and the new target rejected thinkingBudget:0 outright
+// (see callGemini) — a pinned name keeps behavior stable under us.
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 class JSONParseFailure extends Error {
     public readonly likelyTruncated: boolean;
@@ -382,27 +385,54 @@ export class AIService {
         return json.choices[0].message.content || "";
     }
 
-    private static async callGemini(apiKey: string, model: string, system: string, user: string, config: AIModelConfig): Promise<string> {
+    // Newer Gemini models "think" (silent chain-of-thought) before writing the
+    // visible answer, and those thinking tokens are drawn from the same
+    // maxOutputTokens budget. For our structured, rules-driven JSON outputs
+    // (menus, workout plans) that reasoning buys nothing but regularly ate the
+    // whole budget — surfacing as finishReason=MAX_TOKENS, a failed JSON parse,
+    // a same-request retry, and 10-30s responses. Disabling it (budget: 0)
+    // measured as a straight win: same output quality, ~3s responses, no
+    // truncation. Not every model name accepts budget 0 (older aliases 400 on
+    // it), so fall back to an un-throttled call rather than hard-fail.
+    private static async callGeminiRaw(apiKey: string, model: string, system: string, user: string, config: AIModelConfig, disableThinking: boolean): Promise<{ text: string; finishReason?: string }> {
         const { GoogleGenerativeAI } = await import("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(apiKey);
 
+        const generationConfig: Record<string, unknown> = {
+            responseMimeType: config.json_mode ? "application/json" : "text/plain",
+            temperature: config.temperature,
+            maxOutputTokens: config.max_tokens,
+        };
+        if (disableThinking) {
+            generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        }
+
         const generativeModel = genAI.getGenerativeModel({
             model: model,
-            generationConfig: {
-                responseMimeType: config.json_mode ? "application/json" : "text/plain",
-                temperature: config.temperature,
-                maxOutputTokens: config.max_tokens,
-            },
+            // Cast: thinkingConfig isn't in this SDK version's typed
+            // GenerationConfig yet, but the REST API accepts it fine.
+            generationConfig: generationConfig as unknown as import("@google/generative-ai").GenerationConfig,
             systemInstruction: system
         });
 
         const result = await generativeModel.generateContent(user);
         const responseMeta = result.response as unknown as { candidates?: Array<{ finishReason?: string }> };
-        const finishReason = responseMeta.candidates?.[0]?.finishReason;
-        if (finishReason && finishReason !== "STOP") {
-            console.warn(`[AIService] Gemini finishReason=${finishReason} for ${model}.`);
+        return { text: result.response.text(), finishReason: responseMeta.candidates?.[0]?.finishReason };
+    }
+
+    private static async callGemini(apiKey: string, model: string, system: string, user: string, config: AIModelConfig): Promise<string> {
+        let outcome: { text: string; finishReason?: string };
+        try {
+            outcome = await this.callGeminiRaw(apiKey, model, system, user, config, true);
+        } catch (error) {
+            console.warn(`[AIService] Gemini rejected thinkingBudget:0 for ${model}, retrying without it.`, error);
+            outcome = await this.callGeminiRaw(apiKey, model, system, user, config, false);
         }
-        return result.response.text();
+
+        if (outcome.finishReason && outcome.finishReason !== "STOP") {
+            console.warn(`[AIService] Gemini finishReason=${outcome.finishReason} for ${model}.`);
+        }
+        return outcome.text;
     }
 
     private static async callSarvam(apiKey: string, model: string, system: string, user: string, config: AIModelConfig): Promise<string> {

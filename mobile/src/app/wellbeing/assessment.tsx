@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Platform,  View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -107,7 +107,7 @@ export default function WellbeingAssessmentScreen() {
         )}
 
         {/* Card */}
-        <View className="bg-white rounded-[1.5rem] border border-stone-200 shadow-sm overflow-hidden" style={{ minHeight: 440 }}>
+        <View className={`bg-white rounded-[1.5rem] border border-stone-200 overflow-hidden ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ minHeight: 440 }}>
           {!isComplete ? (
             <Animated.View key={currentStep} entering={FadeIn.duration(250)} exiting={FadeOut.duration(150)} className="p-6">
               <View className="bg-stone-50 border border-stone-100 rounded-xl p-3 mb-6">

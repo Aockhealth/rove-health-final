@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 // Dumbbell (lucide) reads as "exercise" far more specifically than the
@@ -29,7 +29,7 @@ export function HabitsOverviewCard({
   return (
     <View 
       className="relative rounded-[32px] p-5 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
     >
       {/* Blob */}
       <View
@@ -38,7 +38,11 @@ export function HabitsOverviewCard({
       />
       
       {/* Blur overlay to soften the blob */}
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+      )}
 
       <View className="relative z-10">
         <View className="flex-row items-center gap-2 mb-4">
@@ -50,9 +54,9 @@ export function HabitsOverviewCard({
 
         <View className="flex flex-col gap-3">
           {/* Sleep Row */}
-          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <View className="flex-row items-center gap-3">
-              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}>
+              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Feather name="moon" size={16} color={theme.color} />
               </View>
               <Text className="text-sm font-medium text-rove-charcoal">Avg Sleep</Text>
@@ -70,9 +74,9 @@ export function HabitsOverviewCard({
           </View>
 
           {/* Exercise Row */}
-          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <View className="flex-row items-center gap-3">
-              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}>
+              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Dumbbell size={16} color={theme.color} />
               </View>
               <Text className="text-sm font-medium text-rove-charcoal">Avg Workout</Text>
@@ -90,9 +94,9 @@ export function HabitsOverviewCard({
           </View>
 
           {/* Hydration Row */}
-          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <View className="flex-row items-center gap-3">
-              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}>
+              <View className="p-2 rounded-[14px] bg-white/70 shadow-sm" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Feather name="droplet" size={16} color={theme.color} />
               </View>
               <Text className="text-sm font-medium text-rove-charcoal">Avg Hydration</Text>

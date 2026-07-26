@@ -50,11 +50,11 @@ export default function ForgotPasswordScreen() {
 
           <Animated.View
             entering={FadeInDown.duration(1000).springify()}
-            className="w-full bg-white/80 p-8 rounded-[2rem] border border-white shadow-sm overflow-hidden"
+            className={`w-full bg-white/80 p-8 rounded-[2rem] border border-white overflow-hidden ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
             style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } }}
           >
             <Link href="/(auth)/login" className="mb-6 self-start" asChild>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-white shadow-sm border border-rove-stone/10 items-center justify-center">
+              <Button variant="ghost" size="icon" className={`w-10 h-10 rounded-full bg-white border border-rove-stone/10 items-center justify-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
                 <ArrowLeft size={20} color="#2D2420" />
               </Button>
             </Link>

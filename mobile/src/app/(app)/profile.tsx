@@ -60,30 +60,6 @@ function Stepper({
         <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">{label}</Text>
         <Text className="text-base font-bold text-stone-800">{value} Days</Text>
       </View>
-      <View className="flex-row items-center justify-between rounded-2xl border border-stone-100 bg-stone-50/50 px-2 py-2">
-        <TouchableOpacity
-          onPress={() => onChange(Math.max(min, value - 1))}
-          disabled={value <= min}
-          className="h-9 w-9 items-center justify-center rounded-xl bg-white"
-          style={{ opacity: value <= min ? 0.3 : 1 }}
-        >
-          <Minus size={16} color="#37332E" />
-        </TouchableOpacity>
-        <View className="h-1.5 flex-1 mx-3 overflow-hidden rounded-full bg-stone-200">
-          <View
-            className="h-full rounded-full bg-stone-800"
-            style={{ width: `${((value - min) / (max - min)) * 100}%` }}
-          />
-        </View>
-        <TouchableOpacity
-          onPress={() => onChange(Math.min(max, value + 1))}
-          disabled={value >= max}
-          className="h-9 w-9 items-center justify-center rounded-xl bg-white"
-          style={{ opacity: value >= max ? 0.3 : 1 }}
-        >
-          <Plus size={16} color="#37332E" />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -293,7 +269,7 @@ export default function ProfileScreen() {
                   shadowOpacity: 0.07,
                   shadowRadius: 12,
                   shadowOffset: { width: 0, height: 4 },
-                  elevation: 3,
+                  elevation: 0,
                 }}
               >
                 <Text

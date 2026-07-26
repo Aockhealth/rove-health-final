@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { Platform,  View, Text, Image } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 export function StepIntro() {
@@ -7,7 +7,7 @@ export function StepIntro() {
     <View className="flex-1 items-center justify-center px-1 py-10">
       <Animated.View
         entering={ZoomIn.duration(600)}
-        className="h-32 w-32 items-center justify-center rounded-full bg-white/80 shadow-sm"
+        className={`h-32 w-32 items-center justify-center rounded-full bg-white/80 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
       >
         <View className="absolute -inset-4 rounded-full border border-rove-charcoal/10" />
         <Image

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Brain, Wind } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -19,7 +19,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
   return (
     <View
       className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
     >
       {/* Blob */}
       <View
@@ -28,7 +28,11 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
       />
 
       {/* Blur overlay to soften the blob */}
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+      )}
 
       <View className="relative z-10 flex flex-col gap-5">
         {/* Header */}
@@ -46,11 +50,11 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
           <Pressable
             onPress={() => goToAssessment('phq9')}
             className="flex-row items-start gap-4 p-4 rounded-2xl border border-black/5 shadow-sm"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', elevation: 0 }}
           >
             <View
               className="w-10 h-10 rounded-full items-center justify-center shadow-sm bg-white"
-              style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+              style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
             >
               <Brain size={18} color={themeColor} />
             </View>
@@ -67,11 +71,11 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
           <Pressable
             onPress={() => goToAssessment('gad7')}
             className="flex-row items-start gap-4 p-4 rounded-2xl border border-black/5 shadow-sm"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', elevation: 0 }}
           >
             <View
               className="w-10 h-10 rounded-full items-center justify-center shadow-sm bg-white"
-              style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+              style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
             >
               <Wind size={18} color={themeColor} />
             </View>

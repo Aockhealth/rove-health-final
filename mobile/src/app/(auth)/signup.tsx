@@ -72,13 +72,13 @@ export default function SignupScreen() {
           
           <Animated.View 
             entering={FadeInDown.duration(1000).springify()}
-            className="w-full bg-white/80 p-8 rounded-[2rem] border border-white shadow-sm overflow-hidden"
+            className={`w-full bg-white/80 p-8 rounded-[2rem] border border-white overflow-hidden ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
             style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } }}
           >
             
             {/* Header & Logo */}
             <View className="items-center mb-8">
-              <View className="w-16 h-16 mb-4 bg-white rounded-[2rem] shadow-sm items-center justify-center" style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
+              <View className={`w-16 h-16 mb-4 bg-white rounded-[2rem] items-center justify-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
                  <Image
                    source={require('../../../assets/images/splash-mark.png')}
                    className="w-10 h-10"

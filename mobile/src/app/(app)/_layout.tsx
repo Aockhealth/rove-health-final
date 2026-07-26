@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Home, Calendar, BarChart2, List, BookOpen } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '../../lib/dashboard';
@@ -47,11 +47,11 @@ export default function AppLayout() {
           elevation: 0, // Remove Android shadow
         },
         tabBarBackground: () => (
-          <BlurView
+          Platform.OS === 'ios' ? (<BlurView
             tint="light"
             intensity={100}
             style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(250, 249, 246, 0.9)' }]}
-          />
+          />) : (<View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#FAF9F6', borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' }]} />)
         ),
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,

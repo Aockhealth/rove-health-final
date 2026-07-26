@@ -7,7 +7,7 @@ import {
   Modal,
   ScrollView,
   Pressable,
-} from 'react-native';
+  Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -182,7 +182,11 @@ export function CycleCalendar({
     <View style={[styles.card, currentPhase && { shadowColor: PHASE_COLORS[currentPhase] }]}>
       {/* Frosted-glass fill, matching every other card on the tracker
           screen (and Home/Plan app-wide) instead of a flat tinted fill. */}
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint }]} />
       <LinearGradient
         colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -675,7 +679,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
   },
 
   // Top info row

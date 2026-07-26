@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -84,7 +84,11 @@ export function LogCard({
     >
       {/* Frosted-glass fill — Blur + soft gradient sheen + the page's shared
           phase tint, the same recipe Home/Plan build their cards from. */}
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View
         style={[
           StyleSheet.absoluteFillObject,
@@ -181,7 +185,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
     overflow: 'hidden',
   },
   header: {
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
   },
   tooltipText: {
     fontSize: 11,

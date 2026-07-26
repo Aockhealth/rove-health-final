@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Platform,  View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,7 +39,7 @@ export default function PrivacyScreen() {
 
         <View className="gap-8 mb-12">
           {/* Section 1 */}
-          <View className="bg-white rounded-3xl p-6 border border-[#AF6B6B]/20 shadow-sm">
+          <View className={`bg-white rounded-3xl p-6 border border-[#AF6B6B]/20 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
             <Text className="text-xl text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               1. We Do Not Sell Your Data
             </Text>

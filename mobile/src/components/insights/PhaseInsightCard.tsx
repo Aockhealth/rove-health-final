@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, FadeIn } from 'react-native-reanimated';
@@ -90,7 +90,7 @@ export function PhaseInsightCard({
   return (
     <View 
       className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
     >
       {/* Blob */}
       <View
@@ -99,7 +99,11 @@ export function PhaseInsightCard({
       />
       
       {/* Blur overlay to soften the blob */}
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+      )}
 
       <View className="relative z-10 flex flex-col gap-5">
         {/* Header */}
@@ -113,13 +117,13 @@ export function PhaseInsightCard({
             </Text>
           </View>
 
-          <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: 2 }}>
+          <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
             <Feather name={getPhaseIcon(phase) as any} size={20} color={theme.color} />
           </View>
         </View>
 
         {/* Insight Content Box */}
-        <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+        <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
           {/* Accent Line */}
           {(insight?.insight || isGenerating) ? (
             <Animated.View entering={FadeIn.delay(200).duration(800)} className="absolute left-0 top-5 bottom-5 w-1 rounded-r-full opacity-60" style={{ backgroundColor: theme.color }} />
@@ -142,7 +146,7 @@ export function PhaseInsightCard({
                 <Pressable
                   onPress={onGenerateInsight}
                   className="self-start px-5 py-2.5 rounded-xl border border-white/60 flex-row items-center justify-center mt-1 bg-white/70 shadow-sm"
-                  style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+                  style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
                 >
                   <Feather name="aperture" size={14} color={theme.color} style={{ marginRight: 6 }} />
                   <Text className="text-xs font-bold uppercase tracking-wider text-rove-charcoal">

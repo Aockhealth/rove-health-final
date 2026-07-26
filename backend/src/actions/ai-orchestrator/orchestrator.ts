@@ -10,6 +10,7 @@ import { buildUnifiedContext } from "./context-builder";
 import { ModelRouter } from "./router";
 import { logAIGenerationEvent } from "./telemetry";
 import { validateSkillPrompt } from "./prompt-limiter";
+import { getNutritionRules, getExerciseRules, formatRulesForPrompt } from "../../../../frontend/src/lib/ai/rules/rules-loader";
 
 function pickFirstNonEmpty<T>(...values: Array<T | undefined | null>): T | undefined {
     for (const value of values) {
@@ -373,6 +374,8 @@ function processChatPayload(response: UnifiedAIResponse, payload: any): UnifiedA
 
 async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAIContextEnvelope): Promise<UnifiedAIResponse> {
     const requestHints = req.contextHints;
+    const mealType = requestHints?.mealType || context.mealType || "snack";
+    const cuisine = requestHints?.cuisinePreference || context.cuisinePreference || "Indian";
     const vars = {
         phase: context.phase,
         dietary_preferences: requestHints?.dietaryPreference
@@ -380,7 +383,7 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
             || context.dietaryPreference
             || context.dietaryPreferences
             || "none",
-        cuisine: requestHints?.cuisinePreference || context.cuisinePreference || "Indian",
+        cuisine,
         health_goals: context.fitnessGoals || "General Wellness",
         goal_focus: requestHints?.goalFocus || context.goalFocus || "Hormone balance and steady energy",
         current_symptoms_or_craving: requestHints?.currentSymptomsOrCraving
@@ -393,7 +396,7 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
         recent_output_signatures: (requestHints?.recentOutputSignatures || context.recentOutputSignatures || []).join(" | "),
         quality_feedback: requestHints?.qualityFeedback || context.qualityFeedback || "",
         // Chef v2 ("pick your plate") variables
-        meal_type: requestHints?.mealType || context.mealType || "snack",
+        meal_type: mealType,
         preference_summary: requestHints?.preferenceSummary || context.preferenceSummary || "No picks recorded yet — offer a balanced spread.",
         recent_chosen: (requestHints?.recentChosen || context.recentChosen || []).join(" | ") || "none",
         dish_name: requestHints?.dishName || context.dishName || "",
@@ -403,7 +406,17 @@ async function handleDietCoachSkill(req: UnifiedAIRequest, context: UnifiedAICon
     const featureKey = req.userIntent && allowedFeatureOverrides.has(req.userIntent)
         ? req.userIntent
         : "diet_coach";
-    return await ModelRouter.executeWithFallback(req, featureKey, vars);
+    // Only chef_options' prompt has the {{curated_rules}} placeholder today —
+    // other diet_coach-routed prompts would just print [MISSING: curated_rules].
+    const curatedRules = featureKey === "chef_options"
+        ? formatRulesForPrompt(getNutritionRules({
+            mealType,
+            phase: context.phase,
+            cuisine,
+            hasMetabolicFlag: context.hasPcosLikePatterns
+        }))
+        : undefined;
+    return await ModelRouter.executeWithFallback(req, featureKey, curatedRules !== undefined ? { ...vars, curated_rules: curatedRules } : vars);
 }
 
 async function handleExerciseCoachSkill(req: UnifiedAIRequest, context: UnifiedAIContextEnvelope): Promise<UnifiedAIResponse> {
@@ -422,7 +435,14 @@ async function handleExerciseCoachSkill(req: UnifiedAIRequest, context: UnifiedA
         quality_feedback: requestHints?.qualityFeedback || context.qualityFeedback || "",
         // Rove Coach personalization — mirrors Chef v2's preference_summary/recent_chosen
         preference_summary: requestHints?.preferenceSummary || context.preferenceSummary || "No workout history yet — build a solid, welcoming first plan.",
-        recent_chosen: (requestHints?.recentChosen || context.recentChosen || []).join(" | ") || "none"
+        recent_chosen: (requestHints?.recentChosen || context.recentChosen || []).join(" | ") || "none",
+        curated_rules: formatRulesForPrompt(getExerciseRules({
+            phase: context.phase,
+            energyLevel: requestHints?.requestedEnergyLevel || context.requestedEnergyLevel || context.inferredEnergyLevel,
+            equipment: requestHints?.equipment || context.equipment,
+            goalFocus: requestHints?.goalFocus || context.goalFocus,
+            limitations: requestHints?.limitations || context.limitations
+        }))
     };
     return await ModelRouter.executeWithFallback(req, "exercise_coach", vars);
 }

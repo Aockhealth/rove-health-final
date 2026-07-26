@@ -36,7 +36,7 @@ export function FocusForYou({ goals, hasWeightGoal, themeColor }: FocusForYouPro
               shadowOpacity: 0.06,
               shadowRadius: 12,
               shadowOffset: { width: 0, height: 4 },
-              elevation: 3,
+              elevation: 0,
             }}
           >
             <View className="flex-row items-start gap-3">

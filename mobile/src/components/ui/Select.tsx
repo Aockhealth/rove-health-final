@@ -45,7 +45,7 @@ export const Select: React.FC<SelectProps> = ({
           "flex-row items-center justify-between h-14 w-full rounded-[1.25rem] border border-white/60 bg-white/50 px-5 shadow-sm",
           className
         )}
-        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
+        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 0 }}
       >
         <Text className={cn("text-base font-medium", selectedOption ? "text-rove-charcoal" : "text-rove-stone/70")} style={{ fontFamily: 'Inter-Medium' }}>
           {selectedOption ? selectedOption.label : placeholder}

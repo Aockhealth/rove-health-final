@@ -76,7 +76,7 @@ export function ExerciseOrb({ phase, metrics, onPressCoach }: ExerciseOrbProps) 
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
                         shadowRadius: 15,
-                        elevation: 2,
+                        elevation: 0,
                     }}
                 >
                     <Text className="text-[9px] font-bold tracking-[2px] text-rove-charcoal/70 uppercase mb-1">
@@ -100,7 +100,7 @@ export function ExerciseOrb({ phase, metrics, onPressCoach }: ExerciseOrbProps) 
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             onPressCoach?.();
                         }}
-                        style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }}
+                        style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 0 }}
                     >
                         <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden', borderWidth: 3, borderColor: '#FAF9F6' }}>
                             <LinearGradient

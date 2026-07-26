@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet , Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -102,10 +102,14 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.08,
           shadowRadius: 16,
-          elevation: 4,
+          elevation: Platform.OS === 'ios' ? 4 : 0,
         }, animatedStyle]}
       >
-        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+        {Platform.OS === 'ios' ? (
+          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+        ) : (
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+        )}
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
         <LinearGradient
           colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0)']}
@@ -275,7 +279,12 @@ export default function HomeScreen() {
     <View className="flex-1 bg-white relative overflow-hidden">
       {/* Dynamic Frosted Header */}
       <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }, headerStyle]}>
-        <BlurView intensity={80} tint="light" className="pt-14 pb-4 px-4 flex-row items-center justify-between border-b border-black/5">
+        <BlurView
+          intensity={80}
+          tint="light"
+          style={Platform.OS === 'android' ? { backgroundColor: 'rgba(255,255,255,0.96)' } : undefined}
+          className="pt-14 pb-4 px-4 flex-row items-center justify-between border-b border-black/5"
+        >
           <View>
             <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone/60">Current Phase</Text>
             <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{data.phase.name} • Day {data.phase.day}</Text>
@@ -353,7 +362,7 @@ export default function HomeScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="flex-1 overflow-hidden"
-              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#AF6B6B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 3 }}
+              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#AF6B6B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1.5 mb-1">
@@ -374,7 +383,7 @@ export default function HomeScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="flex-1 overflow-hidden"
-              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#D4A25F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 3 }}
+              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#D4A25F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1.5 mb-1">
@@ -395,7 +404,7 @@ export default function HomeScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               className="flex-1 overflow-hidden"
-              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#8DAA9D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 3 }}
+              style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#8DAA9D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1.5 mb-1">

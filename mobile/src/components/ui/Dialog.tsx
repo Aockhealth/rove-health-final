@@ -65,7 +65,7 @@ export const DialogContent: React.FC<DialogContentProps> = ({ children, classNam
             "bg-[#FAF9F6] w-[90%] max-w-[400px] rounded-[32px] p-6 shadow-xl border border-white/50",
             className
           )}
-          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 }}
+          style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 0 }}
         >
           {showClose && (
             <TouchableOpacity

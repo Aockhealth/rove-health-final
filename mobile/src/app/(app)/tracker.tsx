@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-} from 'react-native';
+  Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -152,7 +152,11 @@ function SectionGroup({
       {/* Same frosted-glass fill as LogCard, so Lifestyle/Intimacy match the
           individual cards inside them instead of looking like a plainer
           wrapper. */}
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View
         style={[
           StyleSheet.absoluteFillObject,
@@ -877,7 +881,11 @@ export default function TrackerScreen() {
             currentPhase && { shadowColor: PHASE_COLORS[currentPhase], shadowOpacity: 0.1 },
           ]}
         >
-          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+          ) : (
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+          )}
           <View style={[StyleSheet.absoluteFillObject, { backgroundColor: phaseCardTint }]} />
           <LinearGradient
             colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -1365,7 +1373,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
   },
   statusCardInner: {
     paddingHorizontal: 18,
@@ -1461,7 +1469,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    elevation: Platform.OS === 'ios' ? 6 : 0,
   },
   saveBtnText: {
     fontSize: 16,
@@ -1481,7 +1489,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
     overflow: 'hidden',
   },
   sectionGroupHeader: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -46,7 +46,7 @@ export function CycleOverviewCard({
   return (
     <View 
       className="relative rounded-[32px] p-5 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
     >
       {/* Blob */}
       <View
@@ -55,7 +55,11 @@ export function CycleOverviewCard({
       />
       
       {/* Blur overlay to soften the blob */}
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+      )}
 
       <View className="relative z-10 flex flex-col gap-3">
         {/* Top: Next Period Focus */}
@@ -77,7 +81,7 @@ export function CycleOverviewCard({
           </View>
 
           {/* Window */}
-          <View className="flex flex-col items-center justify-center mt-3 mb-1 w-full px-4 py-3 rounded-[16px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.65)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex flex-col items-center justify-center mt-3 mb-1 w-full px-4 py-3 rounded-[16px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.65)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-widest mb-1 opacity-80">Likely Window</Text>
             <Text className="text-sm text-rove-charcoal tracking-wide" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{likelyWindow}</Text>
           </View>
@@ -85,7 +89,7 @@ export function CycleOverviewCard({
 
         {/* Bottom Grid: Stats */}
         <View className="flex-row justify-between gap-2 mt-1">
-          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-wider mb-1">Cycle</Text>
             <View className="flex-row items-baseline">
               <Text className="text-xl text-rove-charcoal leading-none" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
@@ -95,7 +99,7 @@ export function CycleOverviewCard({
             </View>
           </View>
           
-          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-wider mb-1">Flow</Text>
             <View className="flex-row items-baseline">
               <Text className="text-xl text-rove-charcoal leading-none" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
@@ -105,7 +109,7 @@ export function CycleOverviewCard({
             </View>
           </View>
           
-          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+          <View className="flex-1 py-3 px-2 rounded-[20px] border border-white/60 flex flex-col items-center text-center shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
             <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-wider mb-1">Rhythm</Text>
             <View className="flex-row items-center mt-1">
               <Feather name="repeat" size={12} color={theme.color} />

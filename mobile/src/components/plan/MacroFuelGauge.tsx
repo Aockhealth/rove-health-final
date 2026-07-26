@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Animated, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, TouchableOpacity , Platform} from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -211,7 +211,7 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                     <View className="absolute right-0 bottom-4">
                         <TouchableOpacity
                             onPress={handleScrollToChef}
-                            style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 }}
+                            style={{ shadowColor: theme.color, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 5 : 0 }}
                         >
                             <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden', borderWidth: 3, borderColor: '#FAF9F6' }}>
                                 <LinearGradient
@@ -259,10 +259,14 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                         shadowOffset: { width: 0, height: 8 },
                         shadowOpacity: 0.08,
                         shadowRadius: 16,
-                        elevation: 4,
+                        elevation: Platform.OS === 'ios' ? 4 : 0,
                     }}
                 >
-                    <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                    {Platform.OS === 'ios' ? (
+                      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                    ) : (
+                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                    )}
                     <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                     <LinearGradient
                         colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0)']}

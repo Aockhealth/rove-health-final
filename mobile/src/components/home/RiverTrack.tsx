@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, LayoutChangeEvent } from 'react-native';
+import { Platform, View, Text, Pressable, LayoutChangeEvent } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -159,14 +159,14 @@ function RiverCard({ item, onPress, direction = 'left', hideIcon = false }: { it
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.05,
             shadowRadius: 10,
-            elevation: 2,
+            elevation: 0,
           },
           animatedStyle,
         ]}
       >
         {!hideIcon && (
           <View
-            className="w-10 h-10 rounded-xl items-center justify-center border border-white/60 shadow-sm"
+            className={`w-10 h-10 rounded-xl items-center justify-center border border-white/60 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
             style={{ backgroundColor: item.bg }}
           >
             <Icon size={16} color={item.color} />

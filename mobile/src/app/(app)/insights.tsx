@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, SafeAreaView, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { Platform,  View, Text, SafeAreaView, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
@@ -130,14 +130,14 @@ export default function InsightsScreen() {
       >
         {/* TAB BAR */}
         <View
-          className="flex-row rounded-[18px] p-1.5 mb-6 relative overflow-hidden bg-white border border-white/60 shadow-sm"
-          style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}
+          className={`flex-row rounded-[18px] p-1.5 mb-6 relative overflow-hidden bg-white border border-white/60 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
+          style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 0 }}
           onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width - 12)}
         >
           {tabBarWidth > 0 && (
             <Animated.View
-              className="absolute left-1.5 top-1.5 bottom-1.5 rounded-2xl shadow-sm"
-              style={[{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 3 }, tabIndicatorStyle]}
+              className={`absolute left-1.5 top-1.5 bottom-1.5 rounded-2xl ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
+              style={[{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 0 }, tabIndicatorStyle]}
             />
           )}
           
@@ -211,7 +211,7 @@ export default function InsightsScreen() {
             entering={FadeInUp.duration(500).springify()}
             className="items-center mt-4 p-8 rounded-[28px] border border-rove-stone/10 bg-white/80"
           >
-            <View className="w-16 h-16 rounded-full bg-white shadow-sm items-center justify-center mb-4" style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 10 }}>
+            <View className={`w-16 h-16 rounded-full bg-white items-center justify-center mb-4 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 10 }}>
               <Feather name="file-text" size={24} color={theme.color} />
             </View>
             <Text className="text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Health Report</Text>

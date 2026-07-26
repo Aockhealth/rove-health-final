@@ -99,7 +99,7 @@ export const DateSelect: React.FC<DateSelectProps> = ({ value, onValueChange, er
           "flex-row items-center h-14 w-full rounded-[20px] border px-5 shadow-sm",
           error ? "border-rove-red/50 bg-rove-red/5" : "border-white/60 bg-white/50"
         )}
-        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
+        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 0 }}
       >
         <Calendar size={18} color={value ? "#37332E" : "#A8A29E"} style={{ marginRight: 12 }} />
         <Text className={cn("flex-1 text-[15px] font-medium", value ? "text-rove-charcoal" : "text-rove-stone/60")} style={{ fontFamily: 'Inter-Medium' }}>

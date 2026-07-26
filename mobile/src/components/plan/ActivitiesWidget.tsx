@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
@@ -71,9 +71,13 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
   return (
     <View
       className="rounded-[28px] overflow-hidden relative border border-white/40"
-      style={{ shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}
+      style={{ shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: Platform.OS === 'ios' ? 3 : 0 }}
     >
-      <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: `${themeColor}0D` }]} />
 
       <View className="flex-row items-center p-5 border-b border-white/40">

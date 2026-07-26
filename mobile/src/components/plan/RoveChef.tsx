@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, Alert, StyleSheet, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, Alert, StyleSheet, Modal, ScrollView , Platform} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModal, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Feather } from '@expo/vector-icons';
@@ -462,10 +462,14 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                     shadowOffset: { width: 0, height: 8 },
                     shadowOpacity: 0.08,
                     shadowRadius: 16,
-                    elevation: 4,
+                    elevation: Platform.OS === 'ios' ? 4 : 0,
                 }}
             >
-                <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                )}
                 <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                 <LinearGradient
                     colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0)']}

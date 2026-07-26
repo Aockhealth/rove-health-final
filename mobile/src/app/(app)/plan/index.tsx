@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Pressable, TextInput, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Pressable, TextInput, ActivityIndicator, Alert, StyleSheet , Platform} from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, withTiming, withDelay, Easing, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -423,13 +423,13 @@ export default function PlanScreen() {
         <View
           onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width - 12)}
           className="flex-row p-[6px] bg-white rounded-full shadow-sm w-full border border-rove-stone/5"
-          style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}
+          style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: Platform.OS === 'ios' ? 2 : 0 }}
         >
           {tabBarWidth > 0 && (
             <Animated.View
               pointerEvents="none"
               style={[
-                { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 9999, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 5, overflow: 'hidden' },
+                { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 9999, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: Platform.OS === 'ios' ? 5 : 0, overflow: 'hidden' },
                 tabIndicatorStyle,
               ]}
             >
@@ -472,7 +472,7 @@ export default function PlanScreen() {
         {activeTab === 'guide' && (
           <View>
             {/* Focus Banner */}
-            <Animated.View entering={FadeInUp.duration(500)} className="mb-8 rounded-[28px]" style={{ shadowColor: theme.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}>
+            <Animated.View entering={FadeInUp.duration(500)} className="mb-8 rounded-[28px]" style={{ shadowColor: theme.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 6 : 0 }}>
               <LinearGradient
                 colors={[theme.color + 'E6', theme.color]}
                 start={{ x: 0, y: 0 }}
@@ -505,8 +505,12 @@ export default function PlanScreen() {
               const togoText = `${Math.abs(currentW - targetW).toFixed(1)}kg to go`;
               
               return (
-                <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-8 rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
-                  <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-8 rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                  )}
                   <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                   <LinearGradient
                     colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -727,8 +731,12 @@ export default function PlanScreen() {
             <Animated.View entering={FadeInUp.delay(200).duration(500)} className="mb-10">
               <SectionHeader icon="book-open" title="The Science" color={theme.color} />
 
-              <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
-                <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+              <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                )}
                 <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                 <LinearGradient
                   colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -952,9 +960,13 @@ export default function PlanScreen() {
                       <Pressable
                         onPress={() => setExpandedExerciseIndex(i)}
                         className="rounded-[22px] overflow-hidden relative border border-white/40"
-                        style={{ aspectRatio: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}
+                        style={{ aspectRatio: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 3 : 0 }}
                       >
-                        <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+                        {Platform.OS === 'ios' ? (
+                          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+                        ) : (
+                          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                        )}
                         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                         <LinearGradient
                           colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,0.1)']}
@@ -999,8 +1011,12 @@ export default function PlanScreen() {
             {/* Avoid This Phase */}
             {bp?.exercise?.avoid && bp.exercise.avoid.length > 0 && (
               <Animated.View entering={FadeInUp.delay(200).duration(500)} className="mb-10">
-                <View className="rounded-[22px] overflow-hidden relative border border-white/40" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
-                  <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+                <View className="rounded-[22px] overflow-hidden relative border border-white/40" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                  )}
                   <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                   <View className="p-5">
                     <View className="flex-row items-center mb-3">
@@ -1028,8 +1044,12 @@ export default function PlanScreen() {
             >
               <SectionHeader icon="barbell" iconFamily="Ionicons" title="Rove Coach" color={theme.color} />
 
-              <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 4 }}>
-                <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+              <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                )}
                 <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
                 <LinearGradient
                   colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}

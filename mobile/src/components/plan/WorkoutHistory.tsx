@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { Platform,  View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Dumbbell } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -111,7 +111,7 @@ function SessionCard({ session }: { session: WorkoutSession }) {
                             { icon: 'target' as const, label: session.focus },
                             { icon: 'bar-chart-2' as const, label: session.plan_intensity }
                         ].filter(b => b.label).map((b, i) => (
-                            <View key={i} className="bg-white rounded-lg px-2.5 py-1.5 flex-row items-center border border-stone-200/50 shadow-sm">
+                            <View key={i} className={`bg-white rounded-lg px-2.5 py-1.5 flex-row items-center border border-stone-200/50 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
                                 <Feather name={b.icon} size={10} color="#A8A29E" />
                                 <Text className="text-[11px] font-bold text-rove-charcoal ml-1.5">{b.label}</Text>
                             </View>

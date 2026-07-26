@@ -45,7 +45,11 @@ export const ChefOptionSchema = z.object({
     why: z.string(),
     // How the dish is served — drives the hard phase rules (e.g. no "cold"
     // options during the Menstrual phase) in the quality gate.
-    serving_style: z.enum(["warm", "room", "cold"])
+    serving_style: z.enum(["warm", "room", "cold"]),
+    // Drives the fixed 2 protein / 1 fruit / 1 traditional composition
+    // (see chef_options prompt) — checked by the quality gate regardless of
+    // which cuisine was requested.
+    category: z.enum(["protein", "fruit", "traditional"])
 });
 
 export const ChefOptionsResponseSchema = z.object({

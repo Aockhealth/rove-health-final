@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-} from 'react-native';
+  Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeOut, Layout, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -163,7 +163,11 @@ export function DischargeQuestionnaire({
 
   return (
     <Animated.View layout={Layout.duration(220)} style={[styles.card, { shadowColor: ACCENT }]}>
-      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+      ) : (
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+      )}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: cardTint ?? `${ACCENT}26` }]} />
       <LinearGradient
         colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
@@ -342,7 +346,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: Platform.OS === 'ios' ? 4 : 0,
     overflow: 'hidden',
   },
   waveTrack: {
