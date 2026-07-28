@@ -231,7 +231,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                                     <View className="w-7 h-7 rounded-full items-center justify-center mb-1.5" style={{ backgroundColor: `${theme.color}12` }}>
                                         <Feather name={stat.icon} size={12} color={theme.color} />
                                     </View>
-                                    <Text className="text-base font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{stat.value}</Text>
+                                    <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{stat.value}</Text>
                                     <Text className="text-[8px] text-rove-stone font-bold uppercase tracking-widest mt-0.5">{stat.label}</Text>
                                 </View>
                             ))}

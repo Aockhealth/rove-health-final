@@ -7,7 +7,7 @@ import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { LearnHero } from '../../components/learn/LearnHero';
 import { ContentRow } from '../../components/learn/ContentRow';
 import { CategoryPillBar } from '../../components/learn/CategoryPillBar';
-import { LearnSkeleton } from '../../components/learn/LearnSkeleton';
+import LoadingScreen from '../../components/ui/LoadingScreen';
 import { fetchLearnArticles, getStorageUrl, type LearnArticle } from '../../lib/learn';
 import { getAllReadingProgress } from '../../lib/readingProgress';
 
@@ -76,7 +76,7 @@ export default function LearnScreen() {
     }
   };
 
-  if (loading) return <LearnSkeleton />;
+  if (loading) return <LoadingScreen />;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>

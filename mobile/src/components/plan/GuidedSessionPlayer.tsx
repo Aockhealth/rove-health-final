@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -6,6 +6,7 @@ import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import type { ExerciseItem } from '@shared/content/phase-data';
+import { supabase } from '../../lib/supabase';
 
 // Same enrichment web's guided session applies (frontend/src/app/cycle-sync/
 // plan/[phase]/page.tsx enrichExercises/getFormCues) — ported here rather than
@@ -184,7 +185,7 @@ function ExerciseCard({
           <Text className="text-[9px] font-bold uppercase tracking-widest text-rove-stone">
             Exercise {index + 1} of {total}
           </Text>
-          <Text className="text-xl font-bold text-rove-charcoal mt-0.5" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+          <Text className="text-xl text-rove-charcoal mt-0.5" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
             {exercise.title}
           </Text>
         </View>
@@ -266,7 +267,7 @@ function CompleteScreen({ phaseName, onClose, accentColor }: { phaseName: string
       <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: `${accentColor}20` }}>
         <Feather name="check-circle" size={32} color={accentColor} />
       </View>
-      <Text className="text-2xl font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Session Complete!</Text>
+      <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Session Complete!</Text>
       <Text className="text-sm text-rove-stone text-center px-4">
         You crushed your <Text style={{ fontWeight: '700' }}>{phaseName}</Text> phase workout. Your body thanks you.
       </Text>
@@ -293,14 +294,77 @@ export function GuidedSessionPlayer({
   const enriched = useMemo(() => enrichExercises(exercises), [exercises]);
   const [step, setStep] = useState<'exercise' | 'rest' | 'done'>('exercise');
   const [idx, setIdx] = useState(0);
+  const startedAtRef = useRef(Date.now());
+  const savedRef = useRef(false);
 
   // Reset to the first exercise every time the player is (re)opened.
   useEffect(() => {
     if (visible) {
       setStep('exercise');
       setIdx(0);
+      startedAtRef.current = Date.now();
+      savedRef.current = false;
     }
   }, [visible]);
+
+  // Finishing a guided session used to just flip local UI state to the
+  // "done" screen with nothing persisted — sessions never showed up in
+  // Session Log's History or Insights tabs (which read from these same
+  // tables via ExerciseBuilder's saveSession/WorkoutHistory). Mirror that
+  // save here so the guided flow actually counts as a completed session.
+  useEffect(() => {
+    if (step !== 'done' || savedRef.current) return;
+    savedRef.current = true;
+
+    const save = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+
+        const { data: session, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert({
+            user_id: user.id,
+            date: today,
+            phase: phaseName,
+            setting: 'Guided Session',
+            focus: `${phaseName} Guided Session`,
+            duration_seconds: durationSeconds,
+            exercises_total: enriched.length,
+            exercises_completed: enriched.length,
+            plan_title: `${phaseName} Guided Session`,
+            plan_intensity: 'Moderate',
+            plan_reasoning: 'Phase-recommended guided session.',
+            warmup: [],
+            cooldown: [],
+          })
+          .select('id')
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        const exerciseRows = enriched.map((ex) => ({
+          user_id: user.id,
+          workout_session_id: session.id,
+          exercise_name: ex.title,
+          date: today,
+          sets_completed: ex.sets ?? 0,
+          reps_completed: ex.reps ?? 0,
+          completed: true,
+        }));
+
+        const { error: exerciseError } = await supabase.from('exercise_history').insert(exerciseRows);
+        if (exerciseError) throw exerciseError;
+      } catch (err) {
+        console.error('Failed to save guided session:', err);
+      }
+    };
+
+    save();
+  }, [step, enriched, phaseName]);
 
   const goNext = useCallback(() => {
     setStep((s) => {

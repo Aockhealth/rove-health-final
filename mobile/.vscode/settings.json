@@ -4,6 +4,9 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
   },
+  "java.import.exclusions": [
+    "**/node_modules/**"
+  ],
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }

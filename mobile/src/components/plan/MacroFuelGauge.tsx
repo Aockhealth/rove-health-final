@@ -186,7 +186,7 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.05,
                             shadowRadius: 15,
-                            elevation: 2,
+                            elevation: Platform.OS === 'ios' ? 2 : 0,
                         }}
                     >
                         <Text className="text-[9px] font-bold tracking-[2px] text-rove-stone/60 uppercase mb-1">

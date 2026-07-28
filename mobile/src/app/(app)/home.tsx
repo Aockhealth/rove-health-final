@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet , Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -50,7 +51,7 @@ function AnimatedWatermark({ icon: Icon, color, itemKey }: { icon: any, color: s
       scale.value = withRepeat(withTiming(1.05, { duration: 3000, easing: Easing.inOut(Easing.ease) }), -1, true);
       translateY.value = withRepeat(withTiming(-6, { duration: 4000, easing: Easing.inOut(Easing.ease) }), -1, true);
     } else if (itemKey === 'hormones') {
-      translateY.value = withRepeat(withTiming(-10, { duration: 3500, easing: Easing.inOut(Easing.ease) }), -1, true);
+      // No extra transform — HormoneWave handles its own flowing animation
     } else if (itemKey === 'body') {
       scale.value = withRepeat(withTiming(1.04, { duration: 3000, easing: Easing.inOut(Easing.ease) }), -1, true);
       rotation.value = withRepeat(withTiming(8, { duration: 5000, easing: Easing.inOut(Easing.ease) }), -1, true);
@@ -66,7 +67,7 @@ function AnimatedWatermark({ icon: Icon, color, itemKey }: { icon: any, color: s
   }));
 
   return (
-    <Animated.View style={[{ position: 'absolute', top: -10, right: -15, opacity: 0.3 }, style]}>
+    <Animated.View style={[{ position: 'absolute', top: -10, right: -15, opacity: 0.55 }, style]}>
       <Icon size={85} color={color} strokeWidth={1.5} />
     </Animated.View>
   );
@@ -125,7 +126,7 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
 
           <View className="mt-8">
             <View className="flex-row items-center justify-between mb-1.5">
-              <Text numberOfLines={2} className="text-[17px] font-bold text-rove-charcoal leading-tight flex-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+              <Text numberOfLines={2} className="text-[17px] text-rove-charcoal leading-tight flex-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                 {snapshot[itemKey].title}
               </Text>
               <ChevronRight size={14} color="rgba(0,0,0,0.15)" style={{ marginLeft: 4 }} />
@@ -150,6 +151,12 @@ const SNAPSHOT_META = [
 
 export default function HomeScreen() {
   const router = useRouter();
+  // The tab bar is `position: 'absolute'`, so content scrolls underneath it
+  // and needs bottom padding to clear it. This used to be a hardcoded 100,
+  // which happens to clear iOS's ~83pt bar but NOT Android's, where the bar
+  // also includes the navigation/gesture-bar inset — so the last cards were
+  // stuck behind it and unreachable. This returns the real measured height.
+  const tabBarHeight = useBottomTabBarHeight();
   const [expandedRiverItem, setExpandedRiverItem] = useState<RiverItem | null>(null);
   const [selectedSnapshot, setSelectedSnapshot] = useState<(typeof SNAPSHOT_META)[number]['key'] | null>(null);
 
@@ -295,7 +302,7 @@ export default function HomeScreen() {
 
       <Animated.ScrollView 
         className="flex-1 px-4 pt-14" 
-        contentContainerStyle={{ paddingBottom: 100, position: 'relative', zIndex: 1 }} 
+        contentContainerStyle={{ paddingBottom: tabBarHeight + 24, position: 'relative', zIndex: 1 }}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -365,13 +372,13 @@ export default function HomeScreen() {
               style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#AF6B6B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
-                <View className="flex-row items-center gap-1.5 mb-1">
+                <View className="flex-row items-center gap-1 mb-1">
                   <Droplets size={14} color={phaseThemes.Menstrual.color} />
-                  <Text className="text-[10px] font-extrabold uppercase tracking-[1px]" style={{ color: phaseThemes.Menstrual.color }}>Period</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Menstrual.color }}>Period</Text>
                 </View>
                 <View>
-                  <Text className="text-xl font-semibold text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(nextPeriod)}</Text>
-                  <Text className="text-[11px] text-rove-stone/90 font-medium mt-1">{daysToNext !== null ? `in ${daysToNext} days` : 'Next cycle'}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(nextPeriod)}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">{daysToNext !== null ? `in ${daysToNext} days` : 'Next cycle'}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -386,13 +393,13 @@ export default function HomeScreen() {
               style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#D4A25F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
-                <View className="flex-row items-center gap-1.5 mb-1">
+                <View className="flex-row items-center gap-1 mb-1">
                   <Baby size={14} color={phaseThemes.Ovulatory.color} />
-                  <Text className="text-[10px] font-extrabold uppercase tracking-[1px]" style={{ color: phaseThemes.Ovulatory.color }}>Ovulation</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Ovulatory.color }}>Ovulation</Text>
                 </View>
                 <View>
-                  <Text className="text-xl font-semibold text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(ovulationDate)}</Text>
-                  <Text className="text-[11px] text-rove-stone/90 font-medium mt-1">Peak fertility</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(ovulationDate)}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">Peak fertility</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -407,20 +414,20 @@ export default function HomeScreen() {
               style={{ height: 130, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#8DAA9D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: Platform.OS === 'ios' ? 3 : 0 }}
             >
               <View className="p-3.5 flex-1 justify-between">
-                <View className="flex-row items-center gap-1.5 mb-1">
+                <View className="flex-row items-center gap-1 mb-1">
                   <Heart size={14} color={phaseThemes.Follicular.color} />
-                  <Text className="text-[10px] font-extrabold uppercase tracking-[1px]" style={{ color: phaseThemes.Follicular.color }}>Fertile</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Follicular.color }}>Fertile</Text>
                 </View>
                 <View>
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
-                    className="text-xl font-semibold text-rove-charcoal leading-tight"
+                    className="text-xl text-rove-charcoal leading-tight"
                     style={{ fontFamily: 'CormorantGaramond-Bold' }}
                   >
                     {formatDateRange(fertileStart, fertileEnd)}
                   </Text>
-                  <Text className="text-[11px] text-rove-stone/90 font-medium mt-1">Highest chance</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">Highest chance</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -484,7 +491,7 @@ export default function HomeScreen() {
                 <View className="w-16 h-16 rounded-2xl items-center justify-center mb-5" style={{ backgroundColor: expandedRiverItem.bg }}>
                   {React.createElement(iconMap[expandedRiverItem.icon] || require('lucide-react-native').Circle, { size: 32, color: expandedRiverItem.color })}
                 </View>
-                <Text className="text-[28px] font-bold text-rove-charcoal mb-1 leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                <Text className="text-[28px] text-rove-charcoal mb-1 leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                   {expandedRiverItem.title}
                 </Text>
                 {!!expandedRiverItem.desc && (

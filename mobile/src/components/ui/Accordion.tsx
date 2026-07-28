@@ -64,11 +64,11 @@ export const Accordion: React.FC<AccordionProps> = ({
             </View>
           )}
           <View className="flex-1">
-            <Text className="text-base font-semibold text-rove-charcoal" style={{ fontFamily: 'Inter-SemiBold' }}>
+            <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'Raleway-SemiBold' }}>
               {title}
             </Text>
             {summary && !isOpen && (
-              <Text className="text-xs text-rove-stone font-medium mt-0.5" style={{ fontFamily: 'Inter-Medium' }}>
+              <Text className="text-xs text-rove-stone font-medium mt-0.5" style={{ fontFamily: 'Raleway-Medium' }}>
                 {summary}
               </Text>
             )}

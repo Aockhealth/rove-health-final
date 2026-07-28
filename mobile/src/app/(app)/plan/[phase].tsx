@@ -30,7 +30,7 @@ export default function PhaseDeepDiveScreen() {
                     <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: `${theme.color}20` }}>
                         <Feather name="droplet" size={32} color={theme.color} />
                     </View>
-                    <Text className="text-3xl font-bold text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>
+                    <Text className="text-3xl text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>
                         The {phaseName} Phase
                     </Text>
                     <Text className="text-rove-stone text-center px-4 leading-6">
@@ -44,7 +44,7 @@ export default function PhaseDeepDiveScreen() {
                         <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: `${theme.color}15` }}>
                             <Feather name="zap" size={14} color={theme.color} />
                         </View>
-                        <Text className="font-bold text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Hormonal State</Text>
+                        <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Hormonal State</Text>
                     </View>
                     <Text className="text-rove-charcoal text-sm leading-6 mb-4">
                         {bp.hormones?.summary}
@@ -68,7 +68,7 @@ export default function PhaseDeepDiveScreen() {
                         <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: `${theme.color}15` }}>
                             <Feather name="moon" size={14} color={theme.color} />
                         </View>
-                        <Text className="font-bold text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Rituals & Relief</Text>
+                        <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Rituals & Relief</Text>
                     </View>
                     
                     {bp.rituals?.practices.map((prac: any, i: number) => (
@@ -94,7 +94,7 @@ export default function PhaseDeepDiveScreen() {
                         <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: `${theme.color}15` }}>
                             <Feather name="coffee" size={14} color={theme.color} />
                         </View>
-                        <Text className="font-bold text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Nutrition Focus</Text>
+                        <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Nutrition Focus</Text>
                     </View>
                     
                     <View className="mb-4">

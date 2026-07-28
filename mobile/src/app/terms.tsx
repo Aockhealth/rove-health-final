@@ -16,7 +16,7 @@ export default function TermsScreen() {
         >
           <ChevronLeft size={24} color="#37332E" />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-rove-charcoal ml-2" style={{ fontFamily: 'Inter-Medium' }}>
+        <Text className="text-lg text-rove-charcoal ml-2" style={{ fontFamily: 'Raleway-Medium' }}>
           Terms of Service
         </Text>
       </View>
@@ -42,7 +42,7 @@ export default function TermsScreen() {
         <View className="gap-8 mb-12">
           {/* Section 1 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               1. Acceptance of Terms
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -52,7 +52,7 @@ export default function TermsScreen() {
 
           {/* Section 2 - Medical Disclaimer */}
           <View className={`bg-white rounded-3xl p-6 border border-[#AF6B6B]/20 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
-            <Text className="text-xl text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-xl text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               2. Medical Disclaimer
             </Text>
             <View className="gap-3">
@@ -77,7 +77,7 @@ export default function TermsScreen() {
 
           {/* Section 3 - AI Disclaimer */}
           <View className="bg-[#AF6B6B]/5 p-6 rounded-3xl border border-[#AF6B6B]/10">
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               3. AI-Generated Content
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -87,7 +87,7 @@ export default function TermsScreen() {
 
           {/* Section 4 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               4. Your Account
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -97,7 +97,7 @@ export default function TermsScreen() {
 
           {/* Section 5 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               5. Acceptable Use
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-3">
@@ -113,7 +113,7 @@ export default function TermsScreen() {
 
           {/* Section 6 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               6. Intellectual Property
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -123,7 +123,7 @@ export default function TermsScreen() {
 
           {/* Section 7 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               7. Termination
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -133,7 +133,7 @@ export default function TermsScreen() {
 
           {/* Section 8 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               8. Disclaimer of Warranties &amp; Limitation of Liability
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -143,7 +143,7 @@ export default function TermsScreen() {
 
           {/* Section 9 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               9. Changes to These Terms
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -153,7 +153,7 @@ export default function TermsScreen() {
 
           {/* Section 10 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               10. Governing Law
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -163,7 +163,7 @@ export default function TermsScreen() {
 
           {/* Section 11 - Contact */}
           <View className="border-t border-rove-stone/10 pt-8 mt-4 items-center">
-            <Text className="text-xl text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-xl text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               11. Contact Us
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-4 text-center">

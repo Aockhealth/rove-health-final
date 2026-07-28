@@ -85,7 +85,7 @@ export function SymptomChip({
         style={[
           styles.label,
           isSolid && styles.labelSelected,
-          isSoft && { color: resolvedActiveColor, fontFamily: 'Inter-SemiBold' },
+          isSoft && { color: resolvedActiveColor, fontFamily: 'Raleway-SemiBold' },
           !isSelected && styles.labelUnselected,
         ]}
         numberOfLines={1}
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
   },
   labelUnselected: {
     color: '#2D2420',

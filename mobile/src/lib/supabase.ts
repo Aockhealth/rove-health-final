@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
 
 // Only polyfill URL on native devices, NOT in the Node.js SSR background process
@@ -48,4 +48,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+// supabase-js's autoRefreshToken relies on a JS timer to renew the session
+// before it expires. React Native suspends JS timers while the app is
+// backgrounded, so without this the timer never gets to fire — the token
+// silently expires, and the next auth-dependent call (e.g. getUser()) fails
+// with "not authenticated" even though the user never logged out. This is
+// Supabase's documented required wiring for React Native.
+if (typeof process === 'undefined' || process.release?.name !== 'node') {
+  if (Platform.OS !== 'web') {
+    AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    });
+  }
+}
 

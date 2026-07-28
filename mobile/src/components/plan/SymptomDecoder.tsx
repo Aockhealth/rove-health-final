@@ -99,7 +99,7 @@ function SymptomCard({ card, idx, theme }: { card: any, idx: number, theme: any 
                             })()}
                         </View>
                         <View className="flex-1">
-                            <Text className="font-bold text-lg text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                            <Text className="text-lg text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                                 {card.title}
                             </Text>
                             <Text className="text-[11px] font-bold uppercase tracking-[1.5px] text-rove-charcoal/70 mt-1">

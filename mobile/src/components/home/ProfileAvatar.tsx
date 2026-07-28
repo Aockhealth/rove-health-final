@@ -24,7 +24,7 @@ export default function ProfileAvatar() {
     <Link href="/profile" asChild>
       <Pressable className="w-10 h-10 rounded-full bg-white/50 border border-white/60 items-center justify-center active:scale-95 z-50">
         {initial ? (
-          <Text className="text-lg text-rove-charcoal font-bold" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{initial.toUpperCase()}</Text>
+          <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{initial.toUpperCase()}</Text>
         ) : (
           <User size={20} color="#A8A29E" />
         )}

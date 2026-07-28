@@ -91,7 +91,7 @@ export const DialogHeader: React.FC<{ children: React.ReactNode, className?: str
 );
 
 export const DialogTitle: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-  <Text className={cn("text-2xl font-bold text-rove-charcoal text-center mb-1", className)} style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+  <Text className={cn("text-2xl text-rove-charcoal text-center mb-1", className)} style={{ fontFamily: 'CormorantGaramond-Bold' }}>
     {children}
   </Text>
 );

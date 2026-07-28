@@ -235,8 +235,12 @@ export default function OnboardingScreen() {
   }
 
   const { monthStart, monthEnd } = getMonthBoundaries(viewDate);
-  const canClearMonth = completedRanges.some(
-    (range) => !(range.startDate > monthEnd || range.endDate! < monthStart)
+  const canClearMonth = state.periodHistory.some(
+    (range) => {
+      const start = range.startDate;
+      const end = range.endDate || range.startDate;
+      return !(start > monthEnd || end < monthStart);
+    }
   );
 
   const isLastStep = state.step === ONBOARDING_STEPS;
@@ -339,12 +343,12 @@ export default function OnboardingScreen() {
                 cycleLength={state.cycleLength}
                 periodLength={state.periodLength}
                 error={state.errors.periodHistory}
-                onPreviousMonth={() =>
-                  setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
-                }
-                onNextMonth={() =>
-                  setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
-                }
+                onMonthChange={(dateStr) => {
+                  const parts = dateStr.split('-');
+                  if (parts.length === 3) {
+                    setViewDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1));
+                  }
+                }}
                 onSelectDay={selectCalendarDay}
                 onClearMonth={() => dispatch({ type: 'clear_month', monthStart, monthEnd })}
                 canClearMonth={canClearMonth}

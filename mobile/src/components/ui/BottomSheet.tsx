@@ -51,7 +51,7 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
           {/* Header */}
           {(title || showClose) && (
             <View className="flex-row justify-between items-center mb-4 px-6 pt-2">
-              <Text className="text-xl font-bold text-rove-charcoal flex-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+              <Text className="text-xl text-rove-charcoal flex-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                 {title}
               </Text>
               

@@ -251,7 +251,7 @@ export default function PlanScreen() {
     return (
       <SafeAreaView className="flex-1 bg-[#FAF9F6]">
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
-          <Text className="text-3xl font-bold text-rove-charcoal mb-2 mt-4" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+          <Text className="text-3xl text-rove-charcoal mb-2 mt-4" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
             Build Your Plan
           </Text>
           <Text className="text-sm text-rove-stone mb-8">
@@ -698,17 +698,17 @@ export default function PlanScreen() {
                         {/* Weight Dashboard */}
                         <View className="flex-row items-center justify-between mb-6 p-4 rounded-[20px] border border-white/40 bg-white/30">
                           <View className="items-center flex-1">
-                            <Text className="text-lg font-bold text-rove-charcoal/70" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-lg text-rove-charcoal/70" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
                             <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Start</Text>
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1 px-4 py-2 rounded-[14px]" style={{ backgroundColor: `${theme.color}15` }}>
-                            <Text className="text-xl font-bold" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
+                            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
                             <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.color, opacity: 0.7 }}>Now</Text>
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1">
-                            <Text className="text-lg font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
                             <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Goal</Text>
                           </View>
                         </View>

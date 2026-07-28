@@ -6,15 +6,46 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://jicmptpnhapbycdxutng.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_zy-JLFkTHLFXhMU5aHmjwA_wCAqbpky",
+        "EXPO_PUBLIC_API_URL": "https://rovehealth.in",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "375752912907-0sh7r95hvjcenuic208e5ct50q43l7b9.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "375752912907-k00a95at944i0jehg2ib2hc5j8593ome.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "375752912907-qbjd6a5l8r32ata64ssq7mcpq0o6jft1.apps.googleusercontent.com",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_tL6GuKURm3CGrks8a9LDcQjxh6oBtLomcrpUrhpNqj2E",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://bff13e74e932ecf58ee11c80deaf32f8@o4511797550776320.ingest.us.sentry.io/4511797582102528"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://jicmptpnhapbycdxutng.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_zy-JLFkTHLFXhMU5aHmjwA_wCAqbpky",
+        "EXPO_PUBLIC_API_URL": "https://rovehealth.in",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "375752912907-0sh7r95hvjcenuic208e5ct50q43l7b9.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "375752912907-k00a95at944i0jehg2ib2hc5j8593ome.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "375752912907-qbjd6a5l8r32ata64ssq7mcpq0o6jft1.apps.googleusercontent.com",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_tL6GuKURm3CGrks8a9LDcQjxh6oBtLomcrpUrhpNqj2E",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://bff13e74e932ecf58ee11c80deaf32f8@o4511797550776320.ingest.us.sentry.io/4511797582102528"
+      }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096"
+        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://jicmptpnhapbycdxutng.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_zy-JLFkTHLFXhMU5aHmjwA_wCAqbpky",
+        "EXPO_PUBLIC_API_URL": "https://rovehealth.in",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "375752912907-0sh7r95hvjcenuic208e5ct50q43l7b9.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "375752912907-k00a95at944i0jehg2ib2hc5j8593ome.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "375752912907-qbjd6a5l8r32ata64ssq7mcpq0o6jft1.apps.googleusercontent.com",
+        "EXPO_PUBLIC_POSTHOG_KEY": "phc_tL6GuKURm3CGrks8a9LDcQjxh6oBtLomcrpUrhpNqj2E",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://bff13e74e932ecf58ee11c80deaf32f8@o4511797550776320.ingest.us.sentry.io/4511797582102528"
       }
     }
   },

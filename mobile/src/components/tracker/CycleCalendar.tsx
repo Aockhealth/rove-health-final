@@ -151,7 +151,13 @@ export function CycleCalendar({
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const cellSize = gridWidth > 0 ? gridWidth / 7 : 0;
+  // Subtracting 0.1 to prevent Android floating point layout bugs where
+  // 7 * (gridWidth/7) is slightly larger than gridWidth, causing the 7th item (Saturday)
+  // to wrap to the next line and leaving the 7th column entirely empty.
+  // We only apply this to Android so iOS remains perfectly untouched!
+  const cellSize = gridWidth > 0 
+    ? Platform.OS === 'android' ? (gridWidth / 7) - 0.1 : (gridWidth / 7)
+    : 0;
 
   const today = new Date();
   const todayStr = formatDateStr(today);
@@ -308,13 +314,16 @@ export function CycleCalendar({
             const isToday = dateStr === todayStr;
             const isSelected = !isPeriodLoggingMode && dateStr === selectedDateStr;
 
+            // Android has no blur layer softening this fill (see the frosted
+            // card fallback above), so a stronger tint is needed there to
+            // read as clearly as the same alpha does under iOS's blur.
+            const dayAlpha = Platform.OS === 'ios' ? '30' : '55';
             let bg = 'transparent';
             if (isSelected) bg = TODAY_COLOR;
-            else if (isPeriod) bg = withAlpha(PHASE_COLORS.Menstrual, '30');
-            else if (phase) bg = withAlpha(PHASE_COLORS[phase], '30');
+            else if (isPeriod) bg = withAlpha(PHASE_COLORS.Menstrual, dayAlpha);
+            else if (phase) bg = withAlpha(PHASE_COLORS[phase], dayAlpha);
 
             let numberColor = '#4B5563';
-            if (isFuture) numberColor = '#D1D5DB';
             if (isPeriod && !isSelected) numberColor = PHASE_COLORS.Menstrual;
             if (isSelected) numberColor = '#FFFFFF';
 
@@ -342,7 +351,6 @@ export function CycleCalendar({
                       backgroundColor: bg,
                       borderWidth: isToday && !isSelected ? 2 : 0,
                       borderColor: TODAY_COLOR,
-                      opacity: isFuture ? 0.4 : 1,
                     },
                   ]}
                 >
@@ -357,7 +365,7 @@ export function CycleCalendar({
                       styles.dayNumber,
                       {
                         color: numberColor,
-                        fontFamily: isPeriod && !isSelected ? 'Inter-Bold' : 'Inter-SemiBold',
+                        fontFamily: isPeriod && !isSelected ? 'Raleway-Bold' : 'Raleway-SemiBold',
                       },
                     ]}
                   >
@@ -400,32 +408,6 @@ export function CycleCalendar({
       </View>
       </GestureDetector>
 
-      {/* Phase legend */}
-      <View style={styles.phaseLegendRow}>
-        {PHASE_LEGEND.map((p) => (
-          <View key={p.key} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: PHASE_COLORS[p.key] }]} />
-            <Text style={styles.legendLabel}>{p.label}</Text>
-          </View>
-        ))}
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: FERTILE_LEGEND_COLOR }]} />
-          <Text style={styles.legendLabel}>Fertile Window</Text>
-        </View>
-      </View>
-
-      {/* Category / symptom legend */}
-      <View style={styles.categoryLegendWrap}>
-        <Text style={styles.categoryLegendTitle}>LOGGED DATA INDICATORS</Text>
-        <View style={styles.categoryLegendRow}>
-          {CATEGORY_LEGEND.map((cat) => (
-            <View key={cat.key} style={styles.categoryLegendItem}>
-              <View style={[styles.categoryLegendBar, { backgroundColor: CATEGORY_COLORS[cat.key] }]} />
-              <Text style={styles.categoryLegendLabel}>{cat.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
 
       <TrackerGuideModal visible={showGuide} onClose={() => setShowGuide(false)} />
     </View>
@@ -603,11 +585,11 @@ const guideStyles = StyleSheet.create({
   stepText: {
     fontSize: 12.5,
     lineHeight: 18,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#6B7280',
   },
   stepTextEmphasis: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     color: '#2D2420',
   },
   phasesHeader: {
@@ -645,12 +627,12 @@ const guideStyles = StyleSheet.create({
   },
   phaseName: {
     fontSize: 12,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     marginBottom: 2,
   },
   phaseSub: {
     fontSize: 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     opacity: 0.85,
   },
   ctaBtn: {
@@ -662,7 +644,7 @@ const guideStyles = StyleSheet.create({
   },
   ctaText: {
     fontSize: 14,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     color: '#FFFFFF',
   },
 });
@@ -696,7 +678,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#9CA3AF',
     marginTop: 2,
   },
@@ -708,7 +690,7 @@ const styles = StyleSheet.create({
   },
   periodBtnText: {
     fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#FFFFFF',
   },
 
@@ -728,7 +710,7 @@ const styles = StyleSheet.create({
   },
   loggingSub: {
     fontSize: 11,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#9CA3AF',
     marginTop: 2,
   },
@@ -748,7 +730,7 @@ const styles = StyleSheet.create({
   },
   endPeriodText: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: PHASE_COLORS.Menstrual,
   },
   doneBtn: {
@@ -760,7 +742,7 @@ const styles = StyleSheet.create({
   },
   doneText: {
     fontSize: 13,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#FFFFFF',
   },
 
@@ -798,7 +780,7 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     fontSize: 9,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#A8A29E',
     letterSpacing: 0.5,
   },
@@ -882,7 +864,7 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 9,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     color: '#9CA3AF',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
@@ -897,7 +879,7 @@ const styles = StyleSheet.create({
   },
   categoryLegendTitle: {
     fontSize: 8,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     color: '#A8A29E',
     letterSpacing: 0.8,
     textAlign: 'center',
@@ -922,7 +904,7 @@ const styles = StyleSheet.create({
   },
   categoryLegendLabel: {
     fontSize: 9,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
   },
 });

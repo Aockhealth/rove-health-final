@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Feather } from '@expo/vector-icons';
+import { Droplets, Sparkles, Flame, Moon, Activity, Brain } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, FadeIn } from 'react-native-reanimated';
 
 type PhaseInsightCardProps = {
@@ -77,15 +77,12 @@ export function PhaseInsightCard({
   hasError,
   onGenerateInsight
 }: PhaseInsightCardProps) {
-  const getPhaseIcon = (p: string) => {
-    switch(p) {
-      case 'Menstrual': return 'droplet';
-      case 'Follicular': return 'star';
-      case 'Ovulatory': return 'zap'; // Flame equivalent
-      case 'Luteal': return 'moon';
-      default: return 'activity';
-    }
-  };
+  const PhaseIcon = ({
+    Menstrual: Droplets,
+    Follicular: Sparkles,
+    Ovulatory: Flame,
+    Luteal: Moon
+  } as any)[phase] || Activity;
 
   return (
     <View 
@@ -118,7 +115,7 @@ export function PhaseInsightCard({
           </View>
 
           <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
-            <Feather name={getPhaseIcon(phase) as any} size={20} color={theme.color} />
+            <PhaseIcon size={20} color={theme.color} />
           </View>
         </View>
 
@@ -148,7 +145,7 @@ export function PhaseInsightCard({
                   className="self-start px-5 py-2.5 rounded-xl border border-white/60 flex-row items-center justify-center mt-1 bg-white/70 shadow-sm"
                   style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
                 >
-                  <Feather name="aperture" size={14} color={theme.color} style={{ marginRight: 6 }} />
+                  <Brain size={14} color={theme.color} style={{ marginRight: 6 }} />
                   <Text className="text-xs font-bold uppercase tracking-wider text-rove-charcoal">
                     {hasError ? 'Try Again' : 'Generate Insight'}
                   </Text>

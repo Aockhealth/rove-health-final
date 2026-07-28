@@ -180,7 +180,7 @@ function CuisinePicker({ value, onChange, color }: { value: string; onChange: (v
                             >
                                 <Text
                                     className="text-[17px]"
-                                    style={{ fontFamily: isSelected ? 'Inter-Bold' : 'Inter-Medium', color: isSelected ? '#37332E' : 'rgba(55,51,46,0.8)' }}
+                                    style={{ fontFamily: isSelected ? 'Raleway-Bold' : 'Raleway-Medium', color: isSelected ? '#37332E' : 'rgba(55,51,46,0.8)' }}
                                 >
                                     {item.label}
                                 </Text>

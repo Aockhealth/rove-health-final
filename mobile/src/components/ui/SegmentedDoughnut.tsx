@@ -124,14 +124,14 @@ export function SegmentedDoughnut({
       {/* CENTER TEXT */}
       <View className="absolute items-center justify-center pointer-events-none">
         <Text 
-          className="text-[10px] uppercase tracking-widest text-rove-stone font-semibold mb-0.5" 
-          style={{ fontFamily: 'Inter-SemiBold' }}
+          className="text-[10px] uppercase tracking-widest text-rove-stone mb-0.5" 
+          style={{ fontFamily: 'Raleway-SemiBold' }}
         >
           Phase
         </Text>
         <Text 
-          className="text-sm text-rove-charcoal font-bold" 
-          style={{ fontFamily: 'Outfit-Bold' }}
+          className="text-sm text-rove-charcoal" 
+          style={{ fontFamily: 'Raleway-Bold' }}
         >
           {selectedPhase || '—'}
         </Text>

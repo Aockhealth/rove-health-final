@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 9,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#A8A29E',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 11,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     letterSpacing: 0.8,
   },
 });

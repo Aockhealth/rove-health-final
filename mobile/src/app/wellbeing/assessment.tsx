@@ -81,7 +81,7 @@ export default function WellbeingAssessmentScreen() {
           <Text className="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">
             Self-Assessment
           </Text>
-          <Text className="text-3xl font-bold text-rove-charcoal mb-1 text-center" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+          <Text className="text-3xl text-rove-charcoal mb-1 text-center" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
             {assessmentSubtitle}
           </Text>
           <Text className="text-[13px] font-bold text-stone-500 tracking-widest">
@@ -120,7 +120,7 @@ export default function WellbeingAssessmentScreen() {
                 <View className="w-7 h-7 rounded-full bg-rove-charcoal items-center justify-center">
                   <Text className="text-white text-[13px] font-bold">{currentStep + 1}</Text>
                 </View>
-                <Text className="flex-1 text-xl font-bold text-rove-charcoal leading-snug" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                <Text className="flex-1 text-xl text-rove-charcoal leading-snug" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                   {currentQuestions[currentStep]}
                 </Text>
               </View>
@@ -154,7 +154,7 @@ export default function WellbeingAssessmentScreen() {
             </Animated.View>
           ) : (
             <Animated.View entering={FadeIn.duration(400)} className="p-8 items-center justify-center flex-1">
-              <Text className="text-2xl font-bold text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+              <Text className="text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                 Assessment Complete
               </Text>
               <Text className="text-[13px] text-stone-400 mb-8 font-medium">
@@ -162,7 +162,7 @@ export default function WellbeingAssessmentScreen() {
               </Text>
 
               <View className="flex-row items-baseline mb-4">
-                <Text className="text-7xl font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                <Text className="text-7xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                   {totalScore}
                 </Text>
                 <Text className="text-xl text-stone-300 font-medium">/{maxScore}</Text>

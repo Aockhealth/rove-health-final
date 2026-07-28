@@ -220,13 +220,19 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 2,
   },
   body: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+    // Explicit full width instead of relying on implicit flex stretching.
+    // On Android this body is an Animated.View driven by a reanimated
+    // `entering` animation, and it was laying out narrower than the card —
+    // chip grids inside it wrapped to 2 per row where iOS fits 4.
+    alignSelf: 'stretch',
+    width: '100%',
   },
   tooltipWrap: {
     marginHorizontal: 16,
@@ -253,7 +259,7 @@ const styles = StyleSheet.create({
   tooltipText: {
     fontSize: 11,
     lineHeight: 16,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#FFFFFF',
   },
 });

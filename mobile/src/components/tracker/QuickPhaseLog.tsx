@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: '#A8A29E',
     marginTop: 1,
   },

@@ -5,155 +5,230 @@ import { Sun } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedProps,
   withRepeat,
-  withSequence,
   withTiming,
-  withDelay,
   Easing,
 } from 'react-native-reanimated';
 
 /**
- * Native equivalents of the four hand-drawn watermark icons on
- * frontend/src/app/cycle-sync/page.tsx (HormoneWave, MindSynapse, BodyDNA,
- * GlowHalo). Framer Motion's path-drawing animations don't have a direct
- * react-native-svg equivalent, so these use transform/opacity animation
- * instead — same silhouette and color per category, simplified motion.
+ * Native equivalents of the four watermark icons on the web app's
+ * cycle-sync page (HormoneWave, MindSynapse, BodyDNA, GlowHalo).
  */
 
 type IconProps = { color?: string; size?: number };
 
+/* ─── HORMONES: Two flowing sine waves ─── */
 export function HormoneWave({ color = '#FB7185', size = 90 }: IconProps) {
-  const translateY = useSharedValue(0);
+  const tx = useSharedValue(0);
+
   useEffect(() => {
-    translateY.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 2400, easing: Easing.inOut(Easing.ease) }),
-        withTiming(5, { duration: 2400, easing: Easing.inOut(Easing.ease) })
-      ),
+    // One full wave cycle = 50 SVG units.
+    // In pixels: 50 * (size * 3 / 300) = size / 2.
+    // Translate by exactly one wavelength for a seamless loop.
+    tx.value = withRepeat(
+      withTiming(-(size / 2), { duration: 3000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, [size]);
+
+  const waveStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: tx.value }],
+  }));
+
+  return (
+    <View style={{ width: size, height: size, overflow: 'hidden' }}>
+      <Animated.View style={[{ width: size * 3, height: size, position: 'absolute' }, waveStyle]}>
+        <Svg viewBox="0 0 300 100" width="100%" height="100%">
+          {/* Primary thick wave */}
+          <Path
+            d="M0 50 Q12.5 20,25 50 T50 50 T75 50 T100 50 T125 50 T150 50 T175 50 T200 50 T225 50 T250 50 T275 50 T300 50"
+            stroke={color}
+            strokeWidth={8}
+            fill="none"
+            strokeLinecap="round"
+            opacity={0.85}
+          />
+          {/* Secondary thin wave — inverted */}
+          <Path
+            d="M0 50 Q12.5 80,25 50 T50 50 T75 50 T100 50 T125 50 T150 50 T175 50 T200 50 T225 50 T250 50 T275 50 T300 50"
+            stroke={color}
+            strokeWidth={4}
+            fill="none"
+            strokeLinecap="round"
+            opacity={0.5}
+          />
+        </Svg>
+      </Animated.View>
+    </View>
+  );
+}
+
+/* ─── MIND: Central node with radiating spokes ─── */
+export function MindSynapse({ color = '#64748B', size = 90 }: IconProps) {
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1.4, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
   }, []);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
 
-  return (
-    <Animated.View style={[{ width: size, height: size }, style]}>
-      <Svg viewBox="0 0 100 100" width="100%" height="100%">
-        <Path
-          d="M0 42 C 12 26, 25 26, 37 42 C 49 58, 61 58, 73 42 C 85 26, 97 26, 100 30"
-          stroke={color}
-          strokeWidth={6}
-          fill="none"
-          strokeLinecap="round"
-          opacity={0.65}
-        />
-        <Path
-          d="M0 60 C 12 48, 25 48, 37 60 C 49 72, 61 72, 73 60 C 85 48, 97 48, 100 52"
-          stroke={color}
-          strokeWidth={3.5}
-          fill="none"
-          strokeLinecap="round"
-          opacity={0.35}
-        />
-      </Svg>
-    </Animated.View>
-  );
-}
-
-export function MindSynapse({ color = '#64748B', size = 90 }: IconProps) {
-  const pulse = useSharedValue(1);
-  useEffect(() => {
-    pulse.value = withRepeat(withTiming(1.35, { duration: 2000, easing: Easing.inOut(Easing.ease) }), -1, true);
-  }, []);
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+    opacity: 0.15 + 0.2 * (pulse.value - 1) / 0.4,
+  }));
 
   const angles = [0, 72, 144, 216, 288];
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View
-        style={[
-          { position: 'absolute', width: size * 0.3, height: size * 0.3, borderRadius: size, backgroundColor: color, opacity: 0.2 },
-          pulseStyle,
-        ]}
-      />
-      <Svg viewBox="0 0 100 100" width="100%" height="100%" style={{ position: 'absolute' }}>
-        {angles.map((angle, i) => {
-          const rad = (angle * Math.PI) / 180;
-          const x2 = 50 + 34 * Math.cos(rad);
-          const y2 = 50 + 34 * Math.sin(rad);
-          return <Line key={i} x1={50} y1={50} x2={x2} y2={y2} stroke={color} strokeWidth={3.5} strokeLinecap="round" opacity={0.6} />;
-        })}
-        <Circle cx={50} cy={50} r={8} fill={color} />
-      </Svg>
-    </View>
-  );
-}
-
-const AnimatedLine = Animated.createAnimatedComponent(Line);
-
-function DNARow({ y, color, delay }: { y: number; color: string; delay: number }) {
-  const opacity = useSharedValue(0.3);
-  useEffect(() => {
-    opacity.value = withDelay(
-      delay,
-      withRepeat(withSequence(withTiming(1, { duration: 1200 }), withTiming(0.3, { duration: 1200 })), -1, false)
-    );
-  }, []);
-  const animatedProps = useAnimatedProps(() => ({ opacity: opacity.value }));
-  return <AnimatedLine x1={30} y1={y} x2={70} y2={y} stroke={color} strokeWidth={5} strokeLinecap="round" animatedProps={animatedProps} />;
-}
-
-export function BodyDNA({ color = '#10B981', size = 90 }: IconProps) {
-  const rows = [10, 30, 50, 70, 90];
-  return (
-    <View style={{ width: size, height: size }}>
-      <Svg viewBox="0 0 100 100" width="100%" height="100%">
-        <Line x1={30} y1={0} x2={30} y2={100} stroke={color} strokeWidth={3} opacity={0.25} />
-        <Line x1={70} y1={0} x2={70} y2={100} stroke={color} strokeWidth={3} opacity={0.25} />
-        {rows.map((y, i) => (
-          <DNARow key={i} y={y} color={color} delay={i * 150} />
-        ))}
-      </Svg>
-    </View>
-  );
-}
-
-export function GlowHalo({ color = '#F59E0B', size = 90 }: IconProps) {
-  const rotation = useSharedValue(0);
-  const pulse = useSharedValue(1);
-  useEffect(() => {
-    rotation.value = withRepeat(withTiming(360, { duration: 14000, easing: Easing.linear }), -1, false);
-    pulse.value = withRepeat(withTiming(0.88, { duration: 2000, easing: Easing.inOut(Easing.ease) }), -1, true);
-  }, []);
-  const ringStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }));
-  const innerStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Pulsing glow behind center */}
       <Animated.View
         style={[
           {
             position: 'absolute',
-            width: size,
-            height: size,
+            width: size * 0.35,
+            height: size * 0.35,
+            borderRadius: size,
+            backgroundColor: color,
+          },
+          pulseStyle,
+        ]}
+      />
+      {/* Static SVG spokes + center dot */}
+      <Svg viewBox="0 0 100 100" width="100%" height="100%" style={{ position: 'absolute' }}>
+        {angles.map((angle, i) => {
+          const rad = (angle * Math.PI) / 180;
+          const x2 = 50 + 35 * Math.cos(rad);
+          const y2 = 50 + 35 * Math.sin(rad);
+          return (
+            <Line
+              key={i}
+              x1={50}
+              y1={50}
+              x2={x2}
+              y2={y2}
+              stroke={color}
+              strokeWidth={4}
+              strokeLinecap="round"
+              opacity={0.7}
+            />
+          );
+        })}
+        <Circle cx={50} cy={50} r={9} fill={color} opacity={1} />
+      </Svg>
+    </View>
+  );
+}
+
+/* ─── BODY: DNA ladder with pulsing rungs ─── */
+export function BodyDNA({ color = '#10B981', size = 90 }: IconProps) {
+  const breathe = useSharedValue(1);
+
+  useEffect(() => {
+    breathe.value = withRepeat(
+      withTiming(1.06, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, []);
+
+  const breatheStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: breathe.value }],
+  }));
+
+  const rows = [10, 30, 50, 70, 90];
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Animated.View style={[{ width: '100%', height: '100%' }, breatheStyle]}>
+        <Svg viewBox="0 0 100 100" width="100%" height="100%">
+          {/* Vertical rails */}
+          <Line x1={30} y1={0} x2={30} y2={100} stroke={color} strokeWidth={4} opacity={0.4} />
+          <Line x1={70} y1={0} x2={70} y2={100} stroke={color} strokeWidth={4} opacity={0.4} />
+          {/* Horizontal rungs */}
+          {rows.map((y, i) => (
+            <Line
+              key={i}
+              x1={30}
+              y1={y}
+              x2={70}
+              y2={y}
+              stroke={color}
+              strokeWidth={7}
+              strokeLinecap="round"
+              opacity={0.5 + i * 0.1}
+            />
+          ))}
+        </Svg>
+      </Animated.View>
+    </View>
+  );
+}
+
+/* ─── SKIN: Rotating dashed halo with sun ─── */
+export function GlowHalo({ color = '#F59E0B', size = 90 }: IconProps) {
+  const rotation = useSharedValue(0);
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 20000, easing: Easing.linear }),
+      -1,
+      false
+    );
+    pulse.value = withRepeat(
+      withTiming(0.9, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, []);
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+  const innerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      {/* Outer rotating dashed ring */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            width: size * 0.92,
+            height: size * 0.92,
             borderRadius: size / 2,
-            borderWidth: 3,
+            borderWidth: 3.5,
             borderColor: color,
             borderStyle: 'dashed',
-            opacity: 0.6,
+            opacity: 0.65,
           },
           ringStyle,
         ]}
       />
+      {/* Inner breathing solid ring */}
       <Animated.View
         style={[
-          { position: 'absolute', width: size * 0.68, height: size * 0.68, borderRadius: size, borderWidth: 4, borderColor: color, opacity: 0.3 },
+          {
+            position: 'absolute',
+            width: size * 0.62,
+            height: size * 0.62,
+            borderRadius: size,
+            borderWidth: 5,
+            borderColor: color,
+            opacity: 0.35,
+          },
           innerStyle,
         ]}
       />
-      <Sun size={size * 0.32} color={color} strokeWidth={1.75} opacity={0.7} />
+      {/* Sun icon at center */}
+      <Sun size={size * 0.32} color={color} strokeWidth={2} opacity={0.7} />
     </View>
   );
 }

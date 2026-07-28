@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   goalText: {
     fontSize: 10,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -309,12 +309,12 @@ const styles = StyleSheet.create({
   },
   mlUnit: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: '#A8A29E',
   },
   glassCount: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginBottom: 16,
     marginTop: 4,

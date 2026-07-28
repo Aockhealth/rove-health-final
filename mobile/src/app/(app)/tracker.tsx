@@ -46,7 +46,7 @@ import { DurationInput } from '../../components/tracker/DurationInput';
 import { HydrationTracker } from '../../components/tracker/HydrationTracker';
 import { DischargeQuestionnaire, DischargeAnswers } from '../../components/tracker/DischargeQuestionnaire';
 import { FlowCard } from '../../components/tracker/FlowCard';
-import { ChatFAB } from '../../components/tracker/ChatFAB';
+
 import { QuickPhaseLog } from '../../components/tracker/QuickPhaseLog';
 import { SectionJumpBar, JumpSection } from '../../components/tracker/SectionJumpBar';
 import LoadingScreen from '../../components/ui/LoadingScreen';
@@ -383,11 +383,11 @@ export default function TrackerScreen() {
       ? isInFertileWindow(dayInCycle, cycleSettings.cycle_length_days || 28) && currentPhase !== 'Menstrual'
       : false;
 
-  const phaseThemeColor = PHASE_COLORS[currentPhase ?? 'Menstrual'];
+  const phaseThemeColor = currentPhase ? PHASE_COLORS[currentPhase] : '#A8A29E';
   // Frosted-card tint — same token Home/Plan pull from for their
   // BlurView+gradient card fills, so tracker's cards match that recipe
   // instead of the flat opaque fill they used to have.
-  const phaseCardTint = phaseThemes[currentPhase ?? 'Menstrual']?.cardTint ?? 'rgba(168,162,158,0.12)';
+  const phaseCardTint = currentPhase ? phaseThemes[currentPhase]?.cardTint ?? 'rgba(168,162,158,0.12)' : 'rgba(168,162,158,0.12)';
 
   const todayResult = useMemo(
     () => calculatePhase(new Date(), cycleSettings, sharedLogs),
@@ -787,9 +787,7 @@ export default function TrackerScreen() {
       return { ...prev, [dateStr]: updatedLog };
     });
 
-    if (silent) {
-      toast.success('Noted, thanks 💛', { duration: 1500 });
-    } else {
+    if (!silent) {
       toast.success('Entry Saved!', { description: 'Your daily log has been updated.' });
     }
 
@@ -1032,33 +1030,7 @@ export default function TrackerScreen() {
           />
         </LogCard>
 
-        {/* 11. Self Love Log — themed by the SELECTED day's phase (falls back
-            to Menstrual when there's no phase data yet), matching the web's
-            SelfLoveCard "Organic Chromatics" theming. */}
-        <LogCard
-          title="Self Love Log"
-          icon={<Heart size={18} color={phaseThemeColor} fill={phaseThemeColor} />}
-          iconBgColor={`${phaseThemeColor}1A`}
-          accentColor={phaseThemeColor}
-          cardTint={phaseCardTint}
-          infoText="Dedicate at least 15-30 mins daily to activities that recharge your soul, reduce stress, and improve mental well-being."
-          defaultOpen={false}
-        >
-          <ChipGrid
-            items={SELF_LOVE_OPTIONS}
-            selected={selfLove}
-            onToggle={(v) => setSelfLove(toggleChip(selfLove, v))}
-            activeColor={phaseThemeColor}
-          />
-          <TextInput
-            style={[styles.freeTextInput, { borderColor: `${phaseThemeColor}33` }]}
-            placeholder="Others (log here)..."
-            placeholderTextColor="#C0BAB4"
-            value={selfLoveNote}
-            onChangeText={setSelfLoveNote}
-            multiline
-          />
-        </LogCard>
+
 
         {/* 12. Lifestyle (collapsible group) */}
         <View onLayout={(e) => setLifestyleSectionY(e.nativeEvent.layout.y)}>
@@ -1079,7 +1051,6 @@ export default function TrackerScreen() {
             accentColor={CATEGORY_COLORS.exerciseLog}
             cardTint={phaseCardTint}
             infoText="Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health."
-            defaultOpen={false}
           >
             <ChipGrid
               items={EXERCISE_OPTIONS}
@@ -1132,7 +1103,6 @@ export default function TrackerScreen() {
             accentColor={CATEGORY_COLORS.hydration}
             cardTint={phaseCardTint}
             infoText="Drink at least 2L of water (8 glasses) daily to stay hydrated, support detoxification, and maintain healthy cognitive function."
-            defaultOpen={false}
           >
             <HydrationTracker
               glasses={hydrationGlasses}
@@ -1149,7 +1119,6 @@ export default function TrackerScreen() {
             accentColor={CATEGORY_COLORS.sleepLog}
             cardTint={phaseCardTint}
             infoText="7-9 hours of quality sleep is recommended for optimal hormonal balance, mood regulation, and physical recovery."
-            defaultOpen={false}
           >
             <TypedChipGrid
               items={SLEEP_OPTIONS}
@@ -1190,7 +1159,6 @@ export default function TrackerScreen() {
             iconBgColor={`${CATEGORY_COLORS.sexualWellness}1A`}
             accentColor={CATEGORY_COLORS.sexualWellness}
             cardTint={phaseCardTint}
-            defaultOpen={false}
           >
             <SubSectionLabel
               icon={<Heart size={12} color={CATEGORY_COLORS.sexualWellness} />}
@@ -1294,7 +1262,6 @@ export default function TrackerScreen() {
             <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
           </TouchableOpacity>
         )}
-        <ChatFAB hasNotification />
       </View>
     </SafeAreaView>
   );
@@ -1341,7 +1308,7 @@ const styles = StyleSheet.create({
   },
   navEyebrow: {
     fontSize: 10,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     textTransform: 'uppercase',
     letterSpacing: 2,
     color: 'rgba(45, 36, 32, 0.65)',
@@ -1396,7 +1363,7 @@ const styles = StyleSheet.create({
   },
   statusLateText: {
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: PHASE_COLORS.Menstrual,
     marginTop: 1,
   },
@@ -1415,7 +1382,7 @@ const styles = StyleSheet.create({
   },
   fertileInline: {
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: '#B45309',
     opacity: 0.8,
   },
@@ -1430,7 +1397,7 @@ const styles = StyleSheet.create({
   statusHintText: {
     fontSize: 12,
     lineHeight: 17,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#6B7280',
   },
   phaseBadgeNeutral: {
@@ -1438,8 +1405,9 @@ const styles = StyleSheet.create({
   },
   phaseBadgeText: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#9CA3AF',
+    paddingRight: 2,
   },
   statusDay: {
     fontSize: 15,
@@ -1461,10 +1429,11 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     flex: 1,
+    height: 56,
     backgroundColor: '#C97B7B',
-    borderRadius: 50,
-    paddingVertical: 16,
+    borderRadius: 28,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#C97B7B',
     shadowOpacity: 0.35,
     shadowRadius: 14,
@@ -1473,7 +1442,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
     color: '#FFFFFF',
   },
 
@@ -1528,7 +1497,7 @@ const styles = StyleSheet.create({
   },
   subSectionLabel: {
     fontSize: 10,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#A8A29E',
     letterSpacing: 0.8,
   },
@@ -1537,6 +1506,9 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    // Explicit full width — a wrap container that shrink-wraps instead of
+    // filling its parent silently reduces how many chips fit per row.
+    width: '100%',
     // Without this, RN's default `alignItems: 'stretch'` stretches every
     // chip on a wrapped row to match the tallest one in that row (icon vs.
     // no-icon chips, longer labels) — the "misaligned pills" look.
@@ -1551,7 +1523,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     minHeight: 44,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     fontSize: 13,
     color: '#2D2420',
   },
@@ -1568,7 +1540,7 @@ const styles = StyleSheet.create({
   },
   exerciseDurationLabel: {
     fontSize: 11,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: '#A8A29E',
     marginBottom: 6,
   },
@@ -1587,7 +1559,7 @@ const styles = StyleSheet.create({
   },
   exerciseDurationUnit: {
     fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Raleway-SemiBold',
     color: '#A8A29E',
     letterSpacing: 0.5,
   },
@@ -1606,7 +1578,7 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     minHeight: 100,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     fontSize: 13,
     color: '#2D2420',
     textAlignVertical: 'top',
@@ -1614,7 +1586,7 @@ const styles = StyleSheet.create({
   noteCounter: {
     textAlign: 'right',
     fontSize: 11,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 6,
   },

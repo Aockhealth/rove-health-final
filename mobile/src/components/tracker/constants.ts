@@ -61,7 +61,7 @@ export const SEX_ACTIVITY_OPTIONS: TypedOption[] = [
   { label: 'Enjoyable', type: 'positive' },
 ];
 
-export const CONTRACEPTION_OPTIONS = ['Pill', 'Condom', 'IUD', 'Withdrawal', 'None'];
+export const CONTRACEPTION_OPTIONS = ['OC pill', 'Emergency pill', 'Condom', 'IUD', 'Withdrawal', 'None'];
 
 // RN color for each chip "type" — used with SymptomChip's activeVariant="soft"
 // to mirror the web's green/red/orange/blue tinted active states (Sleep

@@ -450,7 +450,7 @@ export function ExerciseBuilder({
                                 <View className="flex-row justify-between items-center mb-5 p-4 rounded-[18px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
                                     <View className="flex-1">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Live Session</Text>
-                                        <Text className="font-bold text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                                        <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                                             {result.title}
                                         </Text>
                                     </View>
@@ -584,7 +584,7 @@ export function ExerciseBuilder({
                                 <View className="flex-row justify-between items-start mb-4">
                                     <View className="flex-1 mr-3">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.color }}>AI Generated Plan</Text>
-                                        <Text className="font-bold text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{result.title}</Text>
+                                        <Text className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{result.title}</Text>
                                     </View>
                                     <TouchableOpacity onPress={handleClearSession} className="w-9 h-9 rounded-full items-center justify-center border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                                         <Feather name="refresh-ccw" size={14} color="#A8A29E" />

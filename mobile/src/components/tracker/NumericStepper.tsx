@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   unit: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Raleway-Medium',
     color: '#A8A29E',
   },
 });

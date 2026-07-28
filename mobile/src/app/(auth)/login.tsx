@@ -58,8 +58,8 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }} showsVerticalScrollIndicator={false}>
           
           <Animated.View 
-            entering={FadeInDown.duration(1000).springify().damping(18)}
-            className="w-full bg-white/60 overflow-hidden"
+            entering={FadeInDown.duration(600).withInitialValues({ transform: [{ translateY: 20 }] })}
+            className="w-full bg-white/70 overflow-hidden"
             style={{ 
               borderRadius: 36,
               borderWidth: 1,
@@ -102,8 +102,8 @@ export default function LoginScreen() {
                     <Mail size={18} color="#78716C" />
                   </View>
                   <Input
-                    className="pl-12 bg-white/70 h-[56px] rounded-2xl border border-white/50"
-                    style={{ fontSize: 15 }}
+                    className="pl-12 bg-white/90 h-[56px] rounded-2xl border border-rove-stone/20"
+                    style={{ fontSize: 15, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
                     placeholder="hello@rove.com"
                     placeholderTextColor="#A8A29E"
                     value={email}
@@ -129,8 +129,8 @@ export default function LoginScreen() {
                     <Lock size={18} color="#78716C" />
                   </View>
                   <Input
-                    className="pl-12 bg-white/70 h-[56px] rounded-2xl border border-white/50"
-                    style={{ fontSize: 15 }}
+                    className="pl-12 bg-white/90 h-[56px] rounded-2xl border border-rove-stone/20"
+                    style={{ fontSize: 15, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}
                     placeholder="••••••••"
                     placeholderTextColor="#A8A29E"
                     value={password}
@@ -183,7 +183,7 @@ export default function LoginScreen() {
               }}
               disabled={loading}
             >
-              <Text className="text-rove-charcoal font-semibold text-base">Continue with Google</Text>
+              <Text className="text-rove-charcoal font-bold text-base">Continue with Google</Text>
             </Button>
 
             {/* Footer Links */}

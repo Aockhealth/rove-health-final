@@ -35,7 +35,7 @@ export default function GalleryScreen() {
         <Button variant="ghost" size="icon" className="-ml-3 mr-2" onPress={() => router.push('/')}>
           <ArrowLeft size={24} color="#333" />
         </Button>
-        <Text className="text-2xl font-bold text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+        <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
           UI Component Gallery
         </Text>
       </View>
@@ -44,7 +44,7 @@ export default function GalleryScreen() {
         
         {/* Buttons */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Buttons</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Buttons</Text>
           <Button>Primary Button</Button>
           <Button variant="secondary">Secondary Button</Button>
           <Button variant="outline">Outline Button</Button>
@@ -53,7 +53,7 @@ export default function GalleryScreen() {
 
         {/* Badges */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Badges</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Badges</Text>
           <View className="flex-row flex-wrap gap-2">
             <Badge>Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
@@ -63,14 +63,14 @@ export default function GalleryScreen() {
 
         {/* Inputs */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Inputs</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Inputs</Text>
           <Input placeholder="Standard Input" />
           <Input placeholder="Error Input" error="This field is required" />
         </View>
 
         {/* Select */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Select</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Select</Text>
           <Select 
             value={selectValue}
             onValueChange={setSelectValue}
@@ -87,7 +87,7 @@ export default function GalleryScreen() {
 
         {/* Dialogs */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Dialogs</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Dialogs</Text>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <Button variant="outline" onPress={() => setDialogOpen(true)}>Open Dialog Modal</Button>
             <DialogContent>
@@ -110,7 +110,7 @@ export default function GalleryScreen() {
 
         {/* Bottom Sheets */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Bottom Sheets</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Bottom Sheets</Text>
           <Button variant="secondary" onPress={() => bottomSheetRef.current?.present()}>
             Open Bottom Sheet
           </Button>
@@ -118,7 +118,7 @@ export default function GalleryScreen() {
 
         {/* Toasts */}
         <View className="mb-12 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Toasts</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Toasts</Text>
           <View className="flex-row gap-2">
             <Button className="flex-1" onPress={() => toast.success('Successfully saved data!')}>Success</Button>
             <Button className="flex-1 bg-red-500" onPress={() => toast.error('Failed to save data.')}>Error</Button>
@@ -128,7 +128,7 @@ export default function GalleryScreen() {
 
         {/* Accordion */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Accordion</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Accordion</Text>
           <Accordion 
             title="Daily Insights" 
             summary="You're in your follicular phase. High energy expected."
@@ -136,7 +136,7 @@ export default function GalleryScreen() {
             themeColor="#8DAA9D"
             defaultOpen
           >
-            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Inter-Regular' }}>
+            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Raleway-Regular' }}>
               Your estrogen levels are rising. This is a great time to schedule demanding tasks, try a new high-intensity workout class, or brainstorm new creative ideas. Make the most of this natural energy peak!
             </Text>
           </Accordion>
@@ -146,7 +146,7 @@ export default function GalleryScreen() {
             icon={<Activity size={20} color="#D4A25F" />}
             themeColor="#D4A25F"
           >
-            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Inter-Regular' }}>
+            <Text className="text-rove-charcoal text-sm leading-6" style={{ fontFamily: 'Raleway-Regular' }}>
               • Cramps (Mild){'\n'}• Bloating (Moderate){'\n'}• Fatigue (Mild)
             </Text>
           </Accordion>
@@ -154,7 +154,7 @@ export default function GalleryScreen() {
 
         {/* Skeleton */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Skeleton Loader</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Skeleton Loader</Text>
           <View className={`bg-white p-5 rounded-[2rem] border border-rove-stone/10 flex-row items-center gap-4 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
             <Skeleton className="w-14 h-14 rounded-full" />
             <View className="flex-1 gap-2">
@@ -166,7 +166,7 @@ export default function GalleryScreen() {
 
         {/* Tabs */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Tabs</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Tabs</Text>
           <SegmentedControl 
             activeTab={activeTab}
             onChange={setActiveTab}
@@ -177,7 +177,7 @@ export default function GalleryScreen() {
             ]}
           />
           <View className={`bg-white p-6 rounded-[2rem] border border-rove-stone/10 mt-2 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
-            <Text className="text-rove-charcoal text-center" style={{ fontFamily: 'Inter-Medium' }}>
+            <Text className="text-rove-charcoal text-center" style={{ fontFamily: 'Raleway-Medium' }}>
               Currently active tab: <Text className="font-bold">{activeTab}</Text>
             </Text>
           </View>
@@ -185,11 +185,11 @@ export default function GalleryScreen() {
 
         {/* Charts & Insights Spike */}
         <View className="mb-8 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>
             Charts & Insights
           </Text>
           <View className={`bg-white/85 p-6 rounded-[2rem] border border-rove-stone/10 items-center justify-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
-            <Text className="text-sm font-semibold text-rove-stone mb-4 text-center" style={{ fontFamily: 'Inter-Medium' }}>
+            <Text className="text-sm text-rove-stone mb-4 text-center" style={{ fontFamily: 'Raleway-Medium' }}>
               Interactive Phase Doughnut Chart
             </Text>
             
@@ -201,7 +201,7 @@ export default function GalleryScreen() {
               />
             </View>
             
-            <Text className="text-xs text-rove-stone text-center mt-4 max-w-[260px]" style={{ fontFamily: 'Inter-Regular' }}>
+            <Text className="text-xs text-rove-stone text-center mt-4 max-w-[260px]" style={{ fontFamily: 'Raleway-Regular' }}>
               Tap on any segment to select the phase. Tapping triggers a smooth pop-out offset translation and scale transition natively.
             </Text>
           </View>
@@ -209,7 +209,7 @@ export default function GalleryScreen() {
 
         {/* Theme Tokens Check */}
         <View className="mb-12 space-y-4">
-          <Text className="text-lg font-bold text-rove-stone mb-2" style={{ fontFamily: 'Outfit-Bold' }}>Theme Tokens</Text>
+          <Text className="text-lg text-rove-stone mb-2" style={{ fontFamily: 'Raleway-Bold' }}>Theme Tokens</Text>
           <View className="flex-row flex-wrap gap-4">
             <View className="items-center">
               <View className={`w-16 h-16 rounded-full bg-phase-menstrual mb-2 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} />
@@ -238,7 +238,7 @@ export default function GalleryScreen() {
 
       {/* The Bottom Sheet component */}
       <BottomSheet ref={bottomSheetRef} title="Interactive Sheet">
-        <Text className="text-rove-charcoal text-base mb-6" style={{ fontFamily: 'Inter-Regular' }}>
+        <Text className="text-rove-charcoal text-base mb-6" style={{ fontFamily: 'Raleway-Regular' }}>
           This is a native bottom sheet! You can drag it down to close it, or tap the X.
         </Text>
         <Button onPress={() => bottomSheetRef.current?.dismiss()}>Close Sheet</Button>

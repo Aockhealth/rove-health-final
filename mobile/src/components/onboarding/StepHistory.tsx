@@ -4,6 +4,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight, RotateCcw, Minus, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { compareDateStrings, formatLocalDate, monthLabel } from '@shared/onboarding/date';
+import { Calendar } from 'react-native-calendars';
 import type { PeriodRangeDraft, AutoStats } from '../../lib/onboarding-state';
 
 type StepHistoryProps = {
@@ -14,8 +15,7 @@ type StepHistoryProps = {
   cycleLength: number;
   periodLength: number;
   error?: string;
-  onPreviousMonth: () => void;
-  onNextMonth: () => void;
+  onMonthChange: (dateString: string) => void;
   onSelectDay: (dateString: string) => void;
   onClearMonth: () => void;
   canClearMonth: boolean;
@@ -109,8 +109,7 @@ export function StepHistory({
   cycleLength,
   periodLength,
   error,
-  onPreviousMonth,
-  onNextMonth,
+  onMonthChange,
   onSelectDay,
   onClearMonth,
   canClearMonth,
@@ -170,91 +169,61 @@ export function StepHistory({
         entering={FadeInDown.delay(200).duration(400)}
         className="rounded-3xl border border-rove-charcoal/10 bg-white/60 p-4"
       >
-        <View className="mb-4 flex-row items-center justify-between">
-          <TouchableOpacity
-            onPress={() => {
+        <View className="mb-2">
+          <Calendar
+            current={formatLocalDate(viewDate)}
+            onDayPress={(day: any) => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onPreviousMonth();
+              onSelectDay(day.dateString);
             }}
-            className="rounded-full p-2"
-          >
-            <ChevronLeft size={20} color="#78716C" />
-          </TouchableOpacity>
-          <Text className="text-sm font-semibold text-rove-charcoal">{monthLabel(viewDate)}</Text>
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onNextMonth();
+            onMonthChange={(month: any) => {
+              onMonthChange(month.dateString);
             }}
-            disabled={isCurrentOrFutureMonth}
-            className="rounded-full p-2"
-            style={{ opacity: isCurrentOrFutureMonth ? 0.3 : 1 }}
-          >
-            <ChevronRight size={20} color="#78716C" />
-          </TouchableOpacity>
-        </View>
-
-        <View className="mb-2 flex-row">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-            <Text
-              key={`${day}-${i}`}
-              className="flex-1 text-center text-[11px] font-semibold uppercase text-rove-stone/60"
-            >
-              {day}
-            </Text>
-          ))}
-        </View>
-
-        <View className="flex-row flex-wrap">
-          {grid.map((day) => {
-            const dateString = formatLocalDate(day);
-            const inCurrentMonth = day.getMonth() === activeMonth;
-            const isFuture = compareDateStrings(dateString, today) > 0;
-            const isToday = dateString === today;
-            const status = getDayStatus(dateString, periodHistory);
-            const disabled = isFuture || !inCurrentMonth;
-
-            let cellClass = '';
-            let textClass = inCurrentMonth ? 'text-rove-charcoal' : 'text-rove-stone/30';
-            if (status === 'start') {
-              cellClass = 'bg-phase-menstrual rounded-l-xl rounded-r-md';
-              textClass = 'text-white font-semibold';
-            } else if (status === 'end') {
-              cellClass = 'bg-phase-menstrual rounded-r-xl rounded-l-md';
-              textClass = 'text-white font-semibold';
-            } else if (status === 'single') {
-              cellClass = 'bg-phase-menstrual rounded-xl';
-              textClass = 'text-white font-semibold';
-            } else if (status === 'mid') {
-              cellClass = 'bg-phase-menstrual/15 rounded-md';
-              textClass = 'text-phase-menstrual font-medium';
-            } else {
-              cellClass = 'rounded-lg';
-            }
-
-            return (
-              <View key={dateString} style={{ width: `${100 / 7}%` }} className="p-[1.5px]">
-                <Pressable
-                  disabled={disabled}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    onSelectDay(dateString);
-                  }}
-                  className={`h-10 items-center justify-center ${cellClass}`}
-                  style={{ opacity: disabled ? 0.3 : 1 }}
-                >
-                  <Text className={`text-sm ${textClass}`}>{day.getDate()}</Text>
-                  {isToday && status === 'none' ? (
-                    <View className="absolute bottom-1 h-1 w-1 rounded-full bg-rove-charcoal/40" />
-                  ) : null}
-                </Pressable>
-              </View>
-            );
-          })}
+            maxDate={today}
+            markingType="period"
+            markedDates={(() => {
+              const dates: any = {};
+              periodHistory.forEach((range) => {
+                if (!range.endDate || range.startDate === range.endDate) {
+                  dates[range.startDate] = { startingDay: true, endingDay: true, color: '#CD8B76', textColor: 'white' };
+                } else {
+                  let currDate = new Date(range.startDate);
+                  const end = new Date(range.endDate);
+                  while (currDate <= end) {
+                    const dateStr = formatLocalDate(currDate);
+                    const isStart = dateStr === range.startDate;
+                    const isEnd = dateStr === range.endDate;
+                    dates[dateStr] = {
+                      startingDay: isStart,
+                      endingDay: isEnd,
+                      color: isStart || isEnd ? '#CD8B76' : '#E8C7BE',
+                      textColor: isStart || isEnd ? 'white' : '#CD8B76',
+                    };
+                    currDate.setDate(currDate.getDate() + 1);
+                  }
+                }
+              });
+              return dates;
+            })()}
+            theme={{
+              calendarBackground: 'transparent',
+              textSectionTitleColor: '#A8A29E',
+              selectedDayBackgroundColor: '#CD8B76',
+              selectedDayTextColor: '#ffffff',
+              todayTextColor: '#2D2420',
+              dayTextColor: '#2D2420',
+              textDisabledColor: '#D6D3D1',
+              arrowColor: '#78716C',
+              monthTextColor: '#2D2420',
+              textMonthFontFamily: 'CormorantGaramond-SemiBold',
+              textDayFontFamily: 'Raleway-Medium',
+              textDayHeaderFontFamily: 'Raleway-SemiBold',
+            }}
+          />
         </View>
 
         {canClearMonth ? (
-          <View className="mt-3 items-center">
+          <View className="mt-1 items-center">
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

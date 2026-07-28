@@ -1,5 +1,8 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.exclusions": [
+        "**/node_modules/**"
+    ],
     "typescript.preferences.includePackageJsonAutoImports": "off",
     "search.exclude": {
         "**/mobile/node_modules": true

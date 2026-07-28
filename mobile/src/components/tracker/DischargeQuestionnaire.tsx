@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 11,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 2,
   },
@@ -410,11 +410,11 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 11,
     lineHeight: 16,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#3E6A8A',
   },
   infoTextBold: {
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Raleway-Bold',
   },
   body: {
     paddingHorizontal: 16,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   questionDesc: {
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginBottom: 12,
   },
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   mediaSublabel: {
     fontSize: 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 1,
     textAlign: 'center',
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   pillSublabel: {
     fontSize: 10,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 2,
   },

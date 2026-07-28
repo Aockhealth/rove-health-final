@@ -19,7 +19,7 @@ export default function WellbeingIntroScreen() {
             <View className="w-12 h-12 rounded-full items-center justify-center mb-4" style={{ backgroundColor: 'rgba(123, 130, 168, 0.1)' }}>
               <ShieldAlert size={24} color="#7B82A8" />
             </View>
-            <Text className="text-2xl font-bold text-rove-charcoal text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-2xl text-rove-charcoal text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               Before You Begin
             </Text>
             <Text className="text-sm text-rove-stone text-center">
@@ -72,7 +72,7 @@ export default function WellbeingIntroScreen() {
 
           {/* Agreement */}
           <View className="mb-6 mt-2">
-            <Text className="text-lg font-bold text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               Your Agreement
             </Text>
             <Text className="text-sm font-bold text-rove-charcoal mb-2">By continuing, you agree that:</Text>

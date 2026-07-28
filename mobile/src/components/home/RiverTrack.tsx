@@ -173,7 +173,7 @@ function RiverCard({ item, onPress, direction = 'left', hideIcon = false }: { it
           </View>
         )}
         <View className="flex-1">
-          <Text numberOfLines={1} className={`text-xs font-semibold text-rove-charcoal/90 ${hideIcon ? 'text-center' : ''}`} style={{ fontFamily: 'CormorantGaramond-Bold' }}>{item.title}</Text>
+          <Text numberOfLines={1} className={`text-xs text-rove-charcoal/90 ${hideIcon ? 'text-center' : ''}`} style={{ fontFamily: 'CormorantGaramond-Bold' }}>{item.title}</Text>
           <Text numberOfLines={1} className={`text-rove-charcoal/50 text-[10px] font-medium mt-0.5 ${hideIcon ? 'text-center' : ''}`}>{item.desc}</Text>
         </View>
         {clickable && (

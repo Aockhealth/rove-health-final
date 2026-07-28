@@ -19,26 +19,29 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SplashIntro } from '../components/ui/SplashIntro';
 
-import { 
-  Inter_400Regular, 
-  Inter_500Medium, 
-  Inter_600SemiBold, 
-  Inter_700Bold 
-} from '@expo-google-fonts/inter';
-
-import { 
-  Outfit_400Regular, 
-  Outfit_500Medium, 
-  Outfit_600SemiBold, 
-  Outfit_700Bold 
-} from '@expo-google-fonts/outfit';
-
-import { 
-  CormorantGaramond_400Regular, 
-  CormorantGaramond_500Medium, 
-  CormorantGaramond_600SemiBold, 
-  CormorantGaramond_700Bold 
+import {
+  CormorantGaramond_400Regular,
+  CormorantGaramond_400Regular_Italic,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_500Medium_Italic,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_600SemiBold_Italic,
+  CormorantGaramond_700Bold,
+  CormorantGaramond_700Bold_Italic
 } from '@expo-google-fonts/cormorant-garamond';
+
+import {
+  Raleway_400Regular,
+  Raleway_400Regular_Italic,
+  Raleway_500Medium,
+  Raleway_500Medium_Italic,
+  Raleway_600SemiBold,
+  Raleway_600SemiBold_Italic,
+  Raleway_700Bold,
+  Raleway_700Bold_Italic,
+  Raleway_800ExtraBold,
+  Raleway_800ExtraBold_Italic
+} from '@expo-google-fonts/raleway';
 
 import * as Sentry from '@sentry/react-native';
 import { trackEvent } from '../lib/analytics';
@@ -47,6 +50,23 @@ import '../global.css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+import * as NavigationBar from 'expo-navigation-bar';
+import { Platform, Text, TextInput } from 'react-native';
+
+if (Platform.OS === 'android') {
+  NavigationBar.setBackgroundColorAsync('#FAF9F6');
+  NavigationBar.setButtonStyleAsync('dark');
+}
+
+// Set global default font for Text and TextInput
+(Text as any).defaultProps = (Text as any).defaultProps || {};
+(Text as any).defaultProps.style = { fontFamily: 'Raleway-Medium' };
+(Text as any).defaultProps.maxFontSizeMultiplier = 1.2;
+
+(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
+(TextInput as any).defaultProps.style = { fontFamily: 'Raleway-Medium' };
+(TextInput as any).defaultProps.maxFontSizeMultiplier = 1.2;
 
 // No-ops safely with an empty DSN (see .env comment) — enable() only flips on
 // once a real Sentry project exists and EXPO_PUBLIC_SENTRY_DSN is set.
@@ -69,18 +89,24 @@ function RootLayout() {
   }));
   const [showIntro, setShowIntro] = useState(true);
   const [loaded, error] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
-    'Inter-Bold': Inter_700Bold,
-    'Outfit-Regular': Outfit_400Regular,
-    'Outfit-Medium': Outfit_500Medium,
-    'Outfit-SemiBold': Outfit_600SemiBold,
-    'Outfit-Bold': Outfit_700Bold,
     'CormorantGaramond-Regular': CormorantGaramond_400Regular,
+    'CormorantGaramond-Italic': CormorantGaramond_400Regular_Italic,
     'CormorantGaramond-Medium': CormorantGaramond_500Medium,
+    'CormorantGaramond-MediumItalic': CormorantGaramond_500Medium_Italic,
     'CormorantGaramond-SemiBold': CormorantGaramond_600SemiBold,
+    'CormorantGaramond-SemiBoldItalic': CormorantGaramond_600SemiBold_Italic,
     'CormorantGaramond-Bold': CormorantGaramond_700Bold,
+    'CormorantGaramond-BoldItalic': CormorantGaramond_700Bold_Italic,
+    'Raleway-Regular': Raleway_400Regular,
+    'Raleway-Italic': Raleway_400Regular_Italic,
+    'Raleway-Medium': Raleway_500Medium,
+    'Raleway-MediumItalic': Raleway_500Medium_Italic,
+    'Raleway-SemiBold': Raleway_600SemiBold,
+    'Raleway-SemiBoldItalic': Raleway_600SemiBold_Italic,
+    'Raleway-Bold': Raleway_700Bold,
+    'Raleway-BoldItalic': Raleway_700Bold_Italic,
+    'Raleway-ExtraBold': Raleway_800ExtraBold,
+    'Raleway-ExtraBoldItalic': Raleway_800ExtraBold_Italic,
   });
 
   useEffect(() => {

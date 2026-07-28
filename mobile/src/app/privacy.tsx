@@ -16,7 +16,7 @@ export default function PrivacyScreen() {
         >
           <ChevronLeft size={24} color="#37332E" />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-rove-charcoal ml-2" style={{ fontFamily: 'Inter-Medium' }}>
+        <Text className="text-lg text-rove-charcoal ml-2" style={{ fontFamily: 'Raleway-Medium' }}>
           Privacy Policy
         </Text>
       </View>
@@ -40,7 +40,7 @@ export default function PrivacyScreen() {
         <View className="gap-8 mb-12">
           {/* Section 1 */}
           <View className={`bg-white rounded-3xl p-6 border border-[#AF6B6B]/20 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}>
-            <Text className="text-xl text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-xl text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               1. We Do Not Sell Your Data
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed font-medium">
@@ -50,7 +50,7 @@ export default function PrivacyScreen() {
 
           {/* Section 2 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               2. Information We Collect
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-4">
@@ -74,7 +74,7 @@ export default function PrivacyScreen() {
 
           {/* Section 3 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               3. Identity Firewall & Security
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-3">
@@ -87,7 +87,7 @@ export default function PrivacyScreen() {
 
           {/* Section 4 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               4. Medical Disclaimer
             </Text>
             <View className="gap-3 bg-white p-5 rounded-2xl border border-rove-stone/10">
@@ -108,7 +108,7 @@ export default function PrivacyScreen() {
 
           {/* Section 5 */}
           <View className="bg-[#AF6B6B]/5 p-6 rounded-3xl border border-[#AF6B6B]/10">
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               5. AI Privacy and Safeguards
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed font-medium mb-4">
@@ -128,7 +128,7 @@ export default function PrivacyScreen() {
 
           {/* Section 6 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               6. How We Share Information
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-4">
@@ -148,7 +148,7 @@ export default function PrivacyScreen() {
 
           {/* Section 7 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               7. Your Rights & Controls
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-4">
@@ -168,7 +168,7 @@ export default function PrivacyScreen() {
 
           {/* Section 8 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               8. Children's Privacy
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -178,7 +178,7 @@ export default function PrivacyScreen() {
 
           {/* Section 9 */}
           <View>
-            <Text className="text-lg text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-lg text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               9. Updates to this Policy
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed">
@@ -188,7 +188,7 @@ export default function PrivacyScreen() {
 
           {/* Section 10 */}
           <View className="border-t border-rove-stone/10 pt-8 mt-4 items-center">
-            <Text className="text-xl text-rove-charcoal font-bold mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+            <Text className="text-xl text-rove-charcoal mb-3" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
               10. Contact Us
             </Text>
             <Text className="text-sm text-rove-stone leading-relaxed mb-4 text-center">
