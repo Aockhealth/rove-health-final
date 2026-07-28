@@ -51,8 +51,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "fc5e7cbe-102a-470f-b15c-93f07d6fc8fe"
+        "projectId": "91b2275e-798f-4b58-b863-e9a0703de826"
       }
-    }
+    },
+    "owner": "satvik-rovee"
   }
 }

@@ -210,11 +210,18 @@ export default function SignupScreen() {
               </View>
               <Text className="text-[11px] text-rove-stone/60 text-center">
                 By joining, you agree to our{' '}
-                <Text 
+                <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/privacy')}
                 >
                   Privacy Policy
+                </Text>
+                {' '}and{' '}
+                <Text
+                  className="underline text-rove-charcoal font-medium"
+                  onPress={() => router.push('/terms')}
+                >
+                  Terms of Service
                 </Text>
               </Text>
             </View>
