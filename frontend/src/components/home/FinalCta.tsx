@@ -9,7 +9,7 @@ export function FinalCta() {
           Start living in sync with your cycle.
         </h2>
         <div className="mt-8">
-          <Button size="lg" variant="secondary" href="/app">
+          <Button size="lg" variant="secondary" href="/shop">
             Shop the system
           </Button>
         </div>
