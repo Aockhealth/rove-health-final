@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Image, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -50,6 +51,8 @@ export default function LoadingScreen() {
     transform: [{ scale: markScale.value }],
   }));
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.container]}>
       <Animated.View style={markStyle}>
@@ -60,7 +63,11 @@ export default function LoadingScreen() {
         />
       </Animated.View>
 
-      <View style={styles.factContainer}>
+      {/* bottom is additive on top of the base 100 instead of replacing it —
+          on 3-button-nav Android phones the system nav bar alone can take
+          ~48dp (vs ~16dp for gesture nav / iOS's home indicator), which ate
+          into the fixed 100 and clipped this text at the screen edge. */}
+      <View style={[styles.factContainer, { bottom: 100 + insets.bottom }]}>
         <Animated.Text
           key={factIndex}
           entering={FadeIn.duration(600).delay(200)}
@@ -83,7 +90,6 @@ const styles = StyleSheet.create({
   },
   factContainer: {
     position: 'absolute',
-    bottom: 100,
     left: 40,
     right: 40,
     alignItems: 'center',

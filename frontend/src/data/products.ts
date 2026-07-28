@@ -418,7 +418,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
     price: 1599,
     currency: "INR",
     image: "/brand/phases/balance-v2.png",
-    shopifyVariantId: "", // Replace with real Shopify Variant ID
+    shopifyVariantId: "gid://shopify/ProductVariant/62123218108786",
   },
 ];
 

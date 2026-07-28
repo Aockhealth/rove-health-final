@@ -1331,6 +1331,7 @@ const styles = StyleSheet.create({
   // Status Card — frosted-glass recipe (Blur + gradient sheen, layered on
   // in JSX) matching Home/Plan's cards instead of a flat tinted fill.
   statusCard: {
+    width: '100%',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
@@ -1450,6 +1451,7 @@ const styles = StyleSheet.create({
   // LogCard (borderRadius/border/shadow), the Blur+tint+gradient fill is
   // layered on in the SectionGroup component itself.
   sectionGroup: {
+    width: '100%',
     borderRadius: 28,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',

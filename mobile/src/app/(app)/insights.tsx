@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Platform,  View, Text, SafeAreaView, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { Platform,  View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';

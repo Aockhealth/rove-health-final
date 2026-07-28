@@ -159,7 +159,15 @@ export function LogCard({
       {collapsible ? (
         isOpen && (
           <Animated.View
-            entering={FadeIn.duration(180)}
+            // entering is iOS-only: on Android, Reanimated's `entering`
+            // measures this view before Yoga finishes resolving its layout,
+            // and locks that width in for the flex-wrap chip grid inside —
+            // no style override (including width: '100%' on this view and
+            // chipWrap) can undo it since the bad measurement happens
+            // before styles are applied. Result: chips wrap 2-per-row here
+            // instead of 4, only on Android. Skipping entering there (exit
+            // is unaffected) fixes the wrap without losing the iOS fade.
+            entering={Platform.OS === 'ios' ? FadeIn.duration(180) : undefined}
             exiting={FadeOut.duration(120)}
             style={styles.body}
           >
@@ -175,6 +183,7 @@ export function LogCard({
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
     borderRadius: 28,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
