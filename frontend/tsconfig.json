@@ -31,6 +31,9 @@
       ],
       "@shared/*": [
         "../shared/*"
+      ],
+      "zod": [
+        "./node_modules/zod"
       ]
     }
   },
@@ -40,7 +43,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "../shared/**/*.ts"
   ],
   "exclude": [
     "node_modules",

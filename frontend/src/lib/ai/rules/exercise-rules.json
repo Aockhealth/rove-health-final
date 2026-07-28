@@ -1,0 +1,86 @@
+{
+  "rules": [
+    {
+      "id": "equipment-mismatch-bodyweight",
+      "domain": "exercise",
+      "appliesTo": { "equipment": ["bodyweight"] },
+      "ruleType": "equipment_mismatch",
+      "statement": "When equipment is bodyweight/home-only, never prescribe a barbell, dumbbell-rack, cable-machine, or Smith-machine movement — substitute the bodyweight or household-object equivalent.",
+      "rationale": "A user without gym equipment cannot safely or physically perform a loaded-barbell movement — a hard usability/safety mismatch, not a style preference.",
+      "severity": "hard",
+      "detection": {
+        "kind": "banned_keyword_in_field",
+        "field": "name",
+        "terms": ["barbell", "dumbbell", "cable machine", "leg press", "smith machine", "lat pulldown", "kettlebell"],
+        "failReason": "equipment_mismatch_bodyweight"
+      }
+    },
+    {
+      "id": "hiit-menstrual-conflict",
+      "domain": "exercise",
+      "appliesTo": { "exercisePhases": ["menstrual"] },
+      "ruleType": "contraindication",
+      "statement": "Do not prescribe HIIT-style movements (burpees, jump squats, mountain climbers, sprint intervals, box jumps) during Menstrual phase even at Moderate intensity — cortisol/CNS load should stay low; use steady mobility/strength instead.",
+      "rationale": "High-intensity interval work spikes cortisol and CNS fatigue, compounding the already-elevated inflammatory/low-energy state of menstruation.",
+      "severity": "hard",
+      "detection": {
+        "kind": "banned_keyword_in_field",
+        "field": "name",
+        "terms": ["burpee", "jump squat", "mountain climber", "sprint", "box jump", "jumping jack"],
+        "failReason": "hiit_movement_in_menstrual_phase"
+      }
+    },
+    {
+      "id": "injury-avoidance-swap",
+      "domain": "exercise",
+      "appliesTo": {},
+      "ruleType": "contraindication",
+      "statement": "If the user has logged an injury/limitation (e.g. 'knee pain', 'lower back issue'), never prescribe a movement that directly loads that joint — always give the safer swap explicitly.",
+      "rationale": "Direct safety requirement — a model could otherwise slip in a banned movement even when told about the injury in prose.",
+      "severity": "hard",
+      "detection": {
+        "kind": "banned_keyword_in_field",
+        "field": "name",
+        "terms": [],
+        "failReason": "injury_contraindicated_movement"
+      },
+      "_detectionNote": "terms computed dynamically per-request from the injury->movement keyword map in rules-loader.ts (getInjuryContraindicationTerms), not statically listed here."
+    },
+    {
+      "id": "late-luteal-pms-low-impact",
+      "domain": "exercise",
+      "appliesTo": { "exercisePhases": ["luteal"] },
+      "ruleType": "programming_constraint",
+      "statement": "If PMS symptoms (bloating, irritability, fatigue, cramps) are present in late Luteal phase, prefer Pilates/LISS/yoga-style movement and avoid heavy compound lifts (deadlift, back squat) even at Moderate energy.",
+      "rationale": "Progesterone-driven core body temperature rise plus PMS fatigue reduces safe performance capacity for maximal loaded lifts late in the Luteal phase.",
+      "severity": "soft"
+    },
+    {
+      "id": "ovulatory-joint-caution",
+      "domain": "exercise",
+      "appliesTo": { "exercisePhases": ["ovulatory"] },
+      "ruleType": "contraindication",
+      "statement": "During Ovulatory phase, every main_set exercise's notes must include an explicit joint-protection/form cue — ligament laxity is elevated from peak estrogen/testosterone.",
+      "severity": "hard",
+      "_enforcement": "Already enforced by the Ovulatory-notes-keyword check in evaluateCoachQuality — documentation only, no detection block here."
+    },
+    {
+      "id": "menstrual-high-intensity-block",
+      "domain": "exercise",
+      "appliesTo": { "exercisePhases": ["menstrual"] },
+      "ruleType": "contraindication",
+      "statement": "Menstrual-phase intensity must never be High regardless of requested energy level — cap at Moderate even on a self-reported high-energy day.",
+      "severity": "hard",
+      "_enforcement": "Already enforced by the Menstrual+High intensity check in evaluateCoachQuality — documentation only, no detection block here."
+    },
+    {
+      "id": "warmup-cooldown-structural-count",
+      "domain": "exercise",
+      "appliesTo": {},
+      "ruleType": "programming_constraint",
+      "statement": "Warmup must be exactly 3 items and cooldown exactly 3 items; main_set must be 4-6 items.",
+      "severity": "hard",
+      "_enforcement": "Structurally requested in the exercise_coach prompt; array-length hard-check is optional future hardening, not part of this feature."
+    }
+  ]
+}

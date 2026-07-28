@@ -409,6 +409,43 @@ describe('Explicit overrides', () => {
 // FERTILITY HELPER TESTS
 // ============================================================================
 
+describe('Spotty logging / gap tolerance', () => {
+    it('findStreakStart bridges a short gap in logged period days', () => {
+        // Logged Jul 19, 20, skipped 21-22, logged 23 again — same real period.
+        const logs: Record<string, DailyLog> = {
+            '2026-07-19': createLog('2026-07-19', true),
+            '2026-07-20': createLog('2026-07-20', true),
+            '2026-07-23': createLog('2026-07-23', true),
+        };
+
+        expect(findStreakStart('2026-07-23', logs)).toBe('2026-07-19');
+    });
+
+    it('findStreakStart stops once the gap exceeds tolerance', () => {
+        const logs: Record<string, DailyLog> = {
+            '2026-07-01': createLog('2026-07-01', true),
+            '2026-07-10': createLog('2026-07-10', true), // 8-day gap — not the same streak
+        };
+
+        expect(findStreakStart('2026-07-10', logs)).toBe('2026-07-10');
+    });
+
+    it('does not fabricate a new cycle when a period is logged with a mid-streak gap', () => {
+        // Reproduces the reported bug: logging Jul 19, 20, (gap), 23 should not
+        // reset the cycle anchor to Jul 23 and flip Jul 24 to Follicular.
+        const settings = createSettings({ last_period_start: '2026-06-26', cycle_length_days: 28 });
+        const logs: Record<string, DailyLog> = {
+            '2026-07-19': createLog('2026-07-19', true),
+            '2026-07-20': createLog('2026-07-20', true),
+            '2026-07-23': createLog('2026-07-23', true),
+        };
+
+        const { start, source } = getRelevantPeriodStart(parseLocalDate('2026-07-24'), settings, logs);
+        expect(source).toBe('logs');
+        expect(start).toBe('2026-07-19');
+    });
+});
+
 describe('Fertility helpers', () => {
     describe('isInFertileWindow', () => {
         it('returns true in fertile window', () => {

@@ -90,16 +90,25 @@ export const daysBetween = (start: Date, end: Date): number => {
 // PERIOD STREAK DETECTION
 // ============================================================================
 
+// Spotty logging (e.g. a user skipping a day or two mid-period) shouldn't be
+// mistaken for the start of a brand-new cycle. Tolerate this many consecutive
+// unlogged/non-period days before deciding the streak has actually ended.
+export const STREAK_GAP_TOLERANCE_DAYS = 2;
+
 /**
  * Finds the actual start date of a period streak given a date within that streak.
- * Walks backwards day by day checking logs.
+ * Walks backwards day by day checking logs, tolerating short gaps (see
+ * STREAK_GAP_TOLERANCE_DAYS) so spotty logging doesn't fragment one real
+ * period into a phantom new cycle.
  */
 export function findStreakStart(
     targetDateStr: string,
-    monthLogs: Record<string, DailyLog>
+    monthLogs: Record<string, DailyLog>,
+    maxGapDays: number = STREAK_GAP_TOLERANCE_DAYS
 ): string {
     let cur = parseLocalDate(targetDateStr);
     let first = targetDateStr;
+    let gap = 0;
 
     let lookback = 0;
     while (lookback < 45) {
@@ -107,8 +116,10 @@ export function findStreakStart(
         const prevStr = formatDate(cur);
         if (monthLogs[prevStr]?.is_period) {
             first = prevStr;
+            gap = 0;
         } else {
-            break;
+            gap++;
+            if (gap > maxGapDays) break;
         }
         lookback++;
     }

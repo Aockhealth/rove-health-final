@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .font-medium {
+    font-family: 'Raleway-Medium';
+    font-weight: normal;
+  }
+  .font-semibold {
+    font-family: 'Raleway-SemiBold';
+    font-weight: normal;
+  }
+  .font-bold {
+    font-family: 'Raleway-Bold';
+    font-weight: normal;
+  }
+  .font-extrabold {
+    font-family: 'Raleway-ExtraBold';
+    font-weight: normal;
+  }
+  .italic {
+    font-family: 'Raleway-Italic';
+    font-style: normal;
+  }
+}

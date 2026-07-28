@@ -1,0 +1,89 @@
+{
+  "rules": [
+    {
+      "id": "whey-citrus-curdling",
+      "domain": "nutrition",
+      "appliesTo": { "mealTypes": ["smoothie"] },
+      "ruleType": "avoid_combination",
+      "statement": "Never combine whey/dairy protein powder with high-vitamin-C citrus (lemon, amla, orange, mosambi) in the same drink — the acid curdles the milk protein into a lumpy texture. Use a non-citrus fruit (banana, mango, papaya) instead.",
+      "rationale": "Citric/ascorbic acid drops dairy protein below its isoelectric point, denaturing and clumping it — a real curdling reaction, not a taste preference.",
+      "severity": "hard",
+      "detection": {
+        "kind": "banned_pair_in_field",
+        "field": "key_ingredients",
+        "scope": "protein_category_options",
+        "termsA": ["whey", "protein powder", "whey protein"],
+        "termsB": ["lemon", "amla", "orange", "mosambi", "citrus", "lime"],
+        "failReason": "whey_citrus_curdling"
+      }
+    },
+    {
+      "id": "protein-powder-format-lock",
+      "domain": "nutrition",
+      "appliesTo": { "mealTypes": ["snack", "salad"] },
+      "ruleType": "avoid_combination",
+      "statement": "Protein powder (whey or plant) must never appear in a snack or salad option — protein there comes from whole food only (paneer, egg, chicken, sprouts, peanuts, chana).",
+      "severity": "hard",
+      "detection": {
+        "kind": "banned_keyword_in_field",
+        "field": "key_ingredients",
+        "scope": "any_option",
+        "terms": ["whey protein", "protein powder", "whey", "casein"],
+        "failReason": "protein_powder_in_snack_or_salad"
+      }
+    },
+    {
+      "id": "dairy-iron-absorption",
+      "domain": "nutrition",
+      "appliesTo": { "phases": ["menstrual"] },
+      "ruleType": "nutrient_tradeoff",
+      "statement": "During Menstrual phase, don't build an option primarily around heavy dairy (paneer/curd as the dominant ingredient) when the point is iron replenishment — calcium inhibits non-heme iron absorption. Pair iron sources (dates, beetroot, moong, sesame) with vitamin C instead of a large dairy portion.",
+      "rationale": "Calcium and phytates in dairy bind non-heme iron in the gut, meaningfully reducing absorption.",
+      "severity": "soft"
+    },
+    {
+      "id": "turmeric-black-pepper-bioavailability",
+      "domain": "nutrition",
+      "appliesTo": {},
+      "ruleType": "prefer_combination",
+      "statement": "When a dish includes turmeric/haldi, prefer also including a pinch of black pepper (kali mirch) — piperine significantly boosts curcumin absorption.",
+      "rationale": "Piperine inhibits the liver's rapid metabolism of curcumin, increasing its bioavailability manyfold.",
+      "severity": "soft"
+    },
+    {
+      "id": "sprouts-raw-follicular-ovulatory-only",
+      "domain": "nutrition",
+      "appliesTo": { "mealTypes": ["salad", "snack"], "phases": ["follicular", "ovulatory"] },
+      "ruleType": "nutrient_tradeoff",
+      "statement": "Raw sprouted/fermented dishes suit Follicular/Ovulatory digestion; avoid raw sprouts as the primary ingredient in a Menstrual or Luteal option.",
+      "rationale": "Raw legume sprouts are harder to digest; Menstrual/Luteal favor cooked, warming preparation.",
+      "severity": "soft"
+    },
+    {
+      "id": "peanut-allergy-caution-labeling",
+      "domain": "nutrition",
+      "appliesTo": { "mealTypes": ["snack", "smoothie", "salad"] },
+      "ruleType": "contraindication",
+      "statement": "When peanuts/peanut butter are a primary ingredient (not a garnish), make that clear in `why` or `description`, not buried only in `key_ingredients`, so a peanut-allergic user can spot and skip it.",
+      "severity": "soft"
+    },
+    {
+      "id": "sugar-pcos-insulin-resistance-conflict",
+      "domain": "nutrition",
+      "appliesTo": { "mealTypes": ["snack", "smoothie", "salad"], "metabolicFlag": true },
+      "ruleType": "nutrient_tradeoff",
+      "statement": "The user has an insulin-resistance/PCOS/diabetes-like flag — don't make a high-glycemic fruit (banana, mango, dates in quantity) the dominant carb in the fruit-category option. Pair with protein/fiber or use a lower-GI fruit (berries, guava, apple).",
+      "rationale": "High-GI carbs eaten alone spike insulin more sharply, which is specifically counter-productive for insulin-resistant/PCOS profiles.",
+      "severity": "soft"
+    },
+    {
+      "id": "raw-cold-menstrual-luteal-conflict",
+      "domain": "nutrition",
+      "appliesTo": { "phases": ["menstrual", "luteal"] },
+      "ruleType": "contraindication",
+      "statement": "Menstrual and Luteal phase options must be served warm or room temperature, never cold.",
+      "severity": "hard",
+      "_enforcement": "Already enforced via the serving_style field + servingViolation check in evaluateChefOptionsQuality — this entry is documentation only, no detection block here."
+    }
+  ]
+}
