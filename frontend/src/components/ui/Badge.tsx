@@ -1,28 +1,30 @@
-import * as React from "react";
+import { type HTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: "default" | "secondary" | "outline" | "luxury";
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full px-3 py-1 font-sans text-[11px] font-semibold uppercase tracking-[0.08em]",
+  {
+    variants: {
+      variant: {
+        neutral: "bg-obsidian/8 text-obsidian",
+        menstrual: "bg-phase-menstrual/15 text-phase-menstrual",
+        follicular: "bg-phase-follicular/15 text-phase-follicular",
+        ovulatory: "bg-phase-ovulatory/15 text-phase-ovulatory",
+        luteal: "bg-phase-luteal/15 text-phase-luteal",
+        balance: "bg-rove-gold/15 text-rove-gold",
+      },
+    },
+    defaultVariants: {
+      variant: "neutral",
+    },
+  }
+);
+
+export interface BadgeProps
+  extends HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
+
+export function Badge({ className, variant, ...props }: BadgeProps) {
+  return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
-
-function Badge({ className, variant = "default", ...props }: BadgeProps) {
-    const variants = {
-        default: "border-transparent bg-rove-charcoal text-rove-cream hover:bg-rove-charcoal/80",
-        secondary: "border-transparent bg-rove-cream text-rove-charcoal hover:bg-rove-cream/80",
-        outline: "text-rove-charcoal border-rove-stone/40",
-        luxury: "border-transparent bg-rove-red/10 text-rove-red hover:bg-rove-red/20",
-    };
-
-    return (
-        <div
-            className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-rove-stone focus:ring-offset-2",
-                variants[variant],
-                className
-            )}
-            {...props}
-        />
-    );
-}
-
-export { Badge };
