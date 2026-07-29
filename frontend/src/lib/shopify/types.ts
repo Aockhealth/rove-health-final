@@ -1,43 +1,71 @@
-export interface ShopifyMoney {
+import type { LocalProduct, ProductHandle } from "@/data/commerce";
+
+export type Money = {
   amount: string;
   currencyCode: string;
-}
+};
 
-export interface ShopifyProductNode {
-  id: string;
-  handle: string;
+export type CommerceVariant = {
+  id: string | null;
   title: string;
-  description: string;
   availableForSale: boolean;
-  featuredImage: { url: string; altText: string | null } | null;
-  variants: { nodes: Array<{ id: string; title: string; availableForSale: boolean; price: ShopifyMoney }> };
-}
+  price: Money | null;
+};
 
-export interface CommerceProduct {
-  id: string;
-  handle: string;
-  title: string;
-  description: string;
+export type CommerceImage = {
+  url: string;
+  altText: string | null;
+};
+
+export type CommerceProduct = LocalProduct & {
+  productId: string | null;
+  onlineStoreUrl: string | null;
   availableForSale: boolean;
-  image: { url: string; altText: string | null };
-  price: ShopifyMoney;
-  variantId: string;
-  source: "shopify" | "local";
-}
+  price: Money | null;
+  variant: CommerceVariant | null;
+  productImage: CommerceImage;
+  shopifyConfigured: boolean;
+};
 
-export interface CartLine {
+export type CartLine = {
   id: string;
   quantity: number;
-  merchandiseId: string;
-  title: string;
-  price: ShopifyMoney;
-  image: string | null;
-}
+  merchandise: {
+    id: string;
+    title: string;
+    productTitle: string;
+    image: CommerceImage | null;
+    price: Money | null;
+    handle?: ProductHandle | string;
+  };
+  cost: {
+    totalAmount: Money;
+  };
+};
 
-export interface Cart {
+export type Cart = {
   id: string;
   checkoutUrl: string;
   totalQuantity: number;
-  subtotal: ShopifyMoney;
+  cost: {
+    subtotalAmount: Money;
+  };
   lines: CartLine[];
-}
+};
+
+export type ShopifyUserError = {
+  field?: string[] | null;
+  message: string;
+  code?: string;
+};
+
+export type ShopifyWarning = {
+  code?: string;
+  message: string;
+};
+
+export type CartResponse = {
+  cart: Cart | null;
+  userErrors: ShopifyUserError[];
+  warnings: ShopifyWarning[];
+};
