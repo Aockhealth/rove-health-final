@@ -13,7 +13,7 @@ const SCREENSHOTS = [
 export function ScreenshotGallery() {
   return (
     <div className="no-scrollbar -mx-6 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-pl-6 px-6 pb-4">
-      {SCREENSHOTS.map(({ src, caption }) => (
+      {SCREENSHOTS.map(({ src, caption }, i) => (
         <figure key={src} className="shrink-0 snap-start">
           <div className="relative aspect-[9/16] w-[220px] overflow-hidden rounded-[24px] border-4 border-obsidian bg-taupe-light shadow-lg md:w-[250px]">
             <Image
@@ -24,8 +24,13 @@ export function ScreenshotGallery() {
               sizes="(max-width: 768px) 220px, 250px"
             />
           </div>
-          <figcaption className="mt-3 text-center font-sans text-xs font-medium text-obsidian/60">
-            {caption}
+          <figcaption className="mt-4 flex items-baseline justify-between gap-3 border-t border-obsidian/20 pt-3">
+            <span className="font-sans text-sm font-semibold tracking-tight text-obsidian">
+              {caption}
+            </span>
+            <span className="font-sans text-[11px] tabular-nums tracking-[0.18em] text-obsidian/70">
+              {String(i + 1).padStart(2, "0")}
+            </span>
           </figcaption>
         </figure>
       ))}

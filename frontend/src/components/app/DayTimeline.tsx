@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/ui/Reveal";
+
 const MOMENTS = [
   {
     time: "7:00 AM",
@@ -27,18 +29,19 @@ const MOMENTS = [
 
 export function DayTimeline() {
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="relative border-l border-obsidian/15 pl-8">
-        {MOMENTS.map((m) => (
-          <div key={m.time} className="relative pb-9 last:pb-0">
-            <span className="absolute -left-[calc(2rem+5px)] top-1 h-2.5 w-2.5 rounded-full bg-obsidian" />
-            <span className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/50">
+    <div className="mx-auto max-w-3xl">
+      {MOMENTS.map((m, i) => (
+        <Reveal key={m.time} delay={i * 90}>
+          <div className="grid gap-2 border-t border-obsidian/12 py-7 last:border-b md:grid-cols-[9rem_1fr] md:gap-8 md:py-8">
+            <span className="font-sans text-[11px] font-semibold uppercase tabular-nums tracking-[0.16em] text-obsidian/70">
               {m.time}
             </span>
-            <p className="mt-1.5 font-sans text-sm leading-relaxed text-obsidian/80">{m.body}</p>
+            <p className="max-w-[54ch] font-sans text-base leading-[1.75] text-obsidian md:text-lg">
+              {m.body}
+            </p>
           </div>
-        ))}
-      </div>
+        </Reveal>
+      ))}
     </div>
   );
 }

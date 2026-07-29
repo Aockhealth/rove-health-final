@@ -15,6 +15,8 @@ export interface ProductFaq {
 export interface ScienceHighlight {
   title: string;
   detail: string;
+  /** A short, honest hedge on the detail claim above (e.g. dose vs. study dose). */
+  caveat?: string;
 }
 
 export interface LocalProduct {
@@ -35,7 +37,13 @@ export interface LocalProduct {
   faqs: ProductFaq[];
   price: number;
   currency: string;
+  /** Canonical square-safe product shot — used for cart thumbnails and cards. */
   image: string;
+  /** Additional real photography, shown in the product gallery after `image`. */
+  gallery?: string[];
+  /** Count printed on the physical label (e.g. 60 tablets) — drives the /shop unit graphic. */
+  unitCount?: number;
+  unitLabel?: string;
   shopifyVariantId?: string;
 }
 
@@ -307,9 +315,11 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
     scienceHighlight: {
       title: "The clinically-studied 40:1 ratio",
       detail:
-        "Myo-Inositol and D-Chiro-Inositol are dosed at a 40:1 ratio (1000mg to 25mg), the ratio shown most effective for restoring ovulation across head-to-head PMOS clinical research comparing multiple ratios, rather than an arbitrary blend of the two.",
+        "Seven ratios were tested head-to-head in women with PMOS-related anovulation. At 40:1, 5 of 8 women resumed menstruation, the strongest result of any ratio studied.",
+      caveat:
+        "A comparison study, not a guarantee: 8 women per arm, open-label, and about four times this tablet's total inositol dose. But of every ratio compared, 40:1 is the one the data points to.",
     },
-    ingredients: ["Myo-Inositol", "D-Chiro-Inositol", "Berberine HCl", "Chromium Picolinate"],
+    ingredients: ["Myo-Inositol", "D-Chiro-Inositol", "Berberine HCl", "N-Acetyl-Cysteine (NAC)"],
     formulation: [
       {
         nutrient: "Myo-Inositol",
@@ -417,7 +427,15 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
     ],
     price: 1599,
     currency: "INR",
-    image: "/brand/phases/balance-v2.png",
+    image: "/product/balance-bottle.jpg",
+    gallery: [
+      "/product/balance-stone-sage.jpg",
+      "/product/balance-box-shelf.jpg",
+      "/product/balance-counter.jpg",
+      "/product/balance-held.jpg",
+    ],
+    unitCount: 60,
+    unitLabel: "tablets",
     shopifyVariantId: "gid://shopify/ProductVariant/62123218108786",
   },
 ];

@@ -33,9 +33,6 @@ export default function AdvisorsPage() {
             <p className="mt-1 font-label text-xs font-medium uppercase tracking-wide text-obsidian">
               {advisor.credentials}
             </p>
-            <p className="mt-1 font-sans text-sm font-medium text-obsidian/60">
-              {advisor.specialization}
-            </p>
             <p className="mt-4 font-sans text-sm leading-relaxed text-obsidian/70">{advisor.bio}</p>
           </div>
         ))}

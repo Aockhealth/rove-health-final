@@ -17,7 +17,7 @@ You’re not bloated from that extra samosa, and you aren’t gaining weight. Ye
 
 In India, if you get an ultrasound for this, the report often comes back with two terrifying words: **"Bulky Uterus."**
 
-Panic sets in. *Is it a tumor? Is it cancer?* Usually, it is neither. It is often a condition called **Adenomyosis** (ad-uh-no-my-O-sisthe quiet, heavy cousin of Endometriosis.
+Panic sets in. *Is it a tumor? Is it cancer?* Usually, it is neither. It is often a condition called **Adenomyosis** (ad-uh-no-my-O-sis) — the quiet, heavy cousin of Endometriosis.
 
 ### 
 
@@ -36,7 +36,7 @@ To understand Adenomyosis, think of a wall.
 * **Normal Uterus:** The lining (endometrium) sits *on top* of the muscle wall.  
 * **Adenomyosis:** The lining breaks the barrier and starts growing *inside* the muscle wall. Each cycle, it responds to hormones → inflammation and muscle thickening.
 
-Every time you have your period, this trapped tissue inside the muscle also bleeds. But since it’s deep inside the muscle, the blood has nowhere to go. This causes the uterine muscle to swell, thicken, and become tenderclinicians call this a **"boggy" or "globular" uterus.**
+Every time you have your period, this trapped tissue inside the muscle also bleeds. But since it’s deep inside the muscle, the blood has nowhere to go. This causes the uterine muscle to swell, thicken, and become tender — clinicians call this a **"boggy" or "globular" uterus.**
 
 **The Clinical Insight: The "Dragging" Sensation** Why does it feel so heavy? Because it *is*. A healthy uterus is small and light (about the size of a pear). An adenomyotic uterus can grow to the size of a 12-week pregnancy. This extra weight pulls on the ligaments holding it in place, causing that distinct "dragging" or bearing-down sensation in your pelvis and thighs.
 

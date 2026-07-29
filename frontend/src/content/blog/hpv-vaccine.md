@@ -28,7 +28,7 @@ And yes, **women up to age 45 can still benefit**.
 
 
 
-## **What This Article Will** 
+## **What This Article Will Cover**
 
 * How HPV leads to cervical cancer  
 * What the HPV vaccine actually does  
@@ -42,14 +42,14 @@ And yes, **women up to age 45 can still benefit**.
 * You assume marriage or monogamy means zero HPV risk  
 * You feel awkward or unsure about asking for the vaccine  
 * You think you’re “too old” to benefit from it  
-* You only think about cervical cancer after an abnormal repor
+* You only think about cervical cancer after an abnormal report
 
 Cervical cancer doesn’t announce itself early.  
 Prevention has to come **before symptoms**.
 
 
 
-## **The science of — what? How? And when? The vaccine works**
+## **The Science: How, When, and Why the Vaccine Works**
 
 1. ### **What Is HPV?**
 

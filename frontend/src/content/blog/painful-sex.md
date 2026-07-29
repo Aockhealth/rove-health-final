@@ -9,8 +9,6 @@ publishedDate: "2024-10-01"
 image: "/blog/painful-sex.jpg"
 ---
 
-## 
-
 ### ***Painful Sex: It’s Not “All in Your Head”***
 
 ### **Introduction: The Myth That Hurts More Than the Pain**

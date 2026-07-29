@@ -1,7 +1,7 @@
 "use server";
 
-import { shopifyFetch } from "@/lib/shopify-web/client";
-import { createCartMutation } from "@/lib/shopify-web/mutations";
+import { shopifyFetch } from "@/lib/shopify/client";
+import { createCartMutation } from "@/lib/shopify/mutations";
 import { getLocalProduct } from "@/data/products";
 
 export async function createShopifyCheckout(

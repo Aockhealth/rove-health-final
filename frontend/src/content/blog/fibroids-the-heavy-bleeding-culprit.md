@@ -132,7 +132,7 @@ Patterns over time are more helpful than one painful cycle.
 
 ## **Dr. Rove’s Note**
 
-If your periods are getting heavier year after year, don’t wait for your haemoglobin to drop again. Ask *why* the bleeding is happening.Chronic blood loss strains your heart and causes severe fatigue. Please get an ultrasound—it’s painless and gives you an answer in minutes."
+If your periods are getting heavier year after year, don’t wait for your haemoglobin to drop again. Ask *why* the bleeding is happening. Chronic blood loss strains your heart and causes severe fatigue. Please get an ultrasound—it’s painless and gives you an answer in minutes."
 
  Many women live well with fibroids once they’re identified and managed early.
 

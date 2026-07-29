@@ -19,7 +19,8 @@ const FAQS = [
   },
   {
     question: "Where do you ship?",
-    answer: "[Placeholder: add shipping regions and timelines once checkout is live.]",
+    answer:
+      "We currently ship across India. Orders are processed within 1–2 business days and typically arrive within 3–7 business days, depending on your location.",
   },
 ];
 

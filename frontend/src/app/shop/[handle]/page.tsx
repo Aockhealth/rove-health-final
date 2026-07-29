@@ -38,7 +38,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
       <div className="grid gap-12 md:grid-cols-2">
-        <ProductGallery image={product.image} alt={product.title} />
+        <ProductGallery image={product.image} alt={product.title} gallery={product.gallery} />
 
         <div>
           <Badge variant={product.phaseVariant}>{product.phaseLabel}</Badge>

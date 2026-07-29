@@ -34,7 +34,7 @@ Most women experience some version of this:
 * Exercising during PMS and ending up more inflamed  
 * Quitting fitness routines altogether due to inconsistency
 
-The issue isn’t motivation.It's a mistimed **movement**.
+The issue isn’t motivation. It's a mistimed **movement**.
 
 
 
@@ -102,7 +102,7 @@ Your body is working harder internally — even before exercise starts.
 * Max-effort HIIT  
 * Back-to-back intense sessions
 
-#### **Additonal Tips:**
+#### **Additional Tips:**
 
 * Hydration is critical: water \+ electrolytes (coconut water, lightly salted lemon water)  
 * Train in well-ventilated spaces; heat stress hits harder now

@@ -231,3 +231,58 @@ body::after {
   display: none;
 }
 
+/* --- Shop hero photograph settle, and section-rule draw --- */
+@keyframes photo-settle {
+  from {
+    transform: scale(1.04);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-photo-settle {
+  animation: photo-settle 2000ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-rule-draw {
+  animation: rule-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ken-burns,
+  .blob-glow,
+  .river-track,
+  .orb-ring,
+  .orb-ring-inner,
+  .orb-ring-outer {
+    animation: none !important;
+  }
+
+  .animate-photo-settle {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+

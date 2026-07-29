@@ -18,10 +18,10 @@ image: "/blog/too-wet-too-dry-vaginal-discharge.jpg"
 “Why does it feel dry even when I’m in the mood?”  
 “And… should I be worried?”
 
-In India, vaginal discharge is often misunderstood, ignored, or linked to shame. Many women grow up thinking **wetness is embarrassing** and **dryness is a problem**without being told that both are often **normal, hormonal, and cyclical**.
+In India, vaginal discharge is often misunderstood, ignored, or linked to shame. Many women grow up thinking **wetness is embarrassing** and **dryness is a problem** — without being told that both are often **normal, hormonal, and cyclical**.
 
 Here’s the truth: **Vaginal wetness changes across your cycle for a reason.**  
-Understanding those changes helps you protect comfort, intimacy, and healthwithout panic.
+Understanding those changes helps you protect comfort, intimacy, and health without panic.
 
 
 
@@ -29,7 +29,7 @@ Understanding those changes helps you protect comfort, intimacy, and healthwitho
 
 * Why discharge increases mid-cycle and reduces later  
 * How estrogen and progesterone control lubrication  
-* What’s safe to use for comfortand what can quietly cause harm
+* What’s safe to use for comfort and what can quietly cause harm
 
 
 

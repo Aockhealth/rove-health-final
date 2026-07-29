@@ -55,13 +55,13 @@ const SECTIONS = [
   {
     title: "6. Shipping & Delivery",
     body: [
-      "[Placeholder: confirm shipping regions, carriers, and delivery timelines once checkout is live.]",
+      "We currently ship across India only. Orders are processed within 1–2 business days of confirmation and typically delivered within 3–7 business days, depending on your location. You will receive tracking information by email once your order ships.",
     ],
   },
   {
     title: "7. Returns, Refunds & Cancellations",
     body: [
-      "Because Balance is an ingestible supplement, opened products cannot be returned once delivered, except in the case of a manufacturing defect or damage in transit. [Placeholder: confirm the return window in days and refund process once checkout is live.]",
+      "Because Balance is an ingestible supplement, opened products cannot be returned once delivered, except in the case of a manufacturing defect or damage in transit. Claims for defective or damaged products must be reported within 7 days of delivery, with photo evidence, to team@rovehealth.in. Approved claims will be resolved via a replacement or refund to your original payment method.",
     ],
   },
   {

@@ -1,187 +1,347 @@
 import type { Metadata } from "next";
-import { Apple, BookOpen, Brain, Dumbbell, ShieldPlus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { PhoneMockup } from "@/components/app/PhoneMockup";
 import { DayTimeline } from "@/components/app/DayTimeline";
 import { ScreenshotGallery } from "@/components/app/ScreenshotGallery";
+import { MechanismChain, type MechanismStep } from "@/components/shop/MechanismChain";
+import { RuleDraw } from "@/components/shop/RuleDraw";
+import { ThreadDraw } from "@/components/shop/ThreadDraw";
 
 export const metadata: Metadata = {
   title: "The App | Rove Health",
   description:
-    "The Rove app is a hormonal lifestyle operating system: a daily plan for what to eat, how to move, and what to take, built for the Indian cycle.",
+    "The Rove app turns your cycle into a daily plan: what to eat, how to move, and what to take, built for the Indian cycle.",
 };
 
-const FEATURES = [
+const RECOGNITIONS = [
+  "You logged the same symptom for a year",
+  "The app gave you a date and stopped there",
+  "Nobody told you what to do with any of it",
+];
+
+const HOW_IT_WORKS: MechanismStep[] = [
   {
-    icon: Sparkles,
+    scene: "You give it two things.",
+    detail: "The date your last period started, and roughly how long your cycle usually runs.",
+  },
+  {
+    scene: "It works out where you are.",
+    detail: "Which phase today falls in, and which one is coming next.",
+  },
+  {
+    scene: "It reads your constraints.",
+    detail: "PMOS, thyroid, insulin resistance, vegetarian, all flagged once at onboarding.",
+  },
+  {
+    scene: "Then it writes the day.",
+    detail: "What to eat, how to move, what to take, for today, not for the month.",
+  },
+  {
+    scene: "And it keeps learning.",
+    detail: "Log what you actually felt, and next cycle's plan comes back different.",
+  },
+];
+
+const CAPABILITIES = [
+  {
     title: "Cycle Intelligence Engine",
     body: "Your last period date and cycle length become the input that drives every recommendation, not just a number on a screen.",
   },
   {
-    icon: Apple,
     title: "AI Diet Coach",
     body: "Fresh meal plans daily, built for Indian kitchens (jowar, bajra, ragi, sattu, dal), with an automatic iron boost during your period.",
   },
   {
-    icon: Dumbbell,
     title: "Phase-Synced Movement",
     body: "Push harder in Follicular and Ovulatory. Wind down with yoga and somatic flows in Luteal. Gentle movement during Menstrual.",
   },
   {
-    icon: Brain,
     title: "Insights Engine",
     body: "Predictive alerts before symptoms hit, like a nudge to cut caffeine three days before your Luteal phase begins.",
   },
   {
-    icon: ShieldPlus,
     title: "PMOS & Condition Modes",
     body: "Flag PMOS, thyroid, or insulin resistance at onboarding, and the plan adjusts: dairy deprioritised, anti-androgenic foods foregrounded.",
   },
   {
-    icon: BookOpen,
     title: "The Learn Library",
     body: "A science-backed editorial library, written for Indian bodies, from cycle-synced protein to the PMOS epidemic in India.",
   },
 ];
 
+const DAILY_OUTPUTS = ["What to eat", "How to move", "What to take", "What's coming next"];
+
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.rovehealth.app";
+
+function Masthead({ className }: { className?: string }) {
+  return (
+    <div className={className}>
+      <div className="h-0.5 w-full origin-left bg-obsidian animate-rule-draw" />
+      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-obsidian/12 pb-3">
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian">
+          The Cycle Sync App
+        </span>
+        <span className="font-sans text-[11px] uppercase tracking-[0.16em] text-obsidian/70">
+          iOS + Android
+        </span>
+        <span className="ml-auto font-sans text-[11px] uppercase tracking-[0.16em] text-obsidian/70">
+          Free · Now on Google Play
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
+  return (
+    <>
+      <RuleDraw />
+      <span className="mt-4 block font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
+        {eyebrow}
+      </span>
+      <h2 className="mt-3">{children}</h2>
+    </>
+  );
+}
+
 export default function AppPage() {
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-6 py-20 md:py-28">
-        <AnimatedBackground phases={["ovulatory", "menstrual"]} />
-        <div className="relative mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
-          <div>
-            <span
-              className="animate-fade-in font-sans text-xs font-semibold uppercase tracking-[0.14em] text-obsidian/50"
-            >
-              The Cycle Sync App
-            </span>
+    <>
+      {/* ─── 1. Hero ──────────────────────────────────────────── */}
+      <section className="relative bg-paper">
+        <Masthead className="px-6 pt-10 md:hidden" />
+
+        <div className="grid md:min-h-[calc(100svh-5rem)] md:grid-cols-[minmax(0,1fr)_42vw]">
+          <div className="order-first flex items-center justify-center bg-taupe-light px-6 py-14 md:order-last md:py-0">
+            <PhoneMockup priority className="md:w-[19rem] lg:w-[21rem]" />
+          </div>
+
+          <div className="flex flex-col justify-end px-6 pb-16 pt-10 md:pl-[7vw] md:pr-14 md:pb-[11vh] md:pt-[16vh]">
+            <Masthead className="hidden md:block" />
+
             <h1
-              className="animate-fade-in mt-4 font-sans text-4xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl"
-              style={{ animationDelay: "100ms" }}
+              className="animate-fade-in mt-8 max-w-[18ch] font-sans text-[2.55rem] font-semibold leading-[1.05] tracking-[-0.02em] text-obsidian md:text-6xl lg:text-[4.6rem] lg:leading-[0.98]"
+              style={{ animationDelay: "140ms" }}
             >
               Not a tracker.{" "}
-              <span className="font-serif italic font-medium">A hormonal lifestyle operating system.</span>
+              <span className="font-serif italic font-medium">
+                A plan for the day you&apos;re actually in.
+              </span>
             </h1>
+
             <p
-              className="animate-fade-in mt-4 font-sans text-base leading-relaxed text-obsidian/70"
-              style={{ animationDelay: "220ms" }}
+              className="animate-fade-in mt-7 max-w-[38ch] font-sans text-base leading-[1.75] text-obsidian/70 md:text-lg"
+              style={{ animationDelay: "280ms" }}
             >
-              Every morning, Rove gives you three things: what to eat, how to move, and what to
-              take, for the exact phase you&apos;re in. The third part of the Rove system, free to
-              use.
+              Every morning, Rove tells you what to eat, how to move, and what to take, for the
+              exact phase you&apos;re in. The third part of the Rove system, free to use.
             </p>
+
             <div
-              className="animate-fade-in mt-8 flex flex-wrap gap-4"
-              style={{ animationDelay: "340ms" }}
+              className="animate-fade-in mt-10 flex flex-wrap items-center gap-x-7 gap-y-4"
+              style={{ animationDelay: "400ms" }}
             >
-              <Button size="lg" disabled title="Coming soon to the App Store">
-                Download on the App Store
-              </Button>
-              <Button size="lg" variant="outline" disabled title="Coming soon to Google Play">
+              <Button size="lg" href={PLAY_STORE_URL}>
                 Get it on Google Play
               </Button>
+              <Button size="lg" variant="outline" disabled title="Coming soon to the App Store">
+                Download on the App Store
+              </Button>
             </div>
+
             <p
-              className="animate-fade-in mt-3 font-sans text-xs text-obsidian/50"
-              style={{ animationDelay: "420ms" }}
+              className="animate-fade-in mt-6 font-sans text-xs font-medium tracking-wide text-obsidian/70"
+              style={{ animationDelay: "500ms" }}
             >
-              Links go live at launch. Join the waitlist via{" "}
-              <a href="/contact" className="underline">
+              Android is live today. iOS is close behind. Join the waitlist via{" "}
+              <a
+                href="/contact"
+                className="underline decoration-obsidian/25 underline-offset-4 hover:decoration-obsidian"
+              >
                 Contact
               </a>
               .
             </p>
-          </div>
 
-          <div className="animate-fade-in flex justify-center" style={{ animationDelay: "200ms" }}>
-            <PhoneMockup />
+            <ul
+              className="animate-fade-in mt-11 border-t border-obsidian/12 md:grid md:grid-cols-2 md:gap-x-10"
+              style={{ animationDelay: "580ms" }}
+            >
+              {DAILY_OUTPUTS.map((item) => (
+                <li key={item} className="flex items-baseline gap-4 border-b border-obsidian/12 py-3">
+                  <span aria-hidden className="mt-1.5 h-1 w-1 shrink-0 bg-sage-teal" />
+                  <span className="font-sans text-sm text-obsidian/70">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* A day with Rove */}
-      <section className="bg-taupe-light px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-2xl text-center">
+      {/* ─── 2. Recognition (dark) ────────────────────────────── */}
+      <section className="bg-rove-plum px-6 py-32 md:py-40">
+        <div className="mx-auto max-w-3xl text-center">
           <Reveal>
-            <span className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-obsidian/50">
-              One Day, From The Inside
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-white-bone/70">
+              If this is your phone
+            </p>
+          </Reveal>
+
+          <div className="mt-12 flex flex-col gap-7 md:gap-9">
+            {RECOGNITIONS.map((line, i) => (
+              <Reveal key={line} delay={i * 200} className="duration-[1000ms]">
+                <p className="text-center font-serif text-2xl italic font-medium leading-snug text-white-bone/90 md:text-4xl">
+                  {line}
+                </p>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={620}>
+            <p className="mt-16 text-center font-sans text-2xl font-semibold leading-tight tracking-tight text-white-bone md:text-4xl">
+              Knowing what&apos;s coming was never the hard part.{" "}
+              <span className="font-serif italic font-medium">Knowing what to do about it is.</span>
+            </p>
+          </Reveal>
+
+          <ThreadDraw />
+        </div>
+      </section>
+
+      {/* ─── 3. How it works ──────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-6 py-24 md:py-32">
+        <Reveal className="md:ml-[6%]">
+          <SectionHeader eyebrow="How it works">
+            <span className="max-w-[26ch] font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
+              Two inputs in.{" "}
+              <span className="font-serif italic font-medium">A whole day out.</span>
             </span>
-            <h2 className="mt-3 font-serif text-3xl italic font-medium leading-tight text-obsidian md:text-4xl">
-              Priya, 28. Delhi. PMOS. Vegetarian. Luteal Day 5.
-            </h2>
+          </SectionHeader>
+        </Reveal>
+
+        <div className="mt-16 grid gap-14 md:grid-cols-[1fr_0.75fr] md:gap-20">
+          <Reveal>
+            <MechanismChain steps={HOW_IT_WORKS} />
+          </Reveal>
+
+          <Reveal delay={150}>
+            <p className="max-w-[30ch] font-sans text-xl font-semibold leading-snug tracking-tight text-obsidian md:text-2xl">
+              The same day handled four different ways, depending on where your body is in the
+              cycle.
+            </p>
+            <p className="mt-6 max-w-[38ch] font-sans text-sm leading-[1.7] text-obsidian/70">
+              Built around the Indian kitchen and the Indian cycle, not a Western template with the
+              names swapped out.
+            </p>
           </Reveal>
         </div>
-        <Reveal delay={150}>
-          <div className="mt-14">
+      </section>
+
+      {/* ─── 4. One day, from the inside ──────────────────────── */}
+      <section className="bg-taupe-light px-6 py-24 md:py-32">
+        <div className="mx-auto max-w-6xl">
+          <Reveal className="mx-auto max-w-3xl">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
+              Fig. 01 — One day, from the inside
+            </p>
+            <h2 className="mt-3 font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
+              Priya, 28. Delhi.{" "}
+              <span className="font-serif italic font-medium">Luteal Day 5.</span>
+            </h2>
+            <p className="mt-4 font-serif text-xl italic font-medium text-obsidian/70 md:text-2xl">
+              PMOS. Vegetarian. One ordinary Tuesday.
+            </p>
+          </Reveal>
+
+          <div className="mt-16">
             <DayTimeline />
           </div>
-        </Reveal>
+        </div>
       </section>
 
-      {/* Screenshot gallery */}
-      <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <div className="text-center">
-              <span className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-obsidian/50">
-                Inside The App
-              </span>
-              <h2 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-obsidian md:text-4xl">
-                A look at the real thing.
-              </h2>
+      {/* ─── 5. What it does ──────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-6 py-24 md:py-32">
+        <Reveal>
+          <SectionHeader eyebrow="What it does">
+            <span className="font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
+              Six things running underneath.{" "}
+              <span className="font-serif italic font-medium">One screen every morning.</span>
+            </span>
+          </SectionHeader>
+        </Reveal>
+
+        <div className="mt-16 grid gap-16 md:grid-cols-[1fr_0.62fr] md:gap-20">
+          <div>
+            {CAPABILITIES.map(({ title, body }, i) => (
+              <Reveal key={title} delay={i * 100}>
+                <div className="border-t border-obsidian/12 py-9 last:border-b md:py-11">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="font-sans text-2xl font-semibold tracking-tight text-obsidian md:text-3xl">
+                      {title}
+                    </span>
+                    <span className="shrink-0 font-sans text-[11px] tabular-nums tracking-[0.18em] text-obsidian/70">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <p className="mt-3 max-w-[52ch] font-sans text-sm leading-[1.75] text-obsidian/70 md:text-base">
+                    {body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={150}>
+            <div className="md:sticky md:top-28">
+              <PhoneMockup
+                src="/app-screenshots/blueprint-of-rhythm.jpg"
+                alt="The Rove app's Blueprint of Your Rhythm screen"
+                className="md:w-full md:max-w-[19rem]"
+              />
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* ─── 6. Inside the app ────────────────────────────────── */}
+      <section className="bg-white-bone px-6 py-24 md:py-32">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
+              Fig. 02 — Inside the app
+            </p>
+            <h2 className="mt-3 font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
+              A look at <span className="font-serif italic font-medium">the real thing.</span>
+            </h2>
+          </Reveal>
+
           <Reveal delay={120}>
-            <div className="mt-12">
+            <div className="mt-14">
               <ScreenshotGallery />
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Feature grid */}
-      <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <h2 className="text-center font-sans text-3xl font-semibold tracking-tight text-obsidian md:text-4xl">
-              Built to work alongside Balance.
-            </h2>
-          </Reveal>
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 md:grid-cols-3">
-            {FEATURES.map(({ icon: Icon, title, body }, i) => (
-              <Reveal key={title} delay={i * 80}>
-                <div className="h-full rounded-[20px] bg-white border border-obsidian/8 p-6 shadow-sm">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-obsidian text-white-bone">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="mt-4 font-sans text-lg font-semibold tracking-tight text-obsidian">
-                    {title}
-                  </h3>
-                  <p className="mt-2 font-sans text-sm leading-relaxed text-obsidian/70">{body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-obsidian px-6 py-20 text-center md:py-24">
-        <Reveal>
-          <h2 className="font-sans text-2xl font-semibold tracking-tight text-white-bone md:text-3xl">
-            The app is free. The system works better together.
+      {/* ─── 7. Close (dark) ──────────────────────────────────── */}
+      <section className="bg-rove-plum px-6 py-24 text-center md:py-32">
+        <Reveal className="mx-auto max-w-2xl">
+          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-sage-teal" />
+          <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-white-bone md:text-5xl">
+            The app is free.{" "}
+            <span className="font-serif italic font-medium">The tablet is the other half.</span>
           </h2>
-          <div className="mt-8">
+          <p className="mt-5 font-sans text-base leading-[1.8] text-white-bone/70 md:text-lg">
+            Rove tells you what your body needs today. Balance is what you take while it settles.
+          </p>
+          <div className="mt-10 flex justify-center">
             <Button size="lg" variant="secondary" href="/shop">
               Shop the supplements
             </Button>
           </div>
         </Reveal>
       </section>
-    </div>
+    </>
   );
 }

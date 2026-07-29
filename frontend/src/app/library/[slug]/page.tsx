@@ -172,6 +172,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             >
               {post.content}
             </ReactMarkdown>
+
+            <div className="mt-14 rounded-[16px] border border-obsidian/10 bg-taupe-light/40 p-5">
+              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/50">
+                A note on medical advice
+              </p>
+              <p className="mt-2 font-sans text-sm leading-relaxed text-obsidian/70">
+                This article is for general education and is not a substitute for professional
+                medical advice, diagnosis, or treatment. Always speak with a qualified doctor about
+                your symptoms, and never start, stop, or change a medication or supplement based on
+                what you read here.
+              </p>
+            </div>
           </article>
         </div>
       </div>

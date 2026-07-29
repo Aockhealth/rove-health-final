@@ -13,8 +13,6 @@ image: "/blog/the-libido-curve-hormones-desire.jpg"
 
 ### ***The Libido Curve: Hormones & Desire (without shame or guessing)***
 
-### 
-
 “Something must be wrong with me.”  
 “Why am I interested one week and completely off the next?”  
 “Is my relationship the problem?”
@@ -131,13 +129,13 @@ Desire responds better to safety than obligation.
 * Over-scheduling → slower evenings during PMS  
 * Silence → gentle communication about cycle needs
 
-4. **Cycle-Tracking Contraception: Planning Protection Without Ignoring Desire**  
-     
+### **4\. Cycle-Tracking Contraception: Planning Protection Without Ignoring Desire**
+
 * It’s normal to feel a push–pull between cycle-tracking rules and desire  
 * Cycle-based contraception works against a rhythm designed around conception  
 * Desire can’t be switched off just because a calendar says so  
 * You don’t need to feel stuck or conflicted  
-* With the right guidance, you can plan *around* your body by adjusting or combining contraceptive methods instead of fighting your cycle
+* With the right guidance, you can plan *around* your body — but any change to your contraceptive method should be made with your doctor, since effectiveness varies by method and cycle-tracking alone is not a reliable substitute for medical contraceptive guidance
 
 ### **5\. When to Check Further**
 

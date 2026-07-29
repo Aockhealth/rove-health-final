@@ -55,7 +55,7 @@ Because this disease is so quiet, doctors often miss it. But your body leaves cl
 
 In India, when a young woman complains of scanty periods, she is often told, *"You are stressing too much about exams/work,"* or *"Eat more dates and jaggery, it will come back."*
 
-**We need to stop normalizing this.** In a country where TB is endemic, unexplained infertility \+ scanty periods should be treated as **TB until proven otherwise**. Studies show that in some parts of India, nearly **50% of women with tubal infertility** actually have Genital TB.
+**We need to stop normalizing this.** In a country where TB is endemic, unexplained infertility \+ scanty periods are worth raising with your doctor as a reason to **actively rule out TB**, rather than leaving it unexamined. Studies show that in some parts of India, nearly **50% of women with tubal infertility** actually have Genital TB.
 
 **The "Good" News:** Unlike other causes of infertility, this is an infection. It can be treated.
 
@@ -120,7 +120,7 @@ No single test is perfect — diagnosis often relies on **clinical suspicion \+ 
 **4\. — Fertility After Genital TB**
 
 Fertility options depend on: Tubal damage, Uterine lining health, Age and Ovarian reserve.  
-Some women conceive naturally after treatment.Others may need assisted reproductive options.
+Some women conceive naturally after treatment. Others may need assisted reproductive options.
 
 A diagnosis of GTB does **not** mean motherhood is off the table — it means the plan needs to be personalised.
 
@@ -128,7 +128,7 @@ A diagnosis of GTB does **not** mean motherhood is off the table — it means th
 
 ### **🩺 Dr. Rove’s Note**
 
-"If your period has practically disappeared and you are struggling to conceive, do not let anyone tell you to 'just relax. Demand a TB test. 'It’s not a diagnosis to fear, but one that’s important to rule out early. A 'silent' disease needs a loud advocate — and that advocate is you."
+"If your period has practically disappeared and you are struggling to conceive, do not let anyone tell you to 'just relax.' Ask your doctor about a TB test. It’s not a diagnosis to fear, but one that’s important to rule out early. A 'silent' disease needs a loud advocate — and that advocate is you."
 
 
 
@@ -139,8 +139,8 @@ A diagnosis of GTB does **not** mean motherhood is off the table — it means th
 * Female genital tuberculosis overview  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/)  
 * GTB and infertility (Indian perspective)  
-  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6141832/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/)  
+  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6141832/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6141832/)  
 * Tubal damage in genital TB  
-  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6094536/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/)  
+  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6094536/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6094536/)  
 * Diagnostic challenges in GTB  
-  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5734871/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/)
+  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5734871/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5734871/)

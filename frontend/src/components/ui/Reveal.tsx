@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 export function Reveal({
   children,
@@ -13,16 +14,17 @@ export function Reveal({
   delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [seen, setSeen] = useState(false);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || reduced) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true);
+          setSeen(true);
           observer.disconnect();
         }
       },
@@ -31,11 +33,14 @@ export function Reveal({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [reduced]);
+
+  const visible = reduced || seen;
 
   return (
     <div
       ref={ref}
+      data-reveal
       className={cn(
         "transition-all duration-700 ease-out",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",

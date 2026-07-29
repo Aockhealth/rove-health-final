@@ -88,7 +88,7 @@ We have a cultural obsession with being "clean." When we feel an itch, our insti
 
 ### **The Fix: Starve the Yeast**
 
-**1\. The "Candida Cleanse" Diet** For 2 weeks, cut out **all** added sugar. Yes, even the sugar in your *chai*. This "starves" the yeast colony. If your itching significantly drops, you have found your trigger.
+**1\. Cutting Back on Added Sugar** For 2 weeks, cut out **all** added sugar. Yes, even the sugar in your *chai*. High blood sugar creates conditions yeast thrives in, so this is worth trying alongside — not instead of — proper treatment. If your symptoms ease, mention it to your doctor; if they persist or keep coming back, get assessed rather than continuing to self-test through diet, since recurrent infections can point to diabetes or another underlying cause.
 
 **2\. Probiotics: The Reinforcements** You need to rebuild the army of good bacteria.
 
@@ -112,11 +112,11 @@ We have a cultural obsession with being "clean." When we feel an itch, our insti
 * Recurrent vulvovaginal candidiasis — Clinical review  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/)  
 * Candida and glucose metabolism  
-  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809253/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/)  
+  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809253/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809253/)  
 * Diabetes and recurrent yeast infections  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3944668/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3944668/)  
 * Insulin resistance and fungal infections  
-  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7602453/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/)  
+  [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7602453/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7602453/)  
 * Diagnosis and management guidelines  
   [https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm](https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm)
 

@@ -12,14 +12,17 @@ export interface AccordionItemData {
 export function Accordion({
   items,
   defaultOpenIndex = 0,
+  variant = "default",
 }: {
   items: AccordionItemData[];
   defaultOpenIndex?: number | null;
+  variant?: "default" | "editorial";
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(defaultOpenIndex);
+  const isEditorial = variant === "editorial";
 
   return (
-    <div className="divide-y divide-obsidian/20">
+    <div className={cn("divide-y", isEditorial ? "divide-obsidian/12" : "divide-obsidian/20")}>
       {items.map((item, index) => {
         const isOpen = openIndex === index;
         return (
@@ -30,7 +33,14 @@ export function Accordion({
               className="flex w-full items-center justify-between gap-4 text-left"
               aria-expanded={isOpen}
             >
-              <span className="font-sans font-semibold tracking-tight text-xl text-obsidian">{item.question}</span>
+              <span
+                className={cn(
+                  "font-sans tracking-tight text-obsidian",
+                  isEditorial ? "text-base font-medium" : "text-xl font-semibold"
+                )}
+              >
+                {item.question}
+              </span>
               <ChevronDown
                 className={cn(
                   "h-5 w-5 shrink-0 text-obsidian transition-transform",
@@ -39,7 +49,12 @@ export function Accordion({
               />
             </button>
             {isOpen && (
-              <div className="mt-3 font-sans text-sm leading-relaxed text-obsidian/80 animate-fade-in">
+              <div
+                className={cn(
+                  "mt-3 font-sans leading-relaxed animate-fade-in",
+                  isEditorial ? "text-sm text-obsidian/70" : "text-sm text-obsidian/80"
+                )}
+              >
                 {item.answer}
               </div>
             )}
