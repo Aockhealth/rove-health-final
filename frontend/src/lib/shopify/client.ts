@@ -1,6 +1,6 @@
 import { LOCAL_PRODUCTS } from "@/data/commerce";
 import { mapProductsByHandle, mapShopifyCart } from "./mappers";
-import type { Cart, CartResponse, CommerceProduct, ShopifyUserError, ShopifyWarning } from "./types";
+import type { Cart, CartResponse, CommerceProduct, ShopifyUserError, ShopifyWarning, Money } from "./types";
 
 const PRODUCT_FRAGMENT = `
   id
@@ -88,7 +88,7 @@ function getStorefrontEndpoint(): string {
   return `https://${normalizedDomain}/api/${version}/graphql.json`;
 }
 
-async function shopifyFetch<T>(
+export async function shopifyFetch<T>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
@@ -301,3 +301,37 @@ export async function removeCartLine(cartId: string, lineId: string): Promise<Ca
     ...userErrorsFromPayload(data.cartLinesRemove),
   };
 }
+
+export async function getProductPricingByVariant(variantId: string): Promise<{ price: Money; compareAtPrice: Money | null } | null> {
+  if (!isShopifyConfigured()) return null;
+
+  const query = `
+    query getVariantPricing($id: ID!) {
+      node(id: $id) {
+        ... on ProductVariant {
+          price {
+            amount
+            currencyCode
+          }
+          compareAtPrice {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{ node: { price: Money; compareAtPrice: Money | null } | null }>(query, { id: variantId });
+    if (!data.node || !data.node.price) return null;
+    return {
+      price: data.node.price,
+      compareAtPrice: data.node.compareAtPrice,
+    };
+  } catch (error) {
+    console.error("[Shopify] Failed to fetch variant pricing", error);
+    return null;
+  }
+}
+

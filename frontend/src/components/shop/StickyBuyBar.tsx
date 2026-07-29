@@ -5,7 +5,15 @@ import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import type { LocalProduct } from "@/data/products";
 import { cn } from "@/lib/utils";
 
-export function StickyBuyBar({ product }: { product: LocalProduct }) {
+export function StickyBuyBar({
+  product,
+  livePrice,
+  compareAtPrice,
+}: {
+  product: LocalProduct;
+  livePrice?: string | null;
+  compareAtPrice?: string | null;
+}) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -32,7 +40,15 @@ export function StickyBuyBar({ product }: { product: LocalProduct }) {
           {product.title}
         </p>
         <p className="font-sans text-[11px] tabular-nums text-obsidian/70">
-          {product.unitCount ? `${product.unitCount} ${product.unitLabel} · ` : ""}₹{product.price}
+          {product.unitCount ? `${product.unitCount} ${product.unitLabel} · ` : ""}
+          {compareAtPrice ? (
+            <>
+              <span className="mr-1.5 opacity-60 line-through decoration-obsidian/40">₹{compareAtPrice}</span>
+              ₹{livePrice}
+            </>
+          ) : (
+            `₹${livePrice || product.price}`
+          )}
         </p>
       </div>
       <AddToCartButton product={product} />

@@ -13,6 +13,7 @@ import { ThreadDraw } from "@/components/shop/ThreadDraw";
 import { Cite } from "@/components/shop/Cite";
 import { ReferencesList, type ReferenceItem } from "@/components/shop/ReferencesList";
 import { FourJobs, type Job } from "@/components/shop/FourJobs";
+import { getProductPricingByVariant } from "@/lib/shopify/client";
 
 export const metadata: Metadata = {
   title: "Shop | Rove Health",
@@ -138,7 +139,17 @@ const REFERENCES: ReferenceItem[] = [
   },
 ];
 
-function Masthead({ featured, className }: { featured: (typeof LAUNCHED_PRODUCTS)[number]; className?: string }) {
+function Masthead({
+  featured,
+  className,
+  livePrice,
+  compareAtPrice,
+}: {
+  featured: (typeof LAUNCHED_PRODUCTS)[number];
+  className?: string;
+  livePrice?: string | null;
+  compareAtPrice?: string | null;
+}) {
   return (
     <div className={className}>
       <div className="h-0.5 w-full origin-left bg-obsidian animate-rule-draw" />
@@ -150,7 +161,15 @@ function Masthead({ featured, className }: { featured: (typeof LAUNCHED_PRODUCTS
           {featured.phaseLabel}
         </span>
         <span className="ml-auto font-sans text-[11px] uppercase tracking-[0.16em] tabular-nums text-obsidian/70">
-          {featured.unitCount} {featured.unitLabel} · ₹{featured.price}
+          {featured.unitCount} {featured.unitLabel} ·{" "}
+          {compareAtPrice ? (
+            <>
+              <span className="mr-1.5 opacity-60 line-through decoration-obsidian/40">₹{compareAtPrice}</span>
+              ₹{livePrice}
+            </>
+          ) : (
+            `₹${livePrice || featured.price}`
+          )}
         </span>
       </div>
     </div>
@@ -169,11 +188,23 @@ function SectionHeader({ eyebrow, children }: { eyebrow: string; children: React
   );
 }
 
-export default function ShopPage() {
+export default async function ShopPage() {
   const featured = LAUNCHED_PRODUCTS[0];
   const comingSoon = LOCAL_PRODUCTS.filter((product) => !product.launched);
 
   if (!featured) return null;
+
+  let livePrice: string | null = null;
+  let compareAtPrice: string | null = null;
+  if (featured.shopifyVariantId) {
+    const pricing = await getProductPricingByVariant(featured.shopifyVariantId);
+    if (pricing?.price) {
+      livePrice = pricing.price.amount.replace(/\.0+$/, "");
+      if (pricing.compareAtPrice) {
+        compareAtPrice = pricing.compareAtPrice.amount.replace(/\.0+$/, "");
+      }
+    }
+  }
 
   const keyIngredients = featured.ingredients
     .map((name) => ({
@@ -190,7 +221,7 @@ export default function ShopPage() {
     <>
       {/* ─── 1. Hero ──────────────────────────────────────────── */}
       <section id="shop-hero" className="relative bg-paper">
-        <Masthead featured={featured} className="px-6 pt-10 md:hidden" />
+        <Masthead featured={featured} className="px-6 pt-10 md:hidden" livePrice={livePrice} compareAtPrice={compareAtPrice} />
 
         <div className="grid md:min-h-[calc(100svh-5rem)] md:grid-cols-[minmax(0,1fr)_46vw] [@media(min-width:1900px)]:grid-cols-[minmax(0,1fr)_875px]">
           <div className="relative order-first h-[54svh] w-full overflow-hidden md:order-last md:h-auto">
@@ -209,7 +240,7 @@ export default function ShopPage() {
           </div>
 
           <div className="flex flex-col justify-end px-6 pb-16 pt-10 md:pl-[7vw] md:pr-14 md:pb-[11vh] md:pt-[16vh]">
-            <Masthead featured={featured} className="hidden md:block" />
+            <Masthead featured={featured} className="hidden md:block" livePrice={livePrice} compareAtPrice={compareAtPrice} />
 
             <h1
               className="animate-fade-in mt-8 max-w-[18ch] font-sans text-[2.55rem] font-semibold leading-[1.05] tracking-[-0.02em] text-obsidian md:text-6xl lg:text-[5rem] lg:leading-[0.98]"
@@ -571,7 +602,7 @@ export default function ShopPage() {
         </section>
       )}
 
-      <StickyBuyBar product={featured} />
+      <StickyBuyBar product={featured} livePrice={livePrice} compareAtPrice={compareAtPrice} />
     </>
   );
 }
