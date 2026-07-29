@@ -568,7 +568,12 @@ export default async function ShopPage() {
           <p className="mt-5 font-sans text-base leading-[1.8] text-white-bone/70 md:text-lg">{featured.goal}</p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-4">
             <span className="font-sans text-2xl font-semibold tabular-nums text-white-bone">
-              ₹{featured.price}
+              {compareAtPrice && (
+                <span className="mr-2 opacity-60 line-through decoration-white-bone/40 text-xl font-normal">
+                  ₹{compareAtPrice}
+                </span>
+              )}
+              ₹{livePrice || featured.price}
             </span>
             <AddToCartButton product={featured} />
           </div>
