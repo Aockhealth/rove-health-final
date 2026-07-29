@@ -74,17 +74,17 @@ type ShopifyGraphQlResponse<T> = {
 
 export function isShopifyConfigured(): boolean {
   return Boolean(
-    process.env.SHOPIFY_STORE_DOMAIN &&
-      process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN
+    (process.env.SHOPIFY_STORE_DOMAIN || process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN) &&
+      (process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN)
   );
 }
 
 function getStorefrontEndpoint(): string {
-  const domain = process.env.SHOPIFY_STORE_DOMAIN;
+  const domain = process.env.SHOPIFY_STORE_DOMAIN || process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN;
   if (!domain) throw new Error("SHOPIFY_STORE_DOMAIN is not configured");
 
   const normalizedDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const version = process.env.SHOPIFY_STOREFRONT_API_VERSION || "2026-04";
+  const version = process.env.SHOPIFY_STOREFRONT_API_VERSION || "2024-01";
   return `https://${normalizedDomain}/api/${version}/graphql.json`;
 }
 
@@ -92,7 +92,7 @@ export async function shopifyFetch<T>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
-  const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+  const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
   if (!token) throw new Error("SHOPIFY_STOREFRONT_ACCESS_TOKEN is not configured");
 
   const response = await fetch(getStorefrontEndpoint(), {
