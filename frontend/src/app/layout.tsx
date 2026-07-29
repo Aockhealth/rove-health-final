@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CartProvider } from "@/context/CartContext";
+import { CartDrawer } from "@/components/shop/CartDrawer";
 
 const workSans = Work_Sans({
   variable: "--font-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
+          <CartDrawer />
         </CartProvider>
       </body>
     </html>

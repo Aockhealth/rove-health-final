@@ -18,7 +18,7 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { totalQuantity } = useCart();
+  const { totalQuantity, openCart } = useCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-obsidian/8 bg-paper/90 backdrop-blur-md">
@@ -43,9 +43,10 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-5">
-          <Link
-            href="/cart"
-            aria-label="Cart"
+          <button
+            type="button"
+            onClick={openCart}
+            aria-label="Open cart"
             className="relative text-obsidian/80 hover:text-obsidian transition-colors"
           >
             <ShoppingBag className="h-5 w-5" />
@@ -54,7 +55,7 @@ export function SiteHeader() {
                 {totalQuantity}
               </span>
             )}
-          </Link>
+          </button>
           <button
             type="button"
             className="md:hidden text-obsidian"
