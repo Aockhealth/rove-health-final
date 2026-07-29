@@ -206,6 +206,12 @@ export default async function ShopPage() {
     }
   }
 
+  // Inject the live price into the product object so AddToCartButton gets the correct price
+  const liveProduct = {
+    ...featured,
+    price: livePrice ? parseInt(livePrice, 10) : featured.price,
+  };
+
   const keyIngredients = featured.ingredients
     .map((name) => ({
       name,
@@ -261,7 +267,7 @@ export default async function ShopPage() {
               className="animate-fade-in mt-10 flex flex-wrap items-center gap-x-7 gap-y-4"
               style={{ animationDelay: "400ms" }}
             >
-              <AddToCartButton product={featured} />
+              <AddToCartButton product={liveProduct} />
               <a
                 href="#formulation"
                 className="font-sans text-sm font-medium text-obsidian underline decoration-obsidian/25 underline-offset-4 hover:decoration-obsidian"
@@ -575,7 +581,7 @@ export default async function ShopPage() {
               )}
               ₹{livePrice || featured.price}
             </span>
-            <AddToCartButton product={featured} />
+            <AddToCartButton product={liveProduct} />
           </div>
           <p className="mt-6 font-sans text-[11px] uppercase tracking-[0.18em] text-white-bone/70">
             {featured.unitCount} {featured.unitLabel} per bottle · 1–2 a day
@@ -607,7 +613,7 @@ export default async function ShopPage() {
         </section>
       )}
 
-      <StickyBuyBar product={featured} livePrice={livePrice} compareAtPrice={compareAtPrice} />
+      <StickyBuyBar product={liveProduct} livePrice={livePrice} compareAtPrice={compareAtPrice} />
     </>
   );
 }

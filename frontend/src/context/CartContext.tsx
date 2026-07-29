@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export interface CartLineItem {
   handle: string;
@@ -18,6 +26,9 @@ interface CartContextValue {
   addItem: (item: Omit<CartLineItem, "quantity">, quantity?: number) => void;
   updateQuantity: (handle: string, quantity: number) => void;
   removeItem: (handle: string) => void;
+  isOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -26,6 +37,7 @@ const STORAGE_KEY = "rove-cart";
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLineItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -47,7 +59,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find((line) => line.handle === item.handle);
       if (existing) {
         return prev.map((line) =>
-          line.handle === item.handle ? { ...line, quantity: line.quantity + quantity } : line
+          line.handle === item.handle
+            ? { ...line, quantity: line.quantity + quantity, price: item.price }
+            : line
         );
       }
       return [...prev, { ...item, quantity }];
@@ -66,11 +80,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines((prev) => prev.filter((line) => line.handle !== handle));
   };
 
+  const openCart = useCallback(() => setIsOpen(true), []);
+  const closeCart = useCallback(() => setIsOpen(false), []);
+
+  // Close on Escape, and stop the page behind the drawer from scrolling.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   const value = useMemo<CartContextValue>(() => {
     const totalQuantity = lines.reduce((sum, l) => sum + l.quantity, 0);
     const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.price, 0);
-    return { lines, totalQuantity, subtotal, addItem, updateQuantity, removeItem };
-  }, [lines]);
+    return {
+      lines,
+      totalQuantity,
+      subtotal,
+      addItem,
+      updateQuantity,
+      removeItem,
+      isOpen,
+      openCart,
+      closeCart,
+    };
+  }, [lines, isOpen, openCart, closeCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
