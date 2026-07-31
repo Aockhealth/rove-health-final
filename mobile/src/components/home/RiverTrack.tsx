@@ -22,7 +22,7 @@ import {
 import * as Haptics from 'expo-haptics';
 
 export const iconMap: Record<string, any> = {
-  Moon, Sparkles: Star, Brain, Utensils, Activity, Leaf, Droplets, Dumbbell,
+  Moon, Brain, Utensils, Activity, Leaf, Droplets, Dumbbell,
   Zap, Sun, TrendingUp, Heart, Wind, Coffee, Soup, Fish, Carrot, Wheat,
   Drumstick, Shield, Pill, Home, FileText, Users, Mic, Image: ImageIcon,
   Lightbulb, Star, Music, Bike, Waves, Book, BookOpen, Smartphone, Clock,

@@ -1,6 +1,6 @@
 "use server";
 
-import { createCart } from "@/lib/shopify/client";
+import { createCart, getQuantityQuote } from "@/lib/shopify/client";
 import { getLocalProduct } from "@/data/products";
 
 export async function createShopifyCheckout(
@@ -21,4 +21,21 @@ export async function createShopifyCheckout(
   }
 
   return response.cart.checkoutUrl;
+}
+
+/**
+ * What Shopify will really charge for what's in the cart. Automatic discounts
+ * (like the 3-bottle bundle) are applied to the cart, not the variant, so the
+ * locally-summed subtotal can't see them — this asks Shopify instead.
+ */
+export async function quoteCart(
+  lines: { handle: string; quantity: number }[]
+): Promise<{ subtotal: number; total: number; discount: number } | null> {
+  if (!lines.length) return null;
+
+  const line = lines[0]; // Mirrors createShopifyCheckout: one primary product.
+  const product = getLocalProduct(line.handle);
+  if (!product?.shopifyVariantId) return null;
+
+  return getQuantityQuote(product.shopifyVariantId, line.quantity);
 }

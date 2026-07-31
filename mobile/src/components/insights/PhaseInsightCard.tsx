@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Droplets, Sparkles, Flame, Moon, Activity, Brain } from 'lucide-react-native';
+import { Droplets, Zap, Flame, Moon, Activity, Brain } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, FadeIn } from 'react-native-reanimated';
 
 type PhaseInsightCardProps = {
@@ -79,7 +79,7 @@ export function PhaseInsightCard({
 }: PhaseInsightCardProps) {
   const PhaseIcon = ({
     Menstrual: Droplets,
-    Follicular: Sparkles,
+    Follicular: Zap,
     Ovulatory: Flame,
     Luteal: Moon
   } as any)[phase] || Activity;

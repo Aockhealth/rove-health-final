@@ -1,13 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/context/CartContext";
+import { useRevealCart } from "@/hooks/useRevealCart";
 import type { LocalProduct } from "@/data/products";
 
 export function AddToCartButton({ product }: { product: LocalProduct }) {
   const { addItem } = useCart();
-  const router = useRouter();
+  const revealCart = useRevealCart();
 
   return (
     <Button
@@ -20,7 +20,7 @@ export function AddToCartButton({ product }: { product: LocalProduct }) {
           currency: product.currency,
           image: product.image,
         });
-        router.push("/cart");
+        revealCart();
       }}
     >
       Add to Cart

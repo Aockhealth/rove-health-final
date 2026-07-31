@@ -197,12 +197,14 @@ const styles = StyleSheet.create({
     fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
     letterSpacing: 0.1,
+    includeFontPadding: false,
   },
   subtitle: {
     fontSize: 10,
     fontFamily: 'Raleway-Medium',
     color: '#A8A29E',
     marginTop: 1,
+    includeFontPadding: false,
   },
   chipRow: {
     flexDirection: 'row',

@@ -59,14 +59,21 @@ if (Platform.OS === 'android') {
   NavigationBar.setButtonStyleAsync('dark');
 }
 
-// Set global default font for Text and TextInput
+// Set global default font for Text and TextInput. allowFontScaling is locked
+// off — the brand layout (fixed-padding pills, justify-between card stacks)
+// breaks against the OS font-size setting (e.g. OnePlus/OxygenOS ships with
+// a larger default than stock Android), so text is pinned to our own sizes.
+// includeFontPadding is also disabled (Android-only, no-op on iOS) — with
+// custom Google Fonts, Android's default extra glyph padding varies by OEM
+// font renderer and was inflating line height enough to throw off the
+// fixed-padding pills and the card layouts that depend on measured text height.
 (Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.style = { fontFamily: 'Raleway-Medium' };
-(Text as any).defaultProps.maxFontSizeMultiplier = 1.2;
+(Text as any).defaultProps.style = { fontFamily: 'Raleway-Medium', includeFontPadding: false };
+(Text as any).defaultProps.allowFontScaling = false;
 
 (TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
-(TextInput as any).defaultProps.style = { fontFamily: 'Raleway-Medium' };
-(TextInput as any).defaultProps.maxFontSizeMultiplier = 1.2;
+(TextInput as any).defaultProps.style = { fontFamily: 'Raleway-Medium', includeFontPadding: false };
+(TextInput as any).defaultProps.allowFontScaling = false;
 
 // No-ops safely with an empty DSN (see .env comment) — enable() only flips on
 // once a real Sentry project exists and EXPO_PUBLIC_SENTRY_DSN is set.

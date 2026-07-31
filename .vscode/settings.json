@@ -6,5 +6,6 @@
     "typescript.preferences.includePackageJsonAutoImports": "off",
     "search.exclude": {
         "**/mobile/node_modules": true
-    }
+    },
+    "css.lint.unknownAtRules": "ignore"
 }

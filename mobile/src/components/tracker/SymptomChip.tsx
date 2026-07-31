@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontFamily: 'Raleway-Medium',
+    includeFontPadding: false,
   },
   labelUnselected: {
     color: '#2D2420',

@@ -9,11 +9,11 @@ import {
   FileSearch,
   FlaskConical,
   Flower2,
+  Info,
   Leaf,
   Moon,
   Pill,
-  Sparkles,
-  Sun,
+  Syringe,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ const DOT: Record<string, string> = {
   balance: "bg-rove-gold",
 };
 
-const ICON_KEYWORDS: Array<[string, typeof Sparkles]> = [
+const ICON_KEYWORDS: Array<[string, typeof Info]> = [
   ["iron", Droplet],
   ["ferrous", Droplet],
   ["shatavari", Leaf],
@@ -46,7 +46,7 @@ const ICON_KEYWORDS: Array<[string, typeof Sparkles]> = [
 function iconFor(name: string) {
   const lower = name.toLowerCase();
   const match = ICON_KEYWORDS.find(([keyword]) => lower.includes(keyword));
-  return match ? match[1] : Sparkles;
+  return match ? match[1] : Info;
 }
 
 function findFormulationDetail(
@@ -58,7 +58,6 @@ function findFormulationDetail(
 }
 
 const STANDARDS = [
-  { icon: FlaskConical, label: "Third-Party Tested" },
   { icon: Building2, label: "Made in GMP-Approved Facility" },
   { icon: FileSearch, label: "Research-Backed Doses" },
   { icon: Pill, label: "Bioavailable Formats" },

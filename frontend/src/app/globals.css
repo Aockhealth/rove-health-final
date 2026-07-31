@@ -7,12 +7,14 @@
   /* Rove brand colors — mirrors rove-health/mobile/tailwind.config.js */
   --color-paper: #faf9f6;
   --color-white-bone: #fdfcfb;
-  --color-obsidian: #17140f;
+  --color-obsidian: #1a1a1a;
 
-  /* Muted neutral system — the site's real base palette */
-  --color-taupe: #cabaa9;
-  --color-taupe-light: #ece4da;
-  --color-taupe-dark: #a3907d;
+  /* Muted neutral system — remapped onto the app's own neutrals
+     (rove-stone / rove-cream) so the site's surfaces read as the same
+     material as the app instead of an invented tan/beige family. */
+  --color-taupe: #a8a29e;
+  --color-taupe-light: #f9f9f5;
+  --color-taupe-dark: #a8a29e;
 
   --color-phase-menstrual: #af6b6b;
   --color-phase-follicular: #8daa9d;
@@ -28,10 +30,13 @@
   --color-rove-peach: #f4dcd6;
 
   /* The confident accent — used sparingly, like a single pop of color */
-  --color-rove-gold: #c68f3f;
+  --color-rove-gold: #d4a25f;
 
-  /* Dark rose — a deliberate mood break for the "problem" moment */
-  --color-rove-plum: #4a2f32;
+  /* Dark mood break for the "problem" moment — a darkened 50/50 blend of
+     rove-red + lavender-soft, the same bookend pair used for the primary
+     button gradient, so this traces to the real palette instead of being
+     an invented one-off. */
+  --color-rove-plum: #342a30;
 
   --color-dusty-rose: #c97b7b;
   --color-dusty-rose-light: #f5e8e8;
@@ -40,14 +45,46 @@
   --color-lavender-soft: #7b82a8;
   --color-lavender-light: #eceef5;
 
+  /* App Phase Gradients */
+  --color-grad-menstrual-start: #e2c3c3;
+  --color-grad-menstrual-end: #ffffff;
+  --color-grad-follicular-start: #cde0d7;
+  --color-grad-follicular-end: #ffffff;
+  --color-grad-ovulatory-start: #e8d6bd;
+  --color-grad-ovulatory-end: #ffffff;
+  --color-grad-luteal-start: #e5e7f0;
+  --color-grad-luteal-end: #ffffff;
+
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
   --font-label: var(--font-sans);
 }
 
+@utility bg-gradient-menstrual {
+  background: linear-gradient(135deg, var(--color-grad-menstrual-start), var(--color-grad-menstrual-end));
+}
+@utility bg-gradient-follicular {
+  background: linear-gradient(135deg, var(--color-grad-follicular-start), var(--color-grad-follicular-end));
+}
+@utility bg-gradient-ovulatory {
+  background: linear-gradient(135deg, var(--color-grad-ovulatory-start), var(--color-grad-ovulatory-end));
+}
+@utility bg-gradient-luteal {
+  background: linear-gradient(135deg, var(--color-grad-luteal-start), var(--color-grad-luteal-end));
+}
+
+@utility bg-4-phase-gradient {
+  background: linear-gradient(135deg, 
+    var(--color-grad-menstrual-start) 0%, 
+    var(--color-grad-follicular-start) 33%, 
+    var(--color-grad-ovulatory-start) 66%, 
+    var(--color-grad-luteal-start) 100%
+  );
+}
+
 :root {
   --background: #faf9f6;
-  --foreground: #17140f;
+  --foreground: #1a1a1a;
 
   --phase-menstrual-rgb: 175, 107, 107;
   --phase-follicular-rgb: 141, 170, 157;
@@ -144,6 +181,29 @@ body::after {
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out both;
+}
+
+/* --- Staggered entrance that cannot hide content ---------------------------
+   `fade-in` animates opacity with a `both` fill, so its *backwards* fill pins
+   the element at opacity 0 for the whole of its animation-delay. If the
+   animation never runs — tab backgrounded during load, bfcache restore,
+   compositor throttling — the element stays at opacity 0 forever and the copy
+   is simply gone. That is fine for decoration and unacceptable for headlines.
+
+   `rise-in` animates transform only. Worst case the text sits 10px low and is
+   still perfectly readable. Use this for anything a visitor must actually see,
+   and never pair `animate-fade-in` with a delay on critical copy. */
+@keyframes rise-in {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- Phase orb, matches the app's PhaseOrbRing --- */

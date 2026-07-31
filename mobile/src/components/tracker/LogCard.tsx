@@ -226,12 +226,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'CormorantGaramond-SemiBold',
     color: '#2D2420',
+    includeFontPadding: false,
   },
   subtitle: {
     fontSize: 12,
     fontFamily: 'Raleway-Regular',
     color: '#A8A29E',
     marginTop: 2,
+    includeFontPadding: false,
   },
   body: {
     paddingHorizontal: 16,

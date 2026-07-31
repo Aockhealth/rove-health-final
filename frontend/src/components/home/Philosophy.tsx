@@ -1,58 +1,68 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/ui/Reveal";
 
+/**
+ * Four phases, no photography. Each line is the action that phase asks for,
+ * which is also what the formula covering it is dosed to do.
+ */
 const MOMENTS = [
   {
     phase: "Menstrual",
-    color: "text-phase-menstrual",
-    image: "/brand/phases/menstrual.jpg",
-    line: "A time for inward reflection, deep rest, and honoring your body's sacred reset.",
+    text: "text-phase-menstrual",
+    bar: "bg-phase-menstrual",
+    line: "Iron leaves. Replace it.",
   },
   {
     phase: "Follicular",
-    color: "text-phase-follicular",
-    image: "/brand/phases/follicular-v2.jpg",
-    line: "A quiet return of energy: clarity, momentum, and the pull to build again.",
+    text: "text-phase-follicular",
+    bar: "bg-phase-follicular",
+    line: "Energy climbs. Build on it.",
   },
   {
     phase: "Ovulatory",
-    color: "text-phase-ovulatory-text",
-    image: "/brand/phases/ovulatory.jpg",
-    line: "Peak vitality. You are radiant, communicative, and vibrating with confidence.",
+    text: "text-phase-ovulatory-text",
+    bar: "bg-phase-ovulatory",
+    line: "Output peaks. Protect it.",
   },
   {
     phase: "Luteal",
-    color: "text-phase-luteal",
-    image: "/brand/phases/luteal.jpg",
-    line: "A gentle wind-down: permission to slow your pace before the cycle begins again.",
+    text: "text-phase-luteal",
+    bar: "bg-phase-luteal",
+    line: "PMS builds. Ease it.",
   },
 ];
 
 export function Philosophy() {
   return (
-    <section className="px-6 py-20 md:py-28">
-      <div className="mx-auto max-w-5xl">
-        <div className="mx-auto max-w-xl text-center">
-          <span className="font-sans text-xs font-semibold uppercase tracking-[0.1em] text-obsidian/50">
-            Living in Sync
+    <section className="bg-gradient-follicular px-6 py-14 md:py-16">
+      <div className="mx-auto max-w-4xl">
+        <Reveal className="mx-auto max-w-xl text-center">
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/50">
+            Why phases
           </span>
-          <h2 className="mt-3 font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-4xl">
-            Every phase asks something different of you.{" "}
-            <span className="font-serif italic font-medium">That&apos;s not a flaw to fix.</span>
+          <h2 className="mt-2 font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-3xl">
+            Your body runs on four phases.{" "}
+            <span className="font-serif italic font-medium">
+              Most supplements ignore all of them.
+            </span>
           </h2>
-        </div>
+        </Reveal>
 
-        <div className="mt-14 grid gap-6 grid-cols-2 md:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 md:gap-x-8">
           {MOMENTS.map((moment, i) => (
-            <Reveal key={moment.phase} delay={i * 120} className="flex flex-col">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[20px]">
-                <Image src={moment.image} alt={moment.phase} fill className="object-cover" />
-              </div>
-              <span className={cn("mt-4 font-sans text-xs font-semibold uppercase tracking-[0.1em]", moment.color)}>
+            <Reveal key={moment.phase} delay={i * 90} className="flex flex-col">
+              <span aria-hidden className={cn("h-[3px] w-full rounded-full", moment.bar)} />
+              <span
+                className={cn(
+                  "mt-4 font-sans text-[11px] font-semibold uppercase tracking-[0.12em]",
+                  moment.text
+                )}
+              >
                 {moment.phase}
               </span>
-              <p className="mt-2 font-serif text-lg italic leading-snug text-obsidian">{moment.line}</p>
+              <p className="mt-2 font-serif text-lg italic font-medium leading-snug text-obsidian md:text-xl">
+                {moment.line}
+              </p>
             </Reveal>
           ))}
         </div>

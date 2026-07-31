@@ -335,3 +335,53 @@ export async function getProductPricingByVariant(variantId: string): Promise<{ p
   }
 }
 
+
+/**
+ * What Shopify would actually charge for `quantity` of a variant, discounts
+ * included. Automatic discounts (e.g. the 3-bottle bundle) are cart-level, so
+ * they exist nowhere on the variant — the only way to learn the real total is
+ * to price a cart and read it back. Nothing here is persisted; the cart is a
+ * throwaway used as a quote, and the rate is never hardcoded, so changing the
+ * discount in Shopify changes the page.
+ */
+export async function getQuantityQuote(
+  variantId: string,
+  quantity: number
+): Promise<{ subtotal: number; total: number; discount: number } | null> {
+  if (!isShopifyConfigured()) return null;
+
+  const mutation = `
+    mutation RoveQuote($lines: [CartLineInput!]!) {
+      cartCreate(input: { lines: $lines }) {
+        cart {
+          cost {
+            subtotalAmount { amount }
+            totalAmount { amount }
+          }
+        }
+        userErrors { field message }
+      }
+    }
+  `;
+
+  try {
+    const data = await shopifyFetch<{
+      cartCreate: {
+        cart: { cost: { subtotalAmount: Money; totalAmount: Money } } | null;
+        userErrors: ShopifyUserError[];
+      };
+    }>(mutation, { lines: [{ merchandiseId: variantId, quantity }] });
+
+    const cost = data.cartCreate.cart?.cost;
+    if (!cost) return null;
+
+    const subtotal = Number(cost.subtotalAmount.amount);
+    const total = Number(cost.totalAmount.amount);
+    if (!Number.isFinite(subtotal) || !Number.isFinite(total)) return null;
+
+    return { subtotal, total, discount: Math.max(0, subtotal - total) };
+  } catch (error) {
+    console.error("[Shopify] Failed to quote quantity", error);
+    return null;
+  }
+}

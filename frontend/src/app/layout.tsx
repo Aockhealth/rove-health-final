@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Work_Sans } from "next/font/google";
+import { Cormorant_Garamond, Raleway } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CartProvider } from "@/context/CartContext";
 import { CartDrawer } from "@/components/shop/CartDrawer";
 
-const workSans = Work_Sans({
+const raleway = Raleway({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${workSans.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${raleway.variable} ${cormorant.variable} h-full scroll-smooth antialiased`}
     >
       <head>
         <noscript>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ShieldCheck, Sparkles, Stethoscope } from "lucide-react";
+import { FlaskConical, Stethoscope } from "lucide-react";
 
 function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -16,8 +16,7 @@ const FOOTER_GROUPS = [
   {
     title: "Shop",
     links: [
-      { href: "/shop", label: "All Products" },
-      { href: "/shop/cycle-sync-balance", label: "Cycle Sync Balance" },
+      { href: "/shop", label: "Balance" },
     ],
   },
   {
@@ -39,8 +38,7 @@ const FOOTER_GROUPS = [
 
 const TRUST_MARKS = [
   { icon: Stethoscope, label: "Doctor-Formulated" },
-  { icon: Sparkles, label: "Clinically-Backed" },
-  { icon: ShieldCheck, label: "Third-Party Tested" },
+  { icon: FlaskConical, label: "Clinically-Backed" },
 ];
 
 export function SiteFooter() {

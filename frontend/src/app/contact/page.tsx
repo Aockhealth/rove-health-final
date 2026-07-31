@@ -22,7 +22,7 @@ export default function ContactPage() {
 
       <a
         href="mailto:team@rovehealth.in"
-        className="mt-8 inline-flex items-center gap-2 rounded-full bg-obsidian px-6 py-3 font-label text-sm font-medium uppercase tracking-wide text-white-bone hover:bg-obsidian"
+        className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-rove-red to-lavender-soft px-6 py-3 font-label text-sm font-medium uppercase tracking-wide text-white-bone hover:brightness-110"
       >
         <Mail className="h-4 w-4" />
         team@rovehealth.in

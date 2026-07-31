@@ -10,6 +10,14 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  // /shop is now the Balance product page itself — only one product is live.
+  // These keep previously-shared links and search results out of a 404.
+  async redirects() {
+    return [
+      { source: "/shop/cycle-sync-balance", destination: "/shop", permanent: true },
+      { source: "/shop/cycle-sync", destination: "/shop", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

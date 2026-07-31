@@ -119,14 +119,18 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
           style={StyleSheet.absoluteFillObject}
         />
 
-        <View className="p-5 justify-between" style={{ minHeight: 180 }}>
+        <View className="p-5" style={{ minHeight: 180 }}>
           <AnimatedWatermark icon={Icon} color={color} itemKey={itemKey} />
 
-          <Text className="text-[11px] font-extrabold uppercase tracking-[2px] mt-1" style={{ color: theme.color }}>{label}</Text>
+          {/* Top half: label only. */}
+          <View className="flex-1">
+            <Text className="text-[11px] font-extrabold uppercase tracking-[2px] mt-1" style={{ color: theme.color }}>{label}</Text>
+          </View>
 
-          <View className="mt-8">
-            <View className="flex-row items-center justify-between mb-1.5">
-              <Text numberOfLines={2} className="text-[17px] text-rove-charcoal leading-tight flex-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+          {/* Bottom half: title + description, anchored to the bottom of this half. */}
+          <View className="flex-1 justify-end">
+            <View className="flex-row items-start justify-between mb-1.5">
+              <Text numberOfLines={2} className="text-[17px] text-rove-charcoal leading-tight flex-1" style={{ fontFamily: 'CormorantGaramond-Bold', includeFontPadding: false }}>
                 {snapshot[itemKey].title}
               </Text>
               <ChevronRight size={14} color="rgba(0,0,0,0.15)" style={{ marginLeft: 4 }} />

@@ -51,7 +51,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
   {
     handle: "cycle-sync-rise",
     launched: false,
-    title: "Cycle Sync Rise",
+    title: "Rise",
     phaseLabel: "Menses + Follicular",
     phaseVariant: "follicular",
     tagline: "For the build: energy, clarity, and momentum as your body moves into its cycle.",
@@ -194,7 +194,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
   {
     handle: "cycle-sync-restore",
     launched: false,
-    title: "Cycle Sync Restore",
+    title: "Restore",
     phaseLabel: "Ovulatory + Luteal",
     phaseVariant: "luteal",
     tagline: "For the wind-down: calm, comfort, and steadiness through your luteal phase.",
@@ -302,7 +302,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
   {
     handle: "cycle-sync-balance",
     launched: true,
-    title: "Cycle Sync Balance",
+    title: "Balance",
     phaseLabel: "Irregular Cycles + PMOS",
     phaseVariant: "balance",
     tagline: "For the reset: bringing structure back to cycles that don't follow a predictable rhythm.",
@@ -316,8 +316,6 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
       title: "The clinically-studied 40:1 ratio",
       detail:
         "Seven ratios were tested head-to-head in women with PMOS-related anovulation. At 40:1, 5 of 8 women resumed menstruation, the strongest result of any ratio studied.",
-      caveat:
-        "A comparison study, not a guarantee: 8 women per arm, open-label, and about four times this tablet's total inositol dose. But of every ratio compared, 40:1 is the one the data points to.",
     },
     ingredients: ["Myo-Inositol", "D-Chiro-Inositol", "Berberine HCl", "N-Acetyl-Cysteine (NAC)"],
     formulation: [
@@ -415,14 +413,19 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
           "No. Balance is built for anyone with irregular cycles, though its insulin-sensitising ingredients are especially studied for PMOS.",
       },
       {
-        question: "How is Balance different from Rise and Restore?",
+        question: "When do I take it?",
         answer:
-          "Rise and Restore are phase-timed to a regular 28-day cycle. Balance is taken daily regardless of cycle day, since irregular cycles don't have a predictable Day 1.",
+          "One to two tablets daily, or as directed by your dietician. There's no phase to time it to — irregular cycles don't have a predictable Day 1 to count from.",
       },
       {
-        question: "Can I take Balance alongside Rise or Restore?",
+        question: "Can I take it with my prescription?",
         answer:
-          "Check with your doctor first if you're considering combining formulas, since some ingredients overlap.",
+          "Check with your doctor first. Balance is a supplement, not a medicine, and we don't market it as a replacement for treatment.",
+      },
+      {
+        question: "Is it safe while pregnant or breastfeeding?",
+        answer:
+          "Speak to your doctor before starting. We'd say the same for anyone already on prescription medication.",
       },
     ],
     price: 1599,
@@ -430,6 +433,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
     image: "/product/balance-bottle.jpg",
     gallery: [
       "/product/balance-stone-sage.jpg",
+      "/product/balance-supplement-facts.jpg",
       "/product/balance-box-shelf.jpg",
       "/product/balance-counter.jpg",
       "/product/balance-held.jpg",

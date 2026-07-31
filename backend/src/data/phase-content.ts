@@ -179,7 +179,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
         },
         fuel: [
             { title: "Iron-Rich Sources", desc: "Blood Replenishment", icon: "Droplets", scientific_benefit: "Crucial to replenish hemoglobin lost during menstruation and prevent fatigue." },
-            { title: "Magnesium", desc: "Muscle Relaxation", icon: "Sparkles", scientific_benefit: "Natural muscle relaxant that reduces uterine contractions (cramps) and promotes sleep." },
+            { title: "Magnesium", desc: "Muscle Relaxation", icon: "Heart", scientific_benefit: "Natural muscle relaxant that reduces uterine contractions (cramps) and promotes sleep." },
             { title: "Omega-3 Fatty Acids", desc: "Anti-Inflammatory", icon: "Fish", scientific_benefit: "Inhibits prostaglandin production to significantly lower inflammation and pain sensitivity." },
             { title: "Warming Foods", desc: "Circulation", icon: "Soup", scientific_benefit: "Improves pelvic blood flow and prevents stagnation-related clotting and pain." }
         ],
@@ -201,7 +201,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
             { title: "Reading", desc: "Quiet", icon: "BookOpen" },
             { title: "Audiobook", desc: "Relax", icon: "Headphones" },
             { title: "Phone Putaway", desc: "Detox", icon: "Smartphone" },
-            { title: "Face Mask", desc: "Self Care", icon: "Sparkles" }
+            { title: "Face Mask", desc: "Self Care", icon: "Smile" }
         ],
         snapshot: [
             {

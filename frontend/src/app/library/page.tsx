@@ -44,7 +44,7 @@ export default function LibraryPage() {
             <div className="flex items-center gap-3 pt-4">
               <Link
                 href={`/library/${featured.slug}`}
-                className="flex items-center gap-2 rounded-xl bg-obsidian px-8 py-3 font-sans font-bold text-white-bone shadow-md transition-all hover:bg-black active:scale-95"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-rove-red to-lavender-soft px-8 py-3 font-sans font-bold text-white-bone shadow-md transition-all hover:brightness-110 active:scale-95"
               >
                 <Play className="h-5 w-5 fill-white-bone" /> Read Now
               </Link>

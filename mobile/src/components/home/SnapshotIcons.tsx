@@ -124,45 +124,75 @@ export function MindSynapse({ color = '#64748B', size = 90 }: IconProps) {
   );
 }
 
-/* ─── BODY: DNA ladder with pulsing rungs ─── */
+/* ─── BODY: Scrolling heartbeat / metabolic pulse line ─── */
+// One repeating unit is 100 SVG units wide — matching the ~100-unit window
+// actually visible in the icon's clipped frame (300-unit viewBox / 3, same
+// as HormoneWave's geometry). The spike (up) and dip (down) are equal
+// distance from the baseline and centered in the unit with flat padding on
+// both sides — a lopsided taller-spike/shallower-dip shape reads as
+// "climbing" rather than pulsing level, so magnitude is kept symmetric.
+const PULSE_UNIT: [number, number][] = [
+  [0, 50], [35, 50], [42, 20], [49, 50], [56, 80], [63, 50], [100, 50],
+];
+const PULSE_UNIT_WIDTH = 100;
+const PULSE_REPEATS = 3;
+
+function buildPulsePath(amplitudeScale: number) {
+  const points: [number, number][] = [];
+  for (let r = 0; r < PULSE_REPEATS; r++) {
+    for (const [dx, dy] of PULSE_UNIT) {
+      const x = r * PULSE_UNIT_WIDTH + dx;
+      const y = 50 + (dy - 50) * amplitudeScale;
+      if (points.length && points[points.length - 1][0] === x) continue;
+      points.push([x, y]);
+    }
+  }
+  return points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ');
+}
+
+const PULSE_PATH_PRIMARY = buildPulsePath(1);
+const PULSE_PATH_SECONDARY = buildPulsePath(0.5);
+
 export function BodyDNA({ color = '#10B981', size = 90 }: IconProps) {
-  const breathe = useSharedValue(1);
+  const tx = useSharedValue(0);
 
   useEffect(() => {
-    breathe.value = withRepeat(
-      withTiming(1.06, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+    // One unit width in pixels: PULSE_UNIT_WIDTH * (size * 3 / 300) = size.
+    tx.value = withRepeat(
+      withTiming(-size, { duration: 3000, easing: Easing.linear }),
       -1,
-      true
+      false
     );
-  }, []);
+  }, [size]);
 
-  const breatheStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: breathe.value }],
+  const scrollStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: tx.value }],
   }));
 
-  const rows = [10, 30, 50, 70, 90];
-
   return (
-    <View style={{ width: size, height: size }}>
-      <Animated.View style={[{ width: '100%', height: '100%' }, breatheStyle]}>
-        <Svg viewBox="0 0 100 100" width="100%" height="100%">
-          {/* Vertical rails */}
-          <Line x1={30} y1={0} x2={30} y2={100} stroke={color} strokeWidth={4} opacity={0.4} />
-          <Line x1={70} y1={0} x2={70} y2={100} stroke={color} strokeWidth={4} opacity={0.4} />
-          {/* Horizontal rungs */}
-          {rows.map((y, i) => (
-            <Line
-              key={i}
-              x1={30}
-              y1={y}
-              x2={70}
-              y2={y}
-              stroke={color}
-              strokeWidth={7}
-              strokeLinecap="round"
-              opacity={0.5 + i * 0.1}
-            />
-          ))}
+    <View style={{ width: size, height: size, overflow: 'hidden' }}>
+      <Animated.View style={[{ width: size * 3, height: size, position: 'absolute' }, scrollStyle]}>
+        <Svg viewBox="0 0 300 100" width="100%" height="100%">
+          {/* Fainter echo trace, dampened amplitude, sits behind */}
+          <Path
+            d={PULSE_PATH_SECONDARY}
+            stroke={color}
+            strokeWidth={4}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.4}
+          />
+          {/* Primary bold pulse */}
+          <Path
+            d={PULSE_PATH_PRIMARY}
+            stroke={color}
+            strokeWidth={8}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.85}
+          />
         </Svg>
       </Animated.View>
     </View>

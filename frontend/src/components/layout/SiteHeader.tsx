@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
+import { useRevealCart } from "@/hooks/useRevealCart";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
@@ -18,7 +19,8 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { totalQuantity, openCart } = useCart();
+  const { totalQuantity } = useCart();
+  const revealCart = useRevealCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-obsidian/8 bg-paper/90 backdrop-blur-md">
@@ -45,7 +47,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-5">
           <button
             type="button"
-            onClick={openCart}
+            onClick={revealCart}
             aria-label="Open cart"
             className="relative text-obsidian/80 hover:text-obsidian transition-colors"
           >

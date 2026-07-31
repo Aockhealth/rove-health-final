@@ -8,7 +8,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-obsidian text-white-bone hover:bg-black",
+        default:
+          "bg-gradient-to-br from-rove-red to-lavender-soft text-white-bone hover:brightness-110",
         outline: "border border-obsidian/25 text-obsidian hover:bg-obsidian/5",
         ghost: "text-obsidian hover:bg-obsidian/5",
         secondary: "bg-taupe-light text-obsidian hover:bg-taupe/50",
