@@ -49,7 +49,7 @@ export function MechanismDiagram({ className }: { className?: string }) {
           const ly = center + (radius + labelOffset) * Math.sin(angleRad);
 
           // Adjust text anchor based on x position
-          let textAnchor = "middle";
+          let textAnchor: "middle" | "start" | "end" = "middle";
           if (Math.abs(Math.cos(angleRad)) > 0.1) {
             textAnchor = Math.cos(angleRad) > 0 ? "start" : "end";
           }
