@@ -31,6 +31,8 @@ import { Cite } from "@/components/shop/Cite";
 import { ReferencesList, type ReferenceItem } from "@/components/shop/ReferencesList";
 import { getProductPricingByVariant, getQuantityQuote } from "@/lib/shopify/client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Balance | Rove Health",
   description:
