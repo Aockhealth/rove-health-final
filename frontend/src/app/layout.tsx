@@ -20,9 +20,26 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Rove Health | Live in Sync",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://rovehealth.in"),
+  title: {
+    template: "%s | Rove Health",
+    default: "Rove Health | Live in Sync",
+  },
   description:
     "Rove Health makes phase-aware supplements and the Cycle Sync app, formulated by doctors for how women's bodies actually move through the month.",
+  openGraph: {
+    title: "Rove Health | Live in Sync",
+    description: "Rove Health makes phase-aware supplements and the Cycle Sync app, formulated by doctors for how women's bodies actually move through the month.",
+    url: "/",
+    siteName: "Rove Health",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rove Health | Live in Sync",
+    description: "Rove Health makes phase-aware supplements and the Cycle Sync app, formulated by doctors for how women's bodies actually move through the month.",
+  },
 };
 
 export default function RootLayout({

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { fetchLearnArticles } from "@/app/actions/learn-actions";
+import { LAUNCHED_PRODUCTS } from "@/data/products";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://rovehealth.in";
@@ -65,5 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
     ];
 
-    return [...staticUrls, ...articleUrls];
+    const productUrls: MetadataRoute.Sitemap = LAUNCHED_PRODUCTS.map((product) => ({
+        url: `${baseUrl}/shop/${product.handle}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly",
+        priority: 0.9,
+    }));
+
+    return [...staticUrls, ...articleUrls, ...productUrls];
 }

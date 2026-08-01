@@ -23,8 +23,20 @@ export async function generateMetadata({
   const product = getLocalProduct(handle);
   if (!product) return {};
   return {
-    title: `${product.title} | Rove Health`,
+    title: product.title,
     description: product.tagline,
+    openGraph: {
+      title: product.title,
+      description: product.tagline,
+      images: [
+        {
+          url: product.image,
+          width: 800,
+          height: 800,
+          alt: product.title,
+        },
+      ],
+    },
   };
 }
 
@@ -35,8 +47,31 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
 
   const otherProducts = LAUNCHED_PRODUCTS.filter((p) => p.handle !== product.handle);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    image: product.image,
+    description: product.tagline,
+    brand: {
+      "@type": "Brand",
+      name: "Rove Health",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://rovehealth.in/shop/${product.handle}`,
+      priceCurrency: "INR",
+      price: product.price,
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="grid gap-12 md:grid-cols-2">
         <ProductGallery image={product.image} alt={product.title} gallery={product.gallery} />
 
