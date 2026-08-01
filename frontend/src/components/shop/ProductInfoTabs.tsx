@@ -13,6 +13,7 @@ import {
   Leaf,
   Moon,
   Pill,
+  Sun,
   Syringe,
   Zap,
 } from "lucide-react";
