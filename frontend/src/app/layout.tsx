@@ -10,6 +10,7 @@ const raleway = Raleway({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  preload: false,
 });
 
 const cormorant = Cormorant_Garamond({
@@ -17,6 +18,7 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["500", "600"],
   style: ["italic", "normal"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
