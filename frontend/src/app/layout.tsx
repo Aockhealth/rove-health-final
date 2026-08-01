@@ -4,7 +4,11 @@ import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CartProvider } from "@/context/CartContext";
-import { CartDrawer } from "@/components/shop/CartDrawer";
+import dynamic from "next/dynamic";
+
+const CartDrawer = dynamic(() => import("@/components/shop/CartDrawer").then((mod) => mod.CartDrawer), {
+  ssr: false, // Don't SSR the cart drawer to save server rendering time
+});
 
 const raleway = Raleway({
   variable: "--font-sans",

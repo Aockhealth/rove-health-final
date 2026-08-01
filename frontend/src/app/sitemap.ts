@@ -73,5 +73,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.9,
     }));
 
-    return [...staticUrls, ...articleUrls, ...productUrls];
+    const symptomUrls: MetadataRoute.Sitemap = ["pcos", "pms", "irregular-cycle"].map((symptom) => ({
+        url: `${baseUrl}/symptoms/${symptom}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.8,
+    }));
+
+    return [...staticUrls, ...articleUrls, ...productUrls, ...symptomUrls];
 }

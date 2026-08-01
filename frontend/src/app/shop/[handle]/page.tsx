@@ -6,7 +6,8 @@ import { Check, FlaskConical } from "lucide-react";
 import { getLocalProduct, LAUNCHED_PRODUCTS } from "@/data/products";
 import { Badge } from "@/components/ui/Badge";
 import { Accordion } from "@/components/ui/Accordion";
-import { AddToCartButton } from "@/components/shop/AddToCartButton";
+import dynamic from "next/dynamic";
+const AddToCartButton = dynamic(() => import("@/components/shop/AddToCartButton").then((mod) => mod.AddToCartButton));
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { ProductInfoTabs } from "@/components/shop/ProductInfoTabs";
 

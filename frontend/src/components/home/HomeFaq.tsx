@@ -35,8 +35,25 @@ const FAQS: AccordionItemData[] = [
 ];
 
 export function HomeFaq() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <section className="bg-gradient-ovulatory px-6 py-12 md:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="mx-auto max-w-2xl">
         <Reveal>
           <h2 className="font-sans text-2xl font-semibold tracking-tight text-obsidian md:text-3xl">
