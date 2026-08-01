@@ -23,13 +23,23 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://rovehealth.in"),
   title: {
     template: "%s | Rove Health",
-    default: "Rove Health | Live in Sync",
+    default: "Rove Health | PCOS, PMS & Irregular Cycle Support | Cycle Sync",
   },
   description:
-    "Rove Health makes phase-aware supplements and the Cycle Sync app, formulated by doctors for how women's bodies actually move through the month.",
+    "Fix your cycle naturally. Rove Health makes phase-aware supplements and the Cycle Sync app to help manage PCOS, PMS, and irregular cycles. Formulated by doctors.",
+  keywords: [
+    "PCOS",
+    "PMS",
+    "irregular cycle",
+    "fix cycle",
+    "cycle sync",
+    "hormonal balance",
+    "phase-aware supplements",
+    "women's health"
+  ],
   openGraph: {
-    title: "Rove Health | Live in Sync",
-    description: "Rove Health makes phase-aware supplements and the Cycle Sync app, formulated by doctors for how women's bodies actually move through the month.",
+    title: "Rove Health | PCOS, PMS & Irregular Cycle Support",
+    description: "Fix your cycle naturally with Rove Health. Phase-aware supplements and the Cycle Sync app to help manage PCOS, PMS, and irregular cycles.",
     url: "/",
     siteName: "Rove Health",
     locale: "en_IN",
