@@ -6,9 +6,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CartProvider } from "@/context/CartContext";
 import dynamic from "next/dynamic";
 
-const CartDrawer = dynamic(() => import("@/components/shop/CartDrawer").then((mod) => mod.CartDrawer), {
-  ssr: false, // Don't SSR the cart drawer to save server rendering time
-});
+const CartDrawer = dynamic(() => import("@/components/shop/CartDrawer").then((mod) => mod.CartDrawer));
 
 const raleway = Raleway({
   variable: "--font-sans",
