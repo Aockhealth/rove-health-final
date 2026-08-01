@@ -11,12 +11,12 @@ const STEPS = [
 
 export function MechanismDiagram({ className }: { className?: string }) {
   // SVG viewBox and center
-  const size = 320;
+  const size = 500;
   const center = size / 2;
-  const radius = 110;
+  const radius = 130;
 
   return (
-    <div className={cn("relative mx-auto flex w-full max-w-sm flex-col items-center", className)}>
+    <div className={cn("relative mx-auto flex w-full max-w-md flex-col items-center", className)}>
       <svg
         viewBox={`0 0 ${size} ${size}`}
         className="h-full w-full overflow-visible"
