@@ -175,24 +175,32 @@ Weights renormalise across whichever signals actually have usable data this cycl
 
 ## 7. Output states
 
+> **Revised 2026-08-01 — the original 6-state design had a real bug, not just a gap.** `CONFIRMED` required BBT shift **and** RHR rise. RHR only exists via a wearable. A strip plus a manual thermometer — realistically the majority near-term user, since a thermometer costs ~₹150 and a wearable is a much bigger ask that's also blocked engineering-side behind a paid Apple Developer account (v3 plan, Decision 2) — could **never reach the flagship state, at any confidence, ever.** That's not honest degradation; it's a ceiling nobody could see. Fixed below by splitting confirmation into two honestly-labelled tiers and making promotion evidence-driven from *whichever* signals actually exist, instead of assuming a fixed signal inventory.
+
 ```ts
 type OvulationState =
   | 'INSUFFICIENT_DATA'      // say so; never guess
   | 'PREDICTED'              // forward estimate + explicit ± band
   | 'SURGE_DETECTED'         // LH surging; ovulation likely in 12–36h
+  | 'LIKELY_CONFIRMED'       // NEW — exactly one clean lagging signal
   | 'CONFIRMED'              // ≥2 independent lagging signals agree
   | 'SURGE_UNCONFIRMED'      // LH surged, no thermal/RHR shift followed
   | 'ANOVULATORY_SUSPECTED'  // screening flag only — never a diagnosis
 ```
 
-Promotion rules:
-- → `CONFIRMED` requires **at least two independent lagging signals** (BBT shift, RHR rise) consistent within ±2 days, and posterior mass ≥ 0.6 within ±1 day of the modal day. LH alone can never confirm — it precedes ovulation and a surge does not prove release occurred. HRV alone can never contribute to promotion.
-- → `SURGE_UNCONFIRMED` when a surge was detected but no lagging shift followed within 5 days. This is a real and clinically meaningful pattern (LUF, failed surge), and reporting it honestly is more valuable than a fake confirmation.
-- → `ANOVULATORY_SUSPECTED` when no surge *and* no thermal/RHR shift by `μ_ov + 2σ_ov`, or by day 21 of a long cycle, whichever is later.
+**Promotion is evidence-driven, not checklist-driven: promote based on which lagging signals actually exist for this user, never assume all of them are available.**
+
+- → `CONFIRMED` requires **at least two independent lagging signals** (BBT/temperature shift, RHR rise) consistent within ±2 days, and posterior mass ≥ 0.6 within ±1 day of the modal day. Reachable by: full wearable users (temperature + RHR from one device — see the note below on why these count as two signals from one source), or strip+wearable, or wearable-only with no strip at all (a wearable alone can supply both temperature-shift and RHR-rise — the strip is not a hard requirement for this tier, only for early lead time).
+- → **`LIKELY_CONFIRMED` (new) requires exactly one lagging signal** — a BBT/temperature shift that independently satisfies **both** Rule A (3-over-6) and Rule B (step-function fit) from §5.2, with confounder exclusions applied, and no contradicting signal. This is the realistic ceiling for a strip + manual-thermometer user, and it must exist as a named, honestly-labelled state — not silently folded into `CONFIRMED` (which would overclaim) and not left unreachable (which is the bug this revision fixes). **Does not require a preceding `SURGE_DETECTED`** — a user with a thermometer but no strip can be promoted straight from `PREDICTED` on a clean thermal shift alone; requiring a strip-derived surge first would just relocate the same lockout bug onto a different user segment.
+- **LH alone can never confirm at either tier** — it precedes ovulation and a surge does not prove release occurred. **HRV alone can never contribute to promotion at either tier.** **Cervical mucus can never contribute to promotion at either tier** — per §4 its timing is coincident with ovulation (±1–2 days), not lagging, so a textbook mucus pattern tightens `PREDICTED`/`SURGE_DETECTED` confidence but cannot itself produce a confirmation claim. State this limitation to the user plainly rather than glossing over it.
+- → `SURGE_UNCONFIRMED` when a surge was detected but no lagging shift followed within 5 days *and no signal exists that could ever produce one* is not quite right either — see the revised rule: `SURGE_UNCONFIRMED` fires when a surge was detected, at least one lagging-capable signal (BBT or wearable) **is being logged**, and it did not show a shift within 5 days. If she has no lagging-capable signal at all, the honest state is not "unconfirmed" (which implies a signal tried and failed) — it is `SURGE_DETECTED` persisting, paired with an explicit UI nudge to add a thermometer (§ttc-mode-spec.md §4) so she understands *why* she cannot get further, not that something went wrong.
+- → `ANOVULATORY_SUSPECTED` when no surge *and* no thermal/RHR shift by `μ_ov + 2σ_ov`, or by day 21 of a long cycle, whichever is later — reachable from cycle-history data alone, since anovulation screening must never be gated behind having a strip or a wearable (§8, §10a).
+
+**A note on wearables and "two independent signals":** a single wearable device supplying both a temperature-deviation channel and an RHR channel is treated as **two independent physiological channels**, not one signal wearing two hats — they are governed by different physiology (thermoregulation vs. cardiac autonomic tone) and fail independently (illness moves both, but alcohol and poor sleep move them differently). This is why a wearable-only user (no strip at all) can still reach true `CONFIRMED`.
 
 **Confidence must be calibrated, not decorative.** If the app says 80%, it must be right about 80% of the time (§9 measures this). A confidence number that is really a design flourish is worse than none.
 
-⚕ All six user-facing state strings reviewed by clinician before release.
+⚕ All seven user-facing state strings reviewed by clinician before release — `LIKELY_CONFIRMED`'s wording needs particular care, since the honest distinction from `CONFIRMED` must survive translation into a reassuring, non-technical sentence without collapsing into "confirmed."
 
 ---
 
@@ -222,7 +230,11 @@ Adversarial cases that must each be a named test:
 - Fever on days 14–16 → BBT excluded, not misread as a thermal shift
 - Anovulatory cycle → `ANOVULATORY_SUSPECTED`, never `CONFIRMED`
 - 45-day irregular cycle → wide window, no false precision
-- LH only, no wearable → `PREDICTED`/`SURGE_DETECTED`, never `CONFIRMED`
+- LH only, no wearable, no thermometer → `PREDICTED`/`SURGE_DETECTED`, never `LIKELY_CONFIRMED` or `CONFIRMED` — and the UI must say why, not just stop
+- **Strip + manual BBT, both rules agree, no wearable → `LIKELY_CONFIRMED`, never silently upgraded to `CONFIRMED`**
+- **Manual BBT only, no strip at all, clean thermal shift → `LIKELY_CONFIRMED` reached directly from `PREDICTED`, without passing through `SURGE_DETECTED`**
+- **Wearable only, no strip → `CONFIRMED` reachable from temperature + RHR alone**
+- **Textbook mucus pattern, no BBT, no wearable → confidence-tightened `PREDICTED`/`SURGE_DETECTED` only, never promoted to either confirmation tier**
 - Missing 5 days mid-cycle → degrades gracefully
 - Chronically elevated baseline LH → no permanent-surge state
 - Alcohol spike in RHR on day 13 → excluded
@@ -246,17 +258,18 @@ Nothing else licenses the accuracy claim.
 
 | Metric | Definition | Ship gate |
 |---|---|---|
-| **False-confirmation rate** | `CONFIRMED` when ovulation did not occur, or off by > 2 days | **< 5% — the one that matters most** |
-| Confirmation accuracy | ‖predicted − true‖ ≤ 1 day, among confirmed cycles | ≥ 80% |
-| Confirmation coverage | share of ovulatory cycles reaching `CONFIRMED` | ≥ 70% (full-signal users) |
+| **False-confirmation rate (`CONFIRMED`)** | `CONFIRMED` when ovulation did not occur, or off by > 2 days | **< 5% — the one that matters most** |
+| **False-confirmation rate (`LIKELY_CONFIRMED`)** | Same, for the single-signal tier | **< 12%** — deliberately looser, and reported separately. LUF alone produces a normal thermal shift in ~5% of all cycles (§3, §8) with no oocyte released, so a single-BBT-signal tier cannot honestly promise `CONFIRMED`'s 5% ceiling — that fact is *why* the tier exists as distinct rather than being merged upward. Do not tune this number down by relaxing the Rule-A/Rule-B agreement requirement in §7; tune it by improving exclusion filtering instead |
+| Confirmation accuracy | ‖predicted − true‖ ≤ 1 day, among `CONFIRMED` cycles | ≥ 80% |
+| Confirmation coverage | share of ovulatory cycles reaching `CONFIRMED` **or** `LIKELY_CONFIRMED` | ≥ 70% (full-signal users); **report `LIKELY_CONFIRMED`-only coverage separately for strip+BBT users, since this is most early users' actual ceiling until wearable sync ships** |
 | Fertile-window capture | predicted window contained true ovulation day | ≥ 90% |
 | Anovulation sensitivity | vs. progesterone | ≥ 80% |
 | Anovulation specificity | vs. progesterone | ≥ 90% |
-| Calibration error | \|stated confidence − observed accuracy\| | ≤ 10 points |
+| Calibration error | \|stated confidence − observed accuracy\| | ≤ 10 points, **measured separately per state** — `LIKELY_CONFIRMED`'s stated confidence must not creep toward `CONFIRMED`'s during tuning |
 
-**A wrong "confirmed" is far more damaging than an honest "unsure"** — for a woman trying to conceive it wastes a month, and for anyone misreading it as contraception the consequence is a pregnancy. Every ambiguous tuning decision resolves toward refusing to confirm.
+**A wrong "confirmed" is far more damaging than an honest "unsure"** — for a woman trying to conceive it wastes a month, and for anyone misreading it as contraception the consequence is a pregnancy. Every ambiguous tuning decision resolves toward refusing to confirm, and toward `LIKELY_CONFIRMED` over `CONFIRMED` when only one signal is genuinely present.
 
-Also report accuracy **stratified by signal set** (LH-only / LH+wearable / full) and **by cycle regularity**. A single headline number would hide exactly the population we built this for.
+Also report accuracy **stratified by signal set** (LH-only / LH+manual-BBT / LH+wearable / wearable-only / full) and **by cycle regularity**. A single headline number would hide exactly the population we built this for — and per this revision, the signal-set stratification is not optional detail, it is the primary way anyone will know whether the two-tier split is actually working as intended.
 
 ---
 
@@ -288,6 +301,36 @@ create table ovulation_estimates (
 `algorithm_version` and the stored `posterior` are not optional. Without them we cannot answer "why did the app tell me day 15 last month?" — which is a support question, a debugging question, and eventually possibly a regulatory one.
 
 ---
+
+## 10a. Where this surfaces — TTC mode, but not TTC-only
+
+`user_onboarding.tracker_mode` already exists with `'ttc'` as a live value, and `mobile/src/app/(app)/home.tsx:247` already renders a placeholder promising *"BBT, cervical mucus, and peak ovulation days."* This engine fills that stub. See Decision 13 of the v3 plan.
+
+**The split matters, and getting it wrong would hide the best thing this algorithm does:**
+
+| Output | Mode |
+|---|---|
+| Daily action framing — "test today," "high fertility today and tomorrow," intercourse timing | **TTC mode only** — this is conception-action copy and it's noise, or worse, for someone not trying |
+| `SURGE_DETECTED` — **computed always** (§10b), but the daily "test today!" push around it is TTC-only | Computation: all modes. Push notification: TTC only |
+| **`CONFIRMED` / `LIKELY_CONFIRMED` — as a retrospective, observational fact** ("this cycle: ovulation confirmed day 15"), and the cycle-day accuracy improvement that comes with it | **All modes, quietly** — it makes every prediction better and it's a real thing to know regardless of intent |
+| **`ANOVULATORY_SUSPECTED`, the cross-cycle pattern flag, LH:FSH screening** | **All modes. Never gate this behind TTC.** |
+
+The last row is the point. Most women who are not ovulating are not currently trying to conceive — they are young, they have irregular cycles, and nobody has told them. Requiring someone to declare "I'm trying to get pregnant" before the app will tell her she may not be ovulating inverts the value of the feature.
+
+Signal *collection* is always on for every mode (passive signals cost the user nothing). Only the fertility-specific *action* framing is mode-gated — the confirmation states themselves are not.
+
+## 10b. This is one engine for the whole app, not a TTC feature — make that explicit
+
+Nothing in §5–§7 has ever branched on `tracker_mode`. The seven-state model, the two-tier confirmation fix, and the full signal-availability matrix (`ttc-mode-spec.md` §3a) are **engine-level**, not TTC-level — TTC mode is simply the one presentation layer that renders them as daily actions. This was implicit before; state it as a design rule now, because "reuse this in normal tracking" is otherwise the kind of requirement that quietly grows a second, forked implementation.
+
+**What default (non-TTC) mode gets, concretely:**
+
+- **A retrospective line in Insights, not a Home action card.** `CycleOverviewCard.tsx` already takes `cycleLength`/`isRegular`/`phase`/`theme` as plain props with no state awareness — add optional `ovulationState` and `confidence` props and render one line when present: *"This cycle: ovulation confirmed, day 15"* or *"Predicted around day 16 ± 4."* Falls back to today's behaviour unchanged when absent — no breaking change, no new component.
+- **The anovulation/PCOS screening card is not optional here** — same rule as always, surfaced identically regardless of mode, worded for someone who almost certainly isn't thinking about conception at all: *"This cycle didn't show a typical ovulation pattern — common, usually not urgent, worth mentioning if it happens often"* — never the TTC phrasing, which assumes she wants to know for a reason.
+- **Optional inputs (manual BBT, LH strips if she has them) stay available, not hidden.** Nothing structurally blocks a non-TTC user from logging them — the P0–P6 matrix in `ttc-mode-spec.md` §3a is the engine's ceiling table for any user, not a TTC-only concept. What doesn't carry over is the *commercial* framing (kit purchase, day-10–14 scheduling) — that stays TTC-specific because it assumes conception intent the copy shouldn't assume elsewhere.
+- **`SURGE_DETECTED` is computed for every user, shown as a daily push to none but TTC.** In default mode it exists only as an intermediate step toward that cycle's eventual `CONFIRMED`/`LIKELY_CONFIRMED` line in Insights — never a "test today" notification to someone who didn't ask for one.
+
+**The cost this adds:** one new pair of props on an existing card, copy variants per state × mode (same `STATE_COPY[mode][state]` externalized-content pattern already used for `PHASE_EXPLAINERS`, not a new pattern), and one more mode to include in the four-phase-times-mode QA matrix. **The benefit:** the anovulation/PCOS screening flag — arguably the single highest-value clinical output in the product — now reaches every user regardless of what mode she happened to pick at onboarding, which is what Decision 13 always required and what this makes concretely buildable.
 
 ## 11. Sequencing
 

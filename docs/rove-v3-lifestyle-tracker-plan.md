@@ -114,6 +114,32 @@ The codebase currently calls `https://generativelanguage.googleapis.com` (`front
 
 ⚕ The whole table is reviewed by the clinician and by counsel before v3.1 ships.
 
+**13. TTC is the right container for the fertility stack — but the sensors run for everyone. Collect universally, surface contextually (founder direction, 2026-08-01).**
+
+**The mode framework already exists and is already shipping a promise we haven't kept.** `user_onboarding.tracker_mode` is live end-to-end — set in onboarding (`mobile/src/app/onboarding.tsx:137`), switchable in Profile (`FocusGoals.tsx`), read by the dashboard (`dashboard.ts:93`) — and `home.tsx:247` **already branches on `'ttc'` today.** What it renders is a placeholder: a Baby icon, the words *"Your dedicated fertility dashboard is being prepared. Soon you'll track BBT, cervical mucus, and peak ovulation days here,"* and a **non-functional "Log Temperature" button.** A `'menopause'` stub sits right below it at line 265.
+
+So this is not a new mode to design. It is a live dead end in the shipped app, and v3.2 fills it. Infrastructure cost: near zero.
+
+**What belongs inside TTC mode** (surfaced only when `tracker_mode = 'ttc'`):
+- Fertile window with confidence, and the predicted/confirmed distinction (§2 of the algorithm doc)
+- LH strip logging and surge display · BBT entry and chart · cervical mucus promoted to a primary daily log
+- Intercourse timing guidance (sex activity is already logged)
+- A TTC dashboard replacing the Home phase orb — which is what the stub already promises
+
+**What must NOT be gated behind TTC:**
+- Passive health sync, food logging, lab reports, doctor PDF, widgets, voice logging
+- **Anovulation and PCOS screening — most of all this one**
+
+**Why the sensors stay universal — three reasons, and the first is the important one:**
+
+1. **PCOS screening is worth more to the woman who is *not* trying to conceive.** Roughly 1 in 5 urban Indian women per `rove_master_pitch.md`. Most of them are 22, have irregular periods and acne, and have never been told they may not be ovulating. Putting that finding behind a "trying to conceive" switch hides the single most valuable clinical output in the product from exactly the population that needs it. It would be a product decision that harms users.
+2. **A mode switch with no history is a mode switch with no value.** If collection only starts when she flips to TTC, she arrives at the moment of highest intent with zero data — population defaults, a 4-day-wide window, and "check back in three cycles." A woman whose phone has been quietly logging temperature and resting HR for eight months arrives with a personalised luteal length and a tuned prior. That difference is the whole product.
+3. **Passive signals cost her nothing.** HRV, resting HR, sleep, and wrist temperature arrive from the wearable whether or not she is TTC. There is no user burden to justify gating.
+
+**The rule: one data layer, three narrative layers.** Modes change presentation and emphasis, never collection or storage. Lab reports are a good test of the rule — the *feature* is universal, but TTC mode surfaces AMH, LH, FSH and prolactin first while the default mode leads with ferritin, vitamin D, B12 and thyroid. Same data, same pipeline, different ordering.
+
+**The cost to accept:** ground rule 5 is a four-phase testing rule. Three modes makes it 4 × 3 = 12 combinations. Keeping mode differences strictly in the presentation layer is what stops that becoming twelve times the QA — and it is a merge-blocking rule, not a preference. A mode that forks the data layer must be rejected in review.
+
 **11. Image capture is deferred to v4. v3 food logging is text, voice, and quick-add (founder decision, 2026-08-01).**
 The v3 tracker is built on *her describing the meal* — typed or spoken — not on photographing it. Reasons this is the right call, not a compromise:
 - **Mixed Indian food is the worst case for food vision.** Gravies hide their contents, oil is invisible, and a katori's depth cannot be judged from above. Item 15 was the highest-risk item in the plan.
