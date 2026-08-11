@@ -39,19 +39,21 @@ function metric(label: string, value: string, note?: string): string {
 function countedList(items: Counted[], emptyText: string): string {
   if (items.length === 0) return `<p class="empty">${escapeHtml(emptyText)}</p>`;
   const max = Math.max(...items.map((i) => i.count));
+  // Flex rows rather than a table: WebKit's print renderer collapses the height of
+  // a background-filled <td>, which silently dropped the bars from the PDF.
   return `
-    <table class="bars">
+    <div class="bars">
       ${items
         .map(
           (i) => `
-        <tr>
-          <td class="bar-name">${escapeHtml(i.name)}</td>
-          <td class="bar-track"><span style="width:${Math.round((i.count / max) * 100)}%"></span></td>
-          <td class="bar-count">${i.count}</td>
-        </tr>`,
+        <div class="bar-row">
+          <div class="bar-name">${escapeHtml(i.name)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, Math.round((i.count / max) * 100))}%"></div></div>
+          <div class="bar-count">${i.count}</div>
+        </div>`,
         )
         .join('')}
-    </table>`;
+    </div>`;
 }
 
 export function renderHealthReportHtml(r: HealthReport): string {
@@ -107,12 +109,12 @@ export function renderHealthReportHtml(r: HealthReport): string {
   .metric-value { font-size: 15pt; font-weight: 600; margin-top: 2px; }
   .metric-note { font-size: 8pt; color: ${MUTED}; margin-top: 1px; }
 
-  table.bars { width: 100%; border-collapse: collapse; }
-  table.bars td { padding: 2.5px 0; vertical-align: middle; font-size: 9.5pt; }
-  .bar-name { width: 38%; padding-right: 8px; }
-  .bar-track { width: 52%; background: #F3F4F6; border-radius: 4px; height: 9px; }
-  .bar-track span { display: block; height: 9px; background: ${ACCENT}; border-radius: 4px; opacity: 0.75; }
-  .bar-count { width: 10%; text-align: right; color: ${MUTED}; font-size: 9pt; padding-left: 8px; }
+  .bars { width: 100%; }
+  .bar-row { display: flex; align-items: center; gap: 8px; padding: 2.5px 0; font-size: 9.5pt; }
+  .bar-name { flex: 0 0 40%; }
+  .bar-track { flex: 1 1 auto; background: #F3F4F6; border-radius: 4px; height: 9px; overflow: hidden; }
+  .bar-fill { height: 9px; background: ${ACCENT}; border-radius: 4px; opacity: 0.75; }
+  .bar-count { flex: 0 0 18px; text-align: right; color: ${MUTED}; font-size: 9pt; }
 
   .flag { border-left: 3px solid #B45309; background: #FFFBEB; padding: 7px 11px; margin-bottom: 6px; border-radius: 0 5px 5px 0; }
   .flag b { display: block; font-size: 10pt; }
@@ -123,9 +125,23 @@ export function renderHealthReportHtml(r: HealthReport): string {
   .sug b { display: block; margin: 2px 0 3px; font-weight: 600; }
   .sug span { color: ${MUTED}; font-size: 9.5pt; }
 
+  table.matrix { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  table.matrix th {
+    font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.7px; color: ${MUTED};
+    font-weight: 600; text-align: center; padding: 0 4px 5px; border-bottom: 1px solid ${RULE};
+  }
+  table.matrix td { text-align: center; padding: 4px; border-bottom: 1px solid #F3F4F6; color: ${MUTED}; }
+  table.matrix th.m-name, table.matrix td.m-name { text-align: left; width: 30%; color: ${INK}; }
+  table.matrix td.peak { background: rgba(67,56,202,0.10); color: ${ACCENT}; font-weight: 700; border-radius: 3px; }
+  table.matrix th.m-total, table.matrix td.m-total { color: ${INK}; font-weight: 600; width: 12%; }
+
   .cols { display: flex; gap: 20px; }
   .col { flex: 1; }
   .empty { color: ${MUTED}; font-style: italic; font-size: 9.5pt; }
+  /* Keep a heading with its content and stop rows splitting mid-table. */
+  h2 { page-break-after: avoid; }
+  h3 { page-break-after: avoid; }
+  table.matrix tr, .bar-row, .metric, .flag, .sug { page-break-inside: avoid; }
   .pagebreak { page-break-before: always; }
   .note {
     margin-top: 20px; padding: 9px 11px; background: #F9FAFB;
@@ -177,28 +193,52 @@ export function renderHealthReportHtml(r: HealthReport): string {
   </div>
 
   <h2>Symptoms</h2>
-  <div class="cols">
+  ${
+    r.symptoms.matrix.length === 0
+      ? `<p class="empty">No symptoms logged in this period.</p>`
+      : `
+    <p class="sub" style="margin-bottom:8px">
+      Recorded on ${r.symptoms.daysWithSymptoms} of the ${r.coverage.daysWithAnyLog} days logged.
+      Shaded cells mark the phase where each symptom occurred most.
+    </p>
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th class="m-name">Symptom</th>
+          ${phaseOrder.map((p) => `<th>${p}</th>`).join('')}
+          <th class="m-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${r.symptoms.matrix
+          .map(
+            (row) => `
+          <tr>
+            <td class="m-name">${escapeHtml(row.name)}</td>
+            ${phaseOrder
+              .map((p) => {
+                const v = row.byPhase[p] || 0;
+                const isPeak = row.peakPhase === p && v > 0;
+                return `<td class="${isPeak ? 'peak' : ''}">${v || '·'}</td>`;
+              })
+              .join('')}
+            <td class="m-total">${row.total}</td>
+          </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>`
+  }
+
+  <div class="cols" style="margin-top:16px">
     <div class="col">
       <h3>Most frequently logged</h3>
-      ${countedList(r.symptoms.top, 'No symptoms logged in this period.')}
+      ${countedList(r.symptoms.top, 'None recorded.')}
     </div>
     <div class="col">
       <h3>Mood</h3>
-      ${countedList(r.moods, 'No moods logged in this period.')}
+      ${countedList(r.moods, 'None recorded.')}
     </div>
-  </div>
-
-  <h3>By cycle phase</h3>
-  <div class="cols">
-    ${phaseOrder
-      .map(
-        (phase) => `
-      <div class="col">
-        <div class="sub" style="font-weight:600;color:${INK}">${phase}</div>
-        ${countedList(r.symptoms.byPhase[phase] || [], '—')}
-      </div>`,
-      )
-      .join('')}
   </div>
 
   ${

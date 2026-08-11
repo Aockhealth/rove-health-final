@@ -1,5 +1,8 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+// Legacy API: the SDK 54 File/Directory rewrite doesn't cover the cache-directory
+// move we need here, and the legacy surface is still shipped and supported.
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
 import { renderHealthReportHtml } from './healthReportHtml';
@@ -19,6 +22,9 @@ export const REPORT_WINDOW_DAYS = 90;
 // Thresholds used for both the stats and the suggestions. Kept together so the
 // numbers quoted in the PDF and the advice derived from them can't drift apart.
 export const HYDRATION_TARGET_ML = 2000;
+/** daily_logs.water_intake counts glasses, not millilitres — matches ML_PER_GLASS
+ *  in components/tracker/HydrationTracker.tsx, which is what the user pours into. */
+export const ML_PER_GLASS = 250;
 export const SLEEP_TARGET_HOURS = 7;
 export const EXERCISE_TARGET_MINS_PER_WEEK = 150;
 /** Cycles shorter/longer than this are worth raising with a clinician. */
@@ -100,6 +106,10 @@ export type HealthReport = {
   symptoms: {
     top: Counted[];
     byPhase: Record<string, Counted[]>;
+    /** Symptom × phase counts — the view that shows where a symptom clusters. */
+    matrix: SymptomRow[];
+    /** Days that carried at least one symptom, for "on N of M logged days". */
+    daysWithSymptoms: number;
   };
   moods: Counted[];
   sleepDisruptors: Counted[];
@@ -108,6 +118,16 @@ export type HealthReport = {
 };
 
 export type Counted = { name: string; count: number };
+
+export type SymptomRow = {
+  name: string;
+  total: number;
+  byPhase: Record<string, number>;
+  /** Phase carrying the most occurrences, or null when it's an even spread. */
+  peakPhase: string | null;
+};
+
+export const PHASE_ORDER = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'] as const;
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -384,6 +404,23 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     symptomsByPhase[phase] = tally(phaseLogs[phase].map((l) => l.symptoms)).slice(0, 5);
   }
 
+  // Symptom × phase matrix, ordered by overall frequency so the most significant
+  // rows sit at the top where a clinician will actually look.
+  const allSymptoms = tally(logs.map((l) => l.symptoms));
+  const symptomMatrix: SymptomRow[] = allSymptoms.slice(0, 10).map(({ name, count }) => {
+    const byPhase: Record<string, number> = {};
+    for (const phase of PHASE_ORDER) {
+      byPhase[phase] = phaseLogs[phase].filter((l) => (l.symptoms || []).includes(name)).length;
+    }
+    const peak = PHASE_ORDER.reduce((best, p) => (byPhase[p] > byPhase[best] ? p : best), PHASE_ORDER[0]);
+    // Only call it a peak when one phase genuinely leads — a flat spread shouldn't
+    // be dressed up as a pattern.
+    const isFlat = PHASE_ORDER.every((p) => byPhase[p] === byPhase[peak]);
+    return { name, total: count, byPhase, peakPhase: isFlat ? null : peak };
+  });
+
+  const daysWithSymptoms = logs.filter((l) => (l.symptoms || []).length > 0).length;
+
   const exerciseObserved = observedFrom(logs, (l) => l.exercise_minutes);
   const totalExerciseMinutes = logs.reduce((acc, l) => acc + (l.exercise_minutes || 0), 0);
   const weeks = REPORT_WINDOW_DAYS / 7;
@@ -414,7 +451,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
       completenessPct: Math.round((daysWithAnyLog / REPORT_WINDOW_DAYS) * 100),
     },
     cycle,
-    hydration: observedFrom(logs, (l) => l.water_intake),
+    hydration: observedFrom(logs, (l) => (l.water_intake ? l.water_intake * ML_PER_GLASS : null)),
     sleep: {
       // sleep_minutes is stored in minutes; the report speaks in hours throughout.
       ...observedFrom(logs, (l) => (l.sleep_minutes ? l.sleep_minutes / 60 : null)),
@@ -425,8 +462,10 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
       topTypes: tally(logs.map((l) => l.exercise_types)).slice(0, 5),
     },
     symptoms: {
-      top: tally(logs.map((l) => l.symptoms)).slice(0, 8),
+      top: allSymptoms.slice(0, 8),
       byPhase: symptomsByPhase,
+      matrix: symptomMatrix,
+      daysWithSymptoms,
     },
     moods: tally(logs.map((l) => l.moods)).slice(0, 6),
     sleepDisruptors: tally(logs.map((l) => l.disruptors)).slice(0, 5),
@@ -439,36 +478,54 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   };
 }
 
-export type GenerateResult =
-  | { ok: true; uri: string }
+export type PreparedReport = { report: HealthReport; html: string };
+
+export type PrepareResult =
+  | { ok: true; prepared: PreparedReport }
   | { ok: false; reason: 'no-data' | 'failed' };
 
 /**
- * Builds the report, renders it to a PDF on the device, and hands it to the OS
- * share sheet so the user decides where it goes (mail to a doctor, save to files,
- * print). Nothing is uploaded by this function.
+ * Builds the report and renders its HTML, without writing a PDF. The card shows
+ * this in a WebView so the user can read the report inside the app before
+ * deciding whether to export it.
  */
-export async function generateAndShareHealthReport(): Promise<GenerateResult> {
+export async function prepareHealthReport(): Promise<PrepareResult> {
   try {
     const report = await buildHealthReport();
     if (!report) return { ok: false, reason: 'no-data' };
+    return { ok: true, prepared: { report, html: renderHealthReportHtml(report) } };
+  } catch (error) {
+    console.error('Health report build failed:', error);
+    return { ok: false, reason: 'failed' };
+  }
+}
 
-    const { uri } = await Print.printToFileAsync({
-      html: renderHealthReportHtml(report),
-      base64: false,
-    });
+/**
+ * Writes the prepared report to a PDF and hands it to the OS share sheet, so the
+ * user decides where it goes (mail to a doctor, save to files, print). Nothing is
+ * uploaded by this function.
+ */
+export async function shareHealthReportPdf(prepared: PreparedReport): Promise<boolean> {
+  try {
+    const { uri } = await Print.printToFileAsync({ html: prepared.html, base64: false });
+
+    // printToFileAsync names the file with a UUID, which is what the share sheet and
+    // the recipient's inbox would show. Give it a name a doctor can file.
+    const safeName = prepared.report.person.name.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const target = `${FileSystem.cacheDirectory}Rove-Health-Report-${safeName || 'Member'}-${prepared.report.windowEnd}.pdf`;
+    await FileSystem.deleteAsync(target, { idempotent: true });
+    await FileSystem.moveAsync({ from: uri, to: target });
 
     if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, {
+      await Sharing.shareAsync(target, {
         mimeType: 'application/pdf',
         dialogTitle: 'Health Report',
         UTI: 'com.adobe.pdf',
       });
     }
-
-    return { ok: true, uri };
+    return true;
   } catch (error) {
-    console.error('Health report generation failed:', error);
-    return { ok: false, reason: 'failed' };
+    console.error('Health report export failed:', error);
+    return false;
   }
 }

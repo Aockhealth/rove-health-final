@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react
 import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import { toast } from 'sonner-native';
-import { generateAndShareHealthReport, REPORT_WINDOW_DAYS } from '../../lib/healthReport';
+import { prepareHealthReport, REPORT_WINDOW_DAYS, type PreparedReport } from '../../lib/healthReport';
+import { HealthReportViewer } from './HealthReportViewer';
 
 // iconBg (not cardTint) is the token meant for small icon-badge containers.
 type Theme = { color: string; iconBg: string };
@@ -17,14 +18,17 @@ const CONTENTS = [
 
 export function HealthReportCard({ theme }: { theme: Theme }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [prepared, setPrepared] = useState<PreparedReport | null>(null);
 
   const handleGenerate = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsGenerating(true);
-    const result = await generateAndShareHealthReport();
+    const result = await prepareHealthReport();
     setIsGenerating(false);
 
-    if (!result.ok) {
+    if (result.ok) {
+      setPrepared(result.prepared);
+    } else {
       if (result.reason === 'no-data') {
         toast.error('Not enough data yet', {
           description: 'Log a few days first — the report needs something to summarise.',
@@ -90,12 +94,18 @@ export function HealthReportCard({ theme }: { theme: Theme }) {
         {isGenerating ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
-          <Feather name="download" size={16} color="#FFFFFF" />
+          <Feather name="file-text" size={16} color="#FFFFFF" />
         )}
         <Text className="text-sm font-bold tracking-wide text-white">
-          {isGenerating ? 'Preparing your report…' : 'Create Health Report'}
+          {isGenerating ? 'Preparing your report…' : 'View Health Report'}
         </Text>
       </TouchableOpacity>
+
+      <HealthReportViewer
+        prepared={prepared}
+        accentColor={theme.color}
+        onClose={() => setPrepared(null)}
+      />
     </View>
   );
 }
