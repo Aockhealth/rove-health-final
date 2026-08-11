@@ -15,6 +15,7 @@ import { CycleOverviewCard } from '../../components/insights/CycleOverviewCard';
 import { HabitsOverviewCard } from '../../components/insights/HabitsOverviewCard';
 import { PhaseInsightCard } from '../../components/insights/PhaseInsightCard';
 import { MentalHealthCheckCard } from '../../components/insights/MentalHealthCheckCard';
+import { HealthReportCard } from '../../components/insights/HealthReportCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
 
 const TABS = [
@@ -208,17 +209,8 @@ export default function InsightsScreen() {
         )}
 
         {activeTab === 'health' && (
-          <Animated.View
-            entering={FadeInUp.duration(500).springify()}
-            className="items-center mt-4 p-8 rounded-[28px] border border-rove-stone/10 bg-white/80"
-          >
-            <View className={`w-16 h-16 rounded-full bg-white items-center justify-center mb-4 ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 10 }}>
-              <Feather name="file-text" size={24} color={theme.color} />
-            </View>
-            <Text className="text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Health Report</Text>
-            <Text className="text-rove-stone text-center max-w-[220px]">
-              A shareable PDF summary for your doctor isn't built yet — it's on the roadmap, not available right now.
-            </Text>
+          <Animated.View entering={FadeInUp.duration(500).springify()}>
+            <HealthReportCard theme={theme} />
           </Animated.View>
         )}
       </Animated.ScrollView>
