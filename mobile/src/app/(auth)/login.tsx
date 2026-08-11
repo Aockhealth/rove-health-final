@@ -176,7 +176,7 @@ export default function LoginScreen() {
                 setLoading(true);
                 setErrors({});
                 const res = await signInWithGoogle();
-                if (!res.success) {
+                if (!res.success && !res.cancelled) {
                   setErrors({ server: res.error || 'Google sign in failed' });
                 }
                 setLoading(false);

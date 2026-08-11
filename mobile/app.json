@@ -9,7 +9,6 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.rovehealth.app",
-      "icon": "./assets/expo.icon",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
