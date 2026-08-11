@@ -302,6 +302,31 @@ export function calculatePhase(
             }
         }
 
+        // 6b. Observed period length wins over the settings average.
+        //     settings.period_length_days is only an average, so a user whose period
+        //     actually ran 4 days was still shown "Period Day 5" on day 5 — the
+        //     prediction overrode their own logs. When this cycle is anchored to logged
+        //     period days and that streak has visibly ended, trust the streak instead.
+        //
+        //     Note the tradeoff: logs alone can't distinguish "period is over" from
+        //     "she hasn't logged today yet", so a period still in progress reads as
+        //     ended until today is logged. It self-corrects on the next log, and
+        //     over-reporting a period the user never recorded is the worse error.
+        let effectivePeriodLength = periodLength;
+        if (source === 'logs' && monthLogs[relevantStart]?.is_period === true) {
+            let streak = 0;
+            const walker = parseLocalDate(relevantStart);
+            while (monthLogs[formatDate(walker)]?.is_period === true) {
+                streak++;
+                walker.setDate(walker.getDate() + 1);
+            }
+            // `walker` is now the first non-period day after the streak. Only trust the
+            // observed length once that day has actually arrived.
+            if (streak > 0 && normalizeToLocalMidnight(walker) <= today) {
+                effectivePeriodLength = streak;
+            }
+        }
+
         // Final safety: ensure dayInCycle is always >= 1
         dayInCycle = Math.max(dayInCycle, 1);
 
@@ -311,7 +336,7 @@ export function calculatePhase(
         if (isLate) {
             // Late period: stay in Luteal, don't wrap to Menstrual
             phase = "Luteal";
-        } else if (dayInCycle <= periodLength && !isExplicitlyNotPeriod) {
+        } else if (dayInCycle <= effectivePeriodLength && !isExplicitlyNotPeriod) {
             phase = "Menstrual";
         } else if (dayInCycle >= ovulationDay - OVULATION_PHASE_WINDOW &&
             dayInCycle <= ovulationDay + OVULATION_PHASE_WINDOW) {
