@@ -11,7 +11,6 @@ import {
   Check,
   Target,
   Droplet,
-  Baby,
 } from 'lucide-react-native';
 import type { ProfileTheme } from './CycleSignature';
 
@@ -28,7 +27,6 @@ const GOALS = [
 
 const TRACKER_MODES = [
   { id: 'menstruation', label: 'Menstruation', description: 'Cycle & symptom tracking', Icon: Droplet },
-  { id: 'ttc', label: 'Trying to Conceive', description: 'Fertility window & ovulation', Icon: Baby },
   { id: 'menopause', label: 'Menopause', description: 'Symptom management', Icon: Flower2 },
 ];
 
