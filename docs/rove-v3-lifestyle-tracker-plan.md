@@ -8,7 +8,7 @@ _Created 2026-08-01. Covers the six Tier-1 features approved by the founder. Sam
 
 | # | Feature | Why it wins |
 |---|---|---|
-| 1 | Passive health sync (Apple Health / Health Connect) | App keeps working when she forgets to log; unlocks *confirmed* ovulation |
+| 1 | Passive health sync (Apple Health / Health Connect) | App keeps working when she forgets to log; imports years of existing cycle history on day one _(scope revised 2026-08-11 — was "unlocks confirmed ovulation", now out of scope with TTC)_ |
 | 2 | Food logging — AI-assisted text + voice + quick-add (India-native) | **Rove has no calorie tracker today.** This builds one, and closes the loop between the AI diet plan and what she actually ate. *Photo capture deferred to v4 — Decision 11.* |
 | 3 | Blood report upload → living Health Passport | Turns a tracker into a health record; real data moat |
 | 4 | Doctor-ready PDF export | Most shareable feature in the app; word-of-mouth engine |
@@ -177,10 +177,10 @@ Create the **private** `lab-reports` bucket (and `meal-photos` too, unused until
 **Size:** 0.5 day.
 
 ### Item 4 — Native health module spike (both platforms)
-A throwaway spike, before any product work. Install `@kingstinct/react-native-healthkit` (iOS) and `react-native-health-connect` (Android) with their Expo config plugins. Prove you can read, on a real device: steps, sleep stages, resting heart rate, HRV, wrist/skin temperature, weight. Then check what a real Oura or Whoop account actually writes into each system, and record the answer in this file — decision 3 above depends on it.
+A throwaway spike, before any product work. Install `@kingstinct/react-native-healthkit` (iOS) and `react-native-health-connect` (Android) with their Expo config plugins. Prove you can read, on a real device: steps, sleep stages, resting heart rate, HRV, weight — **and menstrual flow / period records**, which Item 8a depends on entirely. ~~wrist/skin temperature~~ dropped 2026-08-11, see the scope correction above. Also prove one *write* of a menstrual flow record round-trips into the platform's own health app, since Item 9a rests on it. Then check what a real Oura or Whoop account actually writes into each system, and record the answer in this file — decision 3 above depends on it.
 **Depends on:** Items 1, 2.
-**Definition of done:** a scratch screen in the dev build printing yesterday's six metrics on iPhone and on a real Android phone, plus a written note on which metrics are missing per platform. **Delete the scratch screen before merging Item 7.**
-**Size:** 1.5 days. **Risk:** high — this is the spike that most likely changes the plan. HRV and temperature availability vary by device and by OS version. Find out now.
+**Definition of done:** a scratch screen in the dev build printing yesterday's five metrics plus the most recent period record on iPhone and on a real Android phone; one written flow record visible in the iOS Health app and in Health Connect; plus a written note on which metrics are missing per platform. **Delete the scratch screen before merging Item 7.**
+**Size:** 1.5 days. **Risk:** high — this is the spike that most likely changes the plan. HRV availability varies by device and OS version, and flow-level vocabularies differ between the two platforms. Find out now.
 
 ### Item 5 — Privacy policy, consent copy, and store declarations
 `mobile/src/app/privacy.tsx` predates all of this. It must now cover: health data read from Apple Health / Health Connect, meal photographs, lab reports, voice recordings and transcripts, and WhatsApp message content. Apple additionally forbids using HealthKit data for advertising and requires the policy to say so. Update the App Store privacy worksheet in `docs/app-store-privacy-worksheet.md` and the Play Data Safety form to match.
@@ -194,6 +194,18 @@ A throwaway spike, before any product work. Install `@kingstinct/react-native-he
 Three independent tracks. Engineer A takes health sync, B takes meals, C takes voice.
 
 ### TRACK A — Passive health sync
+
+> **Scope correction, 2026-08-11 (founder).** Current focus is **cycle tracking only — TTC is out of scope.** The TTC engine stays parked on `ttc-mode-build` and does not ship in v3. Three consequences for this track:
+>
+> 1. **No fertility data types.** Basal body temperature, LH/ovulation test results, and cervical mucus quality are not read or written, on either platform. They are TTC signals and pulling them in now drags the schema and the sync engine toward a use case we are not shipping.
+> 2. **Skin/wrist temperature comes out of the Item 4 spike.** Its only real use is retrospective ovulation estimation. Do not spend a day proving reads for a signal nothing in v3 acts on. `health_metrics.skin_temp_delta_c` stays in the Item 6 migration — the column is free and re-adding it later costs a migration — but nothing writes to it in v3.
+> 3. **Two new items, 8a and 9a below.** The original Track A is read-only. Reading alone makes us a consumer of Apple's data; writing period data back makes us the source of record, and it is a small surface once Item 8 exists.
+>
+> **Priority change:** Item 8a (history import) is the highest-value item in this track and should land before Item 9, not after. Every downstream feature — Insights, the doctor report, prediction quality — demos badly against an empty account and well against an imported one.
+>
+> **Schedule impact — not yet reflected below.** Items 8a and 9a add **3.5 days** to Track A; dropping temperature from Item 4 gives back roughly half a day. The day-by-day schedule at the bottom of this file still shows the original Track A ordering and has **not** been re-planned — that is a founder/lead call, not something to absorb silently into an existing 35-day schedule.
+>
+> **Already built since this plan was written:** the doctor-ready PDF export (feature 4) shipped on 2026-08-11 — `mobile/src/lib/healthReport.ts`, surfaced in Insights → Health. It is entirely self-reported today, which is the clearest argument for this track: its Sleep row reads *"— 0 nights logged"* because nobody hand-logs sleep.
 
 ### Item 6 — Health data schema + sync state
 Two new tables:
@@ -237,6 +249,30 @@ A background-capable incremental sync. On app foreground, and on iOS via HealthK
 **Definition of done:** wear a watch overnight, open the app, see last night's sleep and resting HR appear; kill and reopen the app 5× and confirm no duplicate rows; airplane-mode mid-sync leaves the anchor unadvanced and recovers on the next run.
 **Size:** 2 days. **Risk:** medium — anchor handling is where this class of feature usually leaks duplicates.
 
+### Item 8a — Cycle history import on permission grant
+**The highest-value item in this track. Schedule it immediately after Item 8.**
+
+Apple's own Cycle Tracking writes menstrual flow into HealthKit, and Health Connect exposes `MenstruationPeriodRecord` / `MenstruationFlowRecord`. A woman arriving from Apple's tracker — or from any app that mirrors into these systems — is carrying years of period history that we can have the moment she taps Allow.
+
+On first successful permission grant, read **all available** menstrual flow and period records (not the 90-day metrics backfill — history is cheap and the whole point), collapse them into period streaks using the same gap tolerance as `shared/cycle/phase.ts` `findStreakStart`, and write them into `daily_logs.is_period` / `flow_intensity` for dates the user has not already logged herself. **Manual entries always win** — never overwrite a day the user typed. Re-anchor `user_cycle_settings.last_period_start` from the most recent imported streak afterwards.
+
+Show what happened: "We found 14 cycles going back to March 2024." That sentence is the entire onboarding pitch for the integration.
+
+**Depends on:** Items 7, 8.
+**Definition of done:** on a real iPhone with ≥6 months of Apple Cycle Tracking history, granting permission produces correct period streaks in the Tracker calendar and a non-null average cycle length in Insights within one screen of onboarding; a day the user had already logged manually is byte-identical before and after import; running the import twice creates no duplicates and no drift.
+**Size:** 2 days. **Risk:** medium — flow-level mapping differs between platforms, and the "don't clobber manual entries" rule is where this will leak.
+
+### Item 9a — Write period data back to Apple Health / Health Connect
+Read-only integrations are replaceable; two-way ones are not. When the user logs or edits a period in Rove, mirror it out as `HKCategoryTypeIdentifierMenstrualFlow` (iOS) and `MenstruationPeriodRecord` / `MenstruationFlowRecord` (Android), so her cycle shows up in Apple Health, on her watch, and in every other app that reads those systems.
+
+Scope is deliberately narrow: **period and flow only.** No fertility types (see the scope correction at the top of this track). Write access is a separate permission from read on both platforms and must be requested and refused independently — a user who grants read and denies write is a normal state, not an error.
+
+Guard against the obvious loop: records we wrote must be tagged as ours and skipped on the next import, or Item 8a will re-import our own writes.
+
+**Depends on:** Items 8, 8a.
+**Definition of done:** log a period in Rove → it appears in the iOS Health app and in Health Connect within one sync; delete it in Rove → it disappears from both; write permission denied → the app works exactly as it does today with no error state; run import and write-back back-to-back 5× and confirm no duplicated or ballooning streaks.
+**Size:** 1.5 days. **Risk:** medium — the write/import loop is the failure mode to test hardest.
+
 ### Item 9 — Surface passive data in Home and Insights
 Wire the new metrics into `SnapshotIcons` on Home (steps, sleep, resting HR for today) and add a card to Insights showing each metric across the current cycle with phase bands behind it — the point being that she *sees* her resting HR climb in luteal. Every widget must degrade gracefully to the existing manual-entry state when no source is connected.
 **Depends on:** Item 8. **Four-phase testing rule applies** (ground rule 5 of the migration plan).
@@ -249,7 +285,7 @@ Wire the new metrics into `SnapshotIcons` on Home (steps, sleep, resting HR for 
 **Definition of done:** two test accounts with identical onboarding but different step data receive measurably different calorie targets; an account with no health source connected gets byte-identical output to today's.
 **Size:** 1 day.
 
-> **Deferred on purpose — confirmed ovulation.** Full algorithm and validation protocol now specified in `docs/multi-signal-ovulation-algorithm.md` (created 2026-08-01).
+> **Deferred on purpose — confirmed ovulation.** Full algorithm and validation protocol now specified in `docs/multi-signal-ovulation-algorithm.md` (created 2026-08-01). **Deferred further, 2026-08-11:** TTC is out of scope for v3 entirely, so this is not a v3.2 item either until TTC returns to the roadmap.
 >
 > **Original note:** Fusing skin-temperature shift + resting-HR rise + MPIQ + LH strips into a "we confirmed you ovulated on day 15" claim is the biggest prize in this whole plan, and it is *impossible to validate before we have collected a cycle of real temperature data from real users.* It becomes the headline v3.2 item, built on Items 6–8 plus `docs/lh_fsh_strip_integration_plan.md`. Do not let anyone ship a confirmation claim in v3.0 on synthetic data.
 
