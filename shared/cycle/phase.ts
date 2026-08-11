@@ -27,6 +27,7 @@ export interface PhaseResult {
     phase: Phase | null;           // null = insufficient data
     day: number;                   // 0 if no data
     latePeriod: boolean;           // true if past expected cycle length without new period
+    daysLate: number;              // days past the expected start; 0 when due today or not late
     confidence: 'low' | 'medium' | 'high';
     dataSource: 'logs' | 'settings' | 'none';
 }
@@ -192,6 +193,7 @@ export function calculatePhase(
                 phase: "Menstrual",
                 day: Math.max(diff + 1, 1),
                 latePeriod: false,
+                daysLate: 0,
                 confidence: 'high',
                 dataSource: 'logs'
             };
@@ -206,6 +208,7 @@ export function calculatePhase(
                 phase: null,
                 day: 0,
                 latePeriod: false,
+                daysLate: 0,
                 confidence: 'low',
                 dataSource: 'none'
             };
@@ -220,6 +223,7 @@ export function calculatePhase(
                 phase: "Menstrual",
                 day: 1,
                 latePeriod: false,
+                daysLate: 0,
                 confidence: 'low',
                 dataSource: source
             };
@@ -327,6 +331,10 @@ export function calculatePhase(
             phase,
             day: dayInCycle,
             latePeriod: isLate,
+            // Single source of truth for "how late". Derived from diffDays, not dayInCycle,
+            // which is diffDays + 1 — computing it from the latter is an off-by-one that had
+            // Tracker and Insights reporting different numbers for the same day.
+            daysLate: isLate ? diffDays - cycleLength : 0,
             confidence,
             dataSource: source
         };
@@ -337,6 +345,7 @@ export function calculatePhase(
             phase: null,
             day: 0,
             latePeriod: false,
+                daysLate: 0,
             confidence: 'low',
             dataSource: 'none'
         };

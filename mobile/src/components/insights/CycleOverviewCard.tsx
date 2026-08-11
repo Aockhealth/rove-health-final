@@ -33,6 +33,13 @@ export function CycleOverviewCard({
   const lateBy = rawDays !== null && rawDays < 0 ? Math.abs(rawDays) : null;
   const daysLeft = rawDays !== null && rawDays >= 0 ? rawDays : null;
 
+  // Mirrors the Tracker's late-period copy: normalise a short delay, and only at a week
+  // or more suggest a next step. Same threshold, same deliberately non-diagnostic tone.
+  const lateMessage =
+    lateBy !== null && lateBy >= 7
+      ? 'A week or more is worth looking into. If pregnancy is possible, a test will tell you more — otherwise consider checking in with a doctor.'
+      : 'A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle.';
+
   const likelyWindow = target && lateBy === null ? `${target.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -73,17 +80,24 @@ export function CycleOverviewCard({
           
           <View className="flex-row items-baseline justify-center gap-1.5 mb-2">
             <Text className="text-5xl tracking-tight" style={{ fontFamily: 'CormorantGaramond-SemiBold', color: theme.color }}>
-              {lateBy !== null ? `Late ${lateBy}` : (daysLeft !== null ? daysLeft : "—")}
+              {lateBy !== null ? lateBy : (daysLeft !== null ? daysLeft : "—")}
             </Text>
             <Text className="text-sm font-bold text-rove-stone">
-              {lateBy !== null ? 'days' : 'days'}
+              {lateBy !== null ? 'days late' : 'days'}
             </Text>
           </View>
 
           {/* Window */}
           <View className="flex flex-col items-center justify-center mt-3 mb-1 w-full px-4 py-3 rounded-[16px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.65)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
-            <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-widest mb-1 opacity-80">Likely Window</Text>
-            <Text className="text-sm text-rove-charcoal tracking-wide" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{likelyWindow}</Text>
+            <Text className="text-[9px] font-bold text-rove-stone uppercase tracking-widest mb-1 opacity-80">
+              {lateBy !== null ? 'What this means' : 'Likely Window'}
+            </Text>
+            <Text
+              className={lateBy !== null ? 'text-xs text-rove-charcoal text-center leading-5' : 'text-sm text-rove-charcoal tracking-wide'}
+              style={lateBy !== null ? undefined : { fontFamily: 'CormorantGaramond-Bold' }}
+            >
+              {lateBy !== null ? lateMessage : likelyWindow}
+            </Text>
           </View>
         </View>
 

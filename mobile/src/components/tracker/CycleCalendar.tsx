@@ -115,6 +115,7 @@ export interface CycleCalendarProps {
   onEndPeriod: () => void;
 
   headline: string;
+  subtext?: string;
   currentPhase: Phase;
 }
 
@@ -138,6 +139,7 @@ export function CycleCalendar({
   onExitPeriodLogging,
   onEndPeriod,
   headline,
+  subtext = 'Tap a date to log symptoms',
   currentPhase,
 }: CycleCalendarProps) {
   const [gridWidth, setGridWidth] = useState(0);
@@ -206,7 +208,7 @@ export function CycleCalendar({
         <View style={styles.topRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.headline}>{headline}</Text>
-            <Text style={styles.subtext}>Tap a date to log symptoms</Text>
+            <Text style={styles.subtext}>{subtext}</Text>
           </View>
           <TouchableOpacity
             style={styles.periodBtn}

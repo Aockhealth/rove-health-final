@@ -375,9 +375,7 @@ export default function TrackerScreen() {
   const currentPhase: Phase = phaseResult.phase;
   const dayInCycle = phaseResult.day > 0 ? phaseResult.day : null;
   const hasPhaseData = phaseResult.phase !== null;
-  const lateByDays = phaseResult.latePeriod
-    ? Math.max(1, (phaseResult.day || 0) - (cycleSettings.cycle_length_days || 28))
-    : 0;
+  const lateByDays = phaseResult.daysLate;
   const isFertileDay =
     dayInCycle && !phaseResult.latePeriod
       ? isInFertileWindow(dayInCycle, cycleSettings.cycle_length_days || 28) && currentPhase !== 'Menstrual'
@@ -396,9 +394,7 @@ export default function TrackerScreen() {
   // Separate from `lateByDays` above — the headline reports how late
   // *today's* period is, not the selected date's, matching the web's
   // PeriodLoggingCard (which computes this from its own todayResult).
-  const todayLateByDays = todayResult.latePeriod
-    ? Math.max(1, (todayResult.day || 0) - (cycleSettings.cycle_length_days || 28))
-    : 0;
+  const todayLateByDays = todayResult.daysLate;
 
   const daysUntilPeriod = useMemo(() => {
     const cycleLength = cycleSettings.cycle_length_days || 28;
@@ -419,10 +415,23 @@ export default function TrackerScreen() {
     : currentPhase === 'Menstrual'
       ? `Period Day ${Math.max(1, dayInCycle || 1)}`
       : todayResult.latePeriod
-        ? `Late by ${todayLateByDays} day${todayLateByDays === 1 ? '' : 's'}`
+        ? todayLateByDays === 0
+          ? 'Period due today'
+          : `${todayLateByDays} day${todayLateByDays === 1 ? '' : 's'} late`
         : daysUntilPeriod === 0
           ? 'Period starts today'
           : `Period in ${daysUntilPeriod} day${daysUntilPeriod === 1 ? '' : 's'}`;
+
+  // A late period is the most anxious moment in the cycle, and a bare number with no
+  // context is what makes it worse. Normalise the common case, and only at a week or
+  // more point toward an actual next step. Deliberately non-diagnostic.
+  const LATE_ADVICE_THRESHOLD_DAYS = 7;
+  const headlineSubtext =
+    todayResult.latePeriod && todayLateByDays > 0
+      ? todayLateByDays >= LATE_ADVICE_THRESHOLD_DAYS
+        ? 'A week or more is worth looking into. If pregnancy is possible, a test will tell you more — otherwise consider checking in with a doctor.'
+        : 'A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle.'
+      : 'Tap a date to log symptoms';
 
   // ─── Per-cell calendar data for the visible month, keyed by real date ─────
   const dayInfo: DayInfoMap = useMemo(() => {
@@ -947,6 +956,7 @@ export default function TrackerScreen() {
           onExitPeriodLogging={handleSavePeriodChanges}
           onEndPeriod={handleEndPeriod}
           headline={headline}
+          subtext={headlineSubtext}
           currentPhase={currentPhase}
         />
 
