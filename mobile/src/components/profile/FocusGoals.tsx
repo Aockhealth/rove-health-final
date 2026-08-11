@@ -10,7 +10,6 @@ import {
   BookOpen,
   Check,
   Target,
-  Droplet,
 } from 'lucide-react-native';
 import type { ProfileTheme } from './CycleSignature';
 
@@ -25,20 +24,13 @@ const GOALS = [
   { id: 'learn_body', label: 'Learn My Body', Icon: BookOpen },
 ];
 
-const TRACKER_MODES = [
-  { id: 'menstruation', label: 'Menstruation', description: 'Cycle & symptom tracking', Icon: Droplet },
-  { id: 'menopause', label: 'Menopause', description: 'Symptom management', Icon: Flower2 },
-];
-
 interface FocusGoalsProps {
   goals: string[];
-  trackerMode: string;
   onToggleGoal: (goalId: string) => void;
-  onTrackerModeChange: (mode: string) => void;
   theme: ProfileTheme;
 }
 
-export function FocusGoals({ goals, trackerMode, onToggleGoal, onTrackerModeChange, theme }: FocusGoalsProps) {
+export function FocusGoals({ goals, onToggleGoal, theme }: FocusGoalsProps) {
   return (
     <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
       <View className="mb-6 flex-row items-center gap-3">
@@ -97,51 +89,6 @@ export function FocusGoals({ goals, trackerMode, onToggleGoal, onTrackerModeChan
           </View>
         </View>
 
-        <View className="gap-3">
-          <Text className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
-            Tracker Mode
-          </Text>
-          <View className="gap-2">
-            {TRACKER_MODES.map((mode) => {
-              const selected = trackerMode === mode.id;
-              return (
-                <TouchableOpacity
-                  key={mode.id}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    onTrackerModeChange(mode.id);
-                  }}
-                  activeOpacity={0.85}
-                  className={`flex-row items-center gap-3 rounded-2xl border p-3 ${
-                    selected ? 'border-stone-800 bg-stone-800' : 'border-stone-100 bg-stone-50/50'
-                  }`}
-                >
-                  <View
-                    className={`h-9 w-9 items-center justify-center rounded-xl ${
-                      selected ? 'bg-white/15' : 'bg-white'
-                    }`}
-                  >
-                    <mode.Icon size={16} color={selected ? '#FAF7F2' : '#78716C'} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className={`text-sm font-semibold ${selected ? 'text-white' : 'text-stone-700'}`}>
-                      {mode.label}
-                    </Text>
-                    <Text className={`text-xs ${selected ? 'text-white/60' : 'text-stone-400'}`}>
-                      {mode.description}
-                    </Text>
-                  </View>
-                  {selected ? <Check size={16} color="#FAF7F2" /> : null}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          {trackerMode !== 'menstruation' ? (
-            <Text className="text-xs italic text-stone-400">
-              Early access — this dashboard is still being built.
-            </Text>
-          ) : null}
-        </View>
       </View>
     </View>
   );

@@ -175,7 +175,7 @@ export function AccountSettings({
             <Row
               Icon={Database}
               title="Clear Local Data"
-              subtitle="Remove cached data from this device"
+              subtitle="Email us to request a data clear"
               onPress={onClearLocalData}
             />
           </View>

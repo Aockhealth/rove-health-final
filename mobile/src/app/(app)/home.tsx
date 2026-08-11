@@ -244,24 +244,6 @@ export default function HomeScreen() {
     );
   }
 
-  if (data.trackerMode === 'ttc') {
-    return (
-      <SafeAreaView className="flex-1 bg-rove-cream/20 px-4">
-        {Header}
-        <View className="flex-1 items-center justify-center gap-4 px-6">
-          <View className="w-20 h-20 rounded-full bg-amber-100 items-center justify-center">
-            <Baby size={36} color="#F59E0B" />
-          </View>
-          <Text className="text-3xl text-rove-charcoal text-center" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Fertility Window</Text>
-          <Text className="text-rove-stone text-center">
-            Your dedicated fertility dashboard is being prepared. Soon you'll track BBT, cervical mucus, and peak ovulation days here.
-          </Text>
-          <Button className="rounded-full">Log Temperature</Button>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (data.trackerMode === 'menopause') {
     return (
       <SafeAreaView className="flex-1 bg-rove-cream/20 px-4">

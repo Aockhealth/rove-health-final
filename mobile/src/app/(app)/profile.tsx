@@ -7,6 +7,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -33,6 +34,8 @@ import { AccountSettings } from '../../components/profile/AccountSettings';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+const SUPPORT_EMAIL = 'team@rovehealth.in';
 
 const PROFILE_THEMES: Record<string, ProfileTheme> = {
   Menstrual: { accentColor: '#AF6B6B', badgeBg: 'rgba(175,107,107,0.10)', badgeText: '#AF6B6B' },
@@ -196,6 +199,23 @@ export default function ProfileScreen() {
       return;
     }
     toast.success('Password reset email sent');
+  };
+
+  // Clearing local data is handled by the team rather than in-app, so this opens a
+  // pre-addressed mail draft. Falls back to showing the address, since a device with
+  // no mail client configured silently does nothing on a mailto: link.
+  const handleRequestDataClear = async () => {
+    const subject = encodeURIComponent('Request: clear my local data');
+    const body = encodeURIComponent(
+      `Please clear the local data for my Rove account.\n\nAccount email: ${userEmail || '(not signed in)'}\n`,
+    );
+    const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+
+    try {
+      await Linking.openURL(url);
+    } catch {
+      toast.error('Could not open your mail app', { description: `Email us at ${SUPPORT_EMAIL}` });
+    }
   };
 
   const handleLogout = async () => {
@@ -378,9 +398,7 @@ export default function ProfileScreen() {
 
             <FocusGoals
               goals={formData.goals}
-              trackerMode={formData.tracker_mode}
               onToggleGoal={handleToggleGoal}
-              onTrackerModeChange={(mode) => saveProfileFields({ tracker_mode: mode })}
               theme={theme}
             />
 
@@ -399,12 +417,7 @@ export default function ProfileScreen() {
               onResetPassword={handleResetPassword}
               onUpdateContact={handleUpdateContact}
               onDeleteAccount={handleAccountDeletion}
-              onClearLocalData={() => {
-                queryClient.clear();
-                toast.success('Local data cleared', {
-                  description: 'Cached data has been removed from this device.',
-                });
-              }}
+              onClearLocalData={handleRequestDataClear}
               isPending={isPending}
             />
           </View>

@@ -23,9 +23,19 @@ export type DashboardData = {
   monthLogs: Record<string, DailyLog>;
   nutrients: { title: string; desc: string; icon: string; detail: string }[];
   phaseFocus: { title: string; desc: string; icon: string; detail: string }[];
-  trackerMode: 'menstruation' | 'ttc' | 'menopause';
+  trackerMode: 'menstruation' | 'menopause';
   lifestyle: { diet_preference: string } | null;
 };
+
+/**
+ * TTC isn't in this release, but accounts that picked it before it was pulled still have
+ * 'ttc' stored in onboarding.tracker_mode. Fall those back to the standard cycle dashboard
+ * rather than a dead placeholder. The stored value is left alone, so these users return to
+ * TTC automatically once the real dashboard ships.
+ */
+function normaliseTrackerMode(stored: string | null | undefined): DashboardData['trackerMode'] {
+  return stored === 'menopause' ? 'menopause' : 'menstruation';
+}
 
 /**
  * Mirrors frontend/src/app/actions/cycle-sync.ts's fetchDashboardData authenticated
@@ -90,7 +100,7 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
     monthLogs,
     nutrients: content.nutrients || [],
     phaseFocus: content.phaseFocus || [],
-    trackerMode: (onboarding?.tracker_mode as DashboardData['trackerMode']) || 'menstruation',
+    trackerMode: normaliseTrackerMode(onboarding?.tracker_mode),
     lifestyle: lifestyle ? { diet_preference: lifestyle.diet_preference } : null,
   };
 }

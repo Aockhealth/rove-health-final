@@ -141,7 +141,7 @@ export function CycleSignature({
       <View className="flex-row gap-3">
         <View className="flex-1 justify-center rounded-2xl border border-white/60 bg-white/50 p-4">
           <Text className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-500">
-            Total Cycle
+            Cycle Length
           </Text>
           <View className="flex-row items-baseline gap-1">
             <Text className="text-3xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
@@ -152,7 +152,7 @@ export function CycleSignature({
         </View>
         <View className="flex-1 justify-center rounded-2xl border border-white/60 bg-white/50 p-4">
           <Text className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-500">
-            Bleed
+            Period Length
           </Text>
           <View className="flex-row items-baseline gap-1">
             <Text className="text-3xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
