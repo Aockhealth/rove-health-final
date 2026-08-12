@@ -249,7 +249,7 @@ function SectionHeading({
 }) {
   return (
     <div className={className}>
-      <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/50">
+      <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/65">
         {eyebrow}
       </span>
       <h2 className="mt-3 font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-4xl">
@@ -333,11 +333,11 @@ export default async function ShopPage() {
               {TRUST.map(({ icon: Icon, label }) => (
                 <span key={label} className="flex items-center gap-1.5">
                   <Icon
-                    className="h-3 w-3 text-obsidian/45 md:h-3.5 md:w-3.5"
+                    className="h-3 w-3 text-obsidian/65 md:h-3.5 md:w-3.5"
                     strokeWidth={1.75}
                     aria-hidden
                   />
-                  <span className="font-sans text-[9px] font-medium uppercase tracking-[0.08em] text-obsidian/55 md:text-[11px] md:tracking-[0.12em]">
+                  <span className="font-sans text-[9px] font-medium uppercase tracking-[0.08em] text-obsidian/70 md:text-[11px] md:tracking-[0.12em]">
                     {label}
                   </span>
                 </span>
@@ -348,7 +348,7 @@ export default async function ShopPage() {
               {product.title}
             </h1>
 
-            <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-obsidian/60 md:mt-2.5 md:text-[13px] md:tracking-[0.16em]">
+            <p className="mt-2 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-obsidian/70 md:mt-2.5 md:text-[13px] md:tracking-[0.16em]">
               To get the perfect rhythm
             </p>
 
@@ -389,7 +389,7 @@ export default async function ShopPage() {
               {HERO_BENEFITS.map((line) => (
                 <li key={line} className="flex items-start gap-3">
                   <Check
-                    className="mt-1 h-3.5 w-3.5 shrink-0 text-sage-teal"
+                    className="mt-1 h-3.5 w-3.5 shrink-0 text-obsidian/70"
                     strokeWidth={3}
                     aria-hidden
                   />
@@ -419,7 +419,7 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 2. Description ───────────────────────────────────── */}
-      <section className="border-t border-obsidian/10 bg-gradient-menstrual px-6 py-16 md:py-20">
+      <section className="border-t border-obsidian/10 bg-taupe-light px-6 py-16 md:py-20">
         <div className="mx-auto max-w-5xl">
           <Reveal>
             <SectionHeading eyebrow="Product description">
@@ -440,7 +440,7 @@ export default async function ShopPage() {
               <ul className="space-y-4">
                 {WHO_ITS_FOR.map((line) => (
                   <li key={line} className="flex items-start gap-3.5">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage-teal-light text-sage-teal">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rove-lime text-obsidian">
                       <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                     </span>
                     <span className="font-sans text-base leading-[1.6] text-obsidian/80">
@@ -459,14 +459,14 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 3. Benefits / evidence ───────────────────────────── */}
-      <section className="px-6 py-16 md:py-20">
+      <section className="bg-paper px-6 py-16 md:py-20">
         <div className="mx-auto max-w-5xl">
           <Reveal>
             <SectionHeading eyebrow="Benefits">
               What it&apos;s dosed to do.{" "}
               <span className="font-serif italic font-medium">And what the study actually said.</span>
             </SectionHeading>
-            <p className="mt-4 max-w-[60ch] font-sans text-sm leading-[1.75] text-obsidian/60">
+            <p className="mt-4 max-w-[60ch] font-sans text-sm leading-[1.75] text-obsidian/70">
               Every claim below is linked to the research behind it, including where our dose is
               lower than the one that was tested.
             </p>
@@ -475,12 +475,12 @@ export default async function ShopPage() {
           <div className="mt-12 grid gap-5 md:grid-cols-2">
             {EVIDENCE.map(({ icon: Icon, label, claim, actives, hedge, refs }, i) => (
               <Reveal key={label} delay={i * 90}>
-                <div className="flex h-full flex-col rounded-[24px] border border-obsidian/8 bg-white p-7 shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sage-teal-light text-sage-teal">
+                <div className="flex h-full flex-col rounded-[24px] border border-obsidian/8 bg-white-bone p-7 shadow-[0_8px_24px_rgba(0,0,0,0.05)]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-taupe-light text-obsidian">
                     <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                   </div>
 
-                  <p className="mt-5 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/50">
+                  <p className="mt-5 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/65">
                     {label}
                   </p>
 
@@ -499,7 +499,7 @@ export default async function ShopPage() {
                         if (!reference) return null;
                         return (
                           <li key={n} className="flex gap-2">
-                            <span className="shrink-0 font-sans text-[11px] tabular-nums text-obsidian/45">
+                            <span className="shrink-0 font-sans text-[11px] tabular-nums text-obsidian/65">
                               [{n}]
                             </span>
                             <a
@@ -523,7 +523,7 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 4. The 40:1 ratio ────────────────────────────────── */}
-      <section id="science" className="scroll-mt-24 bg-gradient-follicular px-6 py-16 md:py-20">
+      <section id="science" className="scroll-mt-24 bg-paper px-6 py-16 md:py-20">
         <div className="mx-auto max-w-5xl">
           <Reveal>
             <SectionHeading eyebrow="The science">
@@ -545,7 +545,7 @@ export default async function ShopPage() {
                 <Cite n={6} />
               </p>
               {product.scienceHighlight.caveat && (
-                <p className="mt-4 font-sans text-xs italic leading-relaxed text-obsidian/55">
+                <p className="mt-4 font-sans text-xs italic leading-relaxed text-obsidian/70">
                   {product.scienceHighlight.caveat}
                 </p>
               )}
@@ -556,7 +556,7 @@ export default async function ShopPage() {
 
 
       {/* ─── 6. Key ingredients ───────────────────────────────── */}
-      <section id="ingredients" className="scroll-mt-24 px-6 py-16 md:py-20">
+      <section id="ingredients" className="scroll-mt-24 bg-paper px-6 py-16 md:py-20">
         <div className="mx-auto max-w-5xl">
           <Reveal>
             <SectionHeading eyebrow="Key ingredients">
@@ -567,12 +567,12 @@ export default async function ShopPage() {
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {keyIngredients.map(({ name, detail }, i) => (
               <Reveal key={name} delay={i * 80}>
-                <div className="h-full rounded-[20px] border border-obsidian/8 bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+                <div className="h-full rounded-[20px] border border-obsidian/8 bg-white-bone p-6 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="font-sans text-lg font-semibold tracking-tight text-obsidian">
                       {detail.nutrient}
                     </span>
-                    <span className="shrink-0 font-sans text-xs font-medium tabular-nums text-obsidian/60">
+                    <span className="shrink-0 font-sans text-xs font-medium tabular-nums text-obsidian/70">
                       {detail.dose}
                     </span>
                   </div>
@@ -591,7 +591,7 @@ export default async function ShopPage() {
                   <FormulationTable formulation={product.formulation} />
                 </div>
                 <div className="mt-12">
-                  <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/50">
+                  <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/65">
                     References · {REFERENCES.length} studies
                   </p>
                   <div className="mt-5">
@@ -605,7 +605,7 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 7. The Rove difference & Standards ───────────────── */}
-      <section className="bg-gradient-ovulatory px-6 py-16 md:py-20">
+      <section className="bg-taupe-light px-6 py-16 md:py-20">
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
             <SectionHeading eyebrow="The difference">
@@ -616,13 +616,13 @@ export default async function ShopPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-obsidian/15">
-                    <th className="py-4 pr-4 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-obsidian/50">
+                    <th className="py-4 pr-4 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-obsidian/65">
                       &nbsp;
                     </th>
                     <th className="w-24 py-4 text-center font-sans text-xs font-semibold tracking-tight text-obsidian md:w-32 md:text-sm">
                       {product.title}
                     </th>
-                    <th className="w-24 py-4 text-center font-sans text-xs font-medium tracking-tight text-obsidian/50 md:w-32 md:text-sm">
+                    <th className="w-24 py-4 text-center font-sans text-xs font-medium tracking-tight text-obsidian/65 md:w-32 md:text-sm">
                       A generic multivitamin
                     </th>
                   </tr>
@@ -634,13 +634,13 @@ export default async function ShopPage() {
                         {row}
                       </td>
                       <td className="py-4 text-center">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sage-teal-light text-sage-teal">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rove-lime text-obsidian">
                           <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
                           <span className="sr-only">Yes</span>
                         </span>
                       </td>
                       <td className="py-4 text-center">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/5 text-obsidian/35">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/8 text-obsidian/70">
                           <X className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
                           <span className="sr-only">No</span>
                         </span>
@@ -658,7 +658,7 @@ export default async function ShopPage() {
             <ul className="mt-10 space-y-3.5">
               {STANDARDS.map((line) => (
                 <li key={line} className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage-teal-light text-sage-teal">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rove-lime text-obsidian">
                     <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                   </span>
                   <span className="font-sans text-sm leading-[1.6] text-obsidian/75">{line}</span>
@@ -670,7 +670,7 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 10. FAQ ──────────────────────────────────────────── */}
-      <section id="faq" className="scroll-mt-24 bg-gradient-luteal px-6 py-16 md:py-20">
+      <section id="faq" className="scroll-mt-24 bg-paper px-6 py-16 md:py-20">
         <div className="mx-auto max-w-2xl">
           <Reveal>
             <SectionHeading eyebrow="Questions & answers">
@@ -685,7 +685,7 @@ export default async function ShopPage() {
 
 
       {/* ─── 12. Close ────────────────────────────────────────── */}
-      <section className="px-6 py-16 text-center md:py-20">
+      <section className="bg-taupe-light px-6 py-16 text-center md:py-20">
         <Reveal className="mx-auto max-w-2xl">
           <h2 className="font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-obsidian md:text-4xl">
             It starts tomorrow morning.{" "}
@@ -702,16 +702,16 @@ export default async function ShopPage() {
             </span>
             <AddToCartButton product={liveProduct} />
           </div>
-          <p className="mt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-obsidian/60">
+          <p className="mt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-obsidian/70">
             {product.unitCount} {product.unitLabel} per bottle · 1–2 a day
           </p>
         </Reveal>
       </section>
 
       {/* ─── 13. App nudge ────────────────────────────────────── */}
-      <section className="px-6 py-12 pb-24 md:pb-16">
+      <section className="bg-paper px-6 py-12 pb-24 md:pb-16">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="font-sans text-sm leading-relaxed text-obsidian/60">
+          <p className="font-sans text-sm leading-relaxed text-obsidian/70">
             Want a daily plan built around your phase, not just a supplement?{" "}
             <Link href="/app" className="font-medium text-obsidian underline underline-offset-4">
               Get the Cycle Sync app

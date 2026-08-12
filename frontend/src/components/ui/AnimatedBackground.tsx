@@ -5,10 +5,14 @@ const PHASE_GLOWS = {
   follicular: "blob-glow-follicular",
   ovulatory: "blob-glow-ovulatory",
   luteal: "blob-glow-luteal",
+  // The default. A warm taupe haze belongs to the surface palette; the phase
+  // glows are the same pastel-wash-behind-a-section treatment the retheme
+  // removed everywhere else, so they are now opt-in rather than the default.
+  neutral: "blob-glow-taupe",
 } as const;
 
 export function AnimatedBackground({
-  phases = ["menstrual", "luteal"],
+  phases = ["neutral", "neutral"],
   className,
 }: {
   phases?: Array<keyof typeof PHASE_GLOWS>;

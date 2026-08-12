@@ -25,7 +25,7 @@ export default function AdvisorsPage() {
 
       <div className="mt-16 grid gap-10 sm:grid-cols-2">
         {ADVISORS.map((advisor) => (
-          <div key={advisor.name} className="rounded-[20px] bg-white border border-obsidian/8 p-8 shadow-sm">
+          <div key={advisor.name} className="rounded-[20px] bg-white-bone border border-obsidian/12 p-8 shadow-sm">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-obsidian text-white-bone">
               <Stethoscope className="h-7 w-7" />
             </div>

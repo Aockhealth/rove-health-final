@@ -34,10 +34,10 @@ const MOMENTS = [
 
 export function Philosophy() {
   return (
-    <section className="bg-gradient-follicular px-6 py-14 md:py-16">
+    <section className="bg-taupe-light px-6 py-14 md:py-16">
       <div className="mx-auto max-w-4xl">
         <Reveal className="mx-auto max-w-xl text-center">
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/50">
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/60">
             Why phases
           </span>
           <h2 className="mt-2 font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-3xl">

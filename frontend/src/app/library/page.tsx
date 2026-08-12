@@ -29,10 +29,10 @@ export default function LibraryPage() {
               sizes="100vw"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-paper via-transparent to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-paper via-transparent to-obsidian/30" />
 
           <div className="absolute bottom-0 left-0 w-full space-y-4 p-8 pb-12 md:w-2/3 md:p-16 lg:w-1/2">
-            <span className="inline-flex items-center gap-2 rounded-md bg-obsidian px-3 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.2em] text-white-bone">
+            <span className="inline-flex items-center gap-2 rounded-md bg-rove-lime px-3 py-1 font-sans text-[9px] font-bold uppercase tracking-[0.2em] text-obsidian">
               Featured Series
             </span>
             <h1 className="font-sans text-4xl font-semibold leading-[0.95] tracking-tight text-obsidian md:text-6xl">
@@ -44,9 +44,9 @@ export default function LibraryPage() {
             <div className="flex items-center gap-3 pt-4">
               <Link
                 href={`/library/${featured.slug}`}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-rove-red to-lavender-soft px-8 py-3 font-sans font-bold text-white-bone shadow-md transition-all hover:brightness-110 active:scale-95"
+                className="flex items-center gap-2 rounded-xl bg-rove-lime px-8 py-3 font-sans font-bold text-obsidian shadow-md transition-all hover:bg-rove-lime-deep active:scale-95"
               >
-                <Play className="h-5 w-5 fill-white-bone" /> Read Now
+                <Play className="h-5 w-5 fill-obsidian" /> Read Now
               </Link>
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function LibraryPage() {
           <span className="font-label text-xs font-semibold uppercase tracking-wide text-obsidian">
             The Library
           </span>
-          <p className="mt-3 font-sans text-sm leading-relaxed text-obsidian/60">
+          <p className="mt-3 font-sans text-sm leading-relaxed text-obsidian/70">
             Deep-dive into holistic science, Ayurvedic practices, and body literacy, the same
             Library from the Cycle Sync app, reviewed by doctors.
           </p>

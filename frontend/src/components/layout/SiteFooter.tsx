@@ -58,7 +58,7 @@ export function SiteFooter() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
-                className="text-obsidian/60 hover:text-obsidian"
+                className="text-obsidian/70 hover:text-obsidian"
               >
                 <InstagramIcon className="h-5 w-5" />
               </a>
@@ -67,7 +67,7 @@ export function SiteFooter() {
 
           {FOOTER_GROUPS.map((group) => (
             <div key={group.title}>
-              <h3 className="font-label text-xs font-semibold uppercase tracking-wide text-obsidian/50">
+              <h3 className="font-label text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                 {group.title}
               </h3>
               <ul className="mt-4 space-y-3">
@@ -88,7 +88,7 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-obsidian/8 pt-8">
           {TRUST_MARKS.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-2 text-obsidian/60">
+            <div key={label} className="flex items-center gap-2 text-obsidian/70">
               <Icon className="h-4 w-4" />
               <span className="font-label text-xs uppercase tracking-wide">{label}</span>
             </div>
@@ -96,17 +96,17 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 flex flex-col-reverse items-start justify-between gap-4 border-t border-obsidian/8 pt-6 sm:flex-row sm:items-center">
-          <div className="font-sans text-xs text-obsidian/50 flex flex-col gap-1">
+          <div className="font-sans text-xs text-obsidian/70 flex flex-col gap-1">
             <p>© {new Date().getFullYear()} Aockhealth Ventures. All rights reserved.</p>
             <p>
               Email: <a href="mailto:team@rovehealth.in" className="hover:text-obsidian transition-colors">team@rovehealth.in</a> | Phone: <a href="tel:8169785654" className="hover:text-obsidian transition-colors">8169785654</a>
             </p>
           </div>
           <div className="flex gap-6">
-            <Link href="/privacy" className="font-sans text-xs text-obsidian/50 hover:text-obsidian">
+            <Link href="/privacy" className="font-sans text-xs text-obsidian/70 hover:text-obsidian">
               Privacy
             </Link>
-            <Link href="/terms" className="font-sans text-xs text-obsidian/50 hover:text-obsidian">
+            <Link href="/terms" className="font-sans text-xs text-obsidian/70 hover:text-obsidian">
               Terms
             </Link>
           </div>

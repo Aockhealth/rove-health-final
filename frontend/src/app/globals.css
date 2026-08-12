@@ -4,17 +4,18 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Rove brand colors — mirrors rove-health/mobile/tailwind.config.js */
-  --color-paper: #faf9f6;
-  --color-white-bone: #fdfcfb;
-  --color-obsidian: #1a1a1a;
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     A warm greige system: an off-white page base, a greige band/card one
+     step darker, then two progressively deeper warm taupes. Every surface
+     on the site is one of these four — that uniformity is the point, and
+     it is what replaced the old per-section pastel washes. */
+  --color-paper: #fbf9f8; /* page base */
+  --color-white-bone: #ffffff; /* raised cards, and ink on dark bands */
+  --color-obsidian: #241f1f; /* near-black, faintly warm */
 
-  /* Muted neutral system — remapped onto the app's own neutrals
-     (rove-stone / rove-cream) so the site's surfaces read as the same
-     material as the app instead of an invented tan/beige family. */
-  --color-taupe: #a8a29e;
-  --color-taupe-light: #f9f9f5;
-  --color-taupe-dark: #a8a29e;
+  --color-taupe-light: #f3ece6; /* the warm band — the signature surface */
+  --color-taupe: #c4b0a3; /* mid taupe: rules, dividers, muted fills */
+  --color-taupe-dark: #8a7b71; /* muted warm ink */
 
   --color-phase-menstrual: #af6b6b;
   --color-phase-follicular: #8daa9d;
@@ -24,19 +25,27 @@
 
   --color-rove-red: #af6b6b;
   --color-rove-green: #8daa9d;
-  --color-rove-cream: #f9f9f5;
-  --color-rove-stone: #a8a29e;
-  --color-rove-charcoal: #2d2420;
+  --color-rove-cream: #f3ece6; /* alias of taupe-light */
+  --color-rove-stone: #c4b0a3; /* alias of taupe */
+  --color-rove-charcoal: #33292a;
   --color-rove-peach: #f4dcd6;
 
   /* The confident accent — used sparingly, like a single pop of color */
   --color-rove-gold: #d4a25f;
 
-  /* Dark mood break for the "problem" moment — a darkened 50/50 blend of
-     rove-red + lavender-soft, the same bookend pair used for the primary
-     button gradient, so this traces to the real palette instead of being
-     an invented one-off. */
-  --color-rove-plum: #342a30;
+  /* ── The signature accent ──────────────────────────────────────────────
+     One high-chroma lime against an otherwise entirely warm-neutral page.
+     It carries the primary CTA and the "most popular"-style pills, and
+     nothing else — the restraint is what makes it read as a signature
+     rather than as decoration. Always pairs with obsidian ink, never
+     white: the lime is far too light to carry white text. */
+  --color-rove-lime: #daff7d;
+  --color-rove-lime-deep: #b9e04a;
+
+  /* The dark band — a deep plum-brown rather than a neutral black, so the
+     dark moments stay inside the warm family instead of punching a cold
+     hole in the page. */
+  --color-rove-plum: #4b383b;
 
   --color-dusty-rose: #c97b7b;
   --color-dusty-rose-light: #f5e8e8;
@@ -83,15 +92,15 @@
 }
 
 :root {
-  --background: #faf9f6;
-  --foreground: #1a1a1a;
+  --background: #fbf9f8;
+  --foreground: #241f1f;
 
   --phase-menstrual-rgb: 175, 107, 107;
   --phase-follicular-rgb: 141, 170, 157;
   --phase-ovulatory-rgb: 212, 162, 95;
   --phase-luteal-rgb: 123, 130, 168;
   --rove-peach-rgb: 244, 220, 214;
-  --taupe-dark-rgb: 163, 144, 125;
+  --taupe-dark-rgb: 138, 123, 113;
 }
 
 body {

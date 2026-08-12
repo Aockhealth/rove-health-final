@@ -76,14 +76,14 @@ export function MechanismDiagram({ className }: { className?: string }) {
                 cx={x}
                 cy={y}
                 r={6}
-                className="fill-sage-teal"
+                className="fill-obsidian"
               />
               {/* Outer halo */}
               <circle
                 cx={x}
                 cy={y}
                 r={12}
-                className="fill-sage-teal/20"
+                className="fill-obsidian/12"
               />
               
               {/* Label */}
@@ -102,7 +102,7 @@ export function MechanismDiagram({ className }: { className?: string }) {
       
       {/* Central Intervention text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-        <span className="font-sans text-[10px] font-bold uppercase tracking-[0.2em] text-sage-teal">
+        <span className="font-sans text-[10px] font-bold uppercase tracking-[0.2em] text-obsidian">
           Balance
         </span>
         <p className="mt-2 font-serif text-sm italic leading-tight text-obsidian/70">

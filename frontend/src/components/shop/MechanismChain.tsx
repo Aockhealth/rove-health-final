@@ -70,7 +70,7 @@ export function MechanismChain({ steps = STEPS }: { steps?: MechanismStep[] }) {
       {/* The spine the steps hang off */}
       <span
         aria-hidden
-        className="absolute left-[13px] top-2 bottom-2 w-px bg-phase-follicular/40 md:left-[15px]"
+        className="absolute left-[13px] top-2 bottom-2 w-px bg-obsidian/15 md:left-[15px]"
       />
 
       {steps.map((step, i) => {
@@ -105,7 +105,7 @@ export function MechanismChain({ steps = STEPS }: { steps?: MechanismStep[] }) {
             <div
               className="transition-all duration-700 ease-out"
               style={{
-                opacity: isOn ? 1 : 0.35,
+                opacity: isOn ? 1 : 0.7,
                 transform: isOn ? "translateY(0)" : "translateY(6px)",
               }}
             >

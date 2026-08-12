@@ -72,7 +72,7 @@ export function BuyBox({
               key={option.id}
               className={cn(
                 "overflow-hidden rounded-[18px] border transition-colors",
-                isSelected ? "border-2 border-sage-teal" : "border-obsidian/15"
+                isSelected ? "border-2 border-obsidian" : "border-obsidian/15"
               )}
             >
               {option.recommended && (
@@ -80,8 +80,8 @@ export function BuyBox({
                   className={cn(
                     "px-5 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
                     isSelected
-                      ? "bg-sage-teal text-white-bone"
-                      : "bg-obsidian/5 text-obsidian/55"
+                      ? "bg-rove-lime text-obsidian"
+                      : "bg-obsidian/5 text-obsidian/70"
                   )}
                 >
                   Recommended
@@ -106,10 +106,10 @@ export function BuyBox({
                   aria-hidden
                   className={cn(
                     "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                    isSelected ? "border-sage-teal bg-sage-teal" : "border-obsidian/25"
+                    isSelected ? "border-obsidian bg-obsidian" : "border-obsidian/25"
                   )}
                 >
-                  {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white-bone" />}
                 </span>
 
                 <span className="min-w-0 flex-1">
@@ -122,13 +122,13 @@ export function BuyBox({
                         {rupees(total)}
                       </span>
                       {option.priceUnit && (
-                        <span className="font-sans text-xs uppercase tracking-[0.08em] text-obsidian/55">
+                        <span className="font-sans text-xs uppercase tracking-[0.08em] text-obsidian/70">
                           {" "}
                           / {option.priceUnit}
                         </span>
                       )}
                       {wasTotal && wasTotal > total && (
-                        <span className="block font-sans text-xs tabular-nums text-obsidian/45 line-through">
+                        <span className="block font-sans text-xs tabular-nums text-obsidian/65 line-through">
                           {rupees(wasTotal)}
                         </span>
                       )}
@@ -140,11 +140,11 @@ export function BuyBox({
                       {bundleDiscount > 0 && (
                         <span className="flex items-start gap-2">
                           <Check
-                            className="mt-[3px] h-3 w-3 shrink-0 text-sage-teal"
+                            className="mt-[3px] h-3 w-3 shrink-0 text-obsidian"
                             strokeWidth={3}
                             aria-hidden
                           />
-                          <span className="font-sans text-xs font-semibold leading-[1.6] text-sage-teal">
+                          <span className="font-sans text-xs font-semibold leading-[1.6] text-obsidian">
                             Bundle discount of {rupees(bundleDiscount)} included
                           </span>
                         </span>
@@ -152,7 +152,7 @@ export function BuyBox({
                       {option.perks.map((perk) => (
                         <span key={perk} className="flex items-start gap-2">
                           <Check
-                            className="mt-[3px] h-3 w-3 shrink-0 text-sage-teal"
+                            className="mt-[3px] h-3 w-3 shrink-0 text-obsidian/70"
                             strokeWidth={3}
                             aria-hidden
                           />
@@ -165,7 +165,7 @@ export function BuyBox({
                   )}
 
                   {savedPercent !== null && savedPercent > 0 && (
-                    <span className="mt-2.5 inline-block rounded-full bg-sage-teal/15 px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-sage-teal">
+                    <span className="mt-2.5 inline-block rounded-full bg-rove-lime px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-obsidian">
                       Save {savedPercent}%
                     </span>
                   )}

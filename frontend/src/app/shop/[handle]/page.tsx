@@ -89,18 +89,18 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
                 key={benefit}
                 className="inline-flex items-center gap-1.5 rounded-full bg-taupe-light px-3 py-1.5 font-sans text-xs font-medium text-obsidian/80"
               >
-                <Check className="h-3 w-3 text-obsidian/50" />
+                <Check className="h-3 w-3 text-obsidian/65" />
                 {benefit}
               </li>
             ))}
           </ul>
 
-          <div className="mt-5 flex gap-3 rounded-[16px] border border-obsidian/10 bg-white p-4">
+          <div className="mt-5 flex gap-3 rounded-[16px] border border-obsidian/10 bg-white-bone p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-taupe-light text-obsidian">
               <FlaskConical className="h-4 w-4" />
             </div>
             <div>
-              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/50">
+              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                 {product.scienceHighlight.title}
               </p>
               <p className="mt-1 font-sans text-sm leading-relaxed text-obsidian/75">
@@ -146,7 +146,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
             <Link
               key={p.handle}
               href={`/shop/${p.handle}`}
-              className="group flex items-center gap-4 rounded-[20px] border border-obsidian/8 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+              className="group flex items-center gap-4 rounded-[20px] border border-obsidian/8 bg-white-bone p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[12px]">
                 <Image src={p.image} alt={p.title} fill className="object-cover" />
@@ -156,7 +156,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
                 <h3 className="mt-2 font-sans text-base font-semibold tracking-tight text-obsidian">
                   {p.title}
                 </h3>
-                <p className="mt-1 font-sans text-sm text-obsidian/60">₹{p.price}</p>
+                <p className="mt-1 font-sans text-sm text-obsidian/70">₹{p.price}</p>
               </div>
             </Link>
           ))}

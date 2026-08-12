@@ -36,10 +36,10 @@ export function ProblemStatement() {
   }, []);
 
   return (
-    <section className="px-6 py-20 md:py-28">
+    <section className="bg-paper px-6 py-20 md:py-28">
       <div ref={ref} className="mx-auto max-w-3xl">
         <p
-          className="text-center font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/50 transition-opacity duration-700"
+          className="text-center font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/60 transition-opacity duration-700"
           style={{ opacity: seen ? 1 : 0 }}
         >
           What we kept hearing

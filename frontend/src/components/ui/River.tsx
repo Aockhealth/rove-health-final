@@ -33,7 +33,11 @@ export function River({
           <span
             key={`${item.label}-${i}`}
             className={cn(
-              "inline-flex shrink-0 items-center rounded-full border bg-white px-5 py-2.5 font-sans text-sm font-medium whitespace-nowrap",
+              // The border colour must be explicit: Tailwind v4's default
+              // border-color is currentColor, so a bare `border` would pick up
+              // whatever ink `item.colorClass` supplies and ring each pill in a
+              // full-strength phase hue.
+              "inline-flex shrink-0 items-center rounded-full border border-obsidian/10 bg-white-bone px-5 py-2.5 font-sans text-sm font-medium whitespace-nowrap",
               item.colorClass
             )}
           >

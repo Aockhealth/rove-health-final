@@ -39,7 +39,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     <div className="bg-paper pb-20">
       <div className="relative h-[45vh] w-full bg-taupe-light">
         <Image src={post.image} alt={post.title} fill className="object-cover" priority sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-t from-paper via-obsidian/20 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-paper via-obsidian/20 to-obsidian/40" />
 
         <div className="absolute left-0 top-0 w-full p-6 pb-6 pt-6">
           <Link
@@ -52,8 +52,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>
 
       <div className="relative z-10 -mt-20 px-4 sm:px-6">
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-[2.5rem] border border-obsidian/8 bg-white/80 p-6 shadow-sm backdrop-blur-xl sm:p-10 md:p-14">
-          <div className="mb-8 flex flex-wrap items-center gap-3 font-sans text-sm font-medium text-obsidian/60">
+        <div className="mx-auto max-w-3xl overflow-hidden rounded-[2.5rem] border border-obsidian/12 bg-white-bone/85 p-6 shadow-sm backdrop-blur-xl sm:p-10 md:p-14">
+          <div className="mb-8 flex flex-wrap items-center gap-3 font-sans text-sm font-medium text-obsidian/70">
             <span className="rounded-full bg-taupe-light px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-obsidian/70">
               {post.category}
             </span>
@@ -70,10 +70,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
           <div className="mb-8 flex items-center gap-4 border-b border-obsidian/8 pb-8">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-taupe-light">
-              <User className="h-5 w-5 text-obsidian/45" />
+              <User className="h-5 w-5 text-obsidian/65" />
             </div>
             <div>
-              <p className="mb-0.5 font-sans text-xs font-bold uppercase tracking-widest text-obsidian/50">
+              <p className="mb-0.5 font-sans text-xs font-bold uppercase tracking-widest text-obsidian/65">
                 Verified &amp; Reviewed By
               </p>
               <p className="font-sans text-sm font-medium leading-snug text-obsidian">
@@ -123,7 +123,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 ),
                 li: ({ children }) => <li className="pl-1">{children}</li>,
                 blockquote: ({ children }) => (
-                  <blockquote className="my-8 rounded-r-2xl border-l-4 border-rove-gold bg-rove-gold/5 px-6 py-4 font-medium italic text-obsidian/90">
+                  <blockquote className="my-8 rounded-r-2xl border-l-4 border-rove-lime-deep bg-rove-lime/12 px-6 py-4 font-medium italic text-obsidian/90">
                     {children}
                   </blockquote>
                 ),
@@ -132,7 +132,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="break-all font-medium text-phase-menstrual underline decoration-phase-menstrual/30 underline-offset-4 transition-all hover:decoration-phase-menstrual"
+                    className="break-all font-medium text-rove-plum underline decoration-rove-plum/35 underline-offset-4 transition-all hover:decoration-rove-plum"
                   >
                     {children}
                   </a>
@@ -150,7 +150,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                         loading="lazy"
                       />
                       {alt && (
-                        <span className="mb-3 mt-3 block text-center font-sans text-xs italic text-obsidian/50">
+                        <span className="mb-3 mt-3 block text-center font-sans text-xs italic text-obsidian/65">
                           {alt}
                         </span>
                       )}
@@ -174,7 +174,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </ReactMarkdown>
 
             <div className="mt-14 rounded-[16px] border border-obsidian/10 bg-taupe-light/40 p-5">
-              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/50">
+              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                 A note on medical advice
               </p>
               <p className="mt-2 font-sans text-sm leading-relaxed text-obsidian/70">

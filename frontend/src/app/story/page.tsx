@@ -45,11 +45,11 @@ export default function StoryPage() {
         <Masthead className="px-6 pt-10 md:hidden" />
 
         <div className="grid md:min-h-[calc(100svh-5rem)] md:grid-cols-[minmax(0,1fr)_42vw]">
-          <div className="relative order-first h-[42svh] overflow-hidden bg-4-phase-gradient md:order-last md:h-auto">
-            <CycleLineArt className="absolute inset-0 h-full w-full text-obsidian/60" />
+          <div className="relative order-first h-[42svh] overflow-hidden bg-taupe-light md:order-last md:h-auto">
+            <CycleLineArt className="absolute inset-0 h-full w-full text-obsidian/75" />
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-0 hidden w-24 bg-gradient-to-r from-paper to-transparent md:block"
+              className="pointer-events-none absolute inset-y-0 left-0 hidden w-24 bg-gradient-to-r from-taupe-light to-transparent md:block"
             />
           </div>
 
@@ -108,15 +108,15 @@ export default function StoryPage() {
       </section>
 
       {/* ─── 3. Close ──────────────────────────────────── */}
-      <section className="bg-gradient-ovulatory px-6 py-24 text-center md:py-32">
+      <section className="bg-paper px-6 py-24 text-center md:py-32">
         <Reveal className="mx-auto max-w-2xl">
-          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-sage-teal" />
+          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-obsidian" />
           
           <div className="mt-12 flex flex-wrap items-baseline justify-center gap-x-4 gap-y-2">
             <p className="font-sans text-lg font-semibold tracking-tight text-obsidian/90 md:text-xl">
               {ADVISORS.map((a) => a.name).join(" & ")}
             </p>
-            <p className="font-sans text-xs uppercase tracking-[0.16em] text-obsidian/60">
+            <p className="font-sans text-xs uppercase tracking-[0.16em] text-obsidian/70">
               MBBS · Co-founders
             </p>
           </div>

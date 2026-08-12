@@ -43,7 +43,7 @@ export function StickyBuyBar({
           {product.unitCount ? `${product.unitCount} ${product.unitLabel} · ` : ""}
           {compareAtPrice ? (
             <>
-              <span className="mr-1.5 opacity-60 line-through decoration-obsidian/40">₹{compareAtPrice}</span>
+              <span className="mr-1.5 line-through decoration-obsidian/70">₹{compareAtPrice}</span>
               ₹{livePrice}
             </>
           ) : (

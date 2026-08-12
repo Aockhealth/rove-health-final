@@ -85,7 +85,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
               "-mb-px border-b-2 px-1 py-3 font-sans text-sm font-semibold transition-colors sm:px-2",
               active === tab
                 ? "border-obsidian text-obsidian"
-                : "border-transparent text-obsidian/45 hover:text-obsidian/70"
+                : "border-transparent text-obsidian/65 hover:text-obsidian"
             )}
           >
             {tab}
@@ -97,7 +97,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
         {active === "Description" && (
           <div className="max-w-2xl space-y-6">
             <div>
-              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/45">
+              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                 The biology
               </p>
               <p className="mt-2 font-sans text-sm leading-relaxed text-obsidian/75">
@@ -105,7 +105,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
               </p>
             </div>
             <div>
-              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/45">
+              <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                 The goal
               </p>
               <p className="mt-2 font-sans text-sm leading-relaxed text-obsidian/75">{product.goal}</p>
@@ -117,7 +117,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
           <div>
             {keyIngredients.length > 0 && (
               <div className="mb-12">
-                <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/45">
+                <p className="font-sans text-xs font-semibold uppercase tracking-wide text-obsidian/65">
                   Key ingredients
                 </p>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -126,7 +126,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
                     return (
                       <div
                         key={name}
-                        className="flex gap-4 rounded-[16px] border border-obsidian/8 bg-white p-5 shadow-sm"
+                        className="flex gap-4 rounded-[16px] border border-obsidian/8 bg-white-bone p-5 shadow-sm"
                       >
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-taupe-light text-obsidian">
                           <Icon className="h-5 w-5" />
@@ -136,7 +136,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
                             <span className="font-sans text-sm font-semibold text-obsidian">
                               {detail.nutrient}
                             </span>
-                            <span className="shrink-0 rounded-full bg-taupe-light px-2 py-0.5 font-sans text-[11px] font-medium text-obsidian/60">
+                            <span className="shrink-0 rounded-full bg-taupe-light px-2 py-0.5 font-sans text-[11px] font-medium text-obsidian/70">
                               {detail.dose}
                             </span>
                           </div>
@@ -159,7 +159,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
             >
               <span className="font-sans text-sm font-semibold text-obsidian">
                 Full formulation
-                <span className="ml-2 font-normal text-obsidian/45">
+                <span className="ml-2 font-normal text-obsidian/65">
                   ({product.formulation.length} ingredients)
                 </span>
               </span>
@@ -176,7 +176,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
                 {product.formulation.map((item) => (
                   <div
                     key={item.nutrient}
-                    className="flex gap-3 rounded-[14px] bg-taupe-light/40 p-4"
+                    className="flex gap-3 rounded-[14px] bg-taupe-light p-4"
                   >
                     <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", dotClass)} />
                     <div className="min-w-0">
@@ -184,7 +184,7 @@ export function ProductInfoTabs({ product }: { product: LocalProduct }) {
                         <span className="font-sans text-sm font-semibold text-obsidian">
                           {item.nutrient}
                         </span>
-                        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 font-sans text-[11px] font-medium text-obsidian/55">
+                        <span className="shrink-0 rounded-full bg-white-bone px-2 py-0.5 font-sans text-[11px] font-medium text-obsidian/70">
                           {item.dose}
                         </span>
                       </div>

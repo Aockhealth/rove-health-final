@@ -53,7 +53,7 @@ export function SiteHeader() {
           >
             <ShoppingBag className="h-5 w-5" />
             {totalQuantity > 0 && (
-              <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-obsidian text-[10px] font-medium text-white">
+              <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-obsidian text-[10px] font-medium text-white-bone">
                 {totalQuantity}
               </span>
             )}

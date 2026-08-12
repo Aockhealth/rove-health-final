@@ -140,7 +140,7 @@ export default function AppPage() {
       </section>
 
       {/* ─── 2. Recognition ────────────────────────────── */}
-      <section className="bg-gradient-menstrual px-6 py-32 md:py-40">
+      <section className="bg-taupe-light px-6 py-32 md:py-40">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
@@ -209,7 +209,7 @@ export default function AppPage() {
       </section>
 
       {/* ─── 4. One day, from the inside ──────────────────────── */}
-      <section className="bg-gradient-follicular px-6 py-24 md:py-32">
+      <section className="bg-taupe-light px-6 py-24 md:py-32">
         <div className="mx-auto max-w-6xl">
           <Reveal className="mx-auto max-w-3xl">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
@@ -252,9 +252,9 @@ export default function AppPage() {
       </section>
 
       {/* ─── 7. Close ──────────────────────────────────── */}
-      <section className="bg-gradient-luteal px-6 py-24 text-center md:py-32">
+      <section className="bg-paper px-6 py-24 text-center md:py-32">
         <Reveal className="mx-auto max-w-2xl">
-          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-sage-teal" />
+          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-obsidian" />
           <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-obsidian md:text-5xl">
             The app builds the plan.{" "}
             <span className="font-serif italic font-medium">The tablet is the other half.</span>

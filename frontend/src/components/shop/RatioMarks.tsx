@@ -66,7 +66,7 @@ export function RatioMarks({ formulation }: { formulation: FormulationItem[] }) 
           <span
             aria-hidden
             className={cn(
-              "ml-5 w-[3px] origin-bottom bg-sage-teal transition-transform duration-[520ms] ease-out md:w-1"
+              "ml-5 w-[3px] origin-bottom bg-rove-plum transition-transform duration-[520ms] ease-out md:w-1"
             )}
             style={{
               height: "5rem",

@@ -76,8 +76,8 @@ export function ProductGallery({
                 className={cn(
                   "flex h-[74px] w-[74px] flex-col items-center justify-center rounded-full px-2 text-center md:h-[104px] md:w-[104px]",
                   i === 0
-                    ? "bg-white/80 text-obsidian/70 backdrop-blur-sm"
-                    : "bg-sage-teal-light/85 text-sage-teal backdrop-blur-sm",
+                    ? "bg-white-bone/80 text-obsidian/80 backdrop-blur-sm"
+                    : "bg-rove-lime/90 text-obsidian backdrop-blur-sm",
                   badges.length === 1 && "mr-auto"
                 )}
               >
@@ -105,7 +105,7 @@ export function ProductGallery({
               type="button"
               onClick={() => go(-1)}
               aria-label="Previous image"
-              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-obsidian shadow-[0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-sm transition hover:bg-white md:left-5 md:h-11 md:w-11"
+              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white-bone/85 text-obsidian shadow-[0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-sm transition hover:bg-white-bone md:left-5 md:h-11 md:w-11"
             >
               <ChevronLeft className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             </button>
@@ -113,7 +113,7 @@ export function ProductGallery({
               type="button"
               onClick={() => go(1)}
               aria-label="Next image"
-              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-obsidian shadow-[0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-sm transition hover:bg-white md:right-5 md:h-11 md:w-11"
+              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white-bone/85 text-obsidian shadow-[0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-sm transition hover:bg-white-bone md:right-5 md:h-11 md:w-11"
             >
               <ChevronRight className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             </button>

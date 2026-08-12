@@ -27,7 +27,7 @@ export function SectionChips({ chips }: { chips: SectionChip[] }) {
           href={href}
           aria-hidden={decorative || undefined}
           tabIndex={decorative ? -1 : undefined}
-          className="flex shrink-0 items-center gap-2 rounded-full border border-rove-red/40 px-4 py-2.5 font-sans text-xs whitespace-nowrap text-rove-red transition-colors hover:border-rove-red hover:bg-rove-red/[0.06]"
+          className="flex shrink-0 items-center gap-2 rounded-full border border-obsidian/25 px-4 py-2.5 font-sans text-xs whitespace-nowrap text-obsidian/75 transition-colors hover:border-obsidian hover:bg-obsidian/[0.06]"
         >
           <HelpCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
           {label}

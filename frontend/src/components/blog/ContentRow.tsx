@@ -9,7 +9,7 @@ export function ContentRow({ title, posts }: { title: string; posts: BlogPostMet
     <div className="mb-10 pl-6 md:pl-10">
       <h3 className="group flex cursor-default items-center gap-2 font-sans text-lg font-semibold text-obsidian md:text-xl">
         {title}
-        <span className="font-sans text-xs font-medium text-obsidian/45">
+        <span className="font-sans text-xs font-medium text-obsidian/65">
           · {posts.length} {posts.length === 1 ? "article" : "articles"}
         </span>
         <ArrowRight className="h-4 w-4 -translate-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />

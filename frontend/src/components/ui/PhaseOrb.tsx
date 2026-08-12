@@ -1,7 +1,19 @@
 import { OrbCenterContent } from "@/components/ui/OrbCenterContent";
 
+/**
+ * The four phase hues, read from the token system rather than repeated as
+ * literals, so the brand mark can never desync from the palette the app shares.
+ *
+ * These use the `--phase-*-rgb` triples from globals.css rather than
+ * `var(--color-phase-*)` on purpose: globals.css declares its colours in
+ * `@theme inline`, which inlines the hex into utility classes and does NOT
+ * publish `--color-*` as runtime custom properties — `var(--color-phase-luteal)`
+ * resolves to nothing in an inline style. The rgb triples are declared in a
+ * plain `:root` block, so they do resolve. rgb(175,107,107) etc. are the exact
+ * values of the hexes they replace, so nothing here renders differently.
+ */
 const CYCLE_GRADIENT =
-  "conic-gradient(from 0deg, #af6b6b, #8daa9d, #d4a25f, #7b82a8, #af6b6b)";
+  "conic-gradient(from 0deg, rgb(var(--phase-menstrual-rgb)), rgb(var(--phase-follicular-rgb)), rgb(var(--phase-ovulatory-rgb)), rgb(var(--phase-luteal-rgb)), rgb(var(--phase-menstrual-rgb)))";
 
 /**
  * `size` is a ceiling, not a fixed width. On narrow screens the orb caps at a
@@ -21,8 +33,11 @@ export function PhaseOrb({ size = 280, className = "" }: { size?: number; classN
         className="absolute rounded-full blur-3xl"
         style={{
           inset: "-18%",
+          // The inner stop is a hand-darkened gold that matches no token —
+          // deliberately left literal, because pulling it to rove-gold would
+          // visibly lighten the halo.
           background:
-            "radial-gradient(circle, rgba(198,143,63,0.28) 0%, rgba(175,107,107,0.14) 45%, transparent 75%)",
+            "radial-gradient(circle, rgba(198,143,63,0.28) 0%, rgba(var(--phase-menstrual-rgb),0.14) 45%, transparent 75%)",
         }}
       />
 

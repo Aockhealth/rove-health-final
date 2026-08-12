@@ -8,11 +8,24 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // The signature CTA: one flat high-chroma lime on an otherwise
+        // warm-neutral page. Always obsidian ink — white on lime is 1.13:1
+        // and completely unreadable.
+        // The taupe-dark hairline is not decoration: lime is only 1.04-1.13:1
+        // against paper / taupe-light / white-bone, so without a boundary the
+        // control has no discernible edge (WCAG 1.4.11 wants 3:1). taupe-dark
+        // reaches 3.48:1 on the taupe-light band, 3.88:1 on paper, 4.08:1 on
+        // white-bone — and 3.61:1 against the lime fill, so it reads as an edge
+        // rather than a smudge. rove-lime-deep and obsidian/15 both top out at
+        // 1.30:1 on the band, so neither actually solves it.
         default:
-          "bg-gradient-to-br from-rove-red to-lavender-soft text-white-bone hover:brightness-110",
+          "bg-rove-lime text-obsidian border border-taupe-dark hover:bg-rove-lime-deep",
+        // For placing on top of lime or on photography, where the lime
+        // itself would have nothing to contrast against.
+        dark: "bg-obsidian text-paper hover:bg-rove-plum",
         outline: "border border-obsidian/25 text-obsidian hover:bg-obsidian/5",
         ghost: "text-obsidian hover:bg-obsidian/5",
-        secondary: "bg-taupe-light text-obsidian hover:bg-taupe/50",
+        secondary: "bg-white-bone text-obsidian hover:bg-taupe-light",
       },
       size: {
         default: "h-12 px-6",

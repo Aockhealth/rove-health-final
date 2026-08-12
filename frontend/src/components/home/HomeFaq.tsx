@@ -49,7 +49,7 @@ export function HomeFaq() {
   };
 
   return (
-    <section className="bg-gradient-ovulatory px-6 py-12 md:py-16">
+    <section className="bg-taupe-light px-6 py-12 md:py-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

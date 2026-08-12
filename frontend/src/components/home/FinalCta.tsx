@@ -3,7 +3,7 @@ import { Reveal } from "@/components/ui/Reveal";
 
 export function FinalCta() {
   return (
-    <section className="bg-gradient-luteal px-6 py-16 text-center md:py-20">
+    <section className="bg-paper px-6 py-16 text-center md:py-20">
       <Reveal className="mx-auto max-w-2xl">
         <h2 className="font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-4xl">
           Start living in sync with your cycle.

@@ -30,7 +30,7 @@ export function ThreadDraw() {
     <span
       ref={ref}
       aria-hidden
-      className="mx-auto mt-14 block h-14 w-px origin-top bg-white-bone/20 transition-transform duration-[900ms] ease-out"
+      className="mx-auto mt-14 block h-14 w-px origin-top bg-obsidian/20 transition-transform duration-[900ms] ease-out"
       style={{ transform: drawn ? "scaleY(1)" : "scaleY(0)" }}
     />
   );

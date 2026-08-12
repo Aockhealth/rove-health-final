@@ -13,15 +13,15 @@ export function ArticleCard({ post }: { post: BlogPostMeta }) {
           className="object-cover transition-transform duration-500 group-hover/card:scale-105"
           sizes="(max-width: 768px) 200px, 260px"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-85 transition-opacity duration-300 group-hover/card:opacity-95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian/75 via-obsidian/15 to-transparent opacity-85 transition-opacity duration-300 group-hover/card:opacity-95" />
 
         {post.readTime && (
-          <span className="absolute right-3 top-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 font-sans text-[9px] font-bold uppercase tracking-widest text-white backdrop-blur-md">
+          <span className="absolute right-3 top-3 rounded-full border border-white-bone/10 bg-obsidian/40 px-2.5 py-1 font-sans text-[9px] font-bold uppercase tracking-widest text-white-bone backdrop-blur-md">
             {post.readTime}
           </span>
         )}
 
-        <div className="absolute bottom-3 left-3 right-3 text-white">
+        <div className="absolute bottom-3 left-3 right-3 text-white-bone">
           <span className="mb-1 block font-sans text-[9px] font-bold uppercase tracking-widest opacity-70">
             {post.category}
           </span>

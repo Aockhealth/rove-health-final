@@ -72,7 +72,7 @@ export default function CartPage() {
     <div className="mx-auto max-w-5xl px-6 py-12 md:py-16">
       <Link
         href="/shop"
-        className="inline-flex items-center gap-2 font-sans text-sm font-medium text-obsidian/60 transition-colors hover:text-obsidian"
+        className="inline-flex items-center gap-2 font-sans text-sm font-medium text-obsidian/70 transition-colors hover:text-obsidian"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Continue shopping
@@ -80,7 +80,7 @@ export default function CartPage() {
 
       <h1 className="mt-6 font-sans text-3xl font-semibold tracking-tight text-obsidian md:text-4xl">
         Your cart{" "}
-        <span className="font-sans text-lg font-normal tabular-nums text-obsidian/45">
+        <span className="font-sans text-lg font-normal tabular-nums text-obsidian/65">
           ({itemCount} {itemCount === 1 ? "item" : "items"})
         </span>
       </h1>
@@ -106,7 +106,7 @@ export default function CartPage() {
                     <h2 className="font-sans text-lg font-semibold tracking-tight text-obsidian">
                       {line.title}
                     </h2>
-                    <p className="mt-1 font-sans text-xs tabular-nums text-obsidian/55">
+                    <p className="mt-1 font-sans text-xs tabular-nums text-obsidian/70">
                       ₹{line.price} each
                     </p>
                   </div>
@@ -114,7 +114,7 @@ export default function CartPage() {
                     type="button"
                     aria-label={`Remove ${line.title}`}
                     onClick={() => removeItem(line.handle)}
-                    className="shrink-0 text-obsidian/35 transition-colors hover:text-obsidian"
+                    className="shrink-0 text-obsidian/70 transition-colors hover:text-obsidian"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -155,7 +155,7 @@ export default function CartPage() {
         {/* Summary */}
         <div className="md:sticky md:top-28 md:self-start">
           <div className="rounded-[18px] border border-obsidian/12 bg-white-bone p-6">
-            <h2 className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/55">
+            <h2 className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/70">
               Order summary
             </h2>
 
@@ -168,15 +168,15 @@ export default function CartPage() {
               </div>
               {discount > 0 && (
                 <div className="flex items-baseline justify-between gap-4">
-                  <dt className="font-sans text-sm font-medium text-sage-teal">Bundle discount</dt>
-                  <dd className="font-sans text-sm font-medium tabular-nums text-sage-teal">
+                  <dt className="font-sans text-sm font-medium text-rove-plum">Bundle discount</dt>
+                  <dd className="font-sans text-sm font-medium tabular-nums text-rove-plum">
                     −{rupees(discount)}
                   </dd>
                 </div>
               )}
               <div className="flex items-baseline justify-between gap-4">
                 <dt className="font-sans text-sm text-obsidian/70">Shipping</dt>
-                <dd className="font-sans text-sm text-obsidian/60">Calculated at checkout</dd>
+                <dd className="font-sans text-sm text-obsidian/70">Calculated at checkout</dd>
               </div>
             </dl>
 
@@ -214,7 +214,7 @@ export default function CartPage() {
             <ul className="mt-6 space-y-2.5 border-t border-obsidian/12 pt-5">
               {REASSURANCES.map(({ icon: Icon, label }) => (
                 <li key={label} className="flex items-center gap-2.5">
-                  <Icon className="h-4 w-4 shrink-0 text-obsidian/45" strokeWidth={1.75} aria-hidden />
+                  <Icon className="h-4 w-4 shrink-0 text-obsidian/65" strokeWidth={1.75} aria-hidden />
                   <span className="font-sans text-xs text-obsidian/65">{label}</span>
                 </li>
               ))}
