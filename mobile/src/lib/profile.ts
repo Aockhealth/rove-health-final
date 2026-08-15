@@ -261,6 +261,17 @@ export async function deleteUserAccount(): Promise<{ success?: boolean; error?: 
   }
 
   await supabase.from('profiles').delete().eq('id', userId);
+
+  // Removing app data above only deletes rows the user's own session is allowed to
+  // touch under RLS. The Auth identity itself (email/password credential, linked
+  // Google account) needs the service-role key to remove, so it's done server-side
+  // via an edge function — called here, before signOut, while the session is still valid.
+  const { error: authDeleteError } = await supabase.functions.invoke('delete-account');
+  if (authDeleteError) {
+    console.error('[deleteUserAccount] Failed to delete auth identity:', authDeleteError);
+    return { error: 'Your data was deleted, but we could not remove your login. Please contact support.' };
+  }
+
   await supabase.auth.signOut();
 
   return { success: true };
