@@ -56,34 +56,16 @@ export function CycleSignature({
         elevation: 0,
       }}
     >
-      <View className="mb-8 flex-row items-start justify-between">
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2.5">
-            <View className="rounded-xl border border-white bg-white/60 p-1.5">
-              <signature.Icon size={20} color={theme.accentColor} />
-            </View>
-            <Text className="text-xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-              Cycle Signature
-            </Text>
-          </View>
-          <Text className="mt-1.5 text-[13px] font-medium text-stone-500/80">
-            Your unique biological pattern
-          </Text>
+      <View className="mb-8 flex-row items-center gap-2.5">
+        <View className="rounded-xl border border-white bg-white/60 p-1.5">
+          <signature.Icon size={20} color={theme.accentColor} />
         </View>
-        <View
-          className="rounded-full border px-3.5 py-1.5"
-          style={{ borderColor: `${theme.accentColor}4D`, backgroundColor: theme.badgeBg }}
-        >
-          <Text
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: theme.badgeText }}
-          >
-            {signature.label}
-          </Text>
-        </View>
+        <Text className="text-xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
+          Cycle Signature
+        </Text>
       </View>
 
-      <View className="mb-8 h-24 justify-center overflow-hidden rounded-2xl border border-white/50 bg-stone-50/40 px-6">
+      <View className="h-24 justify-center overflow-hidden rounded-2xl border border-white/50 bg-stone-50/40 px-6">
         <View className="absolute inset-0 items-center justify-center opacity-30">
           <Svg viewBox="0 0 200 40" width="100%" height="100%" preserveAspectRatio="none">
             <Path
@@ -135,31 +117,6 @@ export function CycleSignature({
               </View>
             );
           })}
-        </View>
-      </View>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1 justify-center rounded-2xl border border-white/60 bg-white/50 p-4">
-          <Text className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-500">
-            Cycle Length
-          </Text>
-          <View className="flex-row items-baseline gap-1">
-            <Text className="text-3xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-              {cycleLength}
-            </Text>
-            <Text className="text-sm font-medium text-stone-500">Days</Text>
-          </View>
-        </View>
-        <View className="flex-1 justify-center rounded-2xl border border-white/60 bg-white/50 p-4">
-          <Text className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-500">
-            Period Length
-          </Text>
-          <View className="flex-row items-baseline gap-1">
-            <Text className="text-3xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-              {periodLength}
-            </Text>
-            <Text className="text-sm font-medium text-stone-500">Days</Text>
-          </View>
         </View>
       </View>
     </Animated.View>

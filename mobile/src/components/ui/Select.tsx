@@ -47,7 +47,7 @@ export const Select: React.FC<SelectProps> = ({
         )}
         style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 0 }}
       >
-        <Text className={cn("text-base font-medium", selectedOption ? "text-rove-charcoal" : "text-rove-stone/70")} style={{ fontFamily: 'Raleway-Medium' }}>
+        <Text className={cn("text-base font-medium", selectedOption ? "text-rove-charcoal" : "text-rove-stone")} style={{ fontFamily: 'Raleway-Medium' }}>
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
         <ChevronDown size={20} color="#A8A29E" />

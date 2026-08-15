@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { fetchOnboardingCompleted } from '../lib/onboarding';
 import { scheduleDailyTrackerReminder } from '../lib/notifications';
 import { identifyUser } from '../lib/analytics';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 export default function Index() {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,11 +31,7 @@ export default function Index() {
   }, []);
 
   if (loading || (session && onboarded === null)) {
-    return (
-      <View className="flex-1 bg-rove-paper justify-center items-center">
-        <ActivityIndicator size="large" color="#AF6B6B" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (session) {

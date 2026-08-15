@@ -84,7 +84,7 @@ export function ExerciseOrb({ phase, metrics, onPressCoach }: ExerciseOrbProps) 
                     </Text>
                     <Text
                         className="text-2xl mb-1"
-                        style={{ color: theme.color, fontFamily: 'CormorantGaramond-Bold' }}
+                        style={{ color: theme.textColor, fontFamily: 'CormorantGaramond-Bold' }}
                     >
                         {current.intensity}
                     </Text>

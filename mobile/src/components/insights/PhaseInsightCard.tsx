@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Droplets, Zap, Flame, Moon, Activity, Brain } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, FadeIn } from 'react-native-reanimated';
 
@@ -85,28 +86,34 @@ export function PhaseInsightCard({
   } as any)[phase] || Activity;
 
   return (
-    <View 
+    <View
       className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
+      style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.45)' : undefined, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 3 }}
     >
-      {/* Blob */}
-      <View
-        className="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-30"
-        style={{ backgroundColor: theme.color, transform: [{ scale: 1.5 }] }}
-      />
-      
-      {/* Blur overlay to soften the blob */}
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+        <>
+          {/* Blob */}
+          <View
+            className="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-30"
+            style={{ backgroundColor: theme.color, transform: [{ scale: 1.5 }] }}
+          />
+          {/* Blur overlay to soften the blob */}
+          <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+        </>
       ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+        <LinearGradient
+          colors={theme.gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
       )}
 
       <View className="relative z-10 flex flex-col gap-5">
         {/* Header */}
         <View className="flex-row items-start justify-between">
           <View className="flex-1">
-            <Text className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: theme.color }}>
+            <Text className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: theme.textColor }}>
               DAY {day} INSIGHT
             </Text>
             <Text className="text-2xl mt-1 text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
@@ -114,13 +121,13 @@ export function PhaseInsightCard({
             </Text>
           </View>
 
-          <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
+          <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
             <PhaseIcon size={20} color={theme.color} />
           </View>
         </View>
 
         {/* Insight Content Box */}
-        <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
+        <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
           {/* Accent Line */}
           {(insight?.insight || isGenerating) ? (
             <Animated.View entering={FadeIn.delay(200).duration(800)} className="absolute left-0 top-5 bottom-5 w-1 rounded-r-full opacity-60" style={{ backgroundColor: theme.color }} />
@@ -130,7 +137,7 @@ export function PhaseInsightCard({
             {insight?.insight ? (
               <TypingText text={insight.insight} delay={300} />
             ) : isGenerating ? (
-              <Text className="text-sm leading-relaxed text-rove-stone/60 italic">
+              <Text className="text-sm leading-relaxed text-rove-stone italic">
                 Rove AI is analyzing your specific symptoms...
               </Text>
             ) : (
@@ -142,8 +149,8 @@ export function PhaseInsightCard({
                 </Text>
                 <Pressable
                   onPress={onGenerateInsight}
-                  className="self-start px-5 py-2.5 rounded-xl border border-white/60 flex-row items-center justify-center mt-1 bg-white/70 shadow-sm"
-                  style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
+                  className="self-start px-5 py-2.5 rounded-xl border border-white/60 flex-row items-center justify-center mt-1 shadow-sm"
+                  style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.7)' : '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}
                 >
                   <Brain size={14} color={theme.color} style={{ marginRight: 6 }} />
                   <Text className="text-xs font-bold uppercase tracking-wider text-rove-charcoal">

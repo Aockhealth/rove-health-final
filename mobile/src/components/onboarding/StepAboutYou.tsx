@@ -121,7 +121,7 @@ export function StepAboutYou({
             <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
               Typical Symptoms
             </Text>
-            <Text className="text-xs text-rove-stone/60">
+            <Text className="text-xs text-rove-stone">
               {symptoms.length > 0 ? `${symptoms.length} selected` : 'Optional — helps personalize insights'}
             </Text>
           </View>

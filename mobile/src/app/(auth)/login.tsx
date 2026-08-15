@@ -195,7 +195,7 @@ export default function LoginScreen() {
                 </Link>
               </View>
           
-              <Text className="text-[11px] text-rove-stone/60 text-center">
+              <Text className="text-[11px] text-rove-stone text-center">
                 View our{' '}
                 <Text
                   className="underline text-rove-charcoal font-medium"

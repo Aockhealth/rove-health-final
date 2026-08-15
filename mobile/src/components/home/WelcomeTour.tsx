@@ -88,7 +88,7 @@ export default function WelcomeTour() {
 
           <View className="flex-row items-center gap-4">
             {currentStep < TOUR_STEPS.length - 1 && (
-              <Text onPress={dismissTour} className="text-sm font-bold tracking-wider text-rove-stone/60 uppercase">
+              <Text onPress={dismissTour} className="text-sm font-bold tracking-wider text-rove-stone uppercase">
                 Skip
               </Text>
             )}

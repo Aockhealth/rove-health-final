@@ -97,7 +97,7 @@ export const DialogTitle: React.FC<{ children: React.ReactNode, className?: stri
 );
 
 export const DialogDescription: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-  <Text className={cn("text-[11px] font-semibold text-rove-stone/80 text-center uppercase tracking-widest", className)}>
+  <Text className={cn("text-[11px] font-semibold text-rove-stone text-center uppercase tracking-widest", className)}>
     {children}
   </Text>
 );

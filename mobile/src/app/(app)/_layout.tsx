@@ -2,16 +2,20 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Calendar, BarChart2, List, BookOpen } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardData } from '../../lib/dashboard';
 import { phaseThemes } from '../../data/home-content';
+
+const TAB_BAR_CONTENT_HEIGHT = 56;
 
 export default function AppLayout() {
   const { data } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
   });
+  const insets = useSafeAreaInsets();
 
   const activeColor = data?.phase?.name ? (phaseThemes[data.phase.name]?.color || '#AF6B6B') : '#AF6B6B';
   const inactiveColor = '#A8A29E';
@@ -41,6 +45,8 @@ export default function AppLayout() {
           bottom: 0,
           left: 0,
           right: 0,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
           borderTopWidth: 1,
           borderTopColor: 'rgba(45, 36, 32, 0.05)',
           backgroundColor: 'transparent',

@@ -6,9 +6,8 @@ import {
   Mail,
   LogOut,
   ChevronRight,
-  Trash2,
-  AlertTriangle,
-  Database,
+  FileText,
+  ScrollText,
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -18,8 +17,6 @@ interface AccountSettingsProps {
   onLogout: () => void;
   onResetPassword: () => void;
   onUpdateContact: (email: string, phone: string) => void;
-  onDeleteAccount: () => void;
-  onClearLocalData?: () => void;
   isPending?: boolean;
 }
 
@@ -64,30 +61,18 @@ export function AccountSettings({
   onLogout,
   onResetPassword,
   onUpdateContact,
-  onDeleteAccount,
-  onClearLocalData,
   isPending,
 }: AccountSettingsProps) {
   const router = useRouter();
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [editEmail, setEditEmail] = useState(email);
   const [editPhone, setEditPhone] = useState(phone || '');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteInput, setDeleteInput] = useState('');
 
   const handleContactSave = () => {
     if (editEmail && (editEmail !== email || editPhone !== phone)) {
       onUpdateContact(editEmail, editPhone);
     }
     setIsEditingContact(false);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteInput === 'DELETE') {
-      onDeleteAccount();
-      setShowDeleteConfirm(false);
-      setDeleteInput('');
-    }
   };
 
   return (
@@ -170,74 +155,22 @@ export function AccountSettings({
           />
         </View>
 
-        {onClearLocalData ? (
-          <View className="border-b border-stone-100">
-            <Row
-              Icon={Database}
-              title="Clear Local Data"
-              subtitle="Email us to request a data clear"
-              onPress={onClearLocalData}
-            />
-          </View>
-        ) : null}
+        <View className="border-b border-stone-100">
+          <Row
+            Icon={FileText}
+            title="Privacy Policy"
+            subtitle="How your data is handled, and account deletion"
+            onPress={() => router.push('/privacy')}
+          />
+        </View>
 
         <View>
           <Row
-            Icon={Trash2}
-            title="Delete Account"
-            subtitle="Permanently remove data"
-            onPress={!showDeleteConfirm ? () => setShowDeleteConfirm(true) : undefined}
-            showChevron={!showDeleteConfirm}
+            Icon={ScrollText}
+            title="Terms & Conditions"
+            subtitle="The terms you agreed to"
+            onPress={() => router.push('/terms')}
           />
-          {showDeleteConfirm ? (
-            <Animated.View entering={FadeIn.duration(200)} className="px-4 pb-4">
-              <View className="gap-3 rounded-2xl border border-stone-200 bg-stone-50/80 p-4">
-                <View className="flex-row items-start gap-2">
-                  <AlertTriangle size={16} color="#78716C" style={{ marginTop: 2 }} />
-                  <Text className="flex-1 text-xs leading-relaxed text-stone-600">
-                    This will <Text className="font-bold">permanently delete</Text> your cycle logs,
-                    health data, AI insights, and account. This action cannot be undone.
-                  </Text>
-                </View>
-                <View>
-                  <Text className="mb-1 text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                    Type DELETE to confirm
-                  </Text>
-                  <TextInput
-                    value={deleteInput}
-                    onChangeText={setDeleteInput}
-                    placeholder="DELETE"
-                    autoCapitalize="characters"
-                    placeholderTextColor="#A8A29E"
-                    className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm tracking-widest text-stone-800"
-                  />
-                </View>
-                <View className="flex-row gap-2">
-                  <TouchableOpacity
-                    onPress={handleDeleteConfirm}
-                    disabled={deleteInput !== 'DELETE' || isPending}
-                    className="flex-1 items-center rounded-xl bg-stone-900 py-2.5"
-                    style={{ opacity: deleteInput !== 'DELETE' || isPending ? 0.4 : 1 }}
-                  >
-                    <Text className="text-xs font-bold uppercase tracking-widest text-white">
-                      Delete Forever
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowDeleteConfirm(false);
-                      setDeleteInput('');
-                    }}
-                    className="flex-1 items-center rounded-xl border border-stone-200 py-2.5"
-                  >
-                    <Text className="text-xs font-bold uppercase tracking-widest text-stone-600">
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Animated.View>
-          ) : null}
         </View>
       </View>
 
@@ -253,9 +186,6 @@ export function AccountSettings({
         <Text className="text-[10px] font-medium uppercase tracking-[3px] text-stone-300">
           Rove Health v1.0.2
         </Text>
-        <TouchableOpacity onPress={() => router.push('/privacy')}>
-          <Text className="text-[10px] text-stone-400">Terms & Privacy</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );

@@ -189,12 +189,12 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             elevation: Platform.OS === 'ios' ? 2 : 0,
                         }}
                     >
-                        <Text className="text-[9px] font-bold tracking-[2px] text-rove-stone/60 uppercase mb-1">
+                        <Text className="text-[9px] font-bold tracking-[2px] text-rove-stone uppercase mb-1">
                             Daily Fuel
                         </Text>
                         <Text
                             className="text-4xl mb-0"
-                            style={{ color: theme.color, fontFamily: 'CormorantGaramond-Regular' }}
+                            style={{ color: theme.textColor, fontFamily: 'CormorantGaramond-Regular' }}
                         >
                             {displayedCalories}
                         </Text>
@@ -282,13 +282,13 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             <Text className="text-2xl">{currentFact.icon}</Text>
                         </View>
                         <View className="flex-1">
-                            <Text className="text-[10px] font-extrabold uppercase tracking-[2px] mb-1" style={{ color: theme.color }}>
+                            <Text className="text-[10px] font-extrabold uppercase tracking-[2px] mb-1" style={{ color: theme.textColor }}>
                                 {currentFact.title}
                             </Text>
                             <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                                 {currentFact.tip}
                             </Text>
-                            <Text className="text-xs text-rove-stone/90 mt-1 font-medium">
+                            <Text className="text-xs text-rove-stone mt-1 font-medium">
                                 {currentFact.desc}
                             </Text>
                         </View>

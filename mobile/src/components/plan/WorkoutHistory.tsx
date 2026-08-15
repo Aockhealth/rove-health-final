@@ -244,7 +244,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                                 <Feather name="wind" size={24} color="#D6D3D1" />
                             </View>
                             <Text className="text-sm text-rove-stone" style={{ fontFamily: 'CormorantGaramond-Bold' }}>No sessions yet</Text>
-                            <Text className="text-[11px] text-rove-stone/60 mt-1">Generate a plan above to get started</Text>
+                            <Text className="text-[11px] text-rove-stone mt-1">Generate a plan above to get started</Text>
                         </View>
                     ) : (
                         <View>
@@ -265,7 +265,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                                 <Feather name="bar-chart-2" size={24} color="#D6D3D1" />
                             </View>
                             <Text className="text-sm text-rove-stone" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Not enough data yet</Text>
-                            <Text className="text-[11px] text-rove-stone/60 mt-1">Complete a few sessions to see insights</Text>
+                            <Text className="text-[11px] text-rove-stone mt-1">Complete a few sessions to see insights</Text>
                         </View>
                     ) : (
                         <View className="rounded-[18px] bg-white/40 border border-white/50 p-5"

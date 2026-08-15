@@ -37,7 +37,7 @@ export default function TermsScreen() {
           These Terms of Service govern your use of Rove Health. By creating an account, you agree to the terms below.
         </Text>
 
-        <Text className="text-xs font-bold text-rove-stone/60 tracking-widest uppercase mb-8">Last Updated: March 2026</Text>
+        <Text className="text-xs font-bold text-rove-stone tracking-widest uppercase mb-8">Last Updated: March 2026</Text>
 
         <View className="gap-8 mb-12">
           {/* Section 1 */}

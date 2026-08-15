@@ -1,11 +1,43 @@
-import React from 'react';
-import { Platform,  View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform,  View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner-native';
+import { ChevronLeft, AlertTriangle } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '../lib/supabase';
+import { deleteUserAccount } from '../lib/profile';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 export default function PrivacyScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [hasSession, setHasSession] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteInput, setDeleteInput] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setHasSession(!!session);
+      setUserEmail(session?.user?.email || '');
+    });
+  }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (deleteInput !== 'DELETE') return;
+    setIsDeleting(true);
+    const res = await deleteUserAccount();
+    setIsDeleting(false);
+    if (res.error) {
+      toast.error('Failed to delete account', { description: res.error });
+      return;
+    }
+    queryClient.clear();
+    toast.success('Account deleted. Goodbye.');
+    router.replace('/(auth)/login');
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FAF9F6' }}>
@@ -155,14 +187,104 @@ export default function PrivacyScreen() {
               You have absolute control over your profile. At any time, you can:
             </Text>
             <View className="gap-3">
-              <View className="bg-white p-5 rounded-2xl border border-rove-stone/10 items-center">
-                <Text className="font-bold text-rove-charcoal mb-1">Access Your Data</Text>
-                <Text className="text-xs text-rove-stone text-center">Request a complete export of your health logs via your Profile Settings.</Text>
+              {hasSession ? (
+                <TouchableOpacity
+                  onPress={() => router.push('/(app)/insights?tab=health')}
+                  className="bg-white p-5 rounded-2xl border border-rove-stone/10 items-center"
+                >
+                  <Text className="font-bold text-rove-charcoal mb-1">Access Your Data</Text>
+                  <Text className="text-xs text-rove-stone text-center">
+                    Get your Health Report — a PDF summary of your logs, built on your device. Tap to open it under Insights → Health.
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View className="bg-white p-5 rounded-2xl border border-rove-stone/10 items-center">
+                  <Text className="font-bold text-rove-charcoal mb-1">Access Your Data</Text>
+                  <Text className="text-xs text-rove-stone text-center">
+                    Once signed in, get a full Health Report PDF of your logs from Insights → Health.
+                  </Text>
+                </View>
+              )}
+
+              <View className="bg-[#AF6B6B]/5 rounded-2xl border border-[#AF6B6B]/10 overflow-hidden">
+                {hasSession && showDeleteConfirm ? (
+                  <Animated.View entering={FadeIn.duration(200)} className="p-5 gap-3">
+                    <View className="flex-row items-start gap-2">
+                      <AlertTriangle size={16} color="#AF6B6B" style={{ marginTop: 2 }} />
+                      <Text className="flex-1 text-xs leading-relaxed text-rove-stone">
+                        This will <Text className="font-bold text-rove-charcoal">permanently delete</Text> your
+                        cycle logs, health data, AI insights, and account. This cannot be undone.
+                      </Text>
+                    </View>
+                    <View>
+                      <Text className="mb-1 text-[10px] font-bold uppercase tracking-widest text-rove-stone">
+                        Type DELETE to confirm
+                      </Text>
+                      <TextInput
+                        value={deleteInput}
+                        onChangeText={setDeleteInput}
+                        placeholder="DELETE"
+                        autoCapitalize="characters"
+                        placeholderTextColor="#A8A29E"
+                        className="rounded-xl border border-rove-stone/20 bg-white px-4 py-3 text-sm tracking-widest text-rove-charcoal"
+                      />
+                    </View>
+                    <View className="flex-row gap-2">
+                      <TouchableOpacity
+                        onPress={handleDeleteConfirm}
+                        disabled={deleteInput !== 'DELETE' || isDeleting}
+                        className="flex-1 items-center rounded-xl bg-rove-charcoal py-2.5"
+                        style={{ opacity: deleteInput !== 'DELETE' || isDeleting ? 0.4 : 1 }}
+                      >
+                        <Text className="text-xs font-bold uppercase tracking-widest text-white">
+                          Delete Forever
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowDeleteConfirm(false);
+                          setDeleteInput('');
+                        }}
+                        className="flex-1 items-center rounded-xl border border-rove-stone/20 py-2.5"
+                      >
+                        <Text className="text-xs font-bold uppercase tracking-widest text-rove-stone">
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Animated.View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={hasSession ? () => setShowDeleteConfirm(true) : undefined}
+                    disabled={!hasSession}
+                    className="p-5 items-center"
+                  >
+                    <Text className="font-bold text-rove-charcoal mb-1">Delete Your Account</Text>
+                    <Text className="text-xs text-rove-stone text-center">
+                      {hasSession
+                        ? 'Tap to permanently delete your account and all associated health data.'
+                        : 'Sign in, then come back here to delete your account and all associated health data.'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <View className="bg-[#AF6B6B]/5 p-5 rounded-2xl border border-[#AF6B6B]/10 items-center">
-                <Text className="font-bold text-rove-charcoal mb-1">Delete Your Account</Text>
-                <Text className="text-xs text-rove-stone/80 text-center">Request a full deletion of your account. All associated health data is permanently wiped.</Text>
-              </View>
+
+              {hasSession ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    const subject = encodeURIComponent('I want to delete my account');
+                    const body = encodeURIComponent(
+                      `Please delete my Rove account and all associated data.\n\nAccount email: ${userEmail || '(unknown)'}\n`
+                    );
+                    Linking.openURL(`mailto:rovehealthofficial@gmail.com?subject=${subject}&body=${body}`).catch(() => {});
+                  }}
+                  className="items-center py-2"
+                >
+                  <Text className="text-xs text-rove-stone underline">
+                    Prefer to ask a person instead? Email us to delete your account.
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           </View>
 

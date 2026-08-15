@@ -7,6 +7,11 @@
 
 export type PhaseThemeTokens = {
   color: string;
+  /** Same hue as `color`, darkened to clear 4.5:1 contrast against the app's
+   * cream backgrounds. `color` itself only hits 2.2-3.9:1 depending on phase,
+   * which is fine for dots/gradients/tints but fails WCAG AA as text — use
+   * this instead anywhere the phase color renders as actual text. */
+  textColor: string;
   blob: string;
   /** Snapshot-card background tint. Mirrors the web page's actual computed value
    * (`theme.blob` run through a `/30`→`/5` opacity swap, `/10` left unchanged for
@@ -25,6 +30,7 @@ export type PhaseThemeTokens = {
 export const phaseThemes: Record<string, PhaseThemeTokens> = {
   Menstrual: {
     color: '#AF6B6B',
+    textColor: '#A75D5D',
     blob: 'rgba(175, 107, 107, 0.1)',
     cardTint: 'rgba(175, 107, 107, 0.28)',
     orbRingColors: ['rgba(175, 107, 107, 0.4)', 'rgba(255, 255, 255, 1)', 'rgba(175, 107, 107, 0.2)'],
@@ -37,6 +43,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   },
   Follicular: {
     color: '#8DAA9D',
+    textColor: '#577568',
     blob: 'rgba(141, 170, 157, 0.3)',
     cardTint: 'rgba(141, 170, 157, 0.24)',
     orbRingColors: ['rgba(141, 170, 157, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(141, 170, 157, 0.3)'],
@@ -49,6 +56,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   },
   Ovulatory: {
     color: '#D4A25F',
+    textColor: '#996929',
     blob: 'rgba(212, 162, 95, 0.3)',
     cardTint: 'rgba(212, 162, 95, 0.24)',
     orbRingColors: ['rgba(212, 162, 95, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(212, 162, 95, 0.3)'],
@@ -61,6 +69,7 @@ export const phaseThemes: Record<string, PhaseThemeTokens> = {
   },
   Luteal: {
     color: '#7B82A8',
+    textColor: '#68709C',
     blob: 'rgba(123, 130, 168, 0.3)',
     cardTint: 'rgba(123, 130, 168, 0.24)',
     orbRingColors: ['rgba(123, 130, 168, 0.6)', 'rgba(255, 255, 255, 1)', 'rgba(123, 130, 168, 0.4)'],

@@ -112,7 +112,7 @@ function SymptomCard({ card, idx, theme }: { card: any, idx: number, theme: any 
                     <View className="mb-5">
                         <View className="flex-row items-center mb-2.5">
                             <Info size={12} color={theme.color} strokeWidth={3} />
-                            <Text className="text-[10px] font-bold uppercase tracking-[1.5px] ml-2" style={{ color: theme.color }}>
+                            <Text className="text-[10px] font-bold uppercase tracking-[1.5px] ml-2" style={{ color: theme.textColor }}>
                                 The Science
                             </Text>
                         </View>
@@ -127,7 +127,7 @@ function SymptomCard({ card, idx, theme }: { card: any, idx: number, theme: any 
                     <View>
                         <View className="flex-row items-center mb-2.5">
                             <Zap size={12} color={theme.color} strokeWidth={3} />
-                            <Text className="text-[10px] font-bold uppercase tracking-[1.5px] ml-2" style={{ color: theme.color }}>
+                            <Text className="text-[10px] font-bold uppercase tracking-[1.5px] ml-2" style={{ color: theme.textColor }}>
                                 The Protocol
                             </Text>
                         </View>

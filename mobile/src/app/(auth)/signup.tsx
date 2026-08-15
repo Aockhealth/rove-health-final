@@ -208,7 +208,7 @@ export default function SignupScreen() {
                   <Text className="text-rove-charcoal font-bold ml-1">Log in</Text>
                 </Link>
               </View>
-              <Text className="text-[11px] text-rove-stone/60 text-center">
+              <Text className="text-[11px] text-rove-stone text-center">
                 By joining, you agree to our{' '}
                 <Text
                   className="underline text-rove-charcoal font-medium"

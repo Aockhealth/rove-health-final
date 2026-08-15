@@ -30,7 +30,7 @@ export default function PhaseDeepDiveScreen() {
                     <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: `${theme.color}20` }}>
                         <Feather name="droplet" size={32} color={theme.color} />
                     </View>
-                    <Text className="text-3xl text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>
+                    <Text className="text-3xl text-center mb-2" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>
                         The {phaseName} Phase
                     </Text>
                     <Text className="text-rove-stone text-center px-4 leading-6">

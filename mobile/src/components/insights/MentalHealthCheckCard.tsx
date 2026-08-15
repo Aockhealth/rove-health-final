@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Brain, Wind } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -11,6 +12,8 @@ type MentalHealthCheckCardProps = {
 export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
   const router = useRouter();
   const themeColor = theme?.color || '#78716C';
+  // Same hue, darkened for WCAG-safe contrast — theme.color alone fails as text.
+  const themeTextColor = theme?.textColor || '#57534E';
 
   const goToAssessment = (type: 'phq9' | 'gad7') => {
     router.push({ pathname: '/wellbeing/intro', params: { type } });
@@ -19,19 +22,25 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
   return (
     <View
       className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.45)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}
+      style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.45)' : undefined, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 3 }}
     >
-      {/* Blob */}
-      <View
-        className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-30"
-        style={{ backgroundColor: themeColor, transform: [{ scale: 1.5 }] }}
-      />
-
-      {/* Blur overlay to soften the blob */}
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+        <>
+          {/* Blob */}
+          <View
+            className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-30"
+            style={{ backgroundColor: themeColor, transform: [{ scale: 1.5 }] }}
+          />
+          {/* Blur overlay to soften the blob */}
+          <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+        </>
       ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
+        <LinearGradient
+          colors={theme?.gradientColors || ['#FFFFFF', '#FFFFFF']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
       )}
 
       <View className="relative z-10 flex flex-col gap-5">
@@ -50,7 +59,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
           <Pressable
             onPress={() => goToAssessment('phq9')}
             className="flex-row items-start gap-4 p-4 rounded-2xl border border-black/5 shadow-sm"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', elevation: 0 }}
+            style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255,255,255,0.85)', elevation: 0 }}
           >
             <View
               className="w-10 h-10 rounded-full items-center justify-center shadow-sm bg-white"
@@ -60,7 +69,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
             </View>
             <View className="flex-1">
               <Text className="text-base text-rove-charcoal mb-0.5" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-                Mood check <Text style={{ color: themeColor }} className="text-sm">(PHQ-9)</Text>
+                Mood check <Text style={{ color: themeTextColor }} className="text-sm">(PHQ-9)</Text>
               </Text>
               <Text className="text-xs text-rove-stone leading-relaxed">
                 A widely used screening tool for low mood and depressive symptoms.
@@ -71,7 +80,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
           <Pressable
             onPress={() => goToAssessment('gad7')}
             className="flex-row items-start gap-4 p-4 rounded-2xl border border-black/5 shadow-sm"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', elevation: 0 }}
+            style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255,255,255,0.85)', elevation: 0 }}
           >
             <View
               className="w-10 h-10 rounded-full items-center justify-center shadow-sm bg-white"
@@ -81,7 +90,7 @@ export function MentalHealthCheckCard({ theme }: MentalHealthCheckCardProps) {
             </View>
             <View className="flex-1">
               <Text className="text-base text-rove-charcoal mb-0.5" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-                Anxiety check <Text style={{ color: themeColor }} className="text-sm">(GAD-7)</Text>
+                Anxiety check <Text style={{ color: themeTextColor }} className="text-sm">(GAD-7)</Text>
               </Text>
               <Text className="text-xs text-rove-stone leading-relaxed">
                 A widely used screening tool for anxiety symptoms.

@@ -339,7 +339,7 @@ export function ExerciseBuilder({
                         {sessionMode ? (
                             <View className="px-2 py-0.5 rounded-full flex-row items-center mr-2" style={{ backgroundColor: `${theme.color}12` }}>
                                 <Feather name="clock" size={10} color={theme.color} />
-                                <Text className="text-[9px] font-bold ml-1" style={{ color: theme.color, fontVariant: ['tabular-nums'] }}>{formatTime(sessionTimer)}</Text>
+                                <Text className="text-[9px] font-bold ml-1" style={{ color: theme.textColor, fontVariant: ['tabular-nums'] }}>{formatTime(sessionTimer)}</Text>
                             </View>
                         ) : null}
                         <Feather name="chevron-right" size={18} color="#A8A29E" />
@@ -349,7 +349,7 @@ export function ExerciseBuilder({
                 /* ── Empty state ── */
                 <Animated.View key="empty" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                     <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10 mb-4" style={{ backgroundColor: `${theme.color}05` }}>
-                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Optimized for: {phase}</Text>
+                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Optimized for: {phase}</Text>
                     </View>
                     <View
                         style={{
@@ -449,7 +449,7 @@ export function ExerciseBuilder({
                                 {/* Session Header */}
                                 <View className="flex-row justify-between items-center mb-5 p-4 rounded-[18px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
                                     <View className="flex-1">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Live Session</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Live Session</Text>
                                         <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
                                             {result.title}
                                         </Text>
@@ -457,7 +457,7 @@ export function ExerciseBuilder({
                                     <View className="px-4 py-2 rounded-[14px] items-center" style={{ backgroundColor: `${theme.color}20` }}>
                                         <View className="flex-row items-center">
                                             <Feather name="clock" size={12} color={theme.color} />
-                                            <Text className="font-bold ml-1.5 text-sm" style={{ color: theme.color, fontVariant: ['tabular-nums'] }}>{formatTime(sessionTimer)}</Text>
+                                            <Text className="font-bold ml-1.5 text-sm" style={{ color: theme.textColor, fontVariant: ['tabular-nums'] }}>{formatTime(sessionTimer)}</Text>
                                         </View>
                                         <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">
                                             {completedCount}/{totalExercises} done
@@ -468,7 +468,7 @@ export function ExerciseBuilder({
                                 {/* Warmup */}
                                 {result.warmup?.length > 0 && (
                                     <View className="mb-5">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.color }}>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.textColor }}>
                                             ✦ Warmup
                                         </Text>
                                         {result.warmup.map((item: string, i: number) => (
@@ -483,7 +483,7 @@ export function ExerciseBuilder({
                                 )}
 
                                 {/* Main Circuit */}
-                                <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.color }}>
+                                <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>
                                     ✦ Main Circuit
                                 </Text>
                                 {result.main_set?.map((ex: any, i: number) => {
@@ -548,7 +548,7 @@ export function ExerciseBuilder({
                                 {/* Cooldown */}
                                 {result.cooldown?.length > 0 && (
                                     <View className="mt-4 mb-2">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.color }}>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.textColor }}>
                                             ✦ Cooldown
                                         </Text>
                                         {result.cooldown.map((item: string, i: number) => (
@@ -583,7 +583,7 @@ export function ExerciseBuilder({
                                 {/* Title + Refresh */}
                                 <View className="flex-row justify-between items-start mb-4">
                                     <View className="flex-1 mr-3">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.color }}>AI Generated Plan</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.textColor }}>AI Generated Plan</Text>
                                         <Text className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{result.title}</Text>
                                     </View>
                                     <TouchableOpacity onPress={handleClearSession} className="w-9 h-9 rounded-full items-center justify-center border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
@@ -606,14 +606,14 @@ export function ExerciseBuilder({
                                         <Text className="text-[10px] font-bold text-rove-charcoal uppercase tracking-widest">{result.duration}</Text>
                                     </View>
                                     <View className="px-3 py-1.5 rounded-full border bg-white mr-2 flex-row items-center" style={{ borderColor: 'rgba(255, 255, 255, 0.60)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, backgroundColor: `${theme.color}15` }}>
-                                        <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>{result.intensity} Intensity</Text>
+                                        <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{result.intensity} Intensity</Text>
                                     </View>
                                 </View>
 
                                 {/* Warmup */}
                                 {result.warmup?.length > 0 && (
                                     <View className="mb-5 p-4 rounded-[16px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.50)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: theme.color }}>✦ Warmup</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: theme.textColor }}>✦ Warmup</Text>
                                         {result.warmup.map((item: string, i: number) => (
                                             <View key={i} className="flex-row items-center py-1.5">
                                                 <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: theme.color, opacity: 0.5 }} />
@@ -624,7 +624,7 @@ export function ExerciseBuilder({
                                 )}
 
                                 {/* Main Circuit */}
-                                <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.color }}>
+                                <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>
                                     ✦ Main Circuit · {totalExercises} exercises
                                 </Text>
                                 {result.main_set?.map((ex: any, i: number) => (
@@ -639,7 +639,7 @@ export function ExerciseBuilder({
                                             )}
                                         </View>
                                         <View className="px-2.5 py-1 rounded-lg self-start" style={{ backgroundColor: `${theme.color}10` }}>
-                                            <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: theme.color }}>{ex.sets}×{ex.reps}</Text>
+                                            <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: theme.textColor }}>{ex.sets}×{ex.reps}</Text>
                                         </View>
                                     </View>
                                 ))}

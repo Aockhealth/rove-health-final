@@ -442,7 +442,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
             <View className="mb-4">
                 <View className="flex-row items-center mb-1.5">
                     <ChefHat size={13} color={theme.color} style={{ marginRight: 6 }} />
-                    <Text className="text-[10px] font-bold uppercase" style={{ color: theme.color, letterSpacing: 2.5 }}>
+                    <Text className="text-[10px] font-bold uppercase" style={{ color: theme.textColor, letterSpacing: 2.5 }}>
                         Phase Nutrition
                     </Text>
                 </View>
@@ -556,7 +556,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             {currentDetail ? (
                                 <View className="px-2 py-0.5 rounded-full flex-row items-center mr-2" style={{ backgroundColor: `${theme.color}12` }}>
                                     <Feather name="clock" size={10} color={theme.color} />
-                                    <Text className="text-[9px] font-bold ml-1" style={{ color: theme.color }}>{currentDetail.prep_time_minutes}m</Text>
+                                    <Text className="text-[9px] font-bold ml-1" style={{ color: theme.textColor }}>{currentDetail.prep_time_minutes}m</Text>
                                 </View>
                             ) : null}
                             <Feather name="chevron-right" size={18} color="#A8A29E" />
@@ -567,7 +567,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                     <Animated.View key="empty" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                         <View className="flex-row flex-wrap justify-center gap-2 mb-8">
                             <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10" style={{ backgroundColor: `${theme.color}05` }}>
-                                <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Curating for: {diet || 'Veg'}</Text>
+                                <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Curating for: {diet || 'Veg'}</Text>
                             </View>
                             <CuisinePicker value={cuisine} onChange={setCuisine} color={theme.color} />
                         </View>
@@ -680,7 +680,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                     <Text className="font-bold text-2xl text-rove-charcoal flex-1 mr-2" style={{ fontFamily: 'CormorantGaramond-Regular' }}>{currentDetail.name}</Text>
                                     <View className="px-2.5 py-1 rounded-full flex-row items-center" style={{ backgroundColor: `${theme.color}12` }}>
                                         <Feather name="clock" size={11} color={theme.color} />
-                                        <Text className="text-[10px] font-bold ml-1" style={{ color: theme.color }}>{currentDetail.prep_time_minutes} min</Text>
+                                        <Text className="text-[10px] font-bold ml-1" style={{ color: theme.textColor }}>{currentDetail.prep_time_minutes} min</Text>
                                     </View>
                                 </Animated.View>
                                 <Animated.Text
@@ -710,7 +710,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                     {currentDetail.instructions?.map((step: string, i: number) => (
                                         <Animated.View key={i} entering={FadeInDown.delay(260 + i * 60).duration(250)} className="flex-row items-start mb-2.5">
                                             <View className="w-5 h-5 rounded-full items-center justify-center mr-3 mt-0.5" style={{ backgroundColor: `${theme.color}15` }}>
-                                                <Text className="text-[10px] font-bold" style={{ color: theme.color }}>{i + 1}</Text>
+                                                <Text className="text-[10px] font-bold" style={{ color: theme.textColor }}>{i + 1}</Text>
                                             </View>
                                             <Text className="text-sm text-rove-charcoal flex-1 leading-5">{step}</Text>
                                         </Animated.View>
@@ -727,7 +727,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                         style={{ borderColor: `${theme.color}40`, backgroundColor: 'white' }}
                                     >
                                         <Feather name="arrow-left" size={14} color={theme.color} />
-                                        <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.color }}>Back to options</Text>
+                                        <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>Back to options</Text>
                                     </Pressable>
                                     <Pressable
                                         onPress={() => handleGenerateOptions(false)}
@@ -761,7 +761,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                     style={{ borderColor: `${theme.color}40`, backgroundColor: 'rgba(255,255,255,0.7)' }}
                                 >
                                     <Feather name="rotate-cw" size={13} color={theme.color} />
-                                    <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.color }}>None of these — show me others</Text>
+                                    <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>None of these — show me others</Text>
                                 </Pressable>
                             </Animated.View>
                         ) : (
@@ -770,7 +770,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             <Animated.View key="empty-modal" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                                 <View className="flex-row flex-wrap justify-center gap-2 mb-8">
                                     <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10" style={{ backgroundColor: `${theme.color}05` }}>
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Curating for: {diet || 'Veg'}</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Curating for: {diet || 'Veg'}</Text>
                                     </View>
                                     <CuisinePicker value={cuisine} onChange={setCuisine} color={theme.color} />
                                 </View>

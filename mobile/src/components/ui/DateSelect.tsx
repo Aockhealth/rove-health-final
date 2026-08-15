@@ -61,7 +61,7 @@ export const DateSelect: React.FC<DateSelectProps> = ({ value, onValueChange, er
         style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 0 }}
       >
         <Calendar size={18} color={value ? "#37332E" : "#A8A29E"} style={{ marginRight: 12 }} />
-        <Text className={cn("flex-1 text-[15px] font-medium", value ? "text-rove-charcoal" : "text-rove-stone/60")} style={{ fontFamily: 'Raleway-Medium' }}>
+        <Text className={cn("flex-1 text-[15px] font-medium", value ? "text-rove-charcoal" : "text-rove-stone")} style={{ fontFamily: 'Raleway-Medium' }}>
           {displayValue}
         </Text>
         <ChevronDown size={18} color="#A8A29E" />

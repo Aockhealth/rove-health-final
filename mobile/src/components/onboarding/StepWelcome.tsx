@@ -45,7 +45,7 @@ export function StepWelcome({ name, dateOfBirth, onNameChange, onDobChange, erro
           <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
             Date of birth
           </Text>
-          <Text className="text-xs text-rove-stone/70 mb-1">
+          <Text className="text-xs text-rove-stone mb-1">
             Used to personalize your nutrition and calorie recommendations.
           </Text>
           <DateSelect

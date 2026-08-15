@@ -6,22 +6,19 @@ import {
   BarChart3,
   Scale,
   HeartPulse,
-  Flower2,
-  BookOpen,
   Check,
   Target,
 } from 'lucide-react-native';
 import type { ProfileTheme } from './CycleSignature';
 
 // Mirrors GOALS in ../onboarding/StepGoals.tsx so editing goals here feels
-// like a continuation of onboarding rather than a new pattern.
+// like a continuation of onboarding rather than a new pattern. Scoped to the
+// four things the app actually delivers on, rather than vaguer catch-alls.
 const GOALS = [
   { id: 'syncing', label: 'Cycle Syncing', Icon: Calendar },
   { id: 'tracking', label: 'Cycle Tracking', Icon: BarChart3 },
   { id: 'weight_loss', label: 'Weight Loss', Icon: Scale },
   { id: 'pcos', label: 'PCOS Guidance', Icon: HeartPulse },
-  { id: 'other', label: 'General Wellness', Icon: Flower2 },
-  { id: 'learn_body', label: 'Learn My Body', Icon: BookOpen },
 ];
 
 interface FocusGoalsProps {

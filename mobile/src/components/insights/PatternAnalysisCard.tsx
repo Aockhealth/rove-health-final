@@ -121,9 +121,13 @@ type PatternAnalysisCardProps = {
   symptomsByPhase: Record<string, Record<string, number>>;
   selectedPhase: string;
   onPhaseSelect: (phase: string) => void;
+  /** Real correlations computed from her own logs (see lib/insights.ts).
+   * Falls back to the population SYMPTOM_LEARNING stat below when a
+   * symptom isn't in here yet — not enough of her own data to say something real. */
+  symptomCorrelations?: Record<string, { stat: string }>;
 };
 
-export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhase, onPhaseSelect }: PatternAnalysisCardProps) {
+export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhase, onPhaseSelect, symptomCorrelations }: PatternAnalysisCardProps) {
   const router = useRouter();
 
   const currentCounts = symptomsByPhase?.[selectedPhase] || {};
@@ -230,6 +234,7 @@ export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhas
         {isSupportPhase && displaySymptoms.map((name) => {
           const info = SYMPTOM_LEARNING[name.toLowerCase()];
           if (!info) return null;
+          const computed = symptomCorrelations?.[name];
           return (
             <View key={name} style={{ backgroundColor: guidance.bg, borderRadius: 16, padding: 20 }}>
               <View className="flex-row items-start gap-3">
@@ -238,8 +243,11 @@ export function PatternAnalysisCard({ phaseCounts, symptomsByPhase, selectedPhas
                 </View>
                 <View className="flex-1">
                   <Text style={{ color: guidance.color }} className="text-sm font-bold mb-1 capitalize">Why {name}?</Text>
-                  <Text className="text-xs text-rove-charcoal/80 leading-relaxed mb-3">{info.stat}</Text>
-                  <View className="flex-row gap-2 items-start">
+                  <Text className="text-xs text-rove-charcoal/80 leading-relaxed mb-1">{computed ? computed.stat : info.stat}</Text>
+                  {computed && (
+                    <Text className="text-[9px] text-stone-400 italic mb-2">Based on your own logs, not a general stat</Text>
+                  )}
+                  <View className="flex-row gap-2 items-start mt-2">
                     <Text style={{ color: guidance.color }} className="text-[10px] font-bold uppercase tracking-wide mt-0.5">FIX:</Text>
                     <Text className="flex-1 text-xs text-rove-charcoal font-medium">{info.help}</Text>
                   </View>

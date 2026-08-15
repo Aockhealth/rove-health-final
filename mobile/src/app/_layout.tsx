@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Toaster } from 'sonner-native';
 import { QueryClient } from '@tanstack/react-query';
@@ -131,24 +132,26 @@ function RootLayout() {
   }
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: '#FAF9F6' },
-            }}
-          >
-            <Stack.Screen name="wellbeing/intro" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="wellbeing/assessment" options={{ presentation: 'modal' }} />
-          </Stack>
-          <Toaster />
-          {showIntro && <SplashIntro onFinish={() => setShowIntro(false)} />}
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
-    </PersistQueryClientProvider>
+    <SafeAreaProvider>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#FAF9F6' },
+              }}
+            >
+              <Stack.Screen name="wellbeing/intro" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="wellbeing/assessment" options={{ presentation: 'modal' }} />
+            </Stack>
+            <Toaster />
+            {showIntro && <SplashIntro onFinish={() => setShowIntro(false)} />}
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
+      </PersistQueryClientProvider>
+    </SafeAreaProvider>
   );
 }
 

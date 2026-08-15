@@ -260,7 +260,7 @@ export default function OnboardingScreen() {
               resizeMode="contain"
             />
             <View className="mb-8 rounded-full border border-rove-charcoal/20 px-4 py-1.5">
-              <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone/80">
+              <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">
                 Biology First
               </Text>
             </View>
@@ -276,7 +276,7 @@ export default function OnboardingScreen() {
             >
               {cute.pt2}
             </Text>
-            <Text className="mb-12 max-w-[320px] text-center text-sm font-medium leading-relaxed text-rove-stone/80">
+            <Text className="mb-12 max-w-[320px] text-center text-sm font-medium leading-relaxed text-rove-stone">
               {cute.desc}
             </Text>
             <TouchableOpacity
@@ -376,8 +376,10 @@ export default function OnboardingScreen() {
             {state.step === 5 && (
               <StepGoals
                 selectedGoals={state.goals}
+                trackerMode={state.trackerMode}
                 privacyConsented={state.privacyConsented}
                 onToggleGoal={(goalId) => dispatch({ type: 'toggle_goal', goalId })}
+                onTrackerModeChange={(value) => dispatch({ type: 'set_tracker_mode', value })}
                 onPrivacyConsentChange={(value) => dispatch({ type: 'set_privacy_consent', value })}
                 errors={state.errors}
               />
