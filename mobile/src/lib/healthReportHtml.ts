@@ -1,4 +1,5 @@
-import type { Counted, HealthReport } from './healthReport';
+import type { Counted, HealthReport, TtcReportCycle, TtcReportData } from './healthReport';
+import type { OpkResult, OvulationSignal } from '@shared/cycle/ttc';
 
 /**
  * Renders the health report as print-ready HTML for expo-print.
@@ -54,6 +55,163 @@ function countedList(items: Counted[], emptyText: string): string {
         )
         .join('')}
     </div>`;
+}
+
+const STATUS_LABEL: Record<OvulationSignal['status'], string> = {
+  insufficient_data: 'Not enough data',
+  monitoring: 'Monitoring',
+  fertile_window: 'Fertile window',
+  ovulation_likely: 'Ovulation likely',
+  ovulation_confirmed: 'Ovulation confirmed',
+};
+
+const METHOD_LABEL: Record<OvulationSignal['method'], string> = {
+  combined: 'Temperature + test',
+  bbt_only: 'Temperature only',
+  opk_only: 'Ovulation test only',
+  date_math: 'Cycle dates',
+};
+
+const OPK_COLORS: Record<OpkResult, string> = {
+  negative: '#E5E7EB',
+  low: '#C7C2F0',
+  high: '#8B7FE0',
+  peak: ACCENT,
+};
+
+function shortDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function dayOffset(cycleStart: string, dateStr: string): number {
+  const start = new Date(`${cycleStart}T00:00:00`).getTime();
+  const target = new Date(`${dateStr}T00:00:00`).getTime();
+  return Math.round((target - start) / 86400000) + 1;
+}
+
+/**
+ * Static inline SVG for the most recent cycle's temperature/test readings —
+ * same shape as the in-app chart (shared/cycle/ttc.ts's model), redrawn here
+ * as plain markup since expo-print renders a static document, not a live
+ * React tree.
+ */
+function renderTtcChart(chart: NonNullable<TtcReportData['chart']>): string {
+  const { cycleStart, bbt, opk, coverline } = chart;
+  const width = 520;
+  const height = 150;
+  const padLeft = 34;
+  const padRight = 10;
+  const padTop = 10;
+  const opkRowHeight = 22;
+  const plotHeight = height - padTop - opkRowHeight;
+  const plotBottom = padTop + plotHeight;
+
+  const lastDay = Math.max(1, ...bbt.map((r) => dayOffset(cycleStart, r.date)), ...opk.map((r) => dayOffset(cycleStart, r.date)));
+  const span = Math.max(lastDay - 1, 1);
+  const plotWidth = width - padLeft - padRight;
+
+  const temps = bbt.map((r) => r.value);
+  const values = coverline !== null ? [...temps, coverline] : temps;
+  const rawMin = values.length ? Math.min(...values) : 36.0;
+  const rawMax = values.length ? Math.max(...values) : 37.0;
+  const mid = (rawMin + rawMax) / 2;
+  const tempSpan = Math.max(rawMax - rawMin, 0.6);
+  const minTemp = mid - tempSpan / 2 - 0.05;
+  const maxTemp = mid + tempSpan / 2 + 0.05;
+
+  const x = (dateStr: string) => padLeft + ((dayOffset(cycleStart, dateStr) - 1) / span) * plotWidth;
+  const y = (value: number) => padTop + ((maxTemp - value) / (maxTemp - minTemp)) * plotHeight;
+
+  // Break the line wherever a day was missed, matching the in-app chart —
+  // an unlogged stretch shouldn't be drawn as a measured trend.
+  const segments: typeof bbt[] = [];
+  bbt.forEach((r, i) => {
+    const prev = bbt[i - 1];
+    if (!prev || dayOffset(cycleStart, r.date) - dayOffset(cycleStart, prev.date) > 1) segments.push([r]);
+    else segments[segments.length - 1].push(r);
+  });
+  const linePath = (segment: typeof bbt) =>
+    segment.map((r, i) => `${i === 0 ? 'M' : 'L'}${x(r.date).toFixed(1)},${y(r.value).toFixed(1)}`).join(' ');
+
+  const gridLines = [maxTemp, minTemp]
+    .map(
+      (v) => `
+      <text x="0" y="${(y(v) + 3).toFixed(1)}" font-size="8" fill="${MUTED}">${v.toFixed(1)}</text>
+      <line x1="${padLeft}" y1="${y(v).toFixed(1)}" x2="${width - padRight}" y2="${y(v).toFixed(1)}" stroke="${RULE}" stroke-width="0.75" />`,
+    )
+    .join('');
+
+  const coverlineSvg =
+    coverline !== null
+      ? `<line x1="${padLeft}" y1="${y(coverline).toFixed(1)}" x2="${width - padRight}" y2="${y(coverline).toFixed(1)}" stroke="${MUTED}" stroke-width="1.2" stroke-dasharray="4 3" />
+         <text x="${width - padRight}" y="${(y(coverline) - 4).toFixed(1)}" font-size="8" fill="${MUTED}" text-anchor="end">coverline</text>`
+      : '';
+
+  const linesSvg = segments
+    .map((seg) => `<path d="${linePath(seg)}" stroke="${ACCENT}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />`)
+    .join('');
+  const dotsSvg = bbt
+    .map((r) => `<circle cx="${x(r.date).toFixed(1)}" cy="${y(r.value).toFixed(1)}" r="2.6" fill="${ACCENT}" />`)
+    .join('');
+  const opkSvg = opk
+    .map(
+      (r) =>
+        `<rect x="${(x(r.date) - 4).toFixed(1)}" y="${plotBottom + 6}" width="8" height="9" rx="2" fill="${OPK_COLORS[r.value]}" />`,
+    )
+    .join('');
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      ${gridLines}
+      ${coverlineSvg}
+      ${linesSvg}
+      ${dotsSvg}
+      ${opkSvg}
+      <text x="0" y="${plotBottom + 15}" font-size="8" fill="${MUTED}">test</text>
+    </svg>`;
+}
+
+function renderTtcSection(ttc: TtcReportData, personFirstName: string): string {
+  const rows = ttc.cycles
+    .map((c: TtcReportCycle) => {
+      const range = c.isOngoing ? `${shortDate(c.cycleStart)} – ongoing` : `${shortDate(c.cycleStart)} – ${shortDate(c.cycleEnd)}`;
+      return `
+      <tr>
+        <td class="m-name">${escapeHtml(range)}</td>
+        <td>${escapeHtml(STATUS_LABEL[c.status])}</td>
+        <td>${c.confirmedDate ? escapeHtml(shortDate(c.confirmedDate)) : '—'}</td>
+        <td>${escapeHtml(METHOD_LABEL[c.method])}</td>
+      </tr>`;
+    })
+    .join('');
+
+  return `
+  <h2>Fertility Signals</h2>
+  ${
+    ttc.chart
+      ? `<p class="sub" style="margin-bottom:6px">Current cycle — basal body temperature and ovulation test readings, from ${shortDate(ttc.chart.cycleStart)}.</p>
+         ${renderTtcChart(ttc.chart)}`
+      : `<p class="empty">No temperature or ovulation test readings logged this cycle.</p>`
+  }
+
+  <h3 style="margin-top:14px">Ovulation history</h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="m-name">Cycle</th>
+        <th>Status</th>
+        <th>Ovulation</th>
+        <th>Detected from</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="sub" style="margin-top:8px">
+    "Detected from" shows which of ${escapeHtml(personFirstName)}'s own readings the status is based on —
+    temperature, ovulation tests, or cycle-date estimates when neither was logged that cycle.
+    These are descriptive readings from self-logged data, not a fertility diagnosis.
+  </p>`;
 }
 
 export function renderHealthReportHtml(r: HealthReport): string {
@@ -183,6 +341,8 @@ export function renderHealthReportHtml(r: HealthReport): string {
     member's saved averages${cycle.markedIrregular ? '. Cycles are self-reported as irregular' : ''}.
     ${cycle.observedCycles.length < 2 ? 'Fewer than two complete cycles were recorded, so cycle-length statistics are indicative only.' : ''}
   </p>
+
+  ${r.ttc ? renderTtcSection(r.ttc, person.name.split(' ')[0]) : ''}
 
   <h2>Daily measures</h2>
   <div class="metrics">

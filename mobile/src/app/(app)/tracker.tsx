@@ -49,6 +49,8 @@ import { FlowCard } from '../../components/tracker/FlowCard';
 
 import { QuickPhaseLog } from '../../components/tracker/QuickPhaseLog';
 import { SectionJumpBar, JumpSection } from '../../components/tracker/SectionJumpBar';
+import { FertilityCard } from '../../components/tracker/FertilityCard';
+import type { OpkResult } from '@shared/cycle/ttc';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import {
   CATEGORY_COLORS,
@@ -79,8 +81,11 @@ import {
   fetchMonthLogs,
   logDailySymptoms,
   updateLastPeriodDate,
+  savePeriodPredictionFeedback,
   type TrackerLog,
 } from '../../lib/tracker';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
+import { Button } from '../../components/ui/Button';
 
 // ─── Category derivation ────────────────────────────────────────────────────
 // Mirrors getLoggedCategories() in
@@ -123,6 +128,57 @@ function parseCervicalDischarge(raw: string | null): DischargeAnswers {
 // ─── Chip toggle helper ────────────────────────────────────────────────────────
 function toggleChip(arr: string[], val: string): string[] {
   return arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
+}
+
+// ─── SeverityRow ────────────────────────────────────────────────────────────
+// A compact 1-5 rating for one already-selected symptom. Lives directly under
+// the Body Signals ChipGrid — presence (the chip) and severity (this row) are
+// deliberately two separate taps, so a quick "yes I have this" log still only
+// takes one tap and severity stays optional-but-easy to add.
+function SeverityRow({
+  label,
+  value,
+  onChange,
+  color,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  color: string;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
+      <Text style={{ fontSize: 12, fontFamily: 'Raleway-Medium', color: '#2D2420' }} numberOfLines={1}>
+        {label}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: 7 }}>
+        {[1, 2, 3, 4, 5].map((n) => {
+          const active = n <= value;
+          return (
+            <TouchableOpacity
+              key={n}
+              hitSlop={6}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onChange(n);
+              }}
+            >
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  backgroundColor: active ? color : '#FFFFFF',
+                  borderWidth: 1,
+                  borderColor: active ? color : '#E5E0DB',
+                }}
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
 }
 
 // ─── Section group header ─────────────────────────────────────────────────────
@@ -291,6 +347,10 @@ export default function TrackerScreen() {
     queryFn: fetchTrackerData,
   });
 
+  // Gates the Fertility card and its jump target. Defaults to off, so a failed
+  // or still-loading profile fetch simply shows the standard tracker.
+  const isTtcMode = trackerData?.trackerMode === 'ttc';
+
   // Calendar / selection state
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [calMonth, setCalMonth] = useState(selectedDate.getMonth());
@@ -308,6 +368,14 @@ export default function TrackerScreen() {
   const [monthLogs, setMonthLogs] = useState<Record<string, TrackerLog>>({});
   const loadedMonthsRef = useRef<Set<string>>(new Set());
   const dataReadyRef = useRef(false);
+  // `isLoading` alone isn't enough to gate the first paint: a cached/persisted
+  // query resolves with `isLoading: false` on the very first render, while the
+  // state below is still holding its empty defaults until the effect runs a
+  // tick later. That one frame rendered `last_period_start: ''`, which reads as
+  // "no cycle data" and flashed the log-your-first-period empty state before
+  // snapping to the real calendar. This tracks whether the seeding has actually
+  // landed, so the screen can hold the loading view until it has.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     if (!trackerData) return;
@@ -319,6 +387,7 @@ export default function TrackerScreen() {
       loadedMonthsRef.current.add(monthKey(m.getFullYear(), m.getMonth()));
     }
     dataReadyRef.current = true;
+    setHydrated(true);
   }, [trackerData]);
 
   // Fetch logs for the visible month (+ its neighbors) whenever navigation
@@ -457,18 +526,43 @@ export default function TrackerScreen() {
   }, [calYear, calMonth, cycleSettings, sharedLogs, monthLogs]);
 
   // ─── Period-mode toggling — staged locally, persisted on "Done" ──────────
+  // Tapping a day fills forward a typical period length (Cycle Settings'
+  // Period Length) from it, in whichever direction that tap moves — marking
+  // day one auto-fills the days after it as bleeding, and un-marking it
+  // clears the same forward span, so undoing a period doesn't require
+  // tapping every day by hand either.
   const handleTogglePeriodDate = (dateStr: string) => {
     const isCurrentlyLogged = monthLogs[dateStr]?.is_period === true;
+    const turningOn = !isCurrentlyLogged;
+    const span = Math.max(cycleSettings.period_length_days || 5, 1);
+
+    const datesToSet: string[] = [];
+    const cur = parseLocalDate(dateStr);
+    for (let i = 0; i < span; i++) {
+      datesToSet.push(formatDate(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    const wasLoggedByDate: Record<string, boolean> = {};
+    datesToSet.forEach((d) => {
+      wasLoggedByDate[d] = monthLogs[d]?.is_period === true;
+    });
+
     setPendingPeriodChanges((prev) => {
       const next = new Map(prev);
-      if (next.has(dateStr)) next.delete(dateStr);
-      else next.set(dateStr, !isCurrentlyLogged);
+      datesToSet.forEach((d) => {
+        if (wasLoggedByDate[d] === turningOn) next.delete(d);
+        else next.set(d, turningOn);
+      });
       return next;
     });
-    setMonthLogs((prev) => ({
-      ...prev,
-      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: !isCurrentlyLogged },
-    }));
+    setMonthLogs((prev) => {
+      const merged = { ...prev };
+      datesToSet.forEach((d) => {
+        merged[d] = { ...(merged[d] ?? emptyLog(d)), is_period: turningOn };
+      });
+      return merged;
+    });
   };
 
   const handleEndPeriod = () => {
@@ -545,26 +639,86 @@ export default function TrackerScreen() {
     setPendingPeriodChanges(new Map());
     setIsPeriodLoggingMode(false);
     toast.success('Period dates updated!');
+
+    // This path can move last_period_start (see reanchorLastPeriodStart) —
+    // every screen reading cycle data needs to know, same as the regular
+    // daily-log save below already does. That includes this screen's own
+    // ['trackerData'] query: without it, the cached copy keeps the pre-change
+    // anchor, so Tracker itself drifts out of step with the database it just
+    // wrote to, and reads as "correct" while every other screen looks wrong.
+    queryClient.invalidateQueries({ queryKey: ['trackerData'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['insights'] });
+    queryClient.invalidateQueries({ queryKey: ['plan'] });
   };
 
-  // Finds the start of the most recent logged period streak and, if it's
-  // newer than the current setting, persists it as the new anchor — ported
-  // from the web's identical streak-walk in handleSave/handleSavePeriodChanges.
+  // Finds the start of the most recent logged period streak and persists it as
+  // the anchor whenever it differs from what's stored — in either direction.
+  //
+  // This used to only ever move the anchor *forward*
+  // (`streakStart >= last_period_start`), which meant un-marking period days
+  // could never correct it: `user_cycle_settings.last_period_start` would stay
+  // pinned to a date with no logged period days behind it. Every screen that
+  // falls back to that column when no period days are logged (see
+  // getRelevantPeriodStart's step 3) then reported a phase anchored to a period
+  // that doesn't exist, disagreeing with the calendar right next to it. Logged
+  // days are the truth; the column is a cache of where they start.
   const reanchorLastPeriodStart = async (logs: Record<string, DailyLog>) => {
     const periodDates = Object.keys(logs)
       .filter((d) => logs[d]?.is_period === true)
       .sort((a, b) => b.localeCompare(a));
+    // Nothing logged in the loaded window — can't derive an anchor. Deliberately
+    // leaves the stored one alone rather than clearing it, since the window is
+    // partial (90 days plus whatever months were browsed) and an older period
+    // may simply not be loaded.
     if (periodDates.length === 0) return;
 
     const mostRecent = periodDates[0];
     const streakStart = findStreakStart(mostRecent, logs);
 
-    if (!cycleSettings.last_period_start || streakStart >= cycleSettings.last_period_start) {
+    if (streakStart !== cycleSettings.last_period_start) {
+      // Snapshot what the app was predicting BEFORE this anchor moves, so the
+      // "were we right?" prompt below compares against the old prediction —
+      // once `updateLastPeriodDate` lands, last_period_start becomes the new
+      // streak start and the old prediction is gone.
+      const isGenuinelyNewPeriod = cycleSettings.last_period_start && streakStart > cycleSettings.last_period_start;
+      let priorPrediction: { predictedDate: string; daysOff: number } | null = null;
+      if (isGenuinelyNewPeriod) {
+        const predicted = parseLocalDate(cycleSettings.last_period_start);
+        predicted.setDate(predicted.getDate() + (cycleSettings.cycle_length_days || 28));
+        const predictedDate = formatDate(predicted);
+        const daysOff = daysBetween(predicted, parseLocalDate(streakStart));
+        // Outside this range the comparison isn't meaningful (long tracking
+        // gaps, a settings change) — skip asking rather than show nonsense.
+        if (Math.abs(daysOff) <= 60) {
+          priorPrediction = { predictedDate, daysOff };
+        }
+      }
+
       const result = await updateLastPeriodDate(streakStart);
       if (result.success) {
         setCycleSettings((prev) => ({ ...prev, last_period_start: streakStart }));
+        if (priorPrediction) {
+          setPredictionPrompt({
+            periodStartDate: streakStart,
+            predictedDate: priorPrediction.predictedDate,
+            daysOff: priorPrediction.daysOff,
+          });
+        }
       }
     }
+  };
+
+  const answerPredictionPrompt = async (wasAccurate: boolean) => {
+    if (!predictionPrompt) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await savePeriodPredictionFeedback({
+      periodStartDate: predictionPrompt.periodStartDate,
+      predictedDate: predictionPrompt.predictedDate,
+      daysOff: predictionPrompt.daysOff,
+      wasAccurate,
+    });
+    setPredictionPrompt(null);
   };
 
   // Section visibility
@@ -581,10 +735,15 @@ export default function TrackerScreen() {
   const trackerScrollRef = useRef<ScrollView>(null);
   const [lifestyleSectionY, setLifestyleSectionY] = useState(0);
   const [intimacySectionY, setIntimacySectionY] = useState(0);
+  const [fertilitySectionY, setFertilitySectionY] = useState(0);
 
   const handleJumpToSection = (section: JumpSection) => {
     if (section === 'daily') {
       trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
+      return;
+    }
+    if (section === 'fertility') {
+      trackerScrollRef.current?.scrollTo({ y: Math.max(0, fertilitySectionY - 12), animated: true });
       return;
     }
     if (section === 'lifestyle') {
@@ -600,6 +759,14 @@ export default function TrackerScreen() {
   // date (or its underlying data) changes, matching the web's load-on-select
   // effect in page.tsx.
   const [bodySignals, setBodySignals] = useState<string[]>([]);
+  const [symptomSeverity, setSymptomSeverity] = useState<Record<string, number>>({});
+  // "Were we right?" prompt — shown once when a genuinely new period start is
+  // logged, comparing what the app had predicted against where it actually landed.
+  const [predictionPrompt, setPredictionPrompt] = useState<{
+    periodStartDate: string;
+    predictedDate: string | null;
+    daysOff: number | null;
+  } | null>(null);
   const [innerWeather, setInnerWeather] = useState<string[]>([]);
   const [selfLove, setSelfLove] = useState<string[]>([]);
   const [selfLoveNote, setSelfLoveNote] = useState('');
@@ -620,6 +787,11 @@ export default function TrackerScreen() {
   });
 
   const [flowIntensity, setFlowIntensity] = useState<string | null>(null);
+
+  // TTC biomarkers — only collected (and only saved) when the Fertility card
+  // is actually on screen.
+  const [bbtCelsius, setBbtCelsius] = useState<number | null>(null);
+  const [opkResult, setOpkResult] = useState<OpkResult | null>(null);
 
   const noteMax = 1000;
 
@@ -663,6 +835,7 @@ export default function TrackerScreen() {
       return;
     }
     setBodySignals(selectedLog?.symptoms ?? []);
+    setSymptomSeverity(selectedLog?.symptom_severity ?? {});
     setInnerWeather(selectedLog?.moods ?? []);
     setExerciseType(selectedLog?.exercise_types ?? []);
     setExerciseMins(selectedLog?.exercise_minutes ?? 0);
@@ -677,6 +850,8 @@ export default function TrackerScreen() {
     setContraception(selectedLog?.contraception ?? []);
     setNote(selectedLog?.notes ?? '');
     setFlowIntensity(selectedLog?.flow_intensity ?? null);
+    setBbtCelsius(selectedLog?.bbt_celsius ?? null);
+    setOpkResult(selectedLog?.opk_result ?? null);
     // parseCervicalDischarge always builds a fresh object, which would
     // otherwise look like a "change" to the autosave effect below on every
     // reload even when nothing's different — compare fields and keep the
@@ -740,6 +915,7 @@ export default function TrackerScreen() {
     const result = await logDailySymptoms({
       date: dateStr,
       symptoms: bodySignals,
+      symptomSeverity,
       moods: innerWeather,
       exerciseTypes: exerciseType,
       exerciseMinutes: exerciseMins || null,
@@ -757,6 +933,11 @@ export default function TrackerScreen() {
       isPeriod: existingIsPeriod,
       flowIntensity: resolvedFlowIntensity,
       cervicalDischarge,
+      // Left undefined outside TTC mode so the write doesn't touch these
+      // columns at all — someone who switches modes mid-cycle keeps the
+      // readings she already logged.
+      bbtCelsius: isTtcMode ? bbtCelsius : undefined,
+      opkResult: isTtcMode ? opkResult : undefined,
       notes: note,
     });
     if (!silent) setIsSaving(false);
@@ -774,6 +955,7 @@ export default function TrackerScreen() {
       const updatedLog: TrackerLog = {
         ...(prev[dateStr] ?? emptyLog(dateStr)),
         symptoms: bodySignals,
+        symptom_severity: symptomSeverity,
         moods: innerWeather,
         exercise_types: exerciseType,
         exercise_minutes: exerciseMins || null,
@@ -788,6 +970,9 @@ export default function TrackerScreen() {
         is_period: existingIsPeriod,
         flow_intensity: resolvedFlowIntensity ?? null,
         cervical_discharge: cervicalDischarge ?? null,
+        // Mirrors the omit-when-not-TTC rule above: keep whatever the row
+        // already held rather than blanking the local copy too.
+        ...(isTtcMode ? { bbt_celsius: bbtCelsius, opk_result: opkResult } : {}),
         notes: note,
       };
       // Recorded so the field-reset effect can tell this exact update apart
@@ -838,6 +1023,7 @@ export default function TrackerScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bodySignals,
+    symptomSeverity,
     innerWeather,
     selfLove,
     selfLoveNote,
@@ -853,9 +1039,16 @@ export default function TrackerScreen() {
     note,
     dischargeAnswers,
     flowIntensity,
+    bbtCelsius,
+    opkResult,
   ]);
 
-  if (isLoading) {
+  // `trackerData && !hydrated` covers the cached-resolve case described above.
+  // Deliberately not `!hydrated` on its own: when the query legitimately
+  // resolves to null (no signed-in user / no settings row) nothing ever seeds
+  // the state, and gating on that would hang here forever instead of falling
+  // through to the empty state that case is supposed to show.
+  if (isLoading || (trackerData && !hydrated)) {
     return <LoadingScreen />;
   }
 
@@ -973,7 +1166,7 @@ export default function TrackerScreen() {
             collapsed and sit far down the page, so this jumps straight to
             (and opens) whichever one someone actually wants, instead of
             making them scroll past everything else first. */}
-        <SectionJumpBar onJump={handleJumpToSection} accentColor={phaseThemeColor} />
+        <SectionJumpBar onJump={handleJumpToSection} accentColor={phaseThemeColor} showFertility={isTtcMode} />
 
         {/* 7. Quick Phase Log — dynamic per currentPhase, matching the web's
             QuickPhaseLog.tsx. Title/suggestions change with the selected
@@ -1008,6 +1201,23 @@ export default function TrackerScreen() {
           />
         )}
 
+        {/* 8b. Fertility (TTC mode only) — the morning temperature and
+            ovulation test the detection algorithm runs on. Sits directly under
+            Flow/Discharge because it's the same kind of once-a-day body
+            reading, and high enough up to be quick to reach each morning. */}
+        {isTtcMode && (
+          <View onLayout={(e) => setFertilitySectionY(e.nativeEvent.layout.y)}>
+            <FertilityCard
+              bbtCelsius={bbtCelsius}
+              onBbtChange={setBbtCelsius}
+              opkResult={opkResult}
+              onOpkChange={setOpkResult}
+              dateKey={selectedDateStr}
+              cardTint={phaseCardTint}
+            />
+          </View>
+        )}
+
         {/* 9. Body Signals */}
         <LogCard
           title="Body Signals"
@@ -1019,9 +1229,39 @@ export default function TrackerScreen() {
           <ChipGrid
             items={SYMPTOM_OPTIONS}
             selected={bodySignals}
-            onToggle={(v) => setBodySignals(toggleChip(bodySignals, v))}
+            onToggle={(v) => {
+              const next = toggleChip(bodySignals, v);
+              setBodySignals(next);
+              if (next.includes(v)) {
+                // Newly selected — seed a default "moderate" severity so the
+                // row below never shows an unset/zero state.
+                setSymptomSeverity((sev) => (v in sev ? sev : { ...sev, [v]: 3 }));
+              } else {
+                setSymptomSeverity((sev) => {
+                  if (!(v in sev)) return sev;
+                  const { [v]: _removed, ...rest } = sev;
+                  return rest;
+                });
+              }
+            }}
             activeColor={CATEGORY_COLORS.bodySignals}
           />
+          {bodySignals.length > 0 && (
+            <View style={{ marginTop: 10, gap: 2 }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Raleway-SemiBold', color: '#8A8378', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
+                How bad?
+              </Text>
+              {bodySignals.map((symptom) => (
+                <SeverityRow
+                  key={symptom}
+                  label={symptom}
+                  value={symptomSeverity[symptom] ?? 3}
+                  onChange={(v) => setSymptomSeverity((sev) => ({ ...sev, [symptom]: v }))}
+                  color={CATEGORY_COLORS.bodySignals}
+                />
+              ))}
+            </View>
+          )}
         </LogCard>
 
         {/* 10. Inner Weather */}
@@ -1273,6 +1513,45 @@ export default function TrackerScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <Dialog open={!!predictionPrompt} onOpenChange={(o) => !o && setPredictionPrompt(null)}>
+        <DialogContent showClose={false}>
+          {predictionPrompt && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Were we right?</DialogTitle>
+                <DialogDescription>
+                  {predictionPrompt.daysOff === 0
+                    ? 'We predicted your period would start today — and it did.'
+                    : predictionPrompt.daysOff! > 0
+                      ? `We predicted this period ${predictionPrompt.daysOff} day${predictionPrompt.daysOff === 1 ? '' : 's'} earlier than it arrived.`
+                      : `Your period arrived ${Math.abs(predictionPrompt.daysOff!)} day${Math.abs(predictionPrompt.daysOff!) === 1 ? '' : 's'} earlier than we predicted.`}
+                </DialogDescription>
+              </DialogHeader>
+              <Text className="text-sm text-rove-charcoal/80 text-center mb-6">
+                Did that feel about right to you?
+              </Text>
+              <View className="flex-row gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 px-2"
+                  textClassName="text-sm"
+                  onPress={() => answerPredictionPrompt(false)}
+                >
+                  Not really
+                </Button>
+                <Button
+                  className="flex-1 px-2"
+                  textClassName="text-sm"
+                  onPress={() => answerPredictionPrompt(true)}
+                >
+                  Spot on
+                </Button>
+              </View>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </SafeAreaView>
   );
 }
@@ -1283,6 +1562,7 @@ function emptyLog(dateStr: string): TrackerLog {
     is_period: null,
     flow_intensity: null,
     symptoms: [],
+    symptom_severity: {},
     moods: [],
     exercise_types: [],
     exercise_minutes: null,
@@ -1295,6 +1575,9 @@ function emptyLog(dateStr: string): TrackerLog {
     sex_activity: [],
     contraception: [],
     cervical_discharge: null,
+    bbt_celsius: null,
+    opk_result: null,
+    nsaid_taken: null,
     notes: '',
   };
 }

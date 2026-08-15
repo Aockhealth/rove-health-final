@@ -7,7 +7,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -20,52 +19,29 @@ import { supabase } from '../../lib/supabase';
 import {
   fetchProfilePageData,
   updateUserProfile,
-  updateCycleSettings,
   requestPasswordReset,
   updateContactInfo,
-  deleteUserAccount,
   type ProfileFormData,
   type ProfileCycleData,
 } from '../../lib/profile';
 import { CycleSignature, type ProfileTheme } from '../../components/profile/CycleSignature';
+import { phaseThemes } from '../../data/home-content';
 import { HealthPassport } from '../../components/profile/HealthPassport';
 import { FocusGoals } from '../../components/profile/FocusGoals';
 import { AccountSettings } from '../../components/profile/AccountSettings';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { syncBbtReminder } from '../../lib/notifications';
 import LoadingScreen from '../../components/ui/LoadingScreen';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-const SUPPORT_EMAIL = 'team@rovehealth.in';
-
-const PROFILE_THEMES: Record<string, ProfileTheme> = {
-  Menstrual: { accentColor: '#AF6B6B', badgeBg: 'rgba(175,107,107,0.10)', badgeText: '#AF6B6B' },
-  Follicular: { accentColor: '#0F766E', badgeBg: 'rgba(20,184,166,0.10)', badgeText: '#0F766E' },
-  Ovulatory: { accentColor: '#B45309', badgeBg: 'rgba(251,191,36,0.12)', badgeText: '#B45309' },
-  Luteal: { accentColor: '#4338CA', badgeBg: 'rgba(129,140,248,0.12)', badgeText: '#4338CA' },
-};
-
-function Stepper({
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <View className="gap-2">
-      <View className="flex-row items-center justify-between">
-        <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">{label}</Text>
-        <Text className="text-base font-bold text-stone-800">{value} Days</Text>
-      </View>
-    </View>
-  );
-}
+// Derived from the app's single real phase palette (phaseThemes) instead of a
+// second hand-typed color list — this badge/avatar ring needs to match the same
+// phase colors shown by the dots in CycleSignature and everywhere else in the app.
+const PROFILE_THEMES: Record<string, ProfileTheme> = Object.fromEntries(
+  Object.entries(phaseThemes).map(([name, tokens]) => [
+    name,
+    { accentColor: tokens.color, badgeBg: tokens.iconBg, badgeText: tokens.textColor },
+  ]),
+);
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -91,7 +67,6 @@ export default function ProfileScreen() {
     period_length_days: 5,
   });
   const [unifiedPhase, setUnifiedPhase] = useState('Menstrual');
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,24 +132,6 @@ export default function ProfileScreen() {
     saveProfileFields({ goals: nextGoals });
   };
 
-  const handleSaveCycle = async () => {
-    setIsPending(true);
-    const res = await updateCycleSettings({
-      last_period_start: cycleData.last_period_start,
-      cycle_length_days: cycleData.cycle_length_days,
-      period_length_days: cycleData.period_length_days,
-      is_irregular: formData.is_irregular,
-    });
-    setIsPending(false);
-    if (res.error) {
-      toast.error('Failed to update cycle', { description: res.error });
-      return;
-    }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success('Cycle settings updated');
-    invalidateAppData();
-  };
-
   const handleUpdateContact = async (newEmail: string, newPhone: string) => {
     setIsPending(true);
     const res = await updateContactInfo(newEmail, newPhone);
@@ -201,59 +158,10 @@ export default function ProfileScreen() {
     toast.success('Password reset email sent');
   };
 
-  // Clearing local data is handled by the team rather than in-app, so this opens a
-  // pre-addressed mail draft. Falls back to showing the address, since a device with
-  // no mail client configured silently does nothing on a mailto: link.
-  const handleRequestDataClear = async () => {
-    const subject = encodeURIComponent('Request: clear my local data');
-    const body = encodeURIComponent(
-      `Please clear the local data for my Rove account.\n\nAccount email: ${userEmail || '(not signed in)'}\n`,
-    );
-    const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
-
-    try {
-      await Linking.openURL(url);
-    } catch {
-      toast.error('Could not open your mail app', { description: `Email us at ${SUPPORT_EMAIL}` });
-    }
-  };
-
   const handleLogout = async () => {
     queryClient.clear();
     await supabase.auth.signOut();
     router.replace('/(auth)/login');
-  };
-
-  const handleAccountDeletion = async () => {
-    setIsPending(true);
-    const res = await deleteUserAccount();
-    setIsPending(false);
-    if (res.error) {
-      toast.error('Failed to delete account', { description: res.error });
-      return;
-    }
-    queryClient.clear();
-    toast.success('Account deleted. Goodbye.');
-    router.replace('/(auth)/login');
-  };
-
-  let parsedDate = new Date();
-  if (cycleData.last_period_start) {
-    const [y, m, d] = cycleData.last_period_start.split('-').map(Number);
-    if (y && m && d) {
-      parsedDate = new Date(y, m - 1, d);
-    }
-  }
-
-  const handleDateConfirm = (selectedDate: Date) => {
-    setShowDatePicker(false);
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    setCycleData((p) => ({
-      ...p,
-      last_period_start: `${year}-${month}-${day}`,
-    }));
   };
 
   if (loading) {
@@ -323,77 +231,32 @@ export default function ProfileScreen() {
 
             <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
               <Text
-                className="mb-6 text-xl text-stone-800"
+                className="mb-2 text-xl text-stone-800"
                 style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
               >
-                Cycle Settings
+                Tracking Mode
               </Text>
-              <View className="gap-6">
-                <Stepper
-                  label="Cycle Length"
-                  value={cycleData.cycle_length_days}
-                  min={21}
-                  max={45}
-                  onChange={(v) => setCycleData((p) => ({ ...p, cycle_length_days: v }))}
-                />
-                <Stepper
-                  label="Period Length"
-                  value={cycleData.period_length_days}
-                  min={2}
-                  max={10}
-                  onChange={(v) => setCycleData((p) => ({ ...p, period_length_days: v }))}
-                />
-
-                <View className="gap-2">
-                  <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                    Last Period Start
-                  </Text>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => setShowDatePicker(true)}
-                    className="flex-row items-center h-14 w-full rounded-[20px] border border-stone-100 bg-stone-50/50 px-5"
-                  >
-                    <Text className="flex-1 text-[15px] font-bold text-stone-800">
-                      {cycleData.last_period_start ? parsedDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select Date'}
-                    </Text>
-                  </TouchableOpacity>
-                  <DateTimePickerModal
-                    isVisible={showDatePicker}
-                    mode="date"
-                    date={parsedDate}
-                    maximumDate={new Date()}
-                    onConfirm={handleDateConfirm}
-                    onCancel={() => setShowDatePicker(false)}
-                    confirmTextIOS="Confirm"
-                  />
-                </View>
-
-                <View className="gap-2">
-                  <Text className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                    Cycle Regularity
-                  </Text>
-                  <SegmentedControl
-                    tabs={[
-                      { id: 'regular', label: 'Regular' },
-                      { id: 'irregular', label: 'Irregular' },
-                    ]}
-                    activeTab={formData.is_irregular ? 'irregular' : 'regular'}
-                    onChange={(id) => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setFormData((p) => ({ ...p, is_irregular: id === 'irregular' }));
-                    }}
-                  />
-                </View>
-
-                <TouchableOpacity
-                  onPress={handleSaveCycle}
-                  disabled={isPending}
-                  className="items-center rounded-xl bg-stone-900 py-4"
-                  style={{ opacity: isPending ? 0.5 : 1 }}
-                >
-                  <Text className="text-sm font-bold tracking-wide text-white">Update Cycle</Text>
-                </TouchableOpacity>
-              </View>
+              <Text className="mb-4 text-xs leading-relaxed text-stone-500">
+                Conceiving mode adds basal temperature and ovulation test logging, and detects your
+                ovulation from them.
+              </Text>
+              <SegmentedControl
+                tabs={[
+                  { id: 'menstruation', label: 'Cycle' },
+                  { id: 'ttc', label: 'Conceiving' },
+                  { id: 'menopause', label: 'Menopause' },
+                ]}
+                activeTab={formData.tracker_mode}
+                onChange={(id) => {
+                  if (id === formData.tracker_mode) return;
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  saveProfileFields({ tracker_mode: id });
+                  // Turning Conceiving mode on schedules the morning
+                  // temperature reminder (and asks for permission the first
+                  // time); turning it off cancels it, without prompting.
+                  syncBbtReminder(id);
+                }}
+              />
             </View>
 
             <FocusGoals
@@ -416,8 +279,6 @@ export default function ProfileScreen() {
               onLogout={handleLogout}
               onResetPassword={handleResetPassword}
               onUpdateContact={handleUpdateContact}
-              onDeleteAccount={handleAccountDeletion}
-              onClearLocalData={handleRequestDataClear}
               isPending={isPending}
             />
           </View>

@@ -5,11 +5,18 @@ import { Platform } from 'react-native';
 // existing notification instead of stacking duplicates.
 const DAILY_TRACKER_REMINDER_ID = 'daily-tracker-reminder';
 const PERIOD_REMINDER_ID = 'period-in-2-days-reminder';
+const BBT_REMINDER_ID = 'bbt-morning-reminder';
 
 const DAILY_REMINDER_HOUR = 20; // 8pm local time
 const DAILY_REMINDER_MINUTE = 30;
 const PERIOD_REMINDER_DAYS_BEFORE = 2;
 const PERIOD_REMINDER_HOUR = 9; // 9am local time on the reminder day
+
+// Basal temperature is only meaningful taken on waking, before getting out of
+// bed — so this one fires much earlier than the general 8:30pm log reminder,
+// and is a separate notification rather than a reworded version of it.
+const BBT_REMINDER_HOUR = 6;
+const BBT_REMINDER_MINUTE = 30;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -60,6 +67,44 @@ export async function scheduleDailyTrackerReminder() {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: DAILY_REMINDER_HOUR,
       minute: DAILY_REMINDER_MINUTE,
+    },
+  });
+}
+
+/**
+ * Keeps the morning basal-temperature reminder in step with the tracker mode:
+ * scheduled while TTC mode is on, cancelled the moment it's switched off.
+ *
+ * This reminder is load-bearing rather than an engagement nudge — the coverline
+ * the ovulation algorithm derives is built from consecutive morning readings,
+ * so missed days degrade the detection itself, not just the chart.
+ *
+ * Safe to call on every app launch: scheduling is idempotent (fixed
+ * identifier), and the cancel path deliberately never asks for permission, so
+ * a user who isn't trying to conceive is never prompted on our account.
+ */
+export async function syncBbtReminder(trackerMode: string | null | undefined) {
+  if (trackerMode !== 'ttc') {
+    await Notifications.cancelScheduledNotificationAsync(BBT_REMINDER_ID).catch(() => {});
+    return;
+  }
+
+  const granted = await ensureNotificationPermissions();
+  if (!granted) return;
+
+  await Notifications.cancelScheduledNotificationAsync(BBT_REMINDER_ID).catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    identifier: BBT_REMINDER_ID,
+    content: {
+      title: 'Temperature check',
+      body: 'Take your basal temperature before you get out of bed, then log it in Rove.',
+    },
+    // DAILY, not CALENDAR — calendar triggers are iOS-only (see the note on
+    // scheduleDailyTrackerReminder above).
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: BBT_REMINDER_HOUR,
+      minute: BBT_REMINDER_MINUTE,
     },
   });
 }

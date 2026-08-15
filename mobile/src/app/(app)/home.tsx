@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet , Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,15 +12,17 @@ import { Droplets, Baby, Heart, Flower2, CalendarPlus, ChevronRight } from 'luci
 import Svg, { Defs, RadialGradient as SvgRadialGradient, Stop, Rect } from 'react-native-svg';
 
 import { fetchDashboardData, type DashboardData } from '../../lib/dashboard';
-import { schedulePeriodReminder } from '../../lib/notifications';
+import { schedulePeriodReminder, syncBbtReminder } from '../../lib/notifications';
 import { phaseThemes, PHASE_KEYWORDS, PHASE_EXPLAINERS, PHASE_SNAPSHOTS } from '../../data/home-content';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Button } from '../../components/ui/Button';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { PhaseOrbRing } from '../../components/home/PhaseOrbRing';
+import { TtcHomeScreen } from '../../components/home/TtcHomeScreen';
 import { RiverTrack, iconMap, type RiverItem } from '../../components/home/RiverTrack';
 import WelcomeTour from '../../components/home/WelcomeTour';
+import PhaseTransitionCelebration from '../../components/home/PhaseTransitionCelebration';
 import { HormoneWave, MindSynapse, BodyDNA, GlowHalo } from '../../components/home/SnapshotIcons';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 
@@ -35,6 +37,16 @@ function formatDateRange(start: Date | null, end: Date | null): string {
     return `${month} ${start.getDate()}–${end.getDate()}`;
   }
   return `${formatDate(start)} – ${formatDate(end)}`;
+}
+
+// Ovulation/fertile-window dates are arithmetic off the same last_period_start +
+// cycle_length_days the phase engine anchors on, so its confidence/dataSource is an
+// honest proxy for how much to trust them too. 'low' confidence (dataSource: 'none')
+// never reaches this screen — the hasCycleData gate above redirects to the
+// log-your-first-period empty state first.
+function datesConfidenceCaption(confidence: DashboardData['phase']['confidence'], dataSource: DashboardData['phase']['dataSource']): string {
+  if (dataSource === 'logs') return 'Predicted ± 1 day, based on your logged periods.';
+  return 'Predicted ± 3 days, estimated from your cycle settings — log a period to sharpen this.';
 }
 
 function AnimatedWatermark({ icon: Icon, color, itemKey }: { icon: any, color: string, itemKey: string }) {
@@ -124,7 +136,7 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
 
           {/* Top half: label only. */}
           <View className="flex-1">
-            <Text className="text-[11px] font-extrabold uppercase tracking-[2px] mt-1" style={{ color: theme.color }}>{label}</Text>
+            <Text className="text-[11px] font-extrabold uppercase tracking-[2px] mt-1" style={{ color: theme.textColor }}>{label}</Text>
           </View>
 
           {/* Bottom half: title + description, anchored to the bottom of this half. */}
@@ -135,7 +147,7 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
               </Text>
               <ChevronRight size={14} color="rgba(0,0,0,0.15)" style={{ marginLeft: 4 }} />
             </View>
-            <Text numberOfLines={3} className="text-xs text-rove-stone/90 font-medium leading-relaxed">{snapshot[itemKey].desc}</Text>
+            <Text numberOfLines={3} className="text-xs text-rove-stone font-medium leading-relaxed">{snapshot[itemKey].desc}</Text>
           </View>
         </View>
       </Animated.View>
@@ -164,10 +176,25 @@ export default function HomeScreen() {
   const [expandedRiverItem, setExpandedRiverItem] = useState<RiverItem | null>(null);
   const [selectedSnapshot, setSelectedSnapshot] = useState<(typeof SNAPSHOT_META)[number]['key'] | null>(null);
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
   });
+
+  // Bottom-tab screens stay mounted after their first visit, so React Query's
+  // default "refetch on mount" never fires again on later visits — only an
+  // explicit invalidateQueries elsewhere catches it, and that depends on every
+  // other save path remembering to invalidate ['dashboard']. Tracker/Insights
+  // don't have this problem (they're revisited via the same mechanism, but
+  // Plan sidesteps it entirely with its own useFocusEffect refetch); Home
+  // didn't have one, so it could silently show data from whenever it first
+  // loaded — including a persisted snapshot from a previous app session,
+  // since the query cache is written to AsyncStorage (see _layout.tsx).
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   useEffect(() => {
     if (!isPending && !data) {
@@ -182,6 +209,16 @@ export default function HomeScreen() {
       schedulePeriodReminder(data.phase.nextPeriodDate);
     }
   }, [data?.phase.nextPeriodDate]);
+
+  // Keeps the morning basal-temperature reminder in step with the tracker
+  // mode. Doing it here (rather than only on the Profile toggle) makes it
+  // self-healing: every launch passes through Home, so the reminder recovers
+  // after a reinstall or a mode change made on another device.
+  useEffect(() => {
+    if (data?.trackerMode) {
+      syncBbtReminder(data.trackerMode);
+    }
+  }, [data?.trackerMode]);
 
   const scrollY = useSharedValue(0);
 
@@ -262,6 +299,10 @@ export default function HomeScreen() {
     );
   }
 
+  if (data.trackerMode === 'ttc') {
+    return <TtcHomeScreen data={data} />;
+  }
+
   const nextPeriod = data.phase.nextPeriodDate ? new Date(data.phase.nextPeriodDate) : null;
   const ovulationDate = nextPeriod ? new Date(nextPeriod.getTime() - 14 * 24 * 60 * 60 * 1000) : null;
   const fertileStart = ovulationDate ? new Date(ovulationDate.getTime() - 5 * 24 * 60 * 60 * 1000) : null;
@@ -279,8 +320,8 @@ export default function HomeScreen() {
           className="pt-14 pb-4 px-4 flex-row items-center justify-between border-b border-black/5"
         >
           <View>
-            <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone/60">Current Phase</Text>
-            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{data.phase.name} • Day {data.phase.day}</Text>
+            <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone">Current Phase</Text>
+            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>{data.phase.name} • Day {data.phase.day}</Text>
           </View>
           <ProfileAvatar />
         </BlurView>
@@ -323,8 +364,8 @@ export default function HomeScreen() {
                 className="rounded-full items-center justify-center border overflow-hidden"
                 style={{ width: 144, height: 144, backgroundColor: '#FAF9F6', borderColor: 'rgba(0,0,0,0.03)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 15 }}
               >
-                <Text className="text-[8px] font-bold tracking-[2px] text-rove-stone/60 uppercase mb-1">Current Phase</Text>
-                <Text className="text-2xl mb-0.5" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>
+                <Text className="text-[8px] font-bold tracking-[2px] text-rove-stone uppercase mb-1">Current Phase</Text>
+                <Text className="text-2xl mb-0.5" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>
                   {data.phase.name}
                 </Text>
                 <Text className="text-[10px] font-semibold text-rove-charcoal/70 tracking-wide mb-1">{PHASE_KEYWORDS[data.phase.name]}</Text>
@@ -360,11 +401,11 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Droplets size={14} color={phaseThemes.Menstrual.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Menstrual.color }}>Period</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Menstrual.textColor }}>Period</Text>
                 </View>
                 <View>
                   <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(nextPeriod)}</Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">{daysToNext !== null ? `in ${daysToNext} days` : 'Next cycle'}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">{daysToNext !== null ? `in ${daysToNext} days` : 'Next cycle'}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -381,11 +422,11 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Baby size={14} color={phaseThemes.Ovulatory.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Ovulatory.color }}>Ovulation</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Ovulatory.textColor }}>Ovulation</Text>
                 </View>
                 <View>
                   <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(ovulationDate)}</Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">Peak fertility</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">Peak fertility</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -402,7 +443,7 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Heart size={14} color={phaseThemes.Follicular.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Follicular.color }}>Fertile</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Follicular.textColor }}>Fertile</Text>
                 </View>
                 <View>
                   <Text
@@ -413,12 +454,16 @@ export default function HomeScreen() {
                   >
                     {formatDateRange(fertileStart, fertileEnd)}
                   </Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone/90 font-medium mt-1">Highest chance</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">Highest chance</Text>
                 </View>
               </View>
             </LinearGradient>
           </Animated.View>
         </View>
+
+        <Text className="text-center text-[11px] text-rove-stone font-medium mt-3 px-6">
+          {datesConfidenceCaption(data.phase.confidence, data.phase.dataSource)}
+        </Text>
 
         {/* Daily Flow */}
         <Animated.View entering={FadeInUp.delay(400).duration(600).springify()} className="mt-10">
@@ -494,8 +539,8 @@ export default function HomeScreen() {
               {expandedRiverItem.detail?.includes('Sources:') && (
                 <View className="rounded-[20px] p-4 border border-white" style={{ backgroundColor: theme.cardTint }}>
                   <View className="flex-row items-center gap-2 mb-3">
-                    {React.createElement(iconMap['Utensils'] || require('lucide-react-native').Utensils, { size: 14, color: theme.color })}
-                    <Text className="text-[10px] font-bold uppercase tracking-[2px]" style={{ color: theme.color }}>Food Sources</Text>
+                    {React.createElement(iconMap['Utensils'] || require('lucide-react-native').Utensils, { size: 14, color: theme.textColor })}
+                    <Text className="text-[10px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>Food Sources</Text>
                   </View>
                   <View className="flex-row flex-wrap gap-2">
                     {expandedRiverItem.detail
@@ -529,7 +574,7 @@ export default function HomeScreen() {
                 {snapshot[selectedSnapshot].detail}
               </Text>
               <View className="mt-5 rounded-2xl p-4 border border-rove-stone/10 bg-white/50">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] mb-2" style={{ color: theme.color }}>Protocol</Text>
+                <Text className="text-[10px] font-bold uppercase tracking-[2px] mb-2" style={{ color: theme.textColor }}>Protocol</Text>
                 <Text className="text-rove-charcoal/90 text-[13px] leading-relaxed font-semibold">
                   {snapshot[selectedSnapshot].protocol}
                 </Text>
@@ -540,6 +585,7 @@ export default function HomeScreen() {
       </Dialog>
 
       <WelcomeTour />
+      <PhaseTransitionCelebration phaseName={data.phase.name} />
     </View>
   );
 }

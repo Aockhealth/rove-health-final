@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Sun, Zap, Heart } from 'lucide-react-native';
+import { Sun, Zap, Heart, Thermometer } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { SymptomChip } from './SymptomChip';
 
-export type JumpSection = 'daily' | 'lifestyle' | 'intimacy';
+export type JumpSection = 'daily' | 'fertility' | 'lifestyle' | 'intimacy';
 
 interface Item {
   key: JumpSection;
@@ -19,9 +19,14 @@ const ITEMS: Item[] = [
   { key: 'intimacy', label: 'Intimacy', color: '#E8924E', Icon: Heart },
 ];
 
+// Only in TTC mode — the fertility card is the one people come back to every
+// morning, so it earns a jump target, but only when it exists.
+const FERTILITY_ITEM: Item = { key: 'fertility', label: 'Fertility', color: '#C77D8F', Icon: Thermometer };
+
 interface SectionJumpBarProps {
   onJump: (section: JumpSection) => void;
   accentColor?: string;
+  showFertility?: boolean;
 }
 
 // Quick-access row — lets someone skip straight to Lifestyle or Intimacy
@@ -33,15 +38,16 @@ interface SectionJumpBarProps {
 // in its own extra card on top of the calendar/Follicular Patterns/etc.
 // cards just added another box to an already box-heavy page. This is a
 // plain labeled row, no card of its own.
-export function SectionJumpBar({ onJump, accentColor = '#78716C' }: SectionJumpBarProps) {
+export function SectionJumpBar({ onJump, accentColor = '#78716C', showFertility = false }: SectionJumpBarProps) {
+  const items = showFertility ? [ITEMS[0], FERTILITY_ITEM, ...ITEMS.slice(1)] : ITEMS;
   return (
     <View className="mb-6">
-      <Text className="text-[11px] font-bold uppercase tracking-[2px] text-rove-stone/60 mb-2 ml-1">Jump to</Text>
+      <Text className="text-[11px] font-bold uppercase tracking-[2px] text-rove-stone mb-2 ml-1">Jump to</Text>
       <View
         className="flex-row rounded-[18px] p-1.5 relative overflow-hidden bg-white border border-white/60 shadow-sm"
         style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 0 }}
       >
-        {ITEMS.map(({ key, label, color, Icon }) => {
+        {items.map(({ key, label, color, Icon }) => {
           return (
             <Pressable
               key={key}

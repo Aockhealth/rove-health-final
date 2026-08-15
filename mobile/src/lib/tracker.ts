@@ -1,13 +1,19 @@
 import { supabase } from './supabase';
 import type { CycleSettings } from '@shared/cycle/phase';
+import type { OpkResult } from '@shared/cycle/ttc';
 
 const LOG_WINDOW_DAYS = 90;
+
+export type TrackerMode = 'menstruation' | 'ttc' | 'menopause';
 
 export type TrackerLog = {
   date: string;
   is_period: boolean | null;
   flow_intensity: string | null;
   symptoms: string[];
+  /** 1-5 rating per entry in `symptoms`, keyed by the same label string. Absent
+   * keys (older logs, or a symptom logged before this shipped) mean "not rated". */
+  symptom_severity: Record<string, number>;
   moods: string[];
   exercise_types: string[];
   exercise_minutes: number | null;
@@ -20,6 +26,12 @@ export type TrackerLog = {
   sex_activity: string[];
   contraception: string[];
   cervical_discharge: string | null;
+  /** Basal body temperature in Celsius (TTC mode only). */
+  bbt_celsius: number | null;
+  /** Graded ovulation test reading (TTC mode only). */
+  opk_result: OpkResult | null;
+  /** Whether an NSAID/painkiller was taken this day (TTC mode only). */
+  nsaid_taken: boolean | null;
   notes: string;
 };
 
@@ -27,7 +39,15 @@ export type TrackerData = {
   settings: CycleSettings;
   monthLogs: Record<string, TrackerLog>;
   hasSettings: boolean;
+  /** Drives whether the Tracker offers the Fertility section. */
+  trackerMode: TrackerMode;
 };
+
+const TRACKER_MODES: TrackerMode[] = ['menstruation', 'ttc', 'menopause'];
+
+function normaliseTrackerMode(raw: unknown): TrackerMode {
+  return TRACKER_MODES.includes(raw as TrackerMode) ? (raw as TrackerMode) : 'menstruation';
+}
 
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -51,7 +71,7 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
   const pastDate = new Date();
   pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
 
-  const [settingsResult, logsResult] = await Promise.all([
+  const [settingsResult, logsResult, onboardingResult] = await Promise.all([
     supabase.from('user_cycle_settings').select('*').eq('user_id', user.id).single(),
     supabase
       .from('daily_logs')
@@ -59,6 +79,7 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
       .eq('user_id', user.id)
       .gte('date', formatDate(pastDate))
       .order('date', { ascending: false }),
+    supabase.from('user_onboarding').select('tracker_mode').eq('user_id', user.id).single(),
   ]);
 
   const settings = settingsResult.data;
@@ -77,6 +98,7 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
     },
     monthLogs,
     hasSettings: !!settings?.last_period_start,
+    trackerMode: normaliseTrackerMode(onboardingResult.data?.tracker_mode),
   };
 }
 
@@ -115,6 +137,7 @@ export async function fetchMonthLogs(year: number, month0: number): Promise<Trac
 export type LogDailySymptomsPayload = {
   date: string;
   symptoms: string[];
+  symptomSeverity?: Record<string, number>;
   isPeriod: boolean | null;
   flowIntensity?: string | null;
   moods?: string[];
@@ -130,6 +153,16 @@ export type LogDailySymptomsPayload = {
   disruptors?: string[];
   sexActivity?: string[];
   contraception?: string[];
+  /**
+   * TTC biomarkers. Unlike the fields above, these are *omitted* from the
+   * write when left undefined rather than written as null — callers that know
+   * nothing about fertility (the period-calendar save, any non-TTC save) must
+   * not silently wipe a temperature the user logged that morning. Pass an
+   * explicit null to clear one.
+   */
+  bbtCelsius?: number | null;
+  opkResult?: OpkResult | null;
+  nsaidTaken?: boolean | null;
 };
 
 /** Mirrors logDailySymptoms — same table, same upsert conflict key. */
@@ -144,8 +177,12 @@ export async function logDailySymptoms(
   const { error } = await supabase.from('daily_logs').upsert(
     {
       user_id: user.id,
+      ...(payload.bbtCelsius !== undefined ? { bbt_celsius: payload.bbtCelsius } : {}),
+      ...(payload.opkResult !== undefined ? { opk_result: payload.opkResult } : {}),
+      ...(payload.nsaidTaken !== undefined ? { nsaid_taken: payload.nsaidTaken } : {}),
       date: payload.date,
       symptoms: payload.symptoms,
+      symptom_severity: payload.symptomSeverity || {},
       is_period: payload.isPeriod,
       flow_intensity: payload.flowIntensity || null,
       moods: payload.moods || [],
@@ -165,6 +202,71 @@ export async function logDailySymptoms(
     },
     { onConflict: 'user_id, date' }
   );
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+/**
+ * Quick-log entry point for TTC signals from Home's quick-log sheet. Unlike
+ * `logDailySymptoms` — which always writes symptoms/moods/etc. as a full-day
+ * form submit, by design, for the Tracker screen — this only ever touches the
+ * TTC columns actually passed in. Supabase's upsert only sets the columns
+ * present in the payload (ON CONFLICT DO UPDATE SET is scoped to them), so an
+ * existing day's symptoms/period/mood data is left untouched, and a
+ * brand-new day falls back to the table's own column defaults for everything
+ * else.
+ */
+export async function logTtcQuickEntry(payload: {
+  date: string;
+  bbtCelsius?: number | null;
+  opkResult?: OpkResult | null;
+  nsaidTaken?: boolean | null;
+}): Promise<{ success: boolean; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'User not authenticated' };
+
+  const { error } = await supabase.from('daily_logs').upsert(
+    {
+      user_id: user.id,
+      date: payload.date,
+      ...(payload.bbtCelsius !== undefined ? { bbt_celsius: payload.bbtCelsius } : {}),
+      ...(payload.opkResult !== undefined ? { opk_result: payload.opkResult } : {}),
+      ...(payload.nsaidTaken !== undefined ? { nsaid_taken: payload.nsaidTaken } : {}),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id, date' }
+  );
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+/**
+ * Records the one-tap "did the predicted date land about right?" response
+ * shown when a genuinely new period start is logged. `daysOff` is signed:
+ * negative means the period arrived early, positive means it was late.
+ */
+export async function savePeriodPredictionFeedback(payload: {
+  periodStartDate: string;
+  predictedDate: string | null;
+  daysOff: number | null;
+  wasAccurate: boolean;
+}): Promise<{ success: boolean; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'User not authenticated' };
+
+  const { error } = await supabase.from('period_prediction_feedback').insert({
+    user_id: user.id,
+    period_start_date: payload.periodStartDate,
+    predicted_date: payload.predictedDate,
+    days_off: payload.daysOff,
+    was_accurate: payload.wasAccurate,
+  });
 
   if (error) return { success: false, error: error.message };
   return { success: true };

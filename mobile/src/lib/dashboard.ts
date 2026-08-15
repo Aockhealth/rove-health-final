@@ -1,5 +1,11 @@
 import { supabase } from './supabase';
-import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import {
+  calculatePhase,
+  getRelevantPeriodStart,
+  type CycleSettings,
+  type DailyLog,
+} from '@shared/cycle/phase';
+import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
 
 const LOG_WINDOW_DAYS = 90;
@@ -18,23 +24,45 @@ export type DashboardData = {
     day: number;
     length: number;
     nextPeriodDate: string | null;
+    confidence: 'low' | 'medium' | 'high';
+    dataSource: 'logs' | 'settings' | 'none';
   };
   settings: CycleSettings;
-  monthLogs: Record<string, DailyLog>;
+  monthLogs: Record<string, TtcDailyLog>;
   nutrients: { title: string; desc: string; icon: string; detail: string }[];
   phaseFocus: { title: string; desc: string; icon: string; detail: string }[];
-  trackerMode: 'menstruation' | 'menopause';
+  trackerMode: 'menstruation' | 'menopause' | 'ttc';
   lifestyle: { diet_preference: string } | null;
+  /**
+   * Combined BBT + OPK ovulation read. Only computed in TTC mode — the other
+   * modes don't surface it, and it would be dead work on every dashboard load.
+   */
+  ovulation: OvulationSignal | null;
+  /**
+   * NSAID/mucus/intercourse logs, by date. Kept separate from `monthLogs`
+   * rather than added to the shared `TtcDailyLog` type — that type is
+   * algorithm-facing (consumed by `detectOvulation`), and none of these three
+   * play any role in ovulation detection. They only back Home's TTC
+   * "Today's Snapshot" cards.
+   */
+  nsaidTakenByDate: Record<string, boolean>;
+  cervicalDischargeByDate: Record<string, string>;
+  sexActivityByDate: Record<string, string[]>;
 };
 
 /**
- * TTC isn't in this release, but accounts that picked it before it was pulled still have
- * 'ttc' stored in onboarding.tracker_mode. Fall those back to the standard cycle dashboard
- * rather than a dead placeholder. The stored value is left alone, so these users return to
- * TTC automatically once the real dashboard ships.
+ * PCOS is captured two different ways depending on when the user onboarded: as
+ * a goal chip ('pcos') and as a health condition ('PCOS'). Either counts.
  */
+function hasPcosFlag(goals: unknown, conditions: unknown): boolean {
+  const toLower = (v: unknown): string[] =>
+    Array.isArray(v) ? v.map((item) => String(item).toLowerCase()) : [];
+  return [...toLower(goals), ...toLower(conditions)].some((item) => item.includes('pcos'));
+}
+
 function normaliseTrackerMode(stored: string | null | undefined): DashboardData['trackerMode'] {
-  return stored === 'menopause' ? 'menopause' : 'menstruation';
+  if (stored === 'menopause' || stored === 'ttc') return stored;
+  return 'menstruation';
 }
 
 /**
@@ -56,20 +84,47 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
     supabase.from('user_onboarding').select('tracker_mode, goals, conditions').eq('user_id', user.id).single(),
     supabase.from('user_cycle_settings').select('*').eq('user_id', user.id).single(),
-    supabase.from('daily_logs').select('date, is_period').eq('user_id', user.id).gte('date', formatDate(pastDate)).order('date', { ascending: false }),
+    // NOTE: every column named here must exist in the deployed database.
+    // PostgREST rejects the *entire* query for one unknown column, and the
+    // `|| []` fallback below then turns that error into "this user has no
+    // logs" — which reads as a wrong phase/day on Home rather than as a
+    // failure. Check a new column exists remotely before adding it here.
+    supabase.from('daily_logs').select('date, is_period, bbt_celsius, opk_result, nsaid_taken, cervical_discharge, sex_activity').eq('user_id', user.id).gte('date', formatDate(pastDate)).order('date', { ascending: false }),
     supabase.from('user_lifestyle').select('diet_preference').eq('user_id', user.id).maybeSingle(),
   ]);
 
   const profile = profileResult.data;
   const onboarding = onboardingResult.data;
   const settings = settingsResult.data;
+  // A failed logs query is not the same as "no logs", but `|| []` makes them
+  // indistinguishable downstream: the phase calculation quietly falls back to
+  // the settings column and reports a confident, wrong day. Surface it instead.
+  if (logsResult.error) {
+    console.error('[dashboard] daily_logs query failed:', logsResult.error.message);
+  }
   const logs = logsResult.data || [];
   const lifestyle = lifestyleResult.data;
 
   if (!settings) return null;
 
-  const monthLogs: Record<string, DailyLog> = {};
-  logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
+  const monthLogs: Record<string, TtcDailyLog> = {};
+  const nsaidTakenByDate: Record<string, boolean> = {};
+  const cervicalDischargeByDate: Record<string, string> = {};
+  const sexActivityByDate: Record<string, string[]> = {};
+  logs.forEach((l: any) => {
+    monthLogs[l.date] = {
+      date: l.date,
+      is_period: l.is_period,
+      // Coerced defensively: bbt_celsius is a Postgres `numeric`, and a string
+      // slipping through would compare wrong against the coverline rather than
+      // failing loudly.
+      bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
+      opk_result: l.opk_result ?? null,
+    };
+    if (l.nsaid_taken) nsaidTakenByDate[l.date] = true;
+    if (l.cervical_discharge) cervicalDischargeByDate[l.date] = l.cervical_discharge;
+    if (Array.isArray(l.sex_activity) && l.sex_activity.length > 0) sexActivityByDate[l.date] = l.sex_activity;
+  });
 
   const phaseSettings: CycleSettings = {
     last_period_start: settings.last_period_start || '',
@@ -81,10 +136,19 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   const phase = phaseResult.phase || 'Menstrual';
   const day = phaseResult.day || 1;
 
+  // Single resolved period start for this whole payload — prefers an actual
+  // logged period day over the (possibly stale) settings column, exactly like
+  // calculatePhase already does internally, and exactly like Tracker/Insights/
+  // Plan/Profile already resolve it. `nextPeriodDate` used to read
+  // settings.last_period_start directly, bypassing this — the one place on
+  // this screen that could disagree with everywhere else in the app about
+  // which cycle "today" belongs to.
+  const { start: cycleStart } = getRelevantPeriodStart(new Date(), phaseSettings, monthLogs);
+
   const cycleLength = settings.cycle_length_days || 28;
-  const nextPeriodDate = settings.last_period_start
+  const nextPeriodDate = cycleStart
     ? (() => {
-        const [py, pm, pd] = settings.last_period_start.split('-').map(Number);
+        const [py, pm, pd] = cycleStart.split('-').map(Number);
         const next = new Date(py, pm - 1, pd);
         next.setDate(next.getDate() + cycleLength);
         return formatDate(next);
@@ -93,14 +157,34 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
 
   const content = PHASE_CONTENT[phase] || PHASE_CONTENT['Menstrual'];
 
+  const trackerMode = normaliseTrackerMode(onboarding?.tracker_mode);
+
+  const ovulation =
+    trackerMode === 'ttc' && cycleStart
+      ? detectOvulation(cycleStart, new Date(), monthLogs, phaseSettings, {
+          hasPcos: hasPcosFlag(onboarding?.goals, onboarding?.conditions),
+        })
+      : null;
+
   return {
     user: { id: user.id, name: profile?.full_name || 'Rove Member' },
-    phase: { name: phase, day, length: cycleLength, nextPeriodDate },
+    phase: {
+      name: phase,
+      day,
+      length: cycleLength,
+      nextPeriodDate,
+      confidence: phaseResult.confidence,
+      dataSource: phaseResult.dataSource,
+    },
     settings: phaseSettings,
     monthLogs,
     nutrients: content.nutrients || [],
     phaseFocus: content.phaseFocus || [],
-    trackerMode: normaliseTrackerMode(onboarding?.tracker_mode),
+    trackerMode,
     lifestyle: lifestyle ? { diet_preference: lifestyle.diet_preference } : null,
+    ovulation,
+    nsaidTakenByDate,
+    cervicalDischargeByDate,
+    sexActivityByDate,
   };
 }

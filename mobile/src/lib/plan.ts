@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { calculatePhase, getRelevantPeriodStart, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
 import { BLUEPRINTS } from '@shared/content/plan-blueprints';
 import { calculateAge, calculateTDEE, applyGoalAdjustment, getPhaseMacros } from './calorieCalculator';
@@ -34,10 +35,10 @@ export async function fetchPlanPageDataFast() {
       onboardingResult
   ] = await Promise.all([
       supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-      supabase.from("daily_logs").select("date, is_period").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
+      supabase.from("daily_logs").select("date, is_period, bbt_celsius, opk_result").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
       supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
       supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_onboarding").select("goals, conditions, date_of_birth").eq("user_id", user.id).maybeSingle()
+      supabase.from("user_onboarding").select("goals, conditions, date_of_birth, tracker_mode").eq("user_id", user.id).maybeSingle()
   ]);
 
   const settings = settingsResult.data;
@@ -49,7 +50,16 @@ export async function fetchPlanPageDataFast() {
   if (!settings) return null;
 
   const monthLogs: Record<string, DailyLog> = {};
-  logs.forEach((l: any) => { monthLogs[l.date] = { date: l.date, is_period: l.is_period }; });
+  const ttcLogs: Record<string, TtcDailyLog> = {};
+  logs.forEach((l: any) => {
+    monthLogs[l.date] = { date: l.date, is_period: l.is_period };
+    ttcLogs[l.date] = {
+      date: l.date,
+      is_period: l.is_period,
+      bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
+      opk_result: l.opk_result ?? null,
+    };
+  });
 
   const phaseSettings: CycleSettings = {
       last_period_start: settings.last_period_start || '',
@@ -60,6 +70,22 @@ export async function fetchPlanPageDataFast() {
   const phaseResult = calculatePhase(new Date(), phaseSettings, monthLogs);
   const phase = phaseResult.phase || "Menstrual";
   const day = phaseResult.day || 1;
+
+  const trackerModeRaw = onboarding?.tracker_mode || 'menstruation';
+  const goalsAndConditionsForPcos = [
+      ...(Array.isArray(onboarding?.goals) ? onboarding.goals : []),
+      ...(Array.isArray(onboarding?.conditions) ? onboarding.conditions : []),
+  ];
+  const hasPcosFlag = goalsAndConditionsForPcos.some((v) => String(v).toLowerCase().includes('pcos'));
+
+  // Anchored to the same period start the phase calculation uses, matching
+  // dashboard.ts, so the Plan tab's Timing card never disagrees with Home
+  // about which cycle it's describing.
+  const { start: cycleStart } = getRelevantPeriodStart(new Date(), phaseSettings, monthLogs);
+  const ovulation: OvulationSignal | null =
+      trackerModeRaw === 'ttc' && cycleStart
+          ? detectOvulation(cycleStart, new Date(), ttcLogs, phaseSettings, { hasPcos: hasPcosFlag })
+          : null;
 
   const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
   const blueprintContent = BLUEPRINTS[phase] || BLUEPRINTS["Menstrual"];
@@ -128,6 +154,9 @@ export async function fetchPlanPageDataFast() {
       day,
       settings: phaseSettings,
       monthLogs,
+      trackerMode: trackerModeRaw,
+      hasPcos: hasPcosFlag,
+      ovulation,
       lifestyle: lifestyle ? {
           weight_kg: lifestyle.weight_kg,
           height_cm: lifestyle.height_cm,

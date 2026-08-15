@@ -42,6 +42,7 @@ export type OnboardingAction =
   | { type: 'toggle_symptom'; symptom: SymptomInput }
   | { type: 'set_symptom_severity'; name: string; severity: number }
   | { type: 'toggle_goal'; goalId: string }
+  | { type: 'set_tracker_mode'; value: 'menstruation' | 'ttc' | 'menopause' }
   | { type: 'set_height'; value: number | null }
   | { type: 'set_weight'; value: number | null }
   | { type: 'set_diet'; value: string }
@@ -250,6 +251,8 @@ export function onboardingReducer(state: OnboardingState, action: OnboardingActi
         return { ...state, goals: state.goals.filter((g) => g !== action.goalId) };
       }
       return { ...state, goals: [...state.goals, action.goalId] };
+    case 'set_tracker_mode':
+      return { ...state, trackerMode: action.value };
     case 'set_height':
       return { ...state, heightCm: action.value };
     case 'set_weight':

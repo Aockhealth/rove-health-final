@@ -5,7 +5,9 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { type BbtReading, type OpkReading, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
 import { renderHealthReportHtml } from './healthReportHtml';
+import { deriveCycleStarts, latestCycleChart, scoreTtcCycles } from './ttcCycleHistory';
 
 /**
  * Health report data layer.
@@ -47,6 +49,8 @@ export type ReportLog = {
   sleep_quality: string[] | null;
   sleep_minutes: number | null;
   disruptors: string[] | null;
+  bbt_celsius: number | null;
+  opk_result: TtcDailyLog['opk_result'];
 };
 
 export type Observed = {
@@ -79,6 +83,30 @@ export type Suggestion = {
 export type ClinicalFlag = {
   finding: string;
   why: string;
+};
+
+export type TtcReportCycle = {
+  cycleStart: string;
+  /** Last day the cycle was scored over — either the day before the next
+   * logged period, or the report window end for the current, ongoing cycle. */
+  cycleEnd: string;
+  isOngoing: boolean;
+  status: OvulationSignal['status'];
+  confirmedDate: string | null;
+  method: OvulationSignal['method'];
+  confidence: OvulationSignal['confidence'];
+};
+
+export type TtcReportData = {
+  /** Most recent cycle first. */
+  cycles: TtcReportCycle[];
+  /** Chart data for the most recent cycle only — the one still relevant to read. */
+  chart: {
+    cycleStart: string;
+    bbt: BbtReading[];
+    opk: OpkReading[];
+    coverline: number | null;
+  } | null;
 };
 
 export type HealthReport = {
@@ -115,6 +143,8 @@ export type HealthReport = {
   sleepDisruptors: Counted[];
   suggestions: Suggestion[];
   clinicalFlags: ClinicalFlag[];
+  /** Only populated for accounts in TTC (trying-to-conceive) mode. */
+  ttc: TtcReportData | null;
 };
 
 export type Counted = { name: string; count: number };
@@ -171,40 +201,32 @@ function observedFrom(logs: ReportLog[], pick: (l: ReportLog) => number | null |
 }
 
 /**
- * Derives real cycle boundaries from logged period days rather than from the
- * settings average, so the report reflects what actually happened. Consecutive
- * period days (tolerating a one-day gap, matching how people log) collapse into
- * one bleed; the gap between consecutive bleed starts is one observed cycle.
+ * Scores every cycle the report window actually saw, most recent first, using
+ * the same `detectOvulation`/`scoreTtcCycles` the Insights screen runs — a
+ * doctor comparing this page to what the app showed at the time should see
+ * the same answer. Trims `scoreTtcCycles`'s richer per-cycle result down to
+ * the narrower fields the PDF actually renders.
  */
-function deriveCycles(logs: ReportLog[]): { starts: string[]; bleedLengths: number[] } {
-  const periodDates = logs
-    .filter((l) => l.is_period === true)
-    .map((l) => l.date)
-    .sort();
+function buildTtcReportData(
+  logs: ReportLog[],
+  cycleStarts: string[],
+  settings: CycleSettings,
+  windowEnd: Date,
+  hasPcos: boolean,
+): TtcReportData | null {
+  if (cycleStarts.length === 0) return null;
 
-  const starts: string[] = [];
-  const bleedLengths: number[] = [];
-  let currentStart: string | null = null;
-  let currentLength = 0;
-  let previous: Date | null = null;
+  const cycles: TtcReportCycle[] = scoreTtcCycles(logs, cycleStarts, settings, windowEnd, hasPcos).map((c) => ({
+    cycleStart: c.cycleStart,
+    cycleEnd: c.cycleEnd,
+    isOngoing: c.isOngoing,
+    status: c.signal.status,
+    confirmedDate: c.signal.confirmedDate,
+    method: c.signal.method,
+    confidence: c.signal.confidence,
+  }));
 
-  for (const dateStr of periodDates) {
-    const d = new Date(`${dateStr}T00:00:00`);
-    const gapDays = previous ? Math.round((d.getTime() - previous.getTime()) / 86400000) : null;
-
-    if (currentStart === null || (gapDays !== null && gapDays > 2)) {
-      if (currentStart !== null) bleedLengths.push(currentLength);
-      currentStart = dateStr;
-      starts.push(dateStr);
-      currentLength = 1;
-    } else {
-      currentLength += 1;
-    }
-    previous = d;
-  }
-  if (currentStart !== null) bleedLengths.push(currentLength);
-
-  return { starts, bleedLengths };
+  return { cycles, chart: latestCycleChart(logs, cycleStarts, windowEnd) };
 }
 
 // ── suggestions (deterministic, non-diagnostic) ─────────────────────────────
@@ -324,7 +346,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   const [settingsRes, profileRes, onboardingRes, lifestyleRes, logsRes] = await Promise.all([
     supabase.from('user_cycle_settings').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
-    supabase.from('user_onboarding').select('conditions').eq('user_id', user.id).maybeSingle(),
+    supabase.from('user_onboarding').select('conditions, goals, tracker_mode').eq('user_id', user.id).maybeSingle(),
     supabase
       .from('user_lifestyle')
       .select('weight_kg, height_cm, activity_level, diet_preference')
@@ -333,7 +355,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     supabase
       .from('daily_logs')
       .select(
-        'date, is_period, flow_intensity, symptoms, moods, exercise_types, exercise_minutes, water_intake, sleep_quality, sleep_minutes, disruptors',
+        'date, is_period, flow_intensity, symptoms, moods, exercise_types, exercise_minutes, water_intake, sleep_quality, sleep_minutes, disruptors, bbt_celsius, opk_result',
       )
       .eq('user_id', user.id)
       .gte('date', formatDate(windowStart))
@@ -345,14 +367,20 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   if (!settingsRow) return null;
 
   const profile: { full_name?: string | null } = profileRes.data ?? {};
-  const onboarding: { conditions?: string[] | null } = onboardingRes.data ?? {};
+  const onboarding: { conditions?: string[] | null; goals?: string[] | null; tracker_mode?: string | null } =
+    onboardingRes.data ?? {};
   const lifestyle: {
     weight_kg?: number | null;
     height_cm?: number | null;
     activity_level?: string | null;
     diet_preference?: string | null;
   } = lifestyleRes.data ?? {};
-  const logs: ReportLog[] = logsRes.data ?? [];
+  // bbt_celsius is a Postgres `numeric`, which PostgREST returns as a string —
+  // coerce here rather than letting a string reach the coverline arithmetic.
+  const logs: ReportLog[] = (logsRes.data ?? []).map((l: any) => ({
+    ...l,
+    bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
+  }));
 
   const settings: CycleSettings = {
     last_period_start: settingsRow.last_period_start,
@@ -362,7 +390,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   };
 
   // ── cycle statistics from observed data ──────────────────────────────────
-  const { starts, bleedLengths } = deriveCycles(logs);
+  const { starts, bleedLengths } = deriveCycleStarts(logs);
   const observedCycles: number[] = [];
   for (let i = 1; i < starts.length; i++) {
     const prev = new Date(`${starts[i - 1]}T00:00:00`);
@@ -432,6 +460,12 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
 
   const daysWithAnyLog = new Set(logs.map((l) => l.date)).size;
 
+  const hasPcos = [...(onboarding.goals || []), ...(onboarding.conditions || [])].some((v) =>
+    String(v).toLowerCase().includes('pcos'),
+  );
+  const ttc =
+    onboarding.tracker_mode === 'ttc' ? buildTtcReportData(logs, starts, settings, windowEnd, hasPcos) : null;
+
   const base: Omit<HealthReport, 'suggestions' | 'clinicalFlags'> = {
     generatedAt: new Date(),
     windowDays: REPORT_WINDOW_DAYS,
@@ -469,6 +503,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     },
     moods: tally(logs.map((l) => l.moods)).slice(0, 6),
     sleepDisruptors: tally(logs.map((l) => l.disruptors)).slice(0, 5),
+    ttc,
   };
 
   return {

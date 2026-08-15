@@ -8,33 +8,48 @@ import {
   BarChart3,
   Scale,
   HeartPulse,
-  Flower2,
-  BookOpen,
   Check,
   Shield,
+  Droplet,
+  Baby,
+  Sunrise,
 } from 'lucide-react-native';
 
+export type TrackerMode = 'menstruation' | 'ttc' | 'menopause';
+
+// What the app is tracking *for* you — this changes which screens you get, so
+// it sits above the goal chips rather than reading as one more goal.
+const TRACKER_MODES: { id: TrackerMode; label: string; description: string; Icon: typeof Droplet }[] = [
+  { id: 'menstruation', label: 'My Cycle', description: 'Period, symptoms and phase-based guidance', Icon: Droplet },
+  { id: 'ttc', label: 'Trying to Conceive', description: 'Adds temperature and ovulation test tracking', Icon: Baby },
+  { id: 'menopause', label: 'Menopause', description: 'Perimenopause and menopause support', Icon: Sunrise },
+];
+
+// Scoped to the four things the app actually delivers on, rather than vaguer
+// catch-alls — mirrored in ../profile/FocusGoals.tsx.
 const GOALS = [
   { id: 'syncing', label: 'Cycle Syncing', description: 'Align routines with your hormonal phases', Icon: Calendar },
   { id: 'tracking', label: 'Cycle Tracking', description: 'Track period and symptom patterns', Icon: BarChart3 },
   { id: 'weight_loss', label: 'Weight Loss', description: 'Build sustainable fat-loss habits', Icon: Scale },
   { id: 'pcos', label: 'PCOS Guidance', description: 'Manage symptoms and energy better', Icon: HeartPulse },
-  { id: 'other', label: 'General Wellness', description: 'Improve mood, focus, and consistency', Icon: Flower2 },
-  { id: 'learn_body', label: 'Learn My Body', description: 'Understand your personal cycle trends', Icon: BookOpen },
 ];
 
 type StepGoalsProps = {
   selectedGoals: string[];
+  trackerMode: TrackerMode;
   privacyConsented: boolean;
   onToggleGoal: (goalId: string) => void;
+  onTrackerModeChange: (value: TrackerMode) => void;
   onPrivacyConsentChange: (value: boolean) => void;
   errors: Record<string, string>;
 };
 
 export function StepGoals({
   selectedGoals,
+  trackerMode,
   privacyConsented,
   onToggleGoal,
+  onTrackerModeChange,
   onPrivacyConsentChange,
   errors,
 }: StepGoalsProps) {
@@ -53,6 +68,60 @@ export function StepGoals({
           Pick what matters most — we'll tailor your daily plan from day one.
         </Text>
       </Animated.View>
+
+      <View className="gap-2">
+        <Text className="text-xs font-bold uppercase tracking-widest text-rove-stone">
+          What are you tracking?
+        </Text>
+        {TRACKER_MODES.map((mode, i) => {
+          const selected = trackerMode === mode.id;
+          return (
+            <Animated.View key={mode.id} entering={FadeInDown.delay(120 + i * 40).duration(350)}>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onTrackerModeChange(mode.id);
+                }}
+                activeOpacity={0.85}
+                className="flex-row items-center gap-3 rounded-2xl border p-3.5"
+                // Conditional visuals go through `style`, not a branching
+                // className — NativeWind shorthand classes that flip on state
+                // crash touchables in this app.
+                style={{
+                  borderColor: selected ? '#37332E' : 'rgba(55,51,46,0.1)',
+                  backgroundColor: selected ? '#37332E' : 'rgba(255,255,255,0.6)',
+                }}
+              >
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: selected ? 'rgba(255,255,255,0.15)' : 'rgba(55,51,46,0.05)' }}
+                >
+                  <mode.Icon size={18} color={selected ? '#FAF7F2' : '#78716C'} />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className="text-sm font-semibold"
+                    style={{ color: selected ? '#FAF7F2' : '#37332E' }}
+                  >
+                    {mode.label}
+                  </Text>
+                  <Text
+                    className="mt-0.5 text-xs"
+                    style={{ color: selected ? 'rgba(250,247,242,0.6)' : '#78716C' }}
+                  >
+                    {mode.description}
+                  </Text>
+                </View>
+                {selected ? (
+                  <View className="rounded-full bg-rove-cream p-1">
+                    <Check size={12} color="#37332E" />
+                  </View>
+                ) : null}
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        })}
+      </View>
 
       <View className="flex-row flex-wrap">
         {GOALS.map((goal, i) => {

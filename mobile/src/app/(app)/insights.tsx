@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Platform,  View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from 'react-native';
+import { Platform,  View, Text, ScrollView, Pressable, StyleSheet, RefreshControl, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, withSpring, FadeInUp } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { phaseThemes } from '../../data/home-content';
@@ -17,6 +17,8 @@ import { PhaseInsightCard } from '../../components/insights/PhaseInsightCard';
 import { MentalHealthCheckCard } from '../../components/insights/MentalHealthCheckCard';
 import { HealthReportCard } from '../../components/insights/HealthReportCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
+import { TtcFertilityCard } from '../../components/insights/TtcFertilityCard';
+import { TtcCycleInsights } from '../../components/insights/TtcCycleInsights';
 
 const TABS = [
   { id: 'cycle', label: 'Cycle', icon: 'calendar' },
@@ -26,7 +28,11 @@ const TABS = [
 
 export default function InsightsScreen() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'cycle' | 'patterns' | 'health'>('cycle');
+  const { width: windowWidth } = useWindowDimensions();
+  const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<'cycle' | 'patterns' | 'health'>(
+    initialTab === 'health' || initialTab === 'patterns' ? initialTab : 'cycle'
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiInsight, setAiInsight] = useState<{ title?: string; insight: string } | null>(null);
   const [insightError, setInsightError] = useState(false);
@@ -111,7 +117,7 @@ export default function InsightsScreen() {
       <View className="px-5 pb-2 pt-2 flex-row items-center justify-between z-50 mb-2">
         <View>
           <Text className="text-[10px] font-bold uppercase tracking-[3px] text-rove-charcoal/65 mb-0.5">Your Body Intelligence</Text>
-          <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>Insights</Text>
+          <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>Insights</Text>
         </View>
         <ProfileAvatar />
       </View>
@@ -159,7 +165,28 @@ export default function InsightsScreen() {
         </View>
 
         {/* TAB CONTENT PLACEHOLDERS */}
-        {activeTab === 'cycle' && (
+        {activeTab === 'cycle' && stats?.trackerMode === 'ttc' && stats?.ttc ? (
+          <>
+            <Animated.View entering={FadeInUp.duration(500).springify()}>
+              <TtcFertilityCard
+                bbt={stats.ttc.bbt}
+                opk={stats.ttc.opk}
+                coverline={stats.ttc.coverline}
+                signal={stats.ttc.signal}
+                cycleStart={stats.ttc.cycleStart}
+                // 20pt ScrollView padding each side, plus the card's own 20pt
+                // padding each side.
+                width={windowWidth - 80}
+              />
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.delay(100).duration(500).springify()}>
+              <TtcCycleInsights cycles={stats.ttc.cycles} stats={stats.ttc.stats} patterns={stats.ttc.patterns} theme={theme} />
+            </Animated.View>
+          </>
+        ) : null}
+
+        {activeTab === 'cycle' && stats?.trackerMode !== 'ttc' && (
           <>
             <Animated.View entering={FadeInUp.duration(500).springify()}>
               <CycleOverviewCard
@@ -169,9 +196,10 @@ export default function InsightsScreen() {
                 nextPeriodDate={stats?.averages?.nextPeriodDate}
                 phase={phaseName}
                 theme={theme}
+                cycleDeltaFromBaseline={stats?.averages?.cycleDeltaFromBaseline}
               />
             </Animated.View>
-            
+
             <Animated.View entering={FadeInUp.delay(100).duration(500).springify()}>
               <HabitsOverviewCard
                 wellnessAverages={stats?.wellnessAverages}
@@ -204,6 +232,7 @@ export default function InsightsScreen() {
               symptomsByPhase={stats?.symptomsByPhase || {}}
               selectedPhase={activePatternsPhase}
               onPhaseSelect={setSelectedPhase}
+              symptomCorrelations={stats?.symptomCorrelations}
             />
           </Animated.View>
         )}

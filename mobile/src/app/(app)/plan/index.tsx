@@ -23,6 +23,9 @@ import { DietCheatSheet } from '../../../components/plan/DietCheatSheet';
 import { ActivitiesWidget } from '../../../components/plan/ActivitiesWidget';
 import { SectionHeader } from '../../../components/plan/SectionHeader';
 import { FocusForYou } from '../../../components/plan/FocusForYou';
+import { TtcGuidanceSection } from '../../../components/plan/TtcGuidanceSection';
+import { TtcNourishSection } from '../../../components/plan/TtcNourishSection';
+import { TtcMoveSection } from '../../../components/plan/TtcMoveSection';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { RiverTrack } from '../../../components/home/RiverTrack';
 import ProfileAvatar from '../../../components/home/ProfileAvatar';
@@ -411,7 +414,7 @@ export default function PlanScreen() {
         
         <Link href={`/plan/${phaseName}`} asChild>
           <TouchableOpacity className="items-center">
-            <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Regular', color: theme.color }}>{phaseName}</Text>
+            <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Regular', color: theme.textColor }}>{phaseName}</Text>
             <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">Day {data.day} of Cycle</Text>
           </TouchableOpacity>
         </Link>
@@ -472,27 +475,38 @@ export default function PlanScreen() {
         {/* Tabs Content */}
         {activeTab === 'guide' && (
           <View>
-            {/* Focus Banner */}
-            <Animated.View entering={FadeInUp.duration(500)} className="mb-8 rounded-[28px]" style={{ shadowColor: theme.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 6 : 0 }}>
-              <LinearGradient
-                colors={[theme.color + 'E6', theme.color]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ borderRadius: 28, padding: 24, overflow: 'hidden' }}
-              >
-                {/* Decorative blur orb */}
-                <View style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                <View className="z-10 flex-row items-center justify-between">
-                  <View className="flex-1">
-                    <Text className="text-white/70 uppercase tracking-widest text-[10px] font-bold mb-2">Current Focus</Text>
-                    <Text className="text-white text-[28px] leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{bp?.rituals?.focus}</Text>
+            {/* TTC users see conception-prep content before anything tied to
+                today's cycle phase — this tab should read as "getting ready
+                for a baby", not "syncing with today's hormones". */}
+            {data?.trackerMode === 'ttc' && (
+              <TtcGuidanceSection hasPcos={!!data?.hasPcos} signal={data?.ovulation ?? null} />
+            )}
+
+            {/* Focus Banner — "today's phase focus" framing, which is exactly
+                the cycle-sync framing TTC mode replaces above. Hidden only
+                for TTC; unaffected for every other tracker mode. */}
+            {data?.trackerMode !== 'ttc' && (
+              <Animated.View entering={FadeInUp.duration(500)} className="mb-8 rounded-[28px]" style={{ shadowColor: theme.color, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 6 : 0 }}>
+                <LinearGradient
+                  colors={[theme.color + 'E6', theme.color]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ borderRadius: 28, padding: 24, overflow: 'hidden' }}
+                >
+                  {/* Decorative blur orb */}
+                  <View style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  <View className="z-10 flex-row items-center justify-between">
+                    <View className="flex-1">
+                      <Text className="text-white/70 uppercase tracking-widest text-[10px] font-bold mb-2">Current Focus</Text>
+                      <Text className="text-white text-[28px] leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{bp?.rituals?.focus}</Text>
+                    </View>
+                    <View className="w-12 h-12 rounded-full border border-white/20 items-center justify-center bg-white/10 ml-4">
+                      <Feather name="compass" size={20} color="rgba(255,255,255,0.6)" />
+                    </View>
                   </View>
-                  <View className="w-12 h-12 rounded-full border border-white/20 items-center justify-center bg-white/10 ml-4">
-                    <Feather name="compass" size={20} color="rgba(255,255,255,0.6)" />
-                  </View>
-                </View>
-              </LinearGradient>
-            </Animated.View>
+                </LinearGradient>
+              </Animated.View>
+            )}
 
             {/* Weight Goal Widget */}
             {data?.weightGoal && (() => {
@@ -527,7 +541,7 @@ export default function PlanScreen() {
                           <Feather name="target" size={16} color={theme.color} />
                         </View>
                         <View>
-                          <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Your Journey</Text>
+                          <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Your Journey</Text>
                           <Text className="text-rove-charcoal text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Your Goal</Text>
                         </View>
                       </View>
@@ -704,8 +718,8 @@ export default function PlanScreen() {
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1 px-4 py-2 rounded-[14px]" style={{ backgroundColor: `${theme.color}15` }}>
-                            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.color }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
-                            <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.color, opacity: 0.7 }}>Now</Text>
+                            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.textColor, opacity: 0.7 }}>Now</Text>
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1">
@@ -728,7 +742,12 @@ export default function PlanScreen() {
               );
             })()}
 
-            {/* The Science */}
+            {/* The Science / ActivitiesWidget — menstrual-phase hormone
+                education and phase-ritual self-care, both cycle-sync framing
+                that TTC mode's three cards above replace. Hidden only for
+                TTC; every other tracker mode is untouched. */}
+            {data?.trackerMode !== 'ttc' && (
+            <>
             <Animated.View entering={FadeInUp.delay(200).duration(500)} className="mb-10">
               <SectionHeader icon="book-open" title="The Science" color={theme.color} />
 
@@ -775,7 +794,7 @@ export default function PlanScreen() {
                   </Text>
 
                   {/* Symptom Label */}
-                  <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.color }}>What You May Feel</Text>
+                  <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>What You May Feel</Text>
 
                   {/* Symptoms as individual cards */}
                   <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
@@ -808,6 +827,8 @@ export default function PlanScreen() {
             <Animated.View entering={FadeInUp.delay(300).duration(500)} className="mb-16">
               <ActivitiesWidget practices={bp?.rituals?.practices || []} themeColor={theme.color} />
             </Animated.View>
+            </>
+            )}
 
             <FocusForYou
               goals={data?.onboarding?.goals || []}
@@ -817,7 +838,11 @@ export default function PlanScreen() {
           </View>
         )}
 
-        {activeTab === 'diet' && (
+        {activeTab === 'diet' && data?.trackerMode === 'ttc' && (
+          <TtcNourishSection />
+        )}
+
+        {activeTab === 'diet' && data?.trackerMode !== 'ttc' && (
           <View>
             <Animated.View entering={FadeInUp.delay(50).duration(500)}>
               <MacroFuelGauge
@@ -896,7 +921,11 @@ export default function PlanScreen() {
           </View>
         )}
 
-        {activeTab === 'exercise' && (
+        {activeTab === 'exercise' && data?.trackerMode === 'ttc' && (
+          <TtcMoveSection hasPcos={!!data?.hasPcos} signal={data?.ovulation ?? null} />
+        )}
+
+        {activeTab === 'exercise' && data?.trackerMode !== 'ttc' && (
           <View>
             {/* Exercise Orb */}
             <Animated.View entering={FadeInUp.duration(500)}>
@@ -927,7 +956,7 @@ export default function PlanScreen() {
                   <Feather name="calendar" size={16} color={theme.color} />
                 </View>
                 <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
-                  Aim for about <Text style={{ color: theme.color, fontWeight: '800' }}>{bp.exercise.activeDaysPerWeek} active days</Text> this week to support your pace and goal.
+                  Aim for about <Text style={{ color: theme.textColor, fontWeight: '800' }}>{bp.exercise.activeDaysPerWeek} active days</Text> this week to support your pace and goal.
                 </Text>
               </Animated.View>
             )}
@@ -978,7 +1007,7 @@ export default function PlanScreen() {
                         <View className="flex-1 p-4 justify-between">
                           {/* Top: label + emoji */}
                           <View className="flex-row items-start justify-between">
-                            <Text className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: theme.color }}>Exercise</Text>
+                            <Text className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: theme.textColor }}>Exercise</Text>
                             <Text className="text-2xl opacity-80">{getEmoji(ex.title)}</Text>
                           </View>
 
@@ -988,7 +1017,7 @@ export default function PlanScreen() {
                             <View className="flex-row items-center">
                               <View className="px-2 py-1 rounded-md bg-white/50 border border-white/80 flex-row items-center shadow-sm" style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }}>
                                 <Feather name="clock" size={9} color={theme.color} style={{ marginRight: 4 }} />
-                                <Text className="text-[9px] font-bold tracking-wider" style={{ color: theme.color }}>{ex.time}</Text>
+                                <Text className="text-[9px] font-bold tracking-wider" style={{ color: theme.textColor }}>{ex.time}</Text>
                               </View>
                             </View>
                           </View>
@@ -1022,7 +1051,7 @@ export default function PlanScreen() {
                   <View className="p-5">
                     <View className="flex-row items-center mb-3">
                       <Feather name="slash" size={12} color={theme.color} style={{ marginRight: 6 }} />
-                      <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>Avoid This Phase</Text>
+                      <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Avoid This Phase</Text>
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       <View className="flex-row gap-2">
@@ -1130,7 +1159,7 @@ export default function PlanScreen() {
                   </View>
                   <View className="px-3 py-1 rounded-full flex-row items-center" style={{ backgroundColor: `${theme.color}15` }}>
                     <Feather name="zap" size={10} color={theme.color} style={{ marginRight: 4 }} />
-                    <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>
+                    <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>
                       {bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('hiit') || bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('strength') ? 'High Intensity' : 'Mod Intensity'}
                     </Text>
                   </View>
