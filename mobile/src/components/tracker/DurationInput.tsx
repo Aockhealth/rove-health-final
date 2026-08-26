@@ -24,7 +24,6 @@ export function DurationInput({
 }: DurationInputProps) {
   const { t } = useTranslation();
   const resolvedLabel = label ?? t('tracker.duration.totalDuration');
-  const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
     <View style={styles.container}>
@@ -54,7 +53,7 @@ export function DurationInput({
             <Text style={styles.fieldLabel}>{t('tracker.duration.mins')}</Text>
             <TextInput
               style={styles.fieldInput}
-              value={pad(minutes)}
+              value={String(minutes)}
               onChangeText={(t) => {
                 const n = parseInt(t) || 0;
                 onChangeMinutes(Math.min(59, Math.max(0, n)));

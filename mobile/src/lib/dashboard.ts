@@ -109,6 +109,18 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   if (logsResult.error) {
     console.error('[dashboard] daily_logs query failed:', logsResult.error.message);
   }
+  // Same trap as daily_logs above: `.single()` on a transient network/timeout
+  // failure and `.single()` on a genuinely missing settings row both land here
+  // as settingsResult.error with settingsResult.data === null. The `!settings`
+  // check below can't tell them apart, so a blip (e.g. concurrent requests
+  // from Profile loading at the same time) reads as "user never finished
+  // onboarding" and Home's caller redirects an onboarded user back into the
+  // onboarding flow. PGRST116 is PostgREST's real "no rows" code — anything
+  // else is a fetch failure and must not be treated as "not onboarded".
+  if (settingsResult.error && settingsResult.error.code !== 'PGRST116') {
+    console.error('[dashboard] user_cycle_settings query failed:', settingsResult.error.message);
+    throw new Error(`user_cycle_settings fetch failed: ${settingsResult.error.message}`);
+  }
   const logs = logsResult.data || [];
   const lifestyle = lifestyleResult.data;
   if (lhReadingsResult.error) {

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Calendar, BarChart2, List, BookOpen } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { fetchDashboardData } from '../../lib/dashboard';
 import { phaseThemes } from '../../data/home-content';
 
@@ -40,6 +41,11 @@ export default function AppLayout() {
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {

@@ -213,10 +213,17 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    if (!isPending && !data) {
+    // isError is load-bearing here: a dashboard fetch that *failed* (network
+    // blip, timeout, contention with other screens' concurrent requests —
+    // see the user_cycle_settings comment in lib/dashboard.ts) also leaves
+    // data undefined, and used to read identically to "this user has no
+    // dashboard data because they haven't onboarded", bouncing an already-
+    // onboarded user into the onboarding flow. Only a clean, settled "no
+    // data" result should trigger this redirect.
+    if (!isPending && !isError && !data) {
       router.replace('/onboarding' as any);
     }
-  }, [data, isPending]);
+  }, [data, isPending, isError]);
 
   // Re-schedules the "period in 2 days" reminder against the latest
   // prediction whenever fresh dashboard data lands.
