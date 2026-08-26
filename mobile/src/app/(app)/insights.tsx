@@ -26,14 +26,6 @@ import { HormoneRhythmCard } from '../../components/insights/HormoneRhythmCard';
 import { CycleAnomalyCard } from '../../components/insights/CycleAnomalyCard';
 import { PmosScoreCard } from '../../components/insights/PmosScoreCard';
 
-/** [label, count] with the highest count in a phase's mood/symptom tally, or null with nothing logged yet. */
-function topEntry(counts: Record<string, number> | undefined): [string, number] | null {
-  if (!counts) return null;
-  const entries = Object.entries(counts);
-  if (entries.length === 0) return null;
-  return entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best));
-}
-
 const TABS = [
   { id: 'cycle', labelKey: 'cycle', icon: 'calendar' },
   { id: 'patterns', labelKey: 'patterns', icon: 'activity' },
@@ -220,8 +212,7 @@ export default function InsightsScreen() {
               <PhasePatternCard
                 phase={phaseName}
                 loggedDaysThisPhase={stats?.phaseCounts?.[phaseName] || 0}
-                topMood={topEntry(stats?.moodsByPhase?.[phaseName])}
-                topSymptom={topEntry(stats?.symptomsByPhase?.[phaseName])}
+                moodCounts={stats?.moodsByPhase?.[phaseName] || {}}
                 theme={theme}
                 onSeeFullBreakdown={() => handleTabPress('patterns')}
               />
