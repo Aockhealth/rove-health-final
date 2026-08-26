@@ -1203,10 +1203,10 @@ const CHEF_OPTIONS_FALLBACK: Record<ChefOptionsInput["mealType"], ChefOption[]> 
         { name: "Masala Sweet Potato", description: "Warm boiled sweet potato tossed in lemon and cumin.", prep_time_minutes: 15, key_ingredients: ["Sweet potato", "Lemon", "Cumin"], why: "Complex carbs in sweet potato steady mood and cravings.", serving_style: "warm" }
     ],
     smoothie: [
-        { name: "Banana Date Shake", description: "Thick banana shake sweetened with dates.", prep_time_minutes: 5, key_ingredients: ["Banana", "Dates", "Milk"], why: "B6 in banana supports mood regulation in this phase.", serving_style: "room" },
-        { name: "Sattu Nimbu Drink", description: "Savory sattu cooler with lemon and roasted cumin.", prep_time_minutes: 5, key_ingredients: ["Sattu", "Lemon", "Roasted cumin"], why: "Plant protein in sattu keeps energy steady between meals.", serving_style: "room" },
-        { name: "Haldi Doodh", description: "Warm turmeric milk with a pinch of pepper.", prep_time_minutes: 5, key_ingredients: ["Milk", "Turmeric", "Black pepper"], why: "Curcumin in turmeric helps calm phase-related inflammation.", serving_style: "warm" },
-        { name: "Papaya Ginger Blend", description: "Smooth papaya blend with fresh ginger.", prep_time_minutes: 5, key_ingredients: ["Papaya", "Ginger", "Water"], why: "Vitamin C in papaya improves iron absorption from meals.", serving_style: "room" }
+        { name: "Banana Peanut Protein Shake", description: "Thick banana shake blended with a scoop of protein powder.", prep_time_minutes: 5, key_ingredients: ["Banana", "Milk", "Peanut protein powder"], why: "B6 in banana plus added protein keeps energy and mood steady in this phase.", serving_style: "room", drink_type: "smoothie", estimated_sugar_g: 9 },
+        { name: "Haldi Doodh", description: "Warm turmeric milk with a pinch of pepper.", prep_time_minutes: 5, key_ingredients: ["Milk", "Turmeric", "Black pepper"], why: "Curcumin in turmeric helps calm phase-related inflammation.", serving_style: "warm", drink_type: "smoothie", estimated_sugar_g: 4 },
+        { name: "Mosambi Juice", description: "Fresh sweet-lime juice, lightly salted.", prep_time_minutes: 5, key_ingredients: ["Mosambi", "Water", "Black salt"], why: "Vitamin C in mosambi improves iron absorption from meals.", serving_style: "room", drink_type: "juice", estimated_sugar_g: 10 },
+        { name: "Moong Dal Shorba", description: "Warm, lightly spiced moong dal soup.", prep_time_minutes: 10, key_ingredients: ["Moong dal", "Cumin", "Ginger"], why: "Plant protein in moong dal keeps energy steady between meals.", serving_style: "warm", drink_type: "soup", estimated_sugar_g: 0 }
     ],
     salad: [
         { name: "Sprouted Moong Salad", description: "Lightly steamed sprouts with onion, tomato and lemon.", prep_time_minutes: 10, key_ingredients: ["Moong sprouts", "Onion", "Tomato", "Lemon"], why: "Folate in sprouts supports the follicle-building work of this phase.", serving_style: "room" },
@@ -1387,7 +1387,7 @@ export async function generateChefDetail(input: ChefDetailInput): Promise<ChefDe
         name: input.dishName,
         description: "A simple, phase-friendly preparation.",
         prep_time_minutes: 15,
-        ingredients: (input.keyIngredients || []).map((item) => `${item} — as needed`),
+        ingredients: (input.keyIngredients || []).map((item) => `${item}, as needed`),
         instructions: [
             "Prep the listed ingredients.",
             "Combine and cook the base ingredients until done.",
