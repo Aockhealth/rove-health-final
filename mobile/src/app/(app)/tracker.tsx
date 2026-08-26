@@ -386,7 +386,9 @@ export default function TrackerScreen() {
   const [calMonth, setCalMonth] = useState(selectedDate.getMonth());
   const [calYear, setCalYear] = useState(selectedDate.getFullYear());
   const [isPeriodLoggingMode, setIsPeriodLoggingMode] = useState(false);
-  const [pendingPeriodChanges, setPendingPeriodChanges] = useState<Map<string, boolean>>(new Map());
+  // `null` means "clear this day back to no data" — distinct from `false`,
+  // which is an explicit "not bleeding" that only "End Period Here" writes.
+  const [pendingPeriodChanges, setPendingPeriodChanges] = useState<Map<string, boolean | null>>(new Map());
 
   // Real cycle settings + logs, seeded from the initial query then kept in
   // sync locally as the user edits/saves/navigates months.
@@ -612,17 +614,22 @@ export default function TrackerScreen() {
   // one day, nothing more.
   const handleTogglePeriodDate = (dateStr: string) => {
     const turningOn = monthLogs[dateStr]?.is_period !== true;
-    const wasLogged = monthLogs[dateStr]?.is_period === true;
+
+    // Un-marking clears the day (null), it does not record "not bleeding"
+    // (false). Those mean different things to the phase engine: an explicit
+    // false ends the period from that day on, which is right when she taps
+    // "End Period Here" but wrong when she is just undoing a mis-tap. Writing
+    // false here made an accidental tap permanently truncate her period.
+    const nextValue: boolean | null = turningOn ? true : null;
 
     setPendingPeriodChanges((prev) => {
       const next = new Map(prev);
-      if (wasLogged === turningOn) next.delete(dateStr);
-      else next.set(dateStr, turningOn);
+      next.set(dateStr, nextValue);
       return next;
     });
     setMonthLogs((prev) => ({
       ...prev,
-      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: turningOn },
+      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: nextValue },
     }));
   };
 
@@ -668,8 +675,8 @@ export default function TrackerScreen() {
           date: dateStr,
           symptoms: log.symptoms ?? [],
           isPeriod,
-          isPeriodStart: isPeriod ? isPeriodStreakStart(dateStr) : undefined,
-          flowIntensity: isPeriod ? log.flow_intensity || 'Normal' : undefined,
+          isPeriodStart: isPeriod === true ? isPeriodStreakStart(dateStr) : undefined,
+          flowIntensity: isPeriod === true ? log.flow_intensity || 'Normal' : undefined,
           moods: log.moods ?? [],
           notes: log.notes ?? '',
           cervicalDischarge: log.cervical_discharge ?? undefined,
@@ -694,7 +701,8 @@ export default function TrackerScreen() {
 
     const merged: Record<string, DailyLog> = { ...sharedLogs };
     pendingPeriodChanges.forEach((isPeriod, dateStr) => {
-      merged[dateStr] = { date: dateStr, is_period: isPeriod };
+      // DailyLog spells "no data" as undefined, the DB as null.
+      merged[dateStr] = { date: dateStr, is_period: isPeriod ?? undefined };
     });
     await reanchorLastPeriodStart(merged);
 

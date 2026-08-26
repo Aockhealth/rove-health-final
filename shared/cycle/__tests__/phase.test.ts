@@ -780,6 +780,26 @@ describe('Legacy adapters', () => {
             ]);
         });
 
+        it('treats a cleared day as no data, not as an end-of-period signal', () => {
+            // Un-marking a day writes null (-> undefined here), which must read
+            // as silence. Only "End Period Here" writes false. If these two
+            // ever collapse back into one value, an accidental tap-and-untap
+            // silently truncates her period again.
+            const cleared: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+                '2026-08-27': { date: '2026-08-27', is_period: undefined },
+            };
+            expect(phasesFrom(cleared, [26, 27, 28, 29])).toEqual([
+                'Menstrual', 'Menstrual', 'Menstrual', 'Menstrual',
+            ]);
+
+            const ended: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+                '2026-08-27': { date: '2026-08-27', is_period: false },
+            };
+            expect(phasesFrom(ended, [27])).toEqual(['Follicular']);
+        });
+
         it('never overrides a day she explicitly logged as bleeding', () => {
             // A stray un-marked day mid-streak must not un-Menstrual the real
             // logged days around it.
