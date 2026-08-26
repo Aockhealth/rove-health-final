@@ -689,7 +689,7 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Networking",
                 desc: "Communication",
                 icon: "Users",
-                detail: "Your verbal skills are magnetic. This is the best time for interviews, pitches, or difficult conversations."
+                detail: "Estrogen and testosterone are both near their monthly peak, which research links to sharper verbal fluency. A good week for interviews, pitches, or a conversation you've been putting off."
             },
             {
                 title: "Date Night",
@@ -701,25 +701,25 @@ export const PHASE_CONTENT: Record<string, PhaseContent> = {
                 title: "Public Speaking",
                 desc: "Visibility",
                 icon: "Lightbulb",
-                detail: "Step into the spotlight. You are biologically primed to be seen and heard right now."
+                detail: "Confidence and vocal clarity tend to track with this week's hormone peak. If you've been putting off a talk, demo, or big meeting, this is a solid week to schedule it."
             },
             {
                 title: "Community Events",
                 desc: "Group Energy",
                 icon: "Users",
-                detail: "Volunteer or attend group classes. You thrive on the collective energy of others."
+                detail: "Social energy tends to run higher this week. A group class or a volunteering shift will likely feel more rewarding than usual — worth using while it's here."
             },
             {
                 title: "Collaborate",
                 desc: "Teamwork",
                 icon: "Brain",
-                detail: "Work on team projects. You are more empathetic and better at reading facial cues."
+                detail: "Some research links this week to sharper reading of others' facial expressions and tone. A good stretch for team projects that need real back-and-forth."
             },
             {
-                title: "Manifesting",
-                desc: "Attraction",
+                title: "Big Asks",
+                desc: "Confidence",
                 icon: "Target",
-                detail: "Focus on what you want to attract. Your personal magnetism makes this a potent time for goal setting."
+                detail: "Testosterone is near its monthly peak, which tracks with more assertiveness for many women. If there's a raise, a big ask, or an ambitious goal you've been sitting on, this week tends to make it easier to go for it."
             },
             {
                 title: "Dance",
