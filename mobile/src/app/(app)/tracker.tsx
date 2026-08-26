@@ -75,6 +75,7 @@ import {
   findStreakStart,
   isInFertileWindow,
   deriveRecentCycleLengths,
+  stalePeriodEndMarkersAfter,
   daysBetween,
   parseLocalDate,
   formatDate,
@@ -622,15 +623,37 @@ export default function TrackerScreen() {
     // false here made an accidental tap permanently truncate her period.
     const nextValue: boolean | null = turningOn ? true : null;
 
+    const updates: Record<string, TrackerLog> = {};
+    const staged = new Map<string, boolean | null>([[dateStr, nextValue]]);
+    updates[dateStr] = { ...(monthLogs[dateStr] ?? emptyLog(dateStr)), is_period: nextValue };
+
+    // Marking a period start has to clear any "not bleeding" markers sitting
+    // on the days right after it. Those were written earlier — an old "End
+    // Period Here" trail (which writes false to the next 7 days), or a
+    // pre-fix un-tap — so relative to a period she is starting *now* they are
+    // stale, and the engine has no way to tell that from the data alone.
+    // Left in place, one of them ends the period on day 2 and "my period
+    // started today" projects no days forward at all.
+    //
+    // Scoped to the typical period length, and only ever clears `false` — a
+    // day she actually logged as bleeding is never touched.
+    if (turningOn) {
+      for (const dStr of stalePeriodEndMarkersAfter(
+        dateStr,
+        cycleSettings.period_length_days || 5,
+        sharedLogs
+      )) {
+        updates[dStr] = { ...(monthLogs[dStr] ?? emptyLog(dStr)), is_period: null };
+        staged.set(dStr, null);
+      }
+    }
+
     setPendingPeriodChanges((prev) => {
       const next = new Map(prev);
-      next.set(dateStr, nextValue);
+      staged.forEach((v, k) => next.set(k, v));
       return next;
     });
-    setMonthLogs((prev) => ({
-      ...prev,
-      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: nextValue },
-    }));
+    setMonthLogs((prev) => ({ ...prev, ...updates }));
   };
 
   const handleEndPeriod = () => {

@@ -653,6 +653,35 @@ export function deriveRecentCycleLengths(
 }
 
 /**
+ * Days right after a newly-marked period start that still carry an explicit
+ * "not bleeding" marker, and should be cleared.
+ *
+ * Those markers come from an earlier "End Period Here" (which writes one to
+ * each of the next 7 days) or, before that was fixed, from un-marking a day.
+ * Relative to a period she is starting *now* they are stale — but the engine
+ * cannot tell that from the data, since a marker looks identical whenever it
+ * was written. Left in place, the first one ends the period on day 2, so
+ * "my period started today" projects no days forward at all.
+ *
+ * Scoped to one typical period length, and only ever reports days explicitly
+ * marked `false` — a day logged as bleeding is never included.
+ */
+export function stalePeriodEndMarkersAfter(
+    startDateStr: string,
+    periodLength: number,
+    logs: Record<string, DailyLog>
+): string[] {
+    const stale: string[] = [];
+    const cursor = parseLocalDate(startDateStr);
+    for (let i = 1; i < Math.max(1, periodLength); i++) {
+        cursor.setDate(cursor.getDate() + 1);
+        const dateStr = formatDate(cursor);
+        if (logs[dateStr]?.is_period === false) stale.push(dateStr);
+    }
+    return stale;
+}
+
+/**
  * Check if a given day is within the fertile window.
  *
  * Pass `recentCycleLengths` (see deriveRecentCycleLengths) to widen the

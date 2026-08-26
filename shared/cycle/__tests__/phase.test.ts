@@ -21,6 +21,7 @@ import {
     deriveRecentCycleLengths,
     deriveObservedCycleLength,
     resolveCycleSettings,
+    stalePeriodEndMarkersAfter,
     MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS,
     type CycleSettings,
     type DailyLog,
@@ -811,6 +812,68 @@ describe('Legacy adapters', () => {
             };
             expect(phasesFrom(logs, [26, 28, 29])).toEqual([
                 'Menstrual', 'Menstrual', 'Menstrual',
+            ]);
+        });
+    });
+
+
+    // ========================================================================
+    // STALE END-OF-PERIOD MARKERS
+    // ========================================================================
+    describe('stalePeriodEndMarkersAfter', () => {
+        it('finds markers that would block a period she is starting now', () => {
+            // "My period started today" must project forward. A leftover
+            // marker on day 2 used to end it immediately, so the calendar
+            // showed one red day and nothing after it.
+            const logs: Record<string, DailyLog> = {
+                '2026-08-27': { date: '2026-08-27', is_period: false },
+            };
+            expect(stalePeriodEndMarkersAfter('2026-08-26', 5, logs)).toEqual(['2026-08-27']);
+        });
+
+        it('finds a whole leftover End-Period trail inside the period window', () => {
+            const logs: Record<string, DailyLog> = {};
+            for (let d = 27; d <= 31; d++) {
+                logs[`2026-08-${d}`] = { date: `2026-08-${d}`, is_period: false };
+            }
+            // Only the days inside one typical period length — 27, 28, 29, 30.
+            expect(stalePeriodEndMarkersAfter('2026-08-26', 5, logs)).toEqual([
+                '2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30',
+            ]);
+        });
+
+        it('never reports a day she actually logged as bleeding', () => {
+            const logs: Record<string, DailyLog> = {
+                '2026-08-27': { date: '2026-08-27', is_period: true },
+                '2026-08-28': { date: '2026-08-28', is_period: false },
+            };
+            expect(stalePeriodEndMarkersAfter('2026-08-26', 5, logs)).toEqual(['2026-08-28']);
+        });
+
+        it('reports nothing when there is nothing in the way', () => {
+            expect(stalePeriodEndMarkersAfter('2026-08-26', 5, {})).toEqual([]);
+        });
+
+        it('clearing them lets the period project the full length', () => {
+            const settings: CycleSettings = {
+                last_period_start: '2026-08-05',
+                cycle_length_days: 28,
+                period_length_days: 5,
+            };
+            const logs: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+                '2026-08-27': { date: '2026-08-27', is_period: false },
+            };
+            const phaseOn = (d: number) =>
+                calculatePhase(parseLocalDate(`2026-08-${d}`), settings, logs).phase;
+
+            expect(phaseOn(27)).toBe('Follicular'); // blocked
+
+            for (const d of stalePeriodEndMarkersAfter('2026-08-26', 5, logs)) {
+                logs[d] = { date: d, is_period: undefined };
+            }
+            expect([27, 28, 29, 30].map(phaseOn)).toEqual([
+                'Menstrual', 'Menstrual', 'Menstrual', 'Menstrual',
             ]);
         });
     });
