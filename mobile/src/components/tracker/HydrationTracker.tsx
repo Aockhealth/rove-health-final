@@ -11,6 +11,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { NumericStepper } from './NumericStepper';
 import { ConfettiBurst } from './ConfettiBurst';
 
@@ -72,6 +73,7 @@ function Bubble({
 }
 
 export function HydrationTracker({ glasses, onGlassesChange, accentColor = '#5B9A8B' }: HydrationTrackerProps) {
+  const { t } = useTranslation();
   const fillFraction = Math.min(glasses, MAX_GLASSES) / MAX_GLASSES;
   const ml = glasses * ML_PER_GLASS;
   const goalReached = glasses >= MAX_GLASSES;
@@ -193,13 +195,15 @@ export function HydrationTracker({ glasses, onGlassesChange, accentColor = '#5B9
 
       {/* Value display */}
       <Animated.View style={[styles.valueBlock, countStyle]}>
-        {goalReached && <Text style={[styles.goalText, { color: accentColor }]}>Goal Reached! 💧</Text>}
+        {goalReached && <Text style={[styles.goalText, { color: accentColor }]}>{t('tracker.hydration.goalReached')}</Text>}
         <Text style={styles.ml}>
           <Text style={styles.mlNum}>{ml}</Text>
-          <Text style={styles.mlUnit}> ml</Text>
+          <Text style={styles.mlUnit}> {t('tracker.hydration.mlUnit')}</Text>
         </Text>
         <Text style={styles.glassCount}>
-          {glasses} {glasses === 1 ? 'glass' : 'glasses'} {goalReached ? 'logged' : `/ ${MAX_GLASSES} glasses`}
+          {goalReached
+            ? t('tracker.hydration.glassesLoggedGoal', { count: glasses })
+            : t('tracker.hydration.glassesOfGoal', { count: glasses, goal: MAX_GLASSES })}
         </Text>
       </Animated.View>
 

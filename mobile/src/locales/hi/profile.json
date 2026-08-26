@@ -1,0 +1,183 @@
+{
+  "language": {
+    "title": "ऐप की भाषा",
+    "restartNote": "टेक्स्ट तुरंत बदल जाता है। बदलने के बाद हेडिंग सही लिपि में दिखाने के लिए ऐप को दोबारा शुरू करें।",
+    "comingSoon": "जल्द"
+  },
+  "account": {
+    "title": "अकाउंट प्रबंधन",
+    "contactInfo": {
+      "title": "संपर्क जानकारी",
+      "noPhone": "कोई फ़ोन नंबर नहीं जोड़ा गया",
+      "email": "ईमेल",
+      "phone": "फ़ोन"
+    },
+    "security": {
+      "title": "लॉगिन और सुरक्षा",
+      "subtitle": "नाम, ईमेल, साइन आउट, और पासवर्ड रीसेट"
+    },
+    "privacyPolicy": {
+      "title": "गोपनीयता नीति",
+      "subtitle": "आपका डेटा कैसे संभाला जाता है, और अकाउंट डिलीट करना"
+    },
+    "terms": {
+      "title": "नियम व शर्तें",
+      "subtitle": "जिन नियमों से आप सहमत हुए थे"
+    },
+    "signOut": "साइन आउट करें",
+    "deleteAccount": {
+      "title": "अकाउंट डिलीट करें",
+      "subtitle": "अपना डेटा और लॉगिन हमेशा के लिए डिलीट करें",
+      "confirmTitle": "अपना अकाउंट डिलीट करें?",
+      "confirmMessage": "इससे आपके साइकल लॉग, स्वास्थ्य डेटा और लॉगिन हमेशा के लिए डिलीट हो जाएंगे। यह वापस नहीं किया जा सकता।",
+      "confirmButton": "डिलीट करें",
+      "finalConfirmTitle": "क्या आप पूरी तरह से निश्चित हैं?",
+      "finalConfirmMessage": "इसके बाद आपका डेटा वापस पाने का कोई तरीका नहीं है।",
+      "finalConfirmButton": "हां, सब कुछ डिलीट करें",
+      "deleting": "डिलीट हो रहा है…"
+    },
+    "version": "Rove Health v{{version}}"
+  },
+  "loginSecurity": {
+    "headerTitle": "लॉगिन और सुरक्षा",
+    "nameLabel": "नाम",
+    "emailLabel": "ईमेल",
+    "signOut": "साइन आउट करें",
+    "forgotPassword": {
+      "rowTitle": "पासवर्ड भूल गए",
+      "rowSubtitle": "अपने ईमेल पर एक सत्यापन कोड भेजें",
+      "sendCode": "कोड भेजें",
+      "sending": "कोड भेजा जा रहा है…",
+      "sendFailed": "कोड नहीं भेजा जा सका",
+      "codeSentTitle": "अपना कोड डालें",
+      "codeSentBody": "हमने {{email}} पर 6 अंकों का कोड भेजा है।",
+      "codePlaceholder": "000000",
+      "verify": "कोड सत्यापित करें",
+      "verifying": "सत्यापित हो रहा है…",
+      "verifyFailed": "यह कोड काम नहीं किया",
+      "resend": "कोड फिर भेजें",
+      "resendCooldown": "{{seconds}} सेकंड में फिर भेजें",
+      "resendSent": "एक नया कोड भेजा गया।",
+      "invalidCode": "अपने ईमेल पर भेजा गया कोड डालें।",
+      "newPasswordTitle": "नया पासवर्ड सेट करें",
+      "newPasswordBody": "अपने अकाउंट के लिए नया पासवर्ड चुनें।",
+      "newPasswordLabel": "नया पासवर्ड",
+      "confirmPasswordLabel": "पासवर्ड की पुष्टि करें",
+      "passwordTooShort": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।",
+      "passwordMismatch": "पासवर्ड मेल नहीं खाते।",
+      "savePassword": "नया पासवर्ड सेव करें",
+      "saving": "सेव हो रहा है…",
+      "saveFailed": "आपका पासवर्ड अपडेट नहीं हो सका",
+      "successTitle": "पासवर्ड अपडेट हो गया",
+      "successBody": "आपका पासवर्ड बदल दिया गया है।",
+      "done": "हो गया"
+    }
+  },
+  "focusGoals": {
+    "title": "फ़ोकस और केयर मोड",
+    "subtitle": "हम आपका प्लान किस आधार पर तैयार करते हैं",
+    "yourGoals": "आपके लक्ष्य",
+    "items": {
+      "syncing": "साइकल सिंकिंग",
+      "tracking": "साइकल ट्रैकिंग",
+      "weight_loss": "वज़न घटाना"
+    }
+  },
+  "healthPassport": {
+    "title": "हेल्थ पासपोर्ट",
+    "subtitle": "मुख्य बायोमार्कर और स्वास्थ्य स्थितियां",
+    "weight": "वज़न (किग्रा)",
+    "height": "लंबाई (सेमी)",
+    "activityLevel": "एक्टिविटी लेवल",
+    "dietType": "डाइट टाइप",
+    "conditionsManaged": "प्रबंधित स्वास्थ्य स्थितियां",
+    "tapToAdd": "जोड़ने के लिए टैप करें",
+    "otherButton": "+ अन्य",
+    "conditionPlaceholder": "स्थिति...",
+    "saveButton": "पासपोर्ट डेटा सेव करें",
+    "activityOptions": {
+      "sedentary": "गतिहीन",
+      "moderate": "मध्यम",
+      "active": "सक्रिय",
+      "athlete": "एथलीट"
+    },
+    "dietOptions": {
+      "vegetarian": "शाकाहारी",
+      "nonVeg": "मांसाहारी",
+      "vegan": "वीगन",
+      "jain": "जैन"
+    },
+    "conditions": {
+      "pmos": "PMOS",
+      "endometriosis": "एंडोमेट्रियोसिस",
+      "uterineFibroids": "गर्भाशय फाइब्रॉएड्स",
+      "adenomyosis": "एडेनोमायोसिस",
+      "thyroidDisorder": "थायरॉइड डिसऑर्डर",
+      "prematureOvarianInsufficiency": "प्रीमैच्योर ओवेरियन इनसफिशिएंसी",
+      "diminishedOvarianReserve": "डिमिनिश्ड ओवेरियन रिज़र्व",
+      "recurrentPregnancyLoss": "बार-बार गर्भपात होना",
+      "pelvicInflammatoryDisease": "पेल्विक इंफ्लेमेटरी डिज़ीज़"
+    },
+    "addConditionTitle": "स्थिति जोड़ें"
+  },
+  "healthSync": {
+    "title": "स्वास्थ्य डेटा",
+    "syncWith": "{{platform}} के साथ सिंक करें",
+    "syncing": "सिंक हो रहा है…",
+    "description": "बेसल तापमान, नींद और फर्टिलिटी-टेस्ट के नतीजे पढ़ता है। आपका लॉग किया गया तापमान और पीरियड के दिन {{platform}} में वापस लिखे जाते हैं।",
+    "filledIn_one": "पिछले 30 दिनों की {{count}} रीडिंग जोड़ी गई।",
+    "filledIn_other": "पिछले 30 दिनों की {{count}} रीडिंग्स जोड़ी गईं।",
+    "upToDate": "सब कुछ अपडेटेड है — जोड़ने के लिए कुछ नया नहीं।",
+    "permissionNeeded": {
+      "title": "अनुमति चाहिए",
+      "description": "अपनी रीडिंग सिंक करने के लिए {{platform}} में एक्सेस दें।",
+      "action": "{{platform}} खोलें"
+    },
+    "syncFailed": {
+      "title": "सिंक नहीं हो सका",
+      "description": "कुछ देर बाद फिर कोशिश करें।"
+    }
+  },
+  "partnerShare": {
+    "title": "पार्टनर शेयरिंग",
+    "shareCta": "अपनी उर्वर विंडो शेयर करें",
+    "shareAgain": "लिंक फिर से शेयर करें",
+    "inactiveDescription": "एक रीड-ओनली लिंक जिसे आपका पार्टनर खोल सकता है — उनकी तरफ़ से किसी अकाउंट की ज़रूरत नहीं।",
+    "activeDescription": "आपका पार्टनर सिर्फ़ आज की स्थिति देख सकता है — कोई लॉगिन नहीं, कोई अकाउंट नहीं, कोई डेली लॉग नहीं।",
+    "turnOffLink": "लिंक बंद करें",
+    "shareMessage": "Rove पर मेरी उर्वर विंडो की स्थिति देखें: {{url}}",
+    "createFailed": {
+      "title": "लिंक नहीं बन सका",
+      "description": "कुछ देर बाद फिर कोशिश करें।"
+    },
+    "revokeFailed": "लिंक बंद नहीं हो सका",
+    "revokedTitle": "लिंक बंद कर दिया गया",
+    "revokedDescription": "जिसके पास भी यह लिंक था, वह अब आपकी स्थिति नहीं देख सकता।"
+  },
+  "screen": {
+    "title": "प्रोफ़ाइल",
+    "namePlaceholder": "आपका नाम",
+    "saveProfileFailed": "प्रोफ़ाइल सेव नहीं हो सकी",
+    "profileUpdated": "प्रोफ़ाइल अपडेट हो गई",
+    "saveFailed": "सेव नहीं हो सका",
+    "updateFailed": "अपडेट नहीं हो सका",
+    "contactUpdated": "संपर्क जानकारी अपडेट हो गई",
+    "contactUpdatedDescription": "कृपया पुष्टिकरण लिंक के लिए अपना नया ईमेल जांचें।",
+    "resetEmailFailed": "रीसेट ईमेल भेजने में विफल",
+    "resetEmailSent": "पासवर्ड रीसेट ईमेल भेज दिया गया",
+    "deleteAccountFailed": "अकाउंट डिलीट नहीं हो सका",
+    "trackingMode": {
+      "title": "ट्रैकिंग मोड",
+      "description": "गर्भधारण की कोशिश मोड बेसल तापमान और ओव्यूलेशन टेस्ट लॉगिंग जोड़ता है, और इनसे आपके ओव्यूलेशन का पता लगाता है।",
+      "tabs": {
+        "cycle": "Rove Sync",
+        "conceiving": "Rove Pregnancy",
+        "menopause": "Rove Menopause"
+      },
+      "irregularToggle": {
+        "label": "अनियमित साइकिल",
+        "description": "यह Conceiving मोड की तरह ही बेसल तापमान और ओव्यूलेशन टेस्ट लॉगिंग भी जोड़ता है।"
+      }
+    }
+  }
+}

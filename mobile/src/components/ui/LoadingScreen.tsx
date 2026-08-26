@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Image, Text } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,13 +14,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { phaseThemes } from '../../data/home-content';
 
-const FACTS = [
-  "The menstrual cycle has four phases: Menstrual, Follicular, Ovulatory, and Luteal.",
-  "Your energy naturally peaks during the ovulatory phase.",
-  "Gentle movement during your period can help relieve cramps.",
-  "Hydration is especially important in the luteal phase to reduce bloating.",
-];
-
 const DEFAULT_GLOW_COLOR = '#AF6B6B';
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -31,6 +25,9 @@ const hexToRgba = (hex: string, alpha: number) => {
 };
 
 export default function LoadingScreen() {
+  const { t } = useTranslation();
+  const facts = t('common.loadingFacts', { returnObjects: true }) as string[];
+
   // Opportunistically picks up whatever phase color is already cached from the
   // dashboard query (e.g. navigating away and back), so the loading screen matches
   // the app's current phase instead of always showing one fixed color. Falls back
@@ -71,7 +68,7 @@ export default function LoadingScreen() {
 
     // Cycle through facts
     const interval = setInterval(() => {
-      setFactIndex((prev) => (prev + 1) % FACTS.length);
+      setFactIndex((prev) => (prev + 1) % facts.length);
     }, 3500);
 
     return () => clearInterval(interval);
@@ -108,7 +105,7 @@ export default function LoadingScreen() {
             exiting={FadeOut.duration(400)}
             style={styles.factText}
           >
-            {FACTS[factIndex]}
+            {facts[factIndex]}
           </Animated.Text>
         </View>
       </View>

@@ -4,25 +4,42 @@ import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 interface ActivitiesWidgetProps {
   practices: any[];
   themeColor: string;
+  /** Header text — defaults to the cycle-sync wording. */
+  title?: string;
+  /**
+   * Namespaces the AsyncStorage keys this checklist reads/writes. Without
+   * this, every caller shares one global "rove_custom_activities" /
+   * "rove_activity_checks" pair — fine when there's only one caller, but
+   * TTC mode renders a completely different item set here, and a shared
+   * custom-items list would leak a TTC-added item into cycle-sync's
+   * checklist (and vice versa) for anyone who switches tracker mode.
+   */
+  storageKeyPrefix?: string;
 }
 
-export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProps) {
+export function ActivitiesWidget({ practices, themeColor, title, storageKeyPrefix = '' }: ActivitiesWidgetProps) {
+  const { t, i18n } = useTranslation();
+  const resolvedTitle = title ?? t('plan.activitiesWidget.recommendedForYou');
   const [customItems, setCustomItems] = useState<any[]>([]);
   const [newItem, setNewItem] = useState('');
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
+  const customItemsKey = `rove_custom_activities${storageKeyPrefix}`;
+  const checksKey = `rove_activity_checks${storageKeyPrefix}`;
 
   useEffect(() => {
     let isMounted = true;
     const loadState = async () => {
       try {
-        const savedCustom = await AsyncStorage.getItem('rove_custom_activities');
+        const savedCustom = await AsyncStorage.getItem(customItemsKey);
         if (savedCustom && isMounted) setCustomItems(JSON.parse(savedCustom));
 
-        const savedChecks = await AsyncStorage.getItem('rove_activity_checks');
+        const savedChecks = await AsyncStorage.getItem(checksKey);
         if (savedChecks && isMounted) setCheckedState(JSON.parse(savedChecks));
       } catch (e) {
         console.error('Failed to load local storage', e);
@@ -32,13 +49,13 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [customItemsKey, checksKey]);
 
   const toggleCheck = async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newState = { ...checkedState, [id]: !checkedState[id] };
     setCheckedState(newState);
-    await AsyncStorage.setItem('rove_activity_checks', JSON.stringify(newState));
+    await AsyncStorage.setItem(checksKey, JSON.stringify(newState));
   };
 
   const addCustom = async () => {
@@ -46,13 +63,13 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const item = {
       title: newItem,
-      desc: "Personal Goal",
+      desc: t('plan.activitiesWidget.personalGoal'),
       id: `custom-${Date.now()}`,
       isCustom: true
     };
     const next = [...customItems, item];
     setCustomItems(next);
-    await AsyncStorage.setItem('rove_custom_activities', JSON.stringify(next));
+    await AsyncStorage.setItem(customItemsKey, JSON.stringify(next));
     setNewItem('');
   };
 
@@ -60,7 +77,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = customItems.filter(i => i.id !== id);
     setCustomItems(next);
-    await AsyncStorage.setItem('rove_custom_activities', JSON.stringify(next));
+    await AsyncStorage.setItem(customItemsKey, JSON.stringify(next));
   };
 
   const mergedList = [
@@ -84,8 +101,8 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
         <View className="w-8 h-8 rounded-xl items-center justify-center mr-3" style={{ backgroundColor: `${themeColor}15` }}>
           <Feather name="check-circle" size={14} color={themeColor} />
         </View>
-        <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-          Recommended For You
+        <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+          {resolvedTitle}
         </Text>
       </View>
 
@@ -136,7 +153,7 @@ export function ActivitiesWidget({ practices, themeColor }: ActivitiesWidgetProp
         <TextInput
           value={newItem}
           onChangeText={setNewItem}
-          placeholder="Add activity or supplement..."
+          placeholder={t('plan.activitiesWidget.addActivityPlaceholder')}
           placeholderTextColor="#A8A29E"
           className="flex-1 text-sm font-medium text-rove-charcoal h-10 px-4 bg-white rounded-full border border-rove-stone/10"
           onSubmitEditing={addCustom}

@@ -10,10 +10,14 @@ import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, FadeInUp, withSpring, interpolate, Extrapolation, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { Droplets, Baby, Heart, Flower2, CalendarPlus, ChevronRight } from 'lucide-react-native';
 import Svg, { Defs, RadialGradient as SvgRadialGradient, Stop, Rect } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { fetchDashboardData, type DashboardData } from '../../lib/dashboard';
 import { schedulePeriodReminder, syncBbtReminder } from '../../lib/notifications';
-import { phaseThemes, PHASE_KEYWORDS, PHASE_EXPLAINERS, PHASE_SNAPSHOTS } from '../../data/home-content';
+import { getDateLocaleTag } from '../../lib/i18n';
+import { getLocalizedFontFamily } from '../../lib/fonts';
+import { phaseThemes, getPhaseKeyword, getPhaseExplainer, getPhaseSnapshot } from '../../data/home-content';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/Dialog';
 import { Button } from '../../components/ui/Button';
@@ -27,16 +31,24 @@ import { HormoneWave, MindSynapse, BodyDNA, GlowHalo } from '../../components/ho
 import LoadingScreen from '../../components/ui/LoadingScreen';
 
 function formatDate(d: Date | null): string {
-  return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '--';
+  return d ? d.toLocaleDateString(getDateLocaleTag(), { month: 'short', day: 'numeric' }) : '--';
 }
 
 function formatDateRange(start: Date | null, end: Date | null): string {
   if (!start || !end) return '--';
   if (start.getMonth() === end.getMonth()) {
-    const month = start.toLocaleDateString('en-US', { month: 'short' });
+    const month = start.toLocaleDateString(getDateLocaleTag(), { month: 'short' });
     return `${month} ${start.getDate()}–${end.getDate()}`;
   }
   return `${formatDate(start)} – ${formatDate(end)}`;
+}
+
+// Phase display name for the raw English phase key stored/computed
+// everywhere else (theme lookups, engine logic) — reuses the same
+// translation map the Tracker's Quick Phase Log already built rather than
+// keeping a second one here.
+function phaseDisplayName(phase: string, t: TFunction): string {
+  return t(`tracker.quickPhaseLog.phaseNames.${phase}`, { defaultValue: phase });
 }
 
 // Ovulation/fertile-window dates are arithmetic off the same last_period_start +
@@ -44,9 +56,9 @@ function formatDateRange(start: Date | null, end: Date | null): string {
 // honest proxy for how much to trust them too. 'low' confidence (dataSource: 'none')
 // never reaches this screen — the hasCycleData gate above redirects to the
 // log-your-first-period empty state first.
-function datesConfidenceCaption(confidence: DashboardData['phase']['confidence'], dataSource: DashboardData['phase']['dataSource']): string {
-  if (dataSource === 'logs') return 'Predicted ± 1 day, based on your logged periods.';
-  return 'Predicted ± 3 days, estimated from your cycle settings — log a period to sharpen this.';
+function datesConfidenceCaption(confidence: DashboardData['phase']['confidence'], dataSource: DashboardData['phase']['dataSource'], t: TFunction): string {
+  if (dataSource === 'logs') return t('home.datesConfidence.logs');
+  return t('home.datesConfidence.estimated');
 }
 
 function AnimatedWatermark({ icon: Icon, color, itemKey }: { icon: any, color: string, itemKey: string }) {
@@ -158,15 +170,19 @@ function SnapshotCard({ itemKey, label, Icon, color, theme, snapshot, onPress }:
 // On-brand palette tokens (tailwind.config.js) instead of generic Tailwind
 // defaults (rose-400/slate-500/emerald-500/amber-500) — these are topic
 // categories, not cycle phases, so they intentionally don't reuse phaseThemes.
+// Labels come from home.snapshotCategories via t() at render time, not a
+// static field here, since this array is module-level (built once, before
+// any component — and therefore any i18n language — is mounted).
 const SNAPSHOT_META = [
-  { key: 'hormones' as const, label: 'Hormones', Icon: HormoneWave, color: '#C97B7B' },
-  { key: 'mind' as const, label: 'Mind', Icon: MindSynapse, color: '#7B82A8' },
-  { key: 'body' as const, label: 'Body', Icon: BodyDNA, color: '#5B9A8B' },
-  { key: 'skin' as const, label: 'Skin', Icon: GlowHalo, color: '#D4A25F' },
+  { key: 'hormones' as const, Icon: HormoneWave, color: '#C97B7B' },
+  { key: 'mind' as const, Icon: MindSynapse, color: '#7B82A8' },
+  { key: 'body' as const, Icon: BodyDNA, color: '#5B9A8B' },
+  { key: 'skin' as const, Icon: GlowHalo, color: '#D4A25F' },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   // The tab bar is `position: 'absolute'`, so content scrolls underneath it
   // and needs bottom padding to clear it. This used to be a hardcoded 100,
   // which happens to clear iOS's ~83pt bar but NOT Android's, where the bar
@@ -248,16 +264,16 @@ export default function HomeScreen() {
 
   const hasCycleData = !!data.settings.last_period_start || Object.values(data.monthLogs).some((l) => l.is_period);
   const theme = phaseThemes[data.phase.name] || phaseThemes.Follicular;
-  const snapshot = PHASE_SNAPSHOTS[data.phase.name] || PHASE_SNAPSHOTS.Follicular;
-  const firstName = data.user.name.split(' ')[0] || 'Love';
+  const snapshot = getPhaseSnapshot(data.phase.name, t);
+  const firstName = data.user.name.split(' ')[0] || t('home.defaultName');
 
   const Header = (
     <View className="flex-row items-center justify-between mb-8 px-2 pt-2">
       <View>
         <Text className="text-[10px] font-bold uppercase tracking-[3px] text-rove-charcoal/65 mb-0.5">ROVE</Text>
-        <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Hey, {firstName}</Text>
+        <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('home.greeting', { name: firstName })}</Text>
         <Text className="text-[10px] font-medium text-rove-stone uppercase tracking-wider">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          {new Date().toLocaleDateString(getDateLocaleTag(), { weekday: 'long', month: 'short', day: 'numeric' })}
         </Text>
       </View>
       <ProfileAvatar />
@@ -269,12 +285,12 @@ export default function HomeScreen() {
       <SafeAreaView className="flex-1 bg-rove-cream/20 px-4">
         {Header}
         <View className="bg-white/80 border border-rove-stone/10 rounded-3xl p-6">
-          <Text className="text-xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Log your first period</Text>
+          <Text className="text-xl text-rove-charcoal mb-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('home.emptyState.title')}</Text>
           <Text className="text-sm text-rove-stone mb-4">
-            Once you log a period start, your phase, fertile window, and insights will appear here.
+            {t('home.emptyState.body')}
           </Text>
           <Button onPress={() => router.push('/(app)/tracker' as any)} className="self-start">
-            Go to Tracker
+            {t('home.emptyState.cta')}
           </Button>
         </View>
       </SafeAreaView>
@@ -289,11 +305,11 @@ export default function HomeScreen() {
           <View className="w-20 h-20 rounded-full bg-purple-100 items-center justify-center">
             <Flower2 size={36} color="#A855F7" />
           </View>
-          <Text className="text-3xl text-rove-charcoal text-center" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Symptom Management</Text>
+          <Text className="text-3xl text-rove-charcoal text-center" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('home.menopausePlaceholder.title')}</Text>
           <Text className="text-rove-stone text-center">
-            Your menopause support hub is coming soon. Track hot flashes, sleep quality, and HRT adherence.
+            {t('home.menopausePlaceholder.body')}
           </Text>
-          <Button className="rounded-full">Log Symptom</Button>
+          <Button className="rounded-full">{t('home.menopausePlaceholder.cta')}</Button>
         </View>
       </SafeAreaView>
     );
@@ -320,8 +336,8 @@ export default function HomeScreen() {
           className="pt-14 pb-4 px-4 flex-row items-center justify-between border-b border-black/5"
         >
           <View>
-            <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone">Current Phase</Text>
-            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>{data.phase.name} • Day {data.phase.day}</Text>
+            <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone">{t('home.currentPhase')}</Text>
+            <Text className="text-xl" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language), color: theme.textColor }}>{phaseDisplayName(data.phase.name, t)} • {t('home.dayLabel', { day: data.phase.day })}</Text>
           </View>
           <ProfileAvatar />
         </BlurView>
@@ -364,28 +380,28 @@ export default function HomeScreen() {
                 className="rounded-full items-center justify-center border overflow-hidden"
                 style={{ width: 144, height: 144, backgroundColor: '#FAF9F6', borderColor: 'rgba(0,0,0,0.03)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 15 }}
               >
-                <Text className="text-[8px] font-bold tracking-[2px] text-rove-stone uppercase mb-1">Current Phase</Text>
-                <Text className="text-2xl mb-0.5" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>
-                  {data.phase.name}
+                <Text className="text-[8px] font-bold tracking-[2px] text-rove-stone uppercase mb-1">{t('home.currentPhase')}</Text>
+                <Text className="text-2xl mb-0.5" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language), color: theme.textColor }}>
+                  {phaseDisplayName(data.phase.name, t)}
                 </Text>
-                <Text className="text-[10px] font-semibold text-rove-charcoal/70 tracking-wide mb-1">{PHASE_KEYWORDS[data.phase.name]}</Text>
+                <Text className="text-[10px] font-semibold text-rove-charcoal/70 tracking-wide mb-1">{getPhaseKeyword(data.phase.name, t)}</Text>
                 <View className="w-5 h-1 rounded-full border mt-0.5" style={{ borderColor: 'rgba(0,0,0,0.15)' }} />
               </View>
 
               {/* Day Badge positioned on top edge of the ring */}
               <View className="absolute bg-white px-2.5 py-1 rounded-full border border-rove-stone/10" style={{ top: -10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 }}>
-                <Text className="text-[11px] font-extrabold text-rove-charcoal">Day {data.phase.day}</Text>
+                <Text className="text-[11px] font-extrabold text-rove-charcoal">{t('home.dayLabel', { day: data.phase.day })}</Text>
               </View>
 
               {/* Log FAB */}
               <View className="absolute right-0 bottom-0 w-[40px] h-[40px] rounded-full bg-rove-charcoal items-center justify-center border-[3px] border-[#FAF9F6]" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10 }}>
                 <CalendarPlus size={15} color="#FFFFFF" strokeWidth={2.5} />
-                <Text className="absolute -bottom-4 text-[8px] font-bold text-rove-charcoal tracking-widest">LOG</Text>
+                <Text className="absolute -bottom-4 text-[8px] font-bold text-rove-charcoal tracking-widest">{t('home.logButton')}</Text>
               </View>
             </View>
           </Pressable>
           <Text className="text-xs text-rove-charcoal/70 italic text-center max-w-[220px] mt-6">
-            {PHASE_EXPLAINERS[data.phase.name]}
+            {getPhaseExplainer(data.phase.name, t)}
           </Text>
         </Animated.View>
 
@@ -401,11 +417,11 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Droplets size={14} color={phaseThemes.Menstrual.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Menstrual.textColor }}>Period</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Menstrual.textColor }}>{t('home.periodCard.label')}</Text>
                 </View>
                 <View>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(nextPeriod)}</Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">{daysToNext !== null ? `in ${daysToNext} days` : 'Next cycle'}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{formatDate(nextPeriod)}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">{daysToNext !== null ? t('home.periodCard.inDays', { count: daysToNext }) : t('home.periodCard.nextCycle')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -422,11 +438,11 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Baby size={14} color={phaseThemes.Ovulatory.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Ovulatory.textColor }}>Ovulation</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Ovulatory.textColor }}>{t('home.ovulationCard.label')}</Text>
                 </View>
                 <View>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{formatDate(ovulationDate)}</Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">Peak fertility</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{formatDate(ovulationDate)}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">{t('home.ovulationCard.peakFertility')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -443,18 +459,18 @@ export default function HomeScreen() {
               <View className="p-3.5 flex-1 justify-between">
                 <View className="flex-row items-center gap-1 mb-1">
                   <Heart size={14} color={phaseThemes.Follicular.color} />
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Follicular.textColor }}>Fertile</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="flex-1 text-[10px] uppercase tracking-[1px]" style={{ fontFamily: 'Raleway-ExtraBold', color: phaseThemes.Follicular.textColor }}>{t('home.fertileCard.label')}</Text>
                 </View>
                 <View>
                   <Text
                     numberOfLines={1}
                     adjustsFontSizeToFit
                     className="text-xl text-rove-charcoal leading-tight"
-                    style={{ fontFamily: 'CormorantGaramond-Bold' }}
+                    style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}
                   >
                     {formatDateRange(fertileStart, fertileEnd)}
                   </Text>
-                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">Highest chance</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[11px] text-rove-stone font-medium mt-1">{t('home.fertileCard.highestChance')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -462,22 +478,22 @@ export default function HomeScreen() {
         </View>
 
         <Text className="text-center text-[11px] text-rove-stone font-medium mt-3 px-6">
-          {datesConfidenceCaption(data.phase.confidence, data.phase.dataSource)}
+          {datesConfidenceCaption(data.phase.confidence, data.phase.dataSource, t)}
         </Text>
 
         {/* Daily Flow */}
         <Animated.View entering={FadeInUp.delay(400).duration(600).springify()} className="mt-10">
-          <Text className="text-xl text-rove-charcoal mb-4 px-2" style={{ fontFamily: 'CormorantGaramond-Medium' }}>Daily Flow</Text>
+          <Text className="text-xl text-rove-charcoal mb-4 px-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Medium', i18n.language) }}>{t('home.dailyFlow')}</Text>
           <View className="gap-4 -mx-4">
             <RiverTrack
-              label="Nutrients For This Phase"
+              label={t('home.nutrientsForPhase')}
               items={data.nutrients.map((n) => ({ ...n, color: theme.iconColor, bg: theme.iconBg }))}
               direction="right"
               speed={40}
               onCardClick={(item) => setExpandedRiverItem(item)}
             />
             <RiverTrack
-              label="What To Focus On"
+              label={t('home.whatToFocusOn')}
               items={data.phaseFocus.map((n) => ({ ...n, color: theme.iconColor, bg: theme.iconBg }))}
               direction="left"
               speed={38}
@@ -492,16 +508,16 @@ export default function HomeScreen() {
         {/* Today's Snapshot */}
         <Animated.View entering={FadeInUp.delay(500).duration(600).springify()} className="mt-8 mb-4" style={{ position: 'relative' }}>
           <View className="flex-row justify-between items-center mb-4 px-2">
-            <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Today's Snapshot</Text>
+            <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('home.todaysSnapshot')}</Text>
           </View>
-          <Text onPress={() => router.push('/(app)/plan' as any)} className="text-rove-stone text-[13px] font-semibold mb-4 px-2">View Full Plan →</Text>
+          <Text onPress={() => router.push('/(app)/plan' as any)} className="text-rove-stone text-[13px] font-semibold mb-4 px-2">{t('home.viewFullPlan')}</Text>
 
           <View className="flex-row flex-wrap gap-3 justify-between">
-            {SNAPSHOT_META.map(({ key, label, Icon, color }) => (
+            {SNAPSHOT_META.map(({ key, Icon, color }) => (
               <SnapshotCard
                 key={key}
                 itemKey={key}
-                label={label}
+                label={t(`home.snapshotCategories.${key}`)}
                 Icon={Icon}
                 color={color}
                 theme={theme}
@@ -540,7 +556,7 @@ export default function HomeScreen() {
                 <View className="rounded-[20px] p-4 border border-white" style={{ backgroundColor: theme.cardTint }}>
                   <View className="flex-row items-center gap-2 mb-3">
                     {React.createElement(iconMap['Utensils'] || require('lucide-react-native').Utensils, { size: 14, color: theme.textColor })}
-                    <Text className="text-[10px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>Food Sources</Text>
+                    <Text className="text-[10px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>{t('home.foodSources')}</Text>
                   </View>
                   <View className="flex-row flex-wrap gap-2">
                     {expandedRiverItem.detail
@@ -574,7 +590,7 @@ export default function HomeScreen() {
                 {snapshot[selectedSnapshot].detail}
               </Text>
               <View className="mt-5 rounded-2xl p-4 border border-rove-stone/10 bg-white/50">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] mb-2" style={{ color: theme.textColor }}>Protocol</Text>
+                <Text className="text-[10px] font-bold uppercase tracking-[2px] mb-2" style={{ color: theme.textColor }}>{t('home.protocol')}</Text>
                 <Text className="text-rove-charcoal/90 text-[13px] leading-relaxed font-semibold">
                   {snapshot[selectedSnapshot].protocol}
                 </Text>

@@ -5,7 +5,9 @@ import Animated, { useSharedValue, useAnimatedStyle, useAnimatedScrollHandler, w
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import LoadingScreen from '../../components/ui/LoadingScreen';
+import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { phaseThemes } from '../../data/home-content';
 import { fetchInsightsData } from '../../lib/insights';
@@ -19,14 +21,20 @@ import { HealthReportCard } from '../../components/insights/HealthReportCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
 import { TtcFertilityCard } from '../../components/insights/TtcFertilityCard';
 import { TtcCycleInsights } from '../../components/insights/TtcCycleInsights';
+import { PcosPatternInsights } from '../../components/insights/PcosPatternInsights';
+import { LockedComingSoonCard } from '../../components/insights/LockedComingSoonCard';
+import { HormoneRhythmCard } from '../../components/insights/HormoneRhythmCard';
+import { CycleAnomalyCard } from '../../components/insights/CycleAnomalyCard';
+import { PmosScoreCard } from '../../components/insights/PmosScoreCard';
 
 const TABS = [
-  { id: 'cycle', label: 'Cycle', icon: 'calendar' },
-  { id: 'patterns', label: 'Patterns', icon: 'activity' },
-  { id: 'health', label: 'Health', icon: 'zap' },
+  { id: 'cycle', labelKey: 'cycle', icon: 'calendar' },
+  { id: 'patterns', labelKey: 'patterns', icon: 'activity' },
+  { id: 'health', labelKey: 'clinical', icon: 'clipboard' },
 ] as const;
 
 export default function InsightsScreen() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
@@ -45,7 +53,7 @@ export default function InsightsScreen() {
 
   const handleTabPress = useCallback((tabId: 'cycle' | 'patterns' | 'health') => {
     if (tabId === activeTab) return;
-    const idx = TABS.findIndex((t) => t.id === tabId);
+    const idx = TABS.findIndex((tab) => tab.id === tabId);
     tabIndicatorPos.value = withSpring(idx, { damping: 18, stiffness: 160, mass: 0.8 });
     tabScale.value = withSpring(0.92, { damping: 12, stiffness: 400 }, () => {
       tabScale.value = withSpring(1, { damping: 14, stiffness: 200 });
@@ -116,8 +124,8 @@ export default function InsightsScreen() {
       {/* HEADER */}
       <View className="px-5 pb-2 pt-2 flex-row items-center justify-between z-50 mb-2">
         <View>
-          <Text className="text-[10px] font-bold uppercase tracking-[3px] text-rove-charcoal/65 mb-0.5">Your Body Intelligence</Text>
-          <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>Insights</Text>
+          <Text className="text-[10px] font-bold uppercase text-rove-charcoal/65 mb-0.5" style={{ letterSpacing: getLocalizedTracking(3, i18n.language) }}>{t('insights.screen.eyebrow')}</Text>
+          <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language), color: theme.textColor }}>{t('insights.screen.title')}</Text>
         </View>
         <ProfileAvatar />
       </View>
@@ -158,7 +166,7 @@ export default function InsightsScreen() {
                 className="flex-1 flex-row items-center justify-center py-2.5 rounded-2xl z-10"
               >
                 <Feather name={tab.icon as any} size={13} color={isActive ? 'white' : '#78716C'} style={{ marginRight: 6 }} />
-                <Text className={`text-[11px] font-bold ${isActive ? 'text-white' : 'text-rove-stone'}`}>{tab.label}</Text>
+                <Text className={`text-[11px] font-bold ${isActive ? 'text-white' : 'text-rove-stone'}`}>{t(`insights.screen.tabs.${tab.labelKey}`)}</Text>
               </Pressable>
             );
           })}
@@ -177,11 +185,14 @@ export default function InsightsScreen() {
                 // 20pt ScrollView padding each side, plus the card's own 20pt
                 // padding each side.
                 width={windowWidth - 80}
+                secondarySignals={stats.ttc.secondarySignals}
+                mucus={stats.ttc.mucus}
               />
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(100).duration(500).springify()}>
               <TtcCycleInsights cycles={stats.ttc.cycles} stats={stats.ttc.stats} patterns={stats.ttc.patterns} theme={theme} />
+              <PcosPatternInsights insights={stats.ttc.pcosPatterns} />
             </Animated.View>
           </>
         ) : null}
@@ -197,6 +208,14 @@ export default function InsightsScreen() {
                 phase={phaseName}
                 theme={theme}
                 cycleDeltaFromBaseline={stats?.averages?.cycleDeltaFromBaseline}
+                ovulationState={
+                  stats?.ovulationSummary?.status === 'ovulation_confirmed'
+                    ? 'confirmed'
+                    : stats?.ovulationSummary?.anovulatory?.detected
+                      ? 'anovulatory'
+                      : null
+                }
+                ovulationDate={stats?.ovulationSummary?.confirmedDate}
               />
             </Animated.View>
 
@@ -205,6 +224,11 @@ export default function InsightsScreen() {
                 wellnessAverages={stats?.wellnessAverages}
                 theme={theme}
               />
+              <HormoneRhythmCard
+                points={stats?.hormoneRhythm?.points ?? []}
+                hasBaseline={stats?.hormoneRhythm?.hasBaseline ?? false}
+              />
+              <PcosPatternInsights insights={stats?.pcosPatterns ?? []} />
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(200).duration(500).springify()}>
@@ -234,13 +258,23 @@ export default function InsightsScreen() {
               onPhaseSelect={setSelectedPhase}
               symptomCorrelations={stats?.symptomCorrelations}
             />
+            <CycleAnomalyCard anomalies={stats?.cycleAnomalies ?? []} />
+            {stats?.pmosScore ? <PmosScoreCard score={stats.pmosScore} /> : null}
           </Animated.View>
         )}
 
         {activeTab === 'health' && (
-          <Animated.View entering={FadeInUp.duration(500).springify()}>
-            <HealthReportCard theme={theme} />
-          </Animated.View>
+          <>
+            <Animated.View entering={FadeInUp.duration(500).springify()}>
+              <HealthReportCard theme={theme} />
+            </Animated.View>
+            <Animated.View entering={FadeInUp.delay(75).duration(500).springify()}>
+              <LockedComingSoonCard title={t('insights.labResults.title')} />
+            </Animated.View>
+            <Animated.View entering={FadeInUp.delay(150).duration(500).springify()}>
+              <LockedComingSoonCard title={t('insights.medicationTracker.title')} />
+            </Animated.View>
+          </>
         )}
       </Animated.ScrollView>
     </SafeAreaView>

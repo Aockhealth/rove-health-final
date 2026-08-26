@@ -32,6 +32,8 @@ export const iconMap: Record<string, any> = {
 };
 
 export type RiverItem = {
+  /** Stable identifier for matching against `onCardClick`, independent of `title` (which may be a translated, language-dependent string). */
+  id?: string;
   title: string;
   desc?: string;
   detail?: string;
@@ -174,7 +176,7 @@ function RiverCard({ item, onPress, direction = 'left', hideIcon = false }: { it
         )}
         <View className="flex-1">
           <Text numberOfLines={1} className={`text-xs text-rove-charcoal/90 ${hideIcon ? 'text-center' : ''}`} style={{ fontFamily: 'CormorantGaramond-Bold' }}>{item.title}</Text>
-          <Text numberOfLines={1} className={`text-rove-charcoal/50 text-[10px] font-medium mt-0.5 ${hideIcon ? 'text-center' : ''}`}>{item.desc}</Text>
+          <Text numberOfLines={1} className={`text-rove-charcoal/75 text-[10px] font-medium mt-0.5 ${hideIcon ? 'text-center' : ''}`}>{item.desc}</Text>
         </View>
         {clickable && (
           <ChevronRight size={12} color="#333" style={{ opacity: 0.3 }} />

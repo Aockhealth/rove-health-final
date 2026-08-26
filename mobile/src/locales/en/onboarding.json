@@ -1,0 +1,127 @@
+{
+  "intro": {
+    "title": "Welcome to Rove",
+    "subtitle": "Your personal health companion. We'll ask a few quick questions to tailor your experience to your unique biology.",
+    "timeNote": "Takes about 2 minutes. All data is securely encrypted."
+  },
+  "welcome": {
+    "title": "Welcome to Rove",
+    "subtitle": "Let's set up your profile. This takes about 2 minutes.",
+    "nameLabel": "What should we call you?",
+    "namePlaceholder": "Your name",
+    "dobLabel": "Date of birth",
+    "dobNote": "Used to personalize your nutrition and calorie recommendations."
+  },
+  "history": {
+    "title": "Period History",
+    "subtitle": "Mark your recent periods. Adding 2+ ranges gives the most accurate predictions.",
+    "hints": {
+      "tapFirstDay": "Tap the first day of your most recent period",
+      "tapLastDay": "Now tap the last day of that period",
+      "rangeSaved": "Range saved — add one more for better accuracy",
+      "rangesLogged_one": "{{count}} range logged — cycle auto-calculated",
+      "rangesLogged_other": "{{count}} ranges logged — cycle auto-calculated"
+    },
+    "clearMonth": "Clear this month",
+    "autoCalculated": "Auto-Calculated",
+    "cycleDays": "Cycle days",
+    "periodDays": "Period days",
+    "irregular": "Irregular",
+    "regular": "Regular",
+    "pattern": "Pattern",
+    "orSetManually": "Or set manually",
+    "cycleLength": "Cycle length",
+    "periodLength": "Period length",
+    "daysValue_one": "{{count}}d",
+    "daysValue_other": "{{count}}d"
+  },
+  "aboutYou": {
+    "title": "About You",
+    "subtitle": "A few details about your health and lifestyle to tailor your experience.",
+    "healthConditions": "Health Conditions",
+    "typicalSymptoms": "Typical Symptoms",
+    "symptomsSelected_one": "{{count}} selected",
+    "symptomsSelected_other": "{{count}} selected",
+    "symptomsOptional": "Optional — helps personalize insights",
+    "lifestyle": "Lifestyle",
+    "heightLabel": "Height (cm)",
+    "weightLabel": "Weight (kg)",
+    "dietPreference": "Diet preference",
+    "conditions": {
+      "none": "None",
+      "pcosPcod": "PCOS / PCOD",
+      "recurrentUti": "Recurrent UTI",
+      "bacterialVaginosis": "Bacterial Vaginosis",
+      "endometriosis": "Endometriosis",
+      "fibroids": "Fibroids",
+      "diabetes": "Diabetes",
+      "hypertension": "Hypertension",
+      "thyroid": "Thyroid"
+    },
+    "symptoms": {
+      "cramps": "Cramps",
+      "bloating": "Bloating",
+      "fatigue": "Fatigue",
+      "headache": "Headache",
+      "backache": "Backache",
+      "acne": "Acne",
+      "breastPain": "Breast pain",
+      "moodSwings": "Mood swings",
+      "feelingLow": "Feeling low",
+      "irritability": "Irritability",
+      "anger": "Anger",
+      "foodCravings": "Food cravings"
+    },
+    "dietOptions": {
+      "vegetarian": "Vegetarian",
+      "nonVeg": "Non-Veg",
+      "vegan": "Vegan",
+      "jain": "Jain",
+      "eggetarian": "Eggetarian",
+      "pescatarian": "Pescatarian"
+    }
+  },
+  "goals": {
+    "heading": "Your Goals",
+    "subheading": "Pick what matters most — we'll tailor your daily plan from day one.",
+    "trackingQuestion": "What are you tracking?",
+    "trackerModes": {
+      "menstruation": {
+        "label": "My Cycle",
+        "description": "Period, symptoms and phase-based guidance"
+      },
+      "ttc": {
+        "label": "Trying to Conceive",
+        "description": "Adds temperature and ovulation test tracking"
+      },
+      "menopause": {
+        "label": "Menopause",
+        "description": "Perimenopause and menopause support"
+      }
+    },
+    "items": {
+      "syncing": {
+        "label": "Cycle Syncing",
+        "description": "Align routines with your hormonal phases"
+      },
+      "tracking": {
+        "label": "Cycle Tracking",
+        "description": "Track period and symptom patterns"
+      },
+      "weight_loss": {
+        "label": "Weight Loss",
+        "description": "Build sustainable fat-loss habits"
+      }
+    },
+    "privacy": {
+      "title": "Privacy & Disclaimer",
+      "agreePrefix": "I agree to the ",
+      "termsLink": "Terms of Service",
+      "agreeMiddle": " and ",
+      "privacyLink": "Privacy Policy",
+      "agreeSuffix": ".",
+      "medicalDisclaimer": "I understand this app does not intend to diagnose, cure, treat, or prevent any condition. I will consult a healthcare professional for medical advice.",
+      "dataSecurity": "My data is stored securely and never sold."
+    }
+  }
+}

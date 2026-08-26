@@ -5,12 +5,14 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Calendar, BarChart2, List, BookOpen } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { fetchDashboardData } from '../../lib/dashboard';
 import { phaseThemes } from '../../data/home-content';
 
 const TAB_BAR_CONTENT_HEIGHT = 56;
 
 export default function AppLayout() {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboardData,
@@ -75,35 +77,35 @@ export default function AppLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: t('common.tabs.home'),
           tabBarIcon: ({ color, focused }) => renderIcon(Home, color, focused),
         }}
       />
       <Tabs.Screen
         name="tracker"
         options={{
-          title: 'Tracker',
+          title: t('common.tabs.tracker'),
           tabBarIcon: ({ color, focused }) => renderIcon(Calendar, color, focused),
         }}
       />
       <Tabs.Screen
         name="insights"
         options={{
-          title: 'Insights',
+          title: t('common.tabs.insights'),
           tabBarIcon: ({ color, focused }) => renderIcon(BarChart2, color, focused),
         }}
       />
       <Tabs.Screen
         name="plan"
         options={{
-          title: 'Plan',
+          title: t('common.tabs.plan'),
           tabBarIcon: ({ color, focused }) => renderIcon(List, color, focused),
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
-          title: 'Learn',
+          title: t('common.tabs.learn'),
           tabBarIcon: ({ color, focused }) => renderIcon(BookOpen, color, focused),
         }}
       />

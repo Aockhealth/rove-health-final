@@ -1,7 +1,11 @@
 import { supabase } from './supabase';
-import { calculatePhase, getRelevantPeriodStart, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { calculatePhase, deriveRecentCycleLengths, getRelevantPeriodStart, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
 import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
+import type { LhBandReading } from '@shared/cycle/lh';
+import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
+import { deriveCycleStarts, getPersonalizedLutealLength, scoreTtcCycles } from './ttcCycleHistory';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
+import { hasPcosFlag } from './pcos';
 import { BLUEPRINTS } from '@shared/content/plan-blueprints';
 import { calculateAge, calculateTDEE, applyGoalAdjustment, getPhaseMacros } from './calorieCalculator';
 import {
@@ -32,13 +36,15 @@ export async function fetchPlanPageDataFast() {
       logsResult,
       lifestyleResult,
       weightGoalResult,
-      onboardingResult
+      onboardingResult,
+      lhReadingsResult
   ] = await Promise.all([
       supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-      supabase.from("daily_logs").select("date, is_period, bbt_celsius, opk_result").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
+      supabase.from("daily_logs").select("date, is_period, bbt_celsius, opk_result, nsaid_taken, disruptors, sleep_minutes, bbt_wake_time, cervical_discharge").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
       supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
       supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_onboarding").select("goals, conditions, date_of_birth, tracker_mode").eq("user_id", user.id).maybeSingle()
+      supabase.from("user_onboarding").select("goals, conditions, date_of_birth, tracker_mode").eq("user_id", user.id).maybeSingle(),
+      supabase.from("lh_readings").select("date, test_time, band_level").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false })
   ]);
 
   const settings = settingsResult.data;
@@ -46,11 +52,17 @@ export async function fetchPlanPageDataFast() {
   const weightGoal = weightGoalResult.data;
   const onboarding = onboardingResult.data;
   const logs = logsResult.data || [];
+  const lhReadings: LhBandReading[] = (lhReadingsResult.data || []).map((r: any) => ({
+    date: r.date,
+    testTime: r.test_time,
+    bandLevel: Number(r.band_level),
+  }));
 
   if (!settings) return null;
 
   const monthLogs: Record<string, DailyLog> = {};
   const ttcLogs: Record<string, TtcDailyLog> = {};
+  const mucusReadings: MucusReading[] = [];
   logs.forEach((l: any) => {
     monthLogs[l.date] = { date: l.date, is_period: l.is_period };
     ttcLogs[l.date] = {
@@ -58,33 +70,62 @@ export async function fetchPlanPageDataFast() {
       is_period: l.is_period,
       bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
       opk_result: l.opk_result ?? null,
+      disruptors: l.disruptors ?? null,
+      sleep_minutes: l.sleep_minutes === null || l.sleep_minutes === undefined ? null : Number(l.sleep_minutes),
+      bbt_wake_time: l.bbt_wake_time ?? null,
+      nsaid_taken: l.nsaid_taken ?? null,
     };
+    if (l.cervical_discharge) {
+      const mucus = parseMucusJson(l.cervical_discharge, l.date);
+      if (mucus) mucusReadings.push(mucus);
+    }
   });
 
-  const phaseSettings: CycleSettings = {
+  const baseSettings: CycleSettings = {
       last_period_start: settings.last_period_start || '',
       cycle_length_days: settings.cycle_length_days || 28,
       period_length_days: settings.period_length_days || 5
   };
 
+  const trackerModeRaw = onboarding?.tracker_mode || 'menstruation';
+  const hasPcos = hasPcosFlag(onboarding?.goals, onboarding?.conditions);
+
+  // Anchors the date-math fallback (both the phase calculation and the TTC
+  // ovulation read below) off her own history once there's enough of it —
+  // luteal length is comparatively stable within a woman, so it's a better
+  // prior than the 14-day population default. See getPersonalizedLutealLength.
+  let phaseSettings = baseSettings;
+  if (trackerModeRaw === 'ttc') {
+      const ttcHistoryLogs = logs.map((l: any) => ({
+          date: l.date as string,
+          is_period: l.is_period as boolean | null,
+          bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
+          opk_result: (l.opk_result ?? null) as TtcDailyLog['opk_result'],
+          disruptors: l.disruptors ?? null,
+          sleep_minutes: l.sleep_minutes === null || l.sleep_minutes === undefined ? null : Number(l.sleep_minutes),
+          bbt_wake_time: l.bbt_wake_time ?? null,
+          nsaid_taken: l.nsaid_taken ?? null,
+      }));
+      const { starts } = deriveCycleStarts(ttcHistoryLogs);
+      const historyCycles = scoreTtcCycles(ttcHistoryLogs, starts, baseSettings, new Date(), hasPcos, lhReadings, mucusReadings);
+      const personalizedLuteal = getPersonalizedLutealLength(historyCycles);
+      if (personalizedLuteal !== null) {
+          phaseSettings = { ...baseSettings, luteal_length_days: personalizedLuteal };
+      }
+  }
+
   const phaseResult = calculatePhase(new Date(), phaseSettings, monthLogs);
   const phase = phaseResult.phase || "Menstrual";
   const day = phaseResult.day || 1;
-
-  const trackerModeRaw = onboarding?.tracker_mode || 'menstruation';
-  const goalsAndConditionsForPcos = [
-      ...(Array.isArray(onboarding?.goals) ? onboarding.goals : []),
-      ...(Array.isArray(onboarding?.conditions) ? onboarding.conditions : []),
-  ];
-  const hasPcosFlag = goalsAndConditionsForPcos.some((v) => String(v).toLowerCase().includes('pcos'));
 
   // Anchored to the same period start the phase calculation uses, matching
   // dashboard.ts, so the Plan tab's Timing card never disagrees with Home
   // about which cycle it's describing.
   const { start: cycleStart } = getRelevantPeriodStart(new Date(), phaseSettings, monthLogs);
+  const recentCycleLengths = deriveRecentCycleLengths(new Date(), monthLogs);
   const ovulation: OvulationSignal | null =
       trackerModeRaw === 'ttc' && cycleStart
-          ? detectOvulation(cycleStart, new Date(), ttcLogs, phaseSettings, { hasPcos: hasPcosFlag })
+          ? detectOvulation(cycleStart, new Date(), ttcLogs, phaseSettings, { hasPcos, recentCycleLengths, lhReadings, mucusReadings })
           : null;
 
   const content = PHASE_CONTENT[phase] || PHASE_CONTENT["Menstrual"];
@@ -155,7 +196,7 @@ export async function fetchPlanPageDataFast() {
       settings: phaseSettings,
       monthLogs,
       trackerMode: trackerModeRaw,
-      hasPcos: hasPcosFlag,
+      hasPcos,
       ovulation,
       lifestyle: lifestyle ? {
           weight_kg: lifestyle.weight_kg,

@@ -1,11 +1,8 @@
-import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { makeRedirectUri } from 'expo-auth-session';
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { supabase } from './supabase';
-
-WebBrowser.maybeCompleteAuthSession();
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import * as Sentry from '@sentry/react-native';
 
 GoogleSignin.configure({
@@ -35,7 +32,12 @@ function describeSignInError(error: any): string {
   return code ? `${detail} (code ${code})` : detail;
 }
 
-export const signInWithGoogle = async () => {
+// Uses native Google Sign-In SDK on both iOS and Android.
+// Note for iOS: Ensure "Skip nonce checks" is enabled in your Supabase Dashboard
+// (Authentication -> Providers -> Google) to avoid nonce mismatch errors.
+type SignInResult = { success: boolean; cancelled?: true; error?: string };
+
+export const signInWithGoogle = async (): Promise<SignInResult> => {
   try {
     await GoogleSignin.hasPlayServices();
     const userInfo = await GoogleSignin.signIn();
@@ -74,5 +76,48 @@ export const signInWithGoogle = async () => {
     console.error('OAuth error:', error?.code, error);
     Sentry.captureException(error, { tags: { flow: 'google-sign-in' } });
     return { success: false, error: describeSignInError(error) };
+  }
+};
+
+export const signInWithApple = async () => {
+  try {
+    // Supabase checks that the nonce inside Apple's identityToken matches what we told
+    // Apple to sign — it needs the raw value, while Apple only ever sees the SHA-256 hash.
+    const rawNonce = Crypto.randomUUID();
+    const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashedNonce,
+    });
+
+    if (!credential.identityToken) {
+      throw Object.assign(new Error('Apple signed the user in but returned no identity token.'), {
+        code: 'ROVE_NO_ID_TOKEN',
+      });
+    }
+
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
+      nonce: rawNonce,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    if (error?.code === 'ERR_REQUEST_CANCELED') {
+      return { success: false, cancelled: true as const };
+    }
+
+    console.error('OAuth error:', error?.code, error);
+    Sentry.captureException(error, { tags: { flow: 'apple-sign-in' } });
+    return { success: false, error: error?.message || 'Apple sign in failed' };
   }
 };

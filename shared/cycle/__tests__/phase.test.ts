@@ -17,6 +17,8 @@ import {
     getRelevantPeriodStart,
     isInFertileWindow,
     getOvulationDay,
+    computeFertileWindowRadius,
+    deriveRecentCycleLengths,
     type CycleSettings,
     type DailyLog,
     type PhaseResult,
@@ -472,6 +474,73 @@ describe('Fertility helpers', () => {
 
         it('respects custom luteal length', () => {
             expect(getOvulationDay(28, 12)).toBe(16);
+        });
+    });
+
+    describe('computeFertileWindowRadius', () => {
+        it('falls back to the wide population SD with fewer than 3 cycles logged', () => {
+            expect(computeFertileWindowRadius([])).toEqual({
+                before: 9, // 5 + ceil(4)
+                after: 3,  // 1 + ceil(4/2)
+                sigma: 4,
+                tooIrregularForWindow: false,
+            });
+            // Two cycles isn't enough to trust over the population default either.
+            const withTwo = computeFertileWindowRadius([28, 30]);
+            expect(withTwo.sigma).toBe(4);
+        });
+
+        it('narrows for a regular personal history, down to the SD floor', () => {
+            const radius = computeFertileWindowRadius([28, 29, 27, 28, 29, 28]);
+            expect(radius.sigma).toBe(1.5); // real SD (~0.69) is below the 1.5 floor
+            expect(radius.before).toBe(7);  // 5 + ceil(1.5)
+            expect(radius.after).toBe(2);   // 1 + ceil(0.75)
+            expect(radius.tooIrregularForWindow).toBe(false);
+        });
+
+        it('flags a highly irregular history as too wide to draw a window for', () => {
+            const radius = computeFertileWindowRadius([24, 50, 28, 60, 32]);
+            expect(radius.sigma).toBeGreaterThan(5);
+            expect(radius.tooIrregularForWindow).toBe(true);
+        });
+
+        it('ignores non-finite/non-positive noise in the input', () => {
+            const withJunk = computeFertileWindowRadius([28, NaN, -5, 0, 29, 27, 28, 29, 28]);
+            const clean = computeFertileWindowRadius([28, 29, 27, 28, 29, 28]);
+            expect(withJunk).toEqual(clean);
+        });
+    });
+
+    describe('deriveRecentCycleLengths', () => {
+        it('derives cycle lengths from consecutive logged period starts', () => {
+            const logs: Record<string, DailyLog> = {};
+            // Three 28-day cycles: Jan 1, Jan 29, Feb 26.
+            for (const d of ['2026-01-01', '2026-01-02', '2026-01-29', '2026-01-30', '2026-02-26', '2026-02-27']) {
+                logs[d] = createLog(d, true);
+            }
+            const lengths = deriveRecentCycleLengths(parseLocalDate('2026-03-10'), logs);
+            expect(lengths).toEqual([28, 28]);
+        });
+
+        it('returns an empty array with no logged periods', () => {
+            expect(deriveRecentCycleLengths(parseLocalDate('2026-03-10'), {})).toEqual([]);
+        });
+    });
+
+    describe('isInFertileWindow with recentCycleLengths', () => {
+        it('widens the window once history is passed, vs. the untouched fixed default', () => {
+            // Day 17 sits outside the old fixed window (9..15) but inside the
+            // population-SD-widened one (5..17). Omitting the 4th argument
+            // entirely must keep the exact old behavior — passing `[]`
+            // explicitly is what opts into widening.
+            expect(isInFertileWindow(17, 28)).toBe(false);
+            expect(isInFertileWindow(17, 28, DEFAULT_LUTEAL_LENGTH, [])).toBe(true);
+        });
+
+        it('never returns true when the personal history is too irregular to trust', () => {
+            // Even a day that would otherwise sit inside a naive window is
+            // excluded once tooIrregularForWindow fires — there's no window.
+            expect(isInFertileWindow(14, 28, DEFAULT_LUTEAL_LENGTH, [24, 50, 28, 60, 32])).toBe(false);
         });
     });
 });

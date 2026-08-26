@@ -4,8 +4,13 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { Thermometer } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { parseLocalDate } from '@shared/cycle/phase';
 import type { BbtReading, OpkReading, OpkResult, OvulationSignal } from '@shared/cycle/ttc';
+import { isPeakMucus, type MucusReading } from '@shared/cycle/mucus';
+import { getTtcStateMeta, getTtcMethodLabel, getTtcConfidenceWithLabel, getTtcOpkLabel } from '../../lib/ttcEngine';
+import { getDateLocaleTag } from '../../lib/i18n';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 // Hand-rolled SVG, matching how every other chart in this app is drawn (see
 // PhaseOrbRing, MacroFuelGauge) — there's no charting library here, and adding
@@ -25,11 +30,17 @@ const AXIS_COLOR = 'rgba(138,131,120,0.18)';
 const FERTILE_WINDOW_FILL = '#D4A25F';
 const ANDROID_GRADIENT: [string, string] = ['#FAEBEF', '#FDF7F9'];
 
-const CHART_HEIGHT = 150;
+const MUCUS_ROW_HEIGHT = 18;
+const CHART_HEIGHT = 150 + MUCUS_ROW_HEIGHT;
 const PADDING_LEFT = 32;
 const PADDING_RIGHT = 8;
 const PADDING_TOP = 12;
 const OPK_ROW_HEIGHT = 24;
+
+// Peak-quality mucus is coincident with ovulation, not a graded scale like
+// OPK — two states only: logged (not peak) and peak.
+const MUCUS_COLOR_LOGGED = '#D6D1CB';
+const MUCUS_COLOR_PEAK = '#7B9EC7';
 
 // Enough vertical room that a real 0.3°C shift is visibly a step, not a
 // rounding wobble — without this floor, a flat cycle's noise fills the chart
@@ -43,18 +54,12 @@ const OPK_COLORS: Record<OpkResult, string> = {
   peak: '#C0546F',
 };
 
-const METHOD_LABEL: Record<OvulationSignal['method'], string> = {
-  combined: 'Temperature + test',
-  bbt_only: 'Temperature',
-  opk_only: 'Ovulation test',
-  date_math: 'Cycle dates',
-};
-
-const CONFIDENCE_LABEL: Record<OvulationSignal['confidence'], string> = {
-  high: 'High confidence',
-  medium: 'Medium confidence',
-  low: 'Low confidence',
-};
+export interface TtcSecondarySignals {
+  hrvMs: number | null;
+  hrvSource: 'apple_sdnn' | 'health_connect_rmssd' | null;
+  restingHeartRateBpm: number | null;
+  skinTempDeltaCelsius: number | null;
+}
 
 export interface TtcFertilityCardProps {
   bbt: BbtReading[];
@@ -64,6 +69,10 @@ export interface TtcFertilityCardProps {
   cycleStart: string;
   /** Measured width available for the chart. */
   width: number;
+  /** Today's HRV/resting-heart-rate/skin-temperature, if synced — informational only, never part of `signal`. */
+  secondarySignals?: TtcSecondarySignals;
+  /** This cycle's cervical mucus readings — coincident with ovulation, sharpens confidence but never confirms it (see shared/cycle/mucus.ts). */
+  mucus?: MucusReading[];
 }
 
 export function TtcFertilityCard({
@@ -73,10 +82,13 @@ export function TtcFertilityCard({
   signal,
   cycleStart,
   width,
+  secondarySignals,
+  mucus = [],
 }: TtcFertilityCardProps) {
+  const { t, i18n } = useTranslation();
   const chartWidth = Math.max(width, 240);
   const plotWidth = chartWidth - PADDING_LEFT - PADDING_RIGHT;
-  const plotHeight = CHART_HEIGHT - PADDING_TOP - OPK_ROW_HEIGHT;
+  const plotHeight = CHART_HEIGHT - PADDING_TOP - OPK_ROW_HEIGHT - MUCUS_ROW_HEIGHT;
   const plotBottom = PADDING_TOP + plotHeight;
 
   const dayOf = (dateStr: string): number =>
@@ -142,7 +154,7 @@ export function TtcFertilityCard({
       ? { x1: xForDay(Math.max(fertileStartDay, 1)), x2: xForDay(Math.min(fertileEndDay, lastDay)) }
       : null;
 
-  const hasChart = bbt.length > 0 || opk.length > 0;
+  const hasChart = bbt.length > 0 || opk.length > 0 || mucus.length > 0;
   const dateRangeLabel = `${shortDate(cycleStart)} – ${shortDate(addDaysStr(cycleStart, lastDay - 1))}`;
   const loggingIsSparse = bbt.length < Math.ceil(lastDay / 2);
 
@@ -171,8 +183,8 @@ export function TtcFertilityCard({
 
       <View className="flex-row items-center gap-2">
         <Thermometer size={18} color={ACCENT} />
-        <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-          Fertility Signals
+        <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
+          {t('insights.fertilityCard.title')}
         </Text>
       </View>
 
@@ -180,17 +192,17 @@ export function TtcFertilityCard({
           the Home card, so the chart itself only has to show the trend. */}
       <View className="mt-3 flex-row flex-wrap items-center gap-2">
         <View className="rounded-full bg-white/70 px-2.5 py-1">
-          <Text className="text-[10px] font-semibold text-rove-stone">{METHOD_LABEL[signal.method]}</Text>
+          <Text className="text-[10px] font-semibold text-rove-stone">{getTtcMethodLabel(signal.method, t)}</Text>
         </View>
         <View className="rounded-full bg-white/70 px-2.5 py-1">
           <Text className="text-[10px] font-semibold" style={{ color: ACCENT }}>
-            {CONFIDENCE_LABEL[signal.confidence]}
+            {getTtcConfidenceWithLabel(signal.confidence, t)}
           </Text>
         </View>
         {dpo !== null ? (
           <View className="rounded-full bg-white/70 px-2.5 py-1">
             <Text className="text-[10px] font-semibold" style={{ color: CONFIRMED_COLOR }}>
-              {dpo === 0 ? 'Ovulation day' : `${dpo} DPO`}
+              {dpo === 0 ? t('insights.fertilityCard.ovulationDay') : t('insights.fertilityCard.dpo', { count: dpo })}
             </Text>
           </View>
         ) : null}
@@ -286,6 +298,16 @@ export function TtcFertilityCard({
                 fill={OPK_COLORS[r.value]}
               />
             ))}
+
+            {mucus.map((r) => (
+              <Circle
+                key={r.date}
+                cx={x(r.date)}
+                cy={plotBottom + 7 + OPK_ROW_HEIGHT + 5}
+                r={isPeakMucus(r) ? 4 : 3}
+                fill={isPeakMucus(r) ? MUCUS_COLOR_PEAK : MUCUS_COLOR_LOGGED}
+              />
+            ))}
           </Svg>
 
           <Text className="mt-1 text-[10px] text-rove-stone">{dateRangeLabel}</Text>
@@ -296,38 +318,81 @@ export function TtcFertilityCard({
             {coverline !== null ? (
               <View className="flex-row items-center gap-1.5">
                 <View style={{ width: 10, height: 2, backgroundColor: COVERLINE_COLOR, borderRadius: 1 }} />
-                <Text className="text-[10px] text-rove-stone">Coverline</Text>
+                <Text className="text-[10px] text-rove-stone">{t('insights.fertilityCard.coverline')}</Text>
               </View>
             ) : null}
             {(['negative', 'low', 'high', 'peak'] as OpkResult[]).map((value) => (
               <View key={value} className="flex-row items-center gap-1.5">
                 <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: OPK_COLORS[value] }} />
-                <Text className="text-[10px] capitalize text-rove-stone">{value}</Text>
+                <Text className="text-[10px] text-rove-stone">{getTtcOpkLabel(value, t)}</Text>
               </View>
             ))}
+            {mucus.length > 0 ? (
+              <>
+                <View className="flex-row items-center gap-1.5">
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: MUCUS_COLOR_PEAK }} />
+                  <Text className="text-[10px] text-rove-stone">{t('insights.fertilityCard.peakMucus')}</Text>
+                </View>
+                <View className="flex-row items-center gap-1.5">
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MUCUS_COLOR_LOGGED }} />
+                  <Text className="text-[10px] text-rove-stone">{t('insights.fertilityCard.mucusLogged')}</Text>
+                </View>
+              </>
+            ) : null}
           </View>
         </>
       ) : (
         <Text className="mt-3 text-[13px] leading-relaxed text-rove-stone">
-          Log a morning temperature and an ovulation test in the Tracker and your chart will build
-          here across the cycle.
+          {t('insights.fertilityCard.emptyState')}
         </Text>
       )}
 
       <Text className="mt-3 text-[13px] leading-relaxed text-rove-stone">
         {signal.explanation}
-        {hasChart && loggingIsSparse ? ' Daily readings sharpen the coverline.' : ''}
+        {hasChart && loggingIsSparse ? t('insights.fertilityCard.sparseNote') : ''}
       </Text>
 
       {signal.anovulatory?.detected ? (
         <View className="mt-3 rounded-2xl bg-white/60 p-3">
           <Text className="text-[11px] leading-relaxed text-rove-stone">
-            Cycles vary, and one unusual cycle on its own is common. This isn’t a diagnosis.
+            {getTtcStateMeta(signal, t).timingBody}
+          </Text>
+        </View>
+      ) : null}
+
+      {hasSecondarySignal(secondarySignals) ? (
+        <View className="mt-3 flex-row flex-wrap gap-x-4 gap-y-1 border-t border-black/[0.05] pt-3">
+          {secondarySignals!.hrvMs !== null ? (
+            <Text className="text-[10.5px] font-semibold text-rove-stone">
+              {t('insights.fertilityCard.hrv')} <Text className="text-rove-charcoal">{Math.round(secondarySignals!.hrvMs)}ms</Text>
+            </Text>
+          ) : null}
+          {secondarySignals!.restingHeartRateBpm !== null ? (
+            <Text className="text-[10.5px] font-semibold text-rove-stone">
+              {t('insights.fertilityCard.restingHr')} <Text className="text-rove-charcoal">{secondarySignals!.restingHeartRateBpm}bpm</Text>
+            </Text>
+          ) : null}
+          {secondarySignals!.skinTempDeltaCelsius !== null ? (
+            <Text className="text-[10.5px] font-semibold text-rove-stone">
+              {t('insights.fertilityCard.skinTemp')}{' '}
+              <Text className="text-rove-charcoal">
+                {secondarySignals!.skinTempDeltaCelsius > 0 ? '+' : ''}
+                {secondarySignals!.skinTempDeltaCelsius.toFixed(2)}°C
+              </Text>
+            </Text>
+          ) : null}
+          <Text className="w-full text-[9.5px] text-rove-stone/70">
+            {t('insights.fertilityCard.healthSyncNote')}
           </Text>
         </View>
       ) : null}
     </View>
   );
+}
+
+function hasSecondarySignal(s: TtcSecondarySignals | undefined): boolean {
+  if (!s) return false;
+  return s.hrvMs !== null || s.restingHeartRateBpm !== null || s.skinTempDeltaCelsius !== null;
 }
 
 function todayString(): string {
@@ -345,9 +410,8 @@ function addDaysStr(dateStr: string, days: number): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
-/** "2026-08-15" -> "15 Aug" */
+/** "2026-08-15" -> "15 Aug" (localized to the active app language) */
 function shortDate(dateStr: string): string {
   const d = parseLocalDate(dateStr);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${d.getDate()} ${months[d.getMonth()]}`;
+  return d.toLocaleDateString(getDateLocaleTag(), { day: 'numeric', month: 'short' });
 }

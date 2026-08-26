@@ -1,4 +1,26 @@
 
+# Restores the live project's real Auth/Storage settings, which an earlier
+# `supabase config push` from this file overwrote with CLI defaults because
+# this file didn't declare them explicitly. Values below are copied verbatim
+# from that push's own diff output (the "remote"/before side) — do not
+# change these without checking the live project settings first.
+[auth]
+site_url = "https://www.rovehealth.in/"
+additional_redirect_urls = ["http://localhost:3000/reset-password", "http://127.0.0.1:3000/reset-password", "http://localhost:3000/auth/callback", "http://localhost:3000/**", "https://jicmptpnhapbycdxutng.supabase.co/auth/v1/callback", "https://rove-health-git-saundarya-main-saundarya-s-projects.vercel.app"]
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.email]
+double_confirm_changes = false
+enable_confirmations = true
+max_frequency = "30s"
+otp_length = 8
+
+[storage.vector]
+enabled = false
+
 [functions.recompute-cycle]
 enabled = true
 verify_jwt = true
@@ -13,4 +35,8 @@ entrypoint = "./functions/recompute-cycle/index.ts"
 [auth.email.templates.signup]
 subject = "Verify your email for ROVE Health"
 content_path = "./templates/signup.html"
+
+[auth.email.templates.recovery]
+subject = "Your ROVE Health password reset code"
+content_path = "./templates/recovery.html"
 

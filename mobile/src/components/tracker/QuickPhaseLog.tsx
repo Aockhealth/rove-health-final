@@ -3,40 +3,47 @@ import { View, Text, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Zap, Activity, Smile, Heart, Check } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { SymptomChip } from './SymptomChip';
 import { Phase, PHASE_COLORS } from './CycleCalendar';
 import { phaseThemes } from '../../data/home-content';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 // Ported from frontend/src/app/cycle-sync/tracker/components/QuickPhaseLog.tsx —
 // keep the suggestion sets and phase copy in sync with that file if it changes.
 type SuggestionType = 'symptom' | 'mood' | 'sex' | 'disruptor';
 
 interface Suggestion {
+  /** Persisted value — routed to the same state arrays (selectedSymptoms
+   * etc.) the full cards further down the page use, so this stays in
+   * English regardless of app language. */
   label: string;
+  /** Looks up the localized display text via `tracker.quickPhaseLog.suggestions.<labelKey>`. */
+  labelKey: string;
   type: SuggestionType;
 }
 
 const PHASE_SUGGESTIONS: Record<Exclude<Phase, null>, Suggestion[]> = {
   Menstrual: [
-    { label: 'Cramps', type: 'symptom' },
-    { label: 'Fatigue', type: 'symptom' },
-    { label: 'Low mood', type: 'mood' },
-    { label: 'Painkillers', type: 'disruptor' },
+    { label: 'Cramps', labelKey: 'cramps', type: 'symptom' },
+    { label: 'Fatigue', labelKey: 'fatigue', type: 'symptom' },
+    { label: 'Low mood', labelKey: 'lowMood', type: 'mood' },
+    { label: 'Painkillers', labelKey: 'painkillers', type: 'disruptor' },
   ],
   Follicular: [
-    { label: 'Energetic', type: 'mood' },
-    { label: 'Calm', type: 'mood' },
+    { label: 'Energetic', labelKey: 'energetic', type: 'mood' },
+    { label: 'Calm', labelKey: 'calm', type: 'mood' },
   ],
   Ovulatory: [
-    { label: 'High sex drive', type: 'sex' },
-    { label: 'Energetic', type: 'mood' },
-    { label: 'Breast Pain', type: 'symptom' },
+    { label: 'High sex drive', labelKey: 'highSexDrive', type: 'sex' },
+    { label: 'Energetic', labelKey: 'energetic', type: 'mood' },
+    { label: 'Breast Pain', labelKey: 'breastPain', type: 'symptom' },
   ],
   Luteal: [
-    { label: 'Bloating', type: 'symptom' },
-    { label: 'Acne', type: 'symptom' },
-    { label: 'Irritable', type: 'mood' },
-    { label: 'High sugar', type: 'disruptor' },
+    { label: 'Bloating', labelKey: 'bloating', type: 'symptom' },
+    { label: 'Acne', labelKey: 'acne', type: 'symptom' },
+    { label: 'Irritable', labelKey: 'irritable', type: 'mood' },
+    { label: 'High sugar', labelKey: 'highSugar', type: 'disruptor' },
   ],
 };
 
@@ -87,6 +94,7 @@ export function QuickPhaseLog({
   selectedDisruptors,
   onToggleDisruptor,
 }: QuickPhaseLogProps) {
+  const { t, i18n } = useTranslation();
   if (!currentPhase) return null;
 
   const suggestions = PHASE_SUGGESTIONS[currentPhase] ?? [];
@@ -140,8 +148,10 @@ export function QuickPhaseLog({
           <Zap size={16} color={accent} />
         </View>
         <View>
-          <Text style={styles.title}>{currentPhase} Patterns</Text>
-          <Text style={styles.subtitle}>Quick log common symptoms</Text>
+          <Text style={[styles.title, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+            {t('tracker.quickPhaseLog.title', { phase: t(`tracker.quickPhaseLog.phaseNames.${currentPhase}`) })}
+          </Text>
+          <Text style={styles.subtitle}>{t('tracker.quickPhaseLog.subtitle')}</Text>
         </View>
       </View>
 
@@ -152,7 +162,7 @@ export function QuickPhaseLog({
           return (
             <SymptomChip
               key={s.label}
-              label={s.label}
+              label={t(`tracker.quickPhaseLog.suggestions.${s.labelKey}`)}
               isSelected={active}
               onToggle={() => handleToggle(s)}
               accentColor={color}

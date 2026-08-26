@@ -7,31 +7,39 @@ import {
   Calendar,
   BarChart3,
   Scale,
-  HeartPulse,
   Check,
   Shield,
   Droplet,
   Baby,
   Sunrise,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 export type TrackerMode = 'menstruation' | 'ttc' | 'menopause';
 
 // What the app is tracking *for* you — this changes which screens you get, so
-// it sits above the goal chips rather than reading as one more goal.
-const TRACKER_MODES: { id: TrackerMode; label: string; description: string; Icon: typeof Droplet }[] = [
-  { id: 'menstruation', label: 'My Cycle', description: 'Period, symptoms and phase-based guidance', Icon: Droplet },
-  { id: 'ttc', label: 'Trying to Conceive', description: 'Adds temperature and ovulation test tracking', Icon: Baby },
-  { id: 'menopause', label: 'Menopause', description: 'Perimenopause and menopause support', Icon: Sunrise },
+// it sits above the goal chips rather than reading as one more goal. Labels
+// and descriptions are translated at render time via `onboarding.goals.trackerModes.<id>`.
+//
+// TTC and Menopause are temporarily locked out of onboarding while they're
+// still being refined — new users can only start in Cycle Sync. Existing
+// accounts already in one of those modes are unaffected (see profile.tsx's
+// Tracking Mode selector, locked the same way). Re-add both rows here once
+// they're ready.
+const TRACKER_MODES: { id: TrackerMode; Icon: typeof Droplet }[] = [
+  { id: 'menstruation', Icon: Droplet },
 ];
 
-// Scoped to the four things the app actually delivers on, rather than vaguer
-// catch-alls — mirrored in ../profile/FocusGoals.tsx.
+// Scoped to the things the app actually delivers on, rather than vaguer
+// catch-alls — mirrored in ../profile/FocusGoals.tsx. PCOS (PMOS) guidance
+// dropped as a separate goal — it's captured properly in Health Passport's
+// Conditions Managed picker instead. Labels/descriptions translated at render
+// time via `onboarding.goals.items.<id>`.
 const GOALS = [
-  { id: 'syncing', label: 'Cycle Syncing', description: 'Align routines with your hormonal phases', Icon: Calendar },
-  { id: 'tracking', label: 'Cycle Tracking', description: 'Track period and symptom patterns', Icon: BarChart3 },
-  { id: 'weight_loss', label: 'Weight Loss', description: 'Build sustainable fat-loss habits', Icon: Scale },
-  { id: 'pcos', label: 'PCOS Guidance', description: 'Manage symptoms and energy better', Icon: HeartPulse },
+  { id: 'syncing', Icon: Calendar },
+  { id: 'tracking', Icon: BarChart3 },
+  { id: 'weight_loss', Icon: Scale },
 ];
 
 type StepGoalsProps = {
@@ -54,24 +62,25 @@ export function StepGoals({
   errors,
 }: StepGoalsProps) {
   const router = useRouter();
-  
+  const { t, i18n } = useTranslation();
+
   return (
     <View className="gap-6 px-1">
       <Animated.View entering={FadeInDown.delay(100).duration(400)} className="gap-2">
         <Text
           className="text-2xl text-rove-charcoal"
-          style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+          style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
         >
-          Your Goals
+          {t('onboarding.goals.heading')}
         </Text>
         <Text className="max-w-[320px] text-sm leading-relaxed text-rove-stone">
-          Pick what matters most — we'll tailor your daily plan from day one.
+          {t('onboarding.goals.subheading')}
         </Text>
       </Animated.View>
 
       <View className="gap-2">
         <Text className="text-xs font-bold uppercase tracking-widest text-rove-stone">
-          What are you tracking?
+          {t('onboarding.goals.trackingQuestion')}
         </Text>
         {TRACKER_MODES.map((mode, i) => {
           const selected = trackerMode === mode.id;
@@ -88,33 +97,33 @@ export function StepGoals({
                 // className — NativeWind shorthand classes that flip on state
                 // crash touchables in this app.
                 style={{
-                  borderColor: selected ? '#37332E' : 'rgba(55,51,46,0.1)',
-                  backgroundColor: selected ? '#37332E' : 'rgba(255,255,255,0.6)',
+                  borderColor: selected ? '#2D2420' : 'rgba(45,36,32,0.1)',
+                  backgroundColor: selected ? '#2D2420' : 'rgba(255,255,255,0.6)',
                 }}
               >
                 <View
                   className="h-9 w-9 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: selected ? 'rgba(255,255,255,0.15)' : 'rgba(55,51,46,0.05)' }}
+                  style={{ backgroundColor: selected ? 'rgba(255,255,255,0.15)' : 'rgba(45,36,32,0.05)' }}
                 >
-                  <mode.Icon size={18} color={selected ? '#FAF7F2' : '#78716C'} />
+                  <mode.Icon size={18} color={selected ? '#FAF9F6' : '#78716C'} />
                 </View>
                 <View className="flex-1">
                   <Text
                     className="text-sm font-semibold"
-                    style={{ color: selected ? '#FAF7F2' : '#37332E' }}
+                    style={{ color: selected ? '#FAF9F6' : '#2D2420' }}
                   >
-                    {mode.label}
+                    {t(`onboarding.goals.trackerModes.${mode.id}.label`)}
                   </Text>
                   <Text
                     className="mt-0.5 text-xs"
                     style={{ color: selected ? 'rgba(250,247,242,0.6)' : '#78716C' }}
                   >
-                    {mode.description}
+                    {t(`onboarding.goals.trackerModes.${mode.id}.description`)}
                   </Text>
                 </View>
                 {selected ? (
                   <View className="rounded-full bg-rove-cream p-1">
-                    <Check size={12} color="#37332E" />
+                    <Check size={12} color="#2D2420" />
                   </View>
                 ) : null}
               </TouchableOpacity>
@@ -146,7 +155,7 @@ export function StepGoals({
               >
                 {selected ? (
                   <View className="absolute right-3 top-3 rounded-full bg-rove-cream p-1">
-                    <Check size={12} color="#37332E" />
+                    <Check size={12} color="#2D2420" />
                   </View>
                 ) : null}
                 <View
@@ -154,15 +163,15 @@ export function StepGoals({
                     selected ? 'bg-white/15' : 'bg-rove-charcoal/5'
                   }`}
                 >
-                  <goal.Icon size={18} color={selected ? '#FAF7F2' : '#78716C'} />
+                  <goal.Icon size={18} color={selected ? '#FAF9F6' : '#78716C'} />
                 </View>
                 <Text
                   className={`text-sm font-semibold ${selected ? 'text-rove-cream' : 'text-rove-charcoal'}`}
                 >
-                  {goal.label}
+                  {t(`onboarding.goals.items.${goal.id}.label`)}
                 </Text>
                 <Text className={`mt-0.5 text-xs ${selected ? 'text-rove-cream/60' : 'text-rove-stone'}`}>
-                  {goal.description}
+                  {t(`onboarding.goals.items.${goal.id}.description`)}
                 </Text>
               </TouchableOpacity>
             </Animated.View>
@@ -186,38 +195,39 @@ export function StepGoals({
               privacyConsented ? 'border-rove-charcoal bg-rove-charcoal' : 'border-rove-stone/40 bg-white'
             }`}
           >
-            {privacyConsented ? <Check size={12} color="#FAF7F2" /> : null}
+            {privacyConsented ? <Check size={12} color="#FAF9F6" /> : null}
           </TouchableOpacity>
           <View className="flex-1">
             <View className="mb-3 flex-row items-center gap-1.5">
               <Shield size={14} color="#A8A29E" />
-              <Text className="text-xs font-semibold text-rove-charcoal">Privacy & Disclaimer</Text>
+              <Text className="text-xs font-semibold text-rove-charcoal">{t('onboarding.goals.privacy.title')}</Text>
             </View>
             <View className="gap-2">
               <Text className="text-xs leading-relaxed text-rove-stone">
                 <Text className="font-bold text-rove-charcoal">• </Text>
-                I agree to the{' '}
+                {t('onboarding.goals.privacy.agreePrefix')}
                 <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/terms')}
                 >
-                  Terms of Service
+                  {t('onboarding.goals.privacy.termsLink')}
                 </Text>
-                {' '}and{' '}
+                {t('onboarding.goals.privacy.agreeMiddle')}
                 <Text
                   className="underline text-rove-charcoal font-medium"
                   onPress={() => router.push('/privacy')}
                 >
-                  Privacy Policy
-                </Text>.
+                  {t('onboarding.goals.privacy.privacyLink')}
+                </Text>
+                {t('onboarding.goals.privacy.agreeSuffix')}
               </Text>
               <Text className="text-xs leading-relaxed text-rove-stone">
                 <Text className="font-bold text-rove-charcoal">• </Text>
-                I understand this app does not intend to diagnose, cure, treat, or prevent any condition. I will consult a healthcare professional for medical advice.
+                {t('onboarding.goals.privacy.medicalDisclaimer')}
               </Text>
               <Text className="text-xs leading-relaxed text-rove-stone">
                 <Text className="font-bold text-rove-charcoal">• </Text>
-                My data is stored securely and never sold.
+                {t('onboarding.goals.privacy.dataSecurity')}
               </Text>
             </View>
           </View>

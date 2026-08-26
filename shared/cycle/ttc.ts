@@ -26,8 +26,7 @@
 import {
     DEFAULT_CYCLE_LENGTH,
     DEFAULT_LUTEAL_LENGTH,
-    FERTILE_WINDOW_AFTER,
-    FERTILE_WINDOW_BEFORE,
+    computeFertileWindowRadius,
     daysBetween,
     formatDate,
     getOvulationDay,
@@ -36,6 +35,8 @@ import {
     type CycleSettings,
     type DailyLog,
 } from './phase';
+import { computeLhBaselineBand, findLhPeak, type LhBandReading } from './lh';
+import { findMucusPeakDate, type MucusReading } from './mucus';
 
 // ============================================================================
 // TYPES
@@ -46,6 +47,14 @@ export type OpkResult = 'negative' | 'low' | 'high' | 'peak';
 export interface TtcDailyLog extends DailyLog {
     bbt_celsius?: number | null;
     opk_result?: OpkResult | null;
+    /** e.g. 'Alcohol' / 'Illness' chips — a BBT reading logged alongside either is excluded from baseline/rise detection, since it's noise, not signal. */
+    disruptors?: string[] | null;
+    /** A night under 4 hours invalidates that morning's BBT reading — see MIN_SLEEP_MINUTES_FOR_VALID_BBT. */
+    sleep_minutes?: number | null;
+    /** ISO timestamp or HH:MM — a reading taken far outside her usual wake time this cycle is excluded, since BBT is only meaningful measured at a consistent time. */
+    bbt_wake_time?: string | null;
+    /** Whether an NSAID/painkiller was taken this day — periovulatory exposure is linked to suppressed ovulation (LUF). */
+    nsaid_taken?: boolean | null;
 }
 
 export type OvulationStatus =
@@ -89,6 +98,13 @@ export interface OvulationSignal {
     confidence: 'low' | 'medium' | 'high';
     explanation: string;
     anovulatory: AnovulatorySignal | null;
+    /**
+     * True when an NSAID was logged within the periovulatory window around
+     * the best available ovulation estimate — periovulatory NSAID exposure
+     * raises luteinized-unruptured-follicle (LUF) rates sharply (Micu 2011).
+     * Computed from real logged data only; never inferred.
+     */
+    periovulatoryNsaidFlag: boolean;
 }
 
 export interface BbtReading {
@@ -119,11 +135,45 @@ export interface DetectOvulationOptions {
      * the logged data doesn't support.
      */
     hasPcos?: boolean;
+    /**
+     * Her recent cycle lengths (see phase.ts's deriveRecentCycleLengths),
+     * used to widen the fertile window for her own observed variability
+     * instead of the same fixed range for every cycle. Omitting it (or
+     * passing fewer than 3) falls back to a deliberately wide population SD —
+     * see computeFertileWindowRadius.
+     */
+    recentCycleLengths?: number[];
+    /**
+     * Her full logged LH strip band history, across cycles, not just this
+     * one — used to compute her personal baseline (see lh.ts). Omit or pass
+     * an empty array for a user with no LH history yet; the algorithm falls
+     * back to the absolute floor alone. When present, this takes priority
+     * over the legacy negative/low/high/peak `opk_result` dropdown for
+     * predicting ovulation — graded band data is strictly richer — but a
+     * user with only old-style dropdown entries still gets a prediction
+     * from those.
+     */
+    lhReadings?: LhBandReading[];
+    /**
+     * Her cervical mucus (MPIQ) readings this cycle — coincident with
+     * ovulation, not lagging, so this can only sharpen confidence on a
+     * prediction; it can never itself produce a confirmation (see mucus.ts).
+     */
+    mucusReadings?: MucusReading[];
 }
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
+
+/**
+ * Which version of this engine produced a given OvulationSignal. Bump this
+ * whenever the detection logic meaningfully changes (a new signal wired in,
+ * a threshold retuned) — persisted alongside every stored estimate (see
+ * ovulation_estimates) so a later change can never silently reinterpret old
+ * history.
+ */
+export const ALGORITHM_VERSION = '2026.08.16-lh-mucus-exclusions';
 
 /** Ovulation typically follows an LH surge by 24-36 hours. */
 export const OVULATION_AFTER_PEAK_DAYS = 1;
@@ -139,8 +189,16 @@ export const SUSTAINED_RISE_READINGS = 3;
  */
 export const MIN_BASELINE_READINGS = 4;
 
-/** Coverline sits just above the highest baseline reading (0.05°C ≈ 0.1°F). */
-export const COVERLINE_OFFSET_C = 0.05;
+/**
+ * Coverline sits above the highest baseline reading by this much. Matches
+ * published fertility-awareness protocols rather than an arbitrary epsilon:
+ * Sensiplan requires the third elevated reading to clear the baseline high by
+ * ≥0.2°C, TCOYF (Taking Charge of Your Fertility) uses ≥0.3°F (≈0.17°C). This
+ * splits the two so a real BBT thermometer's 2-decimal-Celsius reading has a
+ * clinically-grounded bar to clear, rather than confirming on ordinary
+ * day-to-day thermal noise.
+ */
+export const COVERLINE_OFFSET_C = 0.15;
 
 /**
  * The three elevated readings must be genuinely consecutive days, not three
@@ -154,6 +212,19 @@ export const OPK_HIGHS_WITHOUT_PEAK_THRESHOLD_PCOS = 3;
 
 /** Don't call a missing thermal shift meaningful until BBT is well sampled. */
 export const MIN_BBT_READINGS_FOR_ANOVULATORY_HINT = 10;
+
+/**
+ * BBT preprocessing exclusions — a reading logged alongside any of these is
+ * noise, not signal, and is dropped before baseline/rise detection ever sees
+ * it (per the algorithm spec: "preprocessing is not optional").
+ */
+export const BBT_EXCLUDING_DISRUPTORS = ['Alcohol', 'Illness'];
+export const MIN_SLEEP_MINUTES_FOR_VALID_BBT = 240;
+/** A reading taken further than this from her rolling wake-time average this cycle is excluded — BBT is only meaningful measured at a consistent time. */
+export const MAX_WAKE_TIME_DEVIATION_MINUTES = 90;
+
+/** Periovulatory window (days either side of the best available ovulation estimate) an NSAID log is checked against. */
+export const PERIOVULATORY_NSAID_WINDOW_DAYS = 3;
 
 /** Days past expected ovulation before a missing shift is worth mentioning. */
 export const ANOVULATORY_GRACE_DAYS = 7;
@@ -180,9 +251,36 @@ const OPK_VALUES: OpkResult[] = ['negative', 'low', 'high', 'peak'];
 const isValidOpk = (value: unknown): value is OpkResult =>
     typeof value === 'string' && (OPK_VALUES as string[]).includes(value);
 
+/** Minutes since local midnight, from an "HH:MM[:SS]" string or a full ISO timestamp. Null if unparseable. */
+function parseWakeTimeMinutes(value: string | null | undefined): number | null {
+    if (!value) return null;
+    const match = value.match(/(\d{1,2}):(\d{2})/);
+    if (!match) return null;
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    return hours * 60 + minutes;
+}
+
 /**
- * Walk the cycle day by day and pull out the two biomarker series, in date
- * order, skipping days with nothing logged and ignoring out-of-range garbage.
+ * Is this day's BBT reading valid for baseline/rise detection? Preprocessing
+ * per the algorithm spec — a reading affected by any of these is noise, not
+ * signal: illness/alcohol, under 4 hours of sleep, or a wake time far from
+ * her rolling average this cycle (checked separately, see below — this
+ * function only covers the two checks that don't need cycle-wide context).
+ */
+function isBbtReadingUsable(log: TtcDailyLog): boolean {
+    const disruptors = log.disruptors ?? [];
+    if (BBT_EXCLUDING_DISRUPTORS.some((d) => disruptors.includes(d))) return false;
+    if (typeof log.sleep_minutes === 'number' && log.sleep_minutes < MIN_SLEEP_MINUTES_FOR_VALID_BBT) return false;
+    return true;
+}
+
+/**
+ * Walk the cycle day by day and pull out the biomarker series, in date
+ * order, skipping days with nothing logged, ignoring out-of-range garbage,
+ * and excluding BBT readings preprocessing rules out (see isBbtReadingUsable
+ * and the wake-time check below).
  */
 export function collectCycleReadings(
     cycleStart: string,
@@ -195,12 +293,31 @@ export function collectCycleReadings(
     const end = normalizeToLocalMidnight(targetDate);
     const cursor = parseLocalDate(cycleStart);
 
+    // Rolling wake-time average, built up only from readings already kept —
+    // an excluded day's wake time shouldn't drag the average toward an
+    // anomaly it was excluded for in the first place.
+    const keptWakeMinutes: number[] = [];
+
     let scanned = 0;
     while (cursor <= end && scanned < MAX_CYCLE_SCAN_DAYS) {
         const dateStr = formatDate(cursor);
         const log = cycleLogs[dateStr];
         if (log) {
-            if (isValidBbt(log.bbt_celsius)) bbt.push({ date: dateStr, value: log.bbt_celsius });
+            if (isValidBbt(log.bbt_celsius) && isBbtReadingUsable(log)) {
+                const wakeMinutes = parseWakeTimeMinutes(log.bbt_wake_time);
+                const rollingAverage = keptWakeMinutes.length
+                    ? keptWakeMinutes.reduce((a, b) => a + b, 0) / keptWakeMinutes.length
+                    : null;
+                const withinWakeWindow =
+                    wakeMinutes === null || rollingAverage === null
+                        ? true
+                        : Math.abs(wakeMinutes - rollingAverage) <= MAX_WAKE_TIME_DEVIATION_MINUTES;
+
+                if (withinWakeWindow) {
+                    bbt.push({ date: dateStr, value: log.bbt_celsius });
+                    if (wakeMinutes !== null) keptWakeMinutes.push(wakeMinutes);
+                }
+            }
             if (isValidOpk(log.opk_result)) opk.push({ date: dateStr, value: log.opk_result });
         }
         cursor.setDate(cursor.getDate() + 1);
@@ -208,6 +325,23 @@ export function collectCycleReadings(
     }
 
     return { bbt, opk };
+}
+
+/**
+ * Was an NSAID logged within the periovulatory window around a given date?
+ * Real logged data only — a day with no `nsaid_taken` entry is never
+ * treated as a "no".
+ */
+export function hasNsaidWithinWindow(
+    cycleLogs: Record<string, TtcDailyLog>,
+    centerDate: string,
+    windowDays: number = PERIOVULATORY_NSAID_WINDOW_DAYS
+): boolean {
+    for (let offset = -windowDays; offset <= windowDays; offset++) {
+        const dateStr = addDays(centerDate, offset);
+        if (cycleLogs[dateStr]?.nsaid_taken === true) return true;
+    }
+    return false;
 }
 
 /**
@@ -396,6 +530,7 @@ const emptySignal = (explanation: string): OvulationSignal => ({
     confidence: 'low',
     explanation,
     anovulatory: null,
+    periovulatoryNsaidFlag: false,
 });
 
 /**
@@ -437,10 +572,30 @@ export function detectOvulation(
         const expectedOvulationDay = getOvulationDay(cycleLength, lutealLength);
         const dayInCycle = daysIn + 1;
 
+        // Widen the window for her own observed cycle-length variability
+        // instead of the same fixed range for everyone — see phase.ts.
+        const fertileRadius = computeFertileWindowRadius(options.recentCycleLengths ?? []);
+
         const { bbt, opk } = collectCycleReadings(cycleStart, target, cycleLogs);
         const thermalShift = detectThermalShift(bbt);
-        const opkPeakDate = findOpkPeak(opk);
         const coverline = thermalShift ? thermalShift.coverline : currentCoverline(bbt);
+
+        // Graded LH strip band data, when present, is strictly richer than
+        // the legacy negative/low/high/peak dropdown and takes priority for
+        // predicting ovulation. A user with only old-style entries still
+        // gets a prediction from those.
+        const lhReadings = options.lhReadings ?? [];
+        const lhBaseline = computeLhBaselineBand(lhReadings);
+        const cycleLhReadings = lhReadings.filter((r) => r.date >= cycleStart && r.date <= targetStr);
+        const lhPeak = findLhPeak(cycleLhReadings, lhBaseline);
+        const opkPeakDate = lhPeak?.date ?? findOpkPeak(opk);
+
+        // Coincident with ovulation, not lagging — can sharpen a prediction's
+        // confidence, never produce a confirmation on its own (see mucus.ts).
+        const cycleMucusReadings = (options.mucusReadings ?? []).filter(
+            (r) => r.date >= cycleStart && r.date <= targetStr
+        );
+        const mucusPeakDate = findMucusPeakDate(cycleMucusReadings);
 
         const anovulatory = detectAnovulatoryPattern({
             bbt,
@@ -456,6 +611,16 @@ export function detectOvulation(
         // Date-math fallback, always computed — it backs the fertile window
         // whenever the biomarkers haven't said anything yet.
         const predictedByDate = addDays(cycleStart, expectedOvulationDay - 1);
+
+        // Best available ovulation-date estimate, in the same priority order
+        // as the branches below: an actual confirming shift beats a surge
+        // prediction, which beats the pure calendar guess. Used only to
+        // center the periovulatory NSAID check — never shown to the user as
+        // a date in its own right.
+        const bestOvulationEstimate =
+            thermalShift?.ovulationDate ??
+            (opkPeakDate ? addDays(opkPeakDate, OVULATION_AFTER_PEAK_DAYS) : predictedByDate);
+        const periovulatoryNsaidFlag = hasNsaidWithinWindow(cycleLogs, bestOvulationEstimate);
 
         const method: OvulationSignal['method'] =
             thermalShift && opkPeakDate
@@ -482,17 +647,17 @@ export function detectOvulation(
 
             if (opkPredicted && signalsAgree) {
                 explanation =
-                    'Your temperature stayed up for three days after your test peaked — two signals agreeing that you ovulated around ' +
+                    'Your temperature stayed up for three days after your test peaked — two signals agreeing your cycle showed an ovulatory signature around ' +
                     `${friendlyDate(thermalShift.ovulationDate)}.`;
                 confidence = 'high';
             } else if (opkPredicted) {
                 explanation =
-                    `Your temperature rise points to ovulation around ${friendlyDate(thermalShift.ovulationDate)}, ` +
-                    `while your test peaked on ${friendlyDate(opkPeakDate as string)}. Temperature confirms ovulation after the fact, so we’ve gone with it.`;
+                    `Your temperature rise points to an ovulatory signature around ${friendlyDate(thermalShift.ovulationDate)}, ` +
+                    `while your test peaked on ${friendlyDate(opkPeakDate as string)}. Temperature is the confirming signal here, so we’ve gone with it.`;
                 confidence = 'medium';
             } else {
                 explanation =
-                    `Your temperature stayed above its baseline for three days, which confirms you ovulated around ${friendlyDate(thermalShift.ovulationDate)}. ` +
+                    `Your temperature stayed above its baseline for three days — your cycle showed an ovulatory signature around ${friendlyDate(thermalShift.ovulationDate)}. ` +
                     'Adding ovulation tests would let us catch the fertile window before it opens, not just after.';
                 confidence = 'medium';
             }
@@ -502,13 +667,14 @@ export function detectOvulation(
                 status: 'ovulation_confirmed',
                 confirmedDate: thermalShift.ovulationDate,
                 predictedDate: null,
-                fertileWindowStart: addDays(thermalShift.ovulationDate, -FERTILE_WINDOW_BEFORE),
-                fertileWindowEnd: addDays(thermalShift.ovulationDate, FERTILE_WINDOW_AFTER),
+                fertileWindowStart: addDays(thermalShift.ovulationDate, -fertileRadius.before),
+                fertileWindowEnd: addDays(thermalShift.ovulationDate, fertileRadius.after),
                 coverline,
                 opkPeakDate,
                 confidence,
                 explanation,
                 anovulatory: null,
+                periovulatoryNsaidFlag,
             };
         }
 
@@ -521,7 +687,7 @@ export function detectOvulation(
             const explanation =
                 daysSincePeak <= 2
                     ? 'Your test peaked, so ovulation is likely in the next day or so — this is your most fertile stretch.'
-                    : `Your test peaked on ${friendlyDate(opkPeakDate)}, so you most likely ovulated around ${friendlyDate(predicted)}. ` +
+                    : `Your test peaked on ${friendlyDate(opkPeakDate)}, so ovulation is likely around ${friendlyDate(predicted)}. ` +
                       (awaitingConfirmation
                           ? 'Keep logging your morning temperature and we’ll confirm it.'
                           : 'Logging your morning temperature would let us confirm it.');
@@ -531,13 +697,14 @@ export function detectOvulation(
                 status: 'ovulation_likely',
                 confirmedDate: null,
                 predictedDate: predicted,
-                fertileWindowStart: addDays(predicted, -FERTILE_WINDOW_BEFORE),
-                fertileWindowEnd: addDays(predicted, FERTILE_WINDOW_AFTER),
+                fertileWindowStart: addDays(predicted, -fertileRadius.before),
+                fertileWindowEnd: addDays(predicted, fertileRadius.after),
                 coverline,
                 opkPeakDate,
                 confidence: 'medium',
                 explanation,
                 anovulatory,
+                periovulatoryNsaidFlag,
             };
         }
 
@@ -557,24 +724,54 @@ export function detectOvulation(
                 confidence: 'low',
                 explanation: anovulatory.note,
                 anovulatory,
+                periovulatoryNsaidFlag,
+            };
+        }
+
+        // --- Too irregular for a window to mean anything --------------------
+        // A confident 6-day window drawn from a cycle whose length swings by
+        // more than a week isn't a helpful estimate, it's false precision —
+        // stop drawing one and say so, rather than silently widening forever.
+        if (fertileRadius.tooIrregularForWindow) {
+            const hasHighOpkIrregular = opk.some((r) => r.value === 'high');
+            return {
+                method,
+                status: 'monitoring',
+                confirmedDate: null,
+                predictedDate: null,
+                fertileWindowStart: null,
+                fertileWindowEnd: null,
+                coverline,
+                opkPeakDate: null,
+                confidence: 'low',
+                explanation: hasHighOpkIrregular
+                    ? 'Your test is reading high, so your body is building toward ovulation. Test daily now to catch the peak.'
+                    : 'Your cycles vary enough that a single window would be a guess dressed up as precision. Test daily from around day ' +
+                      `${Math.max(1, expectedOvulationDay - fertileRadius.before)} — we’ll tell you when a signal narrows it.`,
+                anovulatory: null,
+                periovulatoryNsaidFlag,
             };
         }
 
         // --- Date-math fertile window --------------------------------------
-        const windowStart = addDays(predictedByDate, -FERTILE_WINDOW_BEFORE);
-        const windowEnd = addDays(predictedByDate, FERTILE_WINDOW_AFTER);
+        const windowStart = addDays(predictedByDate, -fertileRadius.before);
+        const windowEnd = addDays(predictedByDate, fertileRadius.after);
         const inWindow = targetStr >= windowStart && targetStr <= windowEnd;
 
         const hasHighOpk = opk.some((r) => r.value === 'high');
         const loggingSomething = bbt.length > 0 || opk.length > 0;
+        const mucusPeakInWindow = mucusPeakDate !== null && mucusPeakDate >= windowStart && mucusPeakDate <= windowEnd;
 
         if (inWindow || hasHighOpk) {
             const explanation = hasHighOpk
                 ? 'Your test is reading high, so your body is building toward ovulation. Test daily now to catch the peak.'
-                : `Based on your cycle length, ovulation is expected around ${friendlyDate(predictedByDate)}. ` +
-                  (loggingSomething
-                      ? 'Keep logging — your own readings will sharpen this.'
-                      : 'Logging a morning temperature and an ovulation test will confirm it.');
+                : mucusPeakInWindow
+                  ? `Based on your cycle length and the egg-white mucus you logged around ${friendlyDate(mucusPeakDate as string)}, ovulation is expected around ${friendlyDate(predictedByDate)}. ` +
+                    'Mucus can only narrow the window, not confirm it — a temperature or ovulation test would do that.'
+                  : `Based on your cycle length, ovulation is expected around ${friendlyDate(predictedByDate)}. ` +
+                    (loggingSomething
+                        ? 'Keep logging — your own readings will sharpen this.'
+                        : 'Logging a morning temperature and an ovulation test will confirm it.');
 
             return {
                 method,
@@ -585,9 +782,13 @@ export function detectOvulation(
                 fertileWindowEnd: windowEnd,
                 coverline,
                 opkPeakDate: null,
-                confidence: hasHighOpk ? 'medium' : 'low',
+                // Coincident mucus sharpens confidence one notch above a bare
+                // calendar guess — it never reaches 'high', which is reserved
+                // for two independent lagging signals agreeing.
+                confidence: hasHighOpk || mucusPeakInWindow ? 'medium' : 'low',
                 explanation,
                 anovulatory: null,
+                periovulatoryNsaidFlag,
             };
         }
 
@@ -614,6 +815,7 @@ export function detectOvulation(
             confidence: 'low',
             explanation,
             anovulatory: null,
+            periovulatoryNsaidFlag,
         };
     } catch (err) {
         // Never let a fertility card crash the dashboard.
@@ -627,4 +829,24 @@ function friendlyDate(dateStr: string): string {
     const d = parseLocalDate(dateStr);
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+/**
+ * Which logged signals actually drove this read, derived from `method` —
+ * for the audit trail (see ovulation_estimates), not shown to the user
+ * directly. `opk_or_lh` covers either the graded band or the legacy
+ * dropdown; both funnel into the same `opkPeakDate`, so the signal itself
+ * can't distinguish which one contributed.
+ */
+export function contributingSignalsFromMethod(method: OvulationSignal['method']): string[] {
+    switch (method) {
+        case 'combined':
+            return ['bbt', 'opk_or_lh'];
+        case 'bbt_only':
+            return ['bbt'];
+        case 'opk_only':
+            return ['opk_or_lh'];
+        case 'date_math':
+            return [];
+    }
 }

@@ -6,8 +6,10 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { fetchPlanPageDataFast, savePlanSettings } from '../../../lib/plan';
 import { phaseThemes } from '../../../data/home-content';
+import { getLocalizedFontFamily, getLocalizedTracking } from '../../../lib/fonts';
 import { useFocusEffect, Link } from 'expo-router';
 import { WorkoutHistory } from '../../../components/plan/WorkoutHistory';
 import { ExerciseOrb } from '../../../components/plan/ExerciseOrb';
@@ -18,6 +20,7 @@ import { Button } from '../../../components/ui/Button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ui/Dialog';
 import { RoveChef } from '../../../components/plan/RoveChef';
 import { MacroFuelGauge } from '../../../components/plan/MacroFuelGauge';
+import { NutritionTrackerCard } from '../../../components/plan/NutritionTrackerCard';
 import { SymptomDecoder } from '../../../components/plan/SymptomDecoder';
 import { DietCheatSheet } from '../../../components/plan/DietCheatSheet';
 import { ActivitiesWidget } from '../../../components/plan/ActivitiesWidget';
@@ -26,8 +29,12 @@ import { FocusForYou } from '../../../components/plan/FocusForYou';
 import { TtcGuidanceSection } from '../../../components/plan/TtcGuidanceSection';
 import { TtcNourishSection } from '../../../components/plan/TtcNourishSection';
 import { TtcMoveSection } from '../../../components/plan/TtcMoveSection';
+import { deriveTtcState, getTtcStateMetaByKey } from '../../../lib/ttcEngine';
+import { ACCENT } from '../../../components/plan/ttcCardKit';
+import { TTC_GUIDANCE } from '@shared/content/ttc-guidance';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
-import { RiverTrack } from '../../../components/home/RiverTrack';
+import { RiverTrack, iconMap, type RiverItem } from '../../../components/home/RiverTrack';
+import { Circle as CircleIcon } from 'lucide-react-native';
 import ProfileAvatar from '../../../components/home/ProfileAvatar';
 import { DIET_RECOMMENDATIONS } from '../../../data/diet-recommendations';
 
@@ -49,13 +56,35 @@ function normalizeActivityLevel(raw?: string | null): 'Sedentary' | 'Active' | '
   return 'Active';
 }
 
-const PLAN_TABS = [
-  { id: 'guide' as const, label: 'Guide', icon: 'compass' as const },
-  { id: 'diet' as const, label: 'Nourish', icon: 'coffee' as const },
-  { id: 'exercise' as const, label: 'Move', icon: 'activity' as const },
+const PLAN_TAB_IDS = [
+  { id: 'guide' as const, icon: 'compass' as const },
+  { id: 'diet' as const, icon: 'coffee' as const },
+  { id: 'exercise' as const, icon: 'activity' as const },
 ];
 
 export default function PlanScreen() {
+  const { t, i18n } = useTranslation();
+  const PLAN_TABS = PLAN_TAB_IDS.map((tb) => ({ ...tb, label: t(`plan.index.tabs.${tb.id}`) }));
+  // Display labels for values persisted as plain English enums (activity
+  // level, fitness goal, diet preference) — the underlying value saved to
+  // the DB must stay in English; only what's shown on screen is localized.
+  const ACTIVITY_LABELS: Record<string, string> = {
+    Sedentary: t('plan.index.activityOptions.sedentary'),
+    Active: t('plan.index.activityOptions.active'),
+    'Highly Active': t('plan.index.activityOptions.highlyActive'),
+  };
+  const GOAL_LABELS: Record<string, string> = {
+    weight_loss: t('plan.index.goalOptions.weightLoss'),
+    maintenance: t('plan.index.goalOptions.maintenance'),
+    muscle_gain: t('plan.index.goalOptions.muscleGain'),
+  };
+  const DIET_LABELS: Record<string, string> = {
+    Veg: t('plan.index.dietOptions.veg'),
+    'Non-Veg': t('plan.index.dietOptions.nonVeg'),
+    Vegan: t('plan.index.dietOptions.vegan'),
+    Jain: t('plan.index.dietOptions.jain'),
+  };
+  const monthsLabel = (m: number) => t('plan.index.monthsCount', { count: m });
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   
@@ -128,7 +157,7 @@ export default function PlanScreen() {
       setIsEditingGoal(false);
       await loadData(true);
     } catch (e) {
-      Alert.alert('Error', 'Could not update your plan settings');
+      Alert.alert(t('plan.index.errorTitle'), t('plan.index.errorUpdatePlan'));
     }
     setIsSavingGoal(false);
   };
@@ -136,6 +165,12 @@ export default function PlanScreen() {
   const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
   const [exerciseView, setExerciseView] = useState<'coach' | 'history'>('coach');
   const [expandedExerciseIndex, setExpandedExerciseIndex] = useState<number | null>(null);
+  // Detail popup for a tapped food card in the "Eat More"/"Power Foods" river
+  // tracks — RiverCard only renders the chevron/press state when both
+  // onCardClick is passed AND the item has a `detail` string (see
+  // RiverTrack.tsx's `clickable`), which is why these cards silently didn't
+  // respond to taps before this was wired up.
+  const [expandedFoodItem, setExpandedFoodItem] = useState<RiverItem | null>(null);
   // Bumped whenever the orb's floating Rove Coach button is pressed, so
   // ExerciseBuilder can jump straight into its fullscreen builder instead of
   // just scrolling to the (about to be covered) card.
@@ -238,7 +273,7 @@ export default function PlanScreen() {
       });
       await loadData(true);
     } catch (e) {
-      Alert.alert('Error', 'Could not save plan settings');
+      Alert.alert(t('plan.index.errorTitle'), t('plan.index.errorSavePlan'));
     }
     setIsSaving(false);
   };
@@ -250,23 +285,32 @@ export default function PlanScreen() {
   const phaseName = data?.phase || 'Menstrual';
   const theme = phaseThemes[phaseName as keyof typeof phaseThemes] || phaseThemes['Menstrual'];
 
+  // TTC users see cycle-phase language ("Follicular") nowhere else on this
+  // screen — the Guide/Nourish/Move tabs all speak in fertility-signal terms
+  // (see TtcGuidanceSection etc.), so the header has to match or it reads as
+  // if the mode switch didn't take. Colors/theme stay phase-based on purpose
+  // (see TtcGuidanceSection's own comment on this) — only the header label
+  // swaps to the TTC state name.
+  const ttcStateKey = data?.trackerMode === 'ttc' ? (data?.ovulation ? deriveTtcState(data.ovulation) : 'insufficient') : null;
+  const headerTitle = ttcStateKey ? getTtcStateMetaByKey(ttcStateKey, t).orbTitle : phaseName;
+
   // Setup Wizard
   if (!hasPlanSetup) {
     return (
       <SafeAreaView className="flex-1 bg-[#FAF9F6]">
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
-          <Text className="text-3xl text-rove-charcoal mb-2 mt-4" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-            Build Your Plan
+          <Text className="text-3xl text-rove-charcoal mb-2 mt-4" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+            {t('plan.index.buildYourPlan')}
           </Text>
           <Text className="text-sm text-rove-stone mb-8">
-            Step {setupStep} of 5
+            {t('plan.index.stepOf5', { step: setupStep })}
           </Text>
 
           {setupStep === 1 && (
             <View>
-              <Text className="text-lg font-bold text-rove-charcoal mb-4">What are your biometrics?</Text>
+              <Text className="text-lg font-bold text-rove-charcoal mb-4">{t('plan.index.biometricsQuestion')}</Text>
               <View className="mb-4">
-                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Height (cm)</Text>
+                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">{t('plan.index.heightCm')}</Text>
                 <TextInput
                   value={height}
                   onChangeText={setHeight}
@@ -275,7 +319,7 @@ export default function PlanScreen() {
                 />
               </View>
               <View className="mb-4">
-                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Weight (kg)</Text>
+                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">{t('plan.index.weightKg')}</Text>
                 <TextInput
                   value={weight}
                   onChangeText={setWeight}
@@ -288,14 +332,14 @@ export default function PlanScreen() {
 
           {setupStep === 2 && (
             <View>
-              <Text className="text-lg font-bold text-rove-charcoal mb-4">How active are you?</Text>
+              <Text className="text-lg font-bold text-rove-charcoal mb-4">{t('plan.index.activityQuestion')}</Text>
               {['Sedentary', 'Active', 'Highly Active'].map((opt) => (
                 <TouchableOpacity
                   key={opt}
                   onPress={() => setActivity(opt)}
                   className={`p-4 rounded-xl border mb-3 flex-row items-center justify-between ${activity === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                 >
-                  <Text className={`font-bold ${activity === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                  <Text className={`font-bold ${activity === opt ? 'text-white' : 'text-rove-charcoal'}`}>{ACTIVITY_LABELS[opt]}</Text>
                   {activity === opt && <Feather name="check" size={20} color="white" />}
                 </TouchableOpacity>
               ))}
@@ -304,14 +348,14 @@ export default function PlanScreen() {
 
           {setupStep === 3 && (
             <View>
-              <Text className="text-lg font-bold text-rove-charcoal mb-4">What is your primary goal?</Text>
-              {[{ id: 'weight_loss', label: 'Fat Loss' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'muscle_gain', label: 'Build Muscle' }].map((opt) => (
+              <Text className="text-lg font-bold text-rove-charcoal mb-4">{t('plan.index.primaryGoalQuestion')}</Text>
+              {[{ id: 'weight_loss' }, { id: 'maintenance' }, { id: 'muscle_gain' }].map((opt) => (
                 <TouchableOpacity
                   key={opt.id}
                   onPress={() => setFitnessGoal(opt.id)}
                   className={`p-4 rounded-xl border mb-3 flex-row items-center justify-between ${fitnessGoal === opt.id ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                 >
-                  <Text className={`font-bold ${fitnessGoal === opt.id ? 'text-white' : 'text-rove-charcoal'}`}>{opt.label}</Text>
+                  <Text className={`font-bold ${fitnessGoal === opt.id ? 'text-white' : 'text-rove-charcoal'}`}>{GOAL_LABELS[opt.id]}</Text>
                   {fitnessGoal === opt.id && <Feather name="check" size={20} color="white" />}
                 </TouchableOpacity>
               ))}
@@ -320,9 +364,9 @@ export default function PlanScreen() {
 
           {setupStep === 4 && (
             <View>
-              <Text className="text-lg font-bold text-rove-charcoal mb-4">Target Weight & Pace</Text>
+              <Text className="text-lg font-bold text-rove-charcoal mb-4">{t('plan.index.targetWeightPace')}</Text>
               <View className="mb-4">
-                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Target Weight (kg)</Text>
+                <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">{t('plan.index.targetWeightKg')}</Text>
                 <TextInput
                   value={targetWeight}
                   onChangeText={setTargetWeight}
@@ -332,7 +376,7 @@ export default function PlanScreen() {
               </View>
               {totalToLoseKg > 0 && (
                 <View className="mb-4">
-                  <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">Desired Month — Reach it by</Text>
+                  <Text className="text-xs uppercase tracking-widest text-rove-stone font-bold mb-2">{t('plan.index.desiredMonth')}</Text>
                   <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
                     {GOAL_MONTH_OPTIONS.map((m) => (
                       <TouchableOpacity
@@ -340,7 +384,7 @@ export default function PlanScreen() {
                         onPress={() => setDesiredMonths(m)}
                         className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${desiredMonths === m ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                       >
-                        <Text className={`font-bold ${desiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{m} {m === 1 ? 'month' : 'months'}</Text>
+                        <Text className={`font-bold ${desiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{monthsLabel(m)}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -351,11 +395,17 @@ export default function PlanScreen() {
                   <View className={`mt-2 p-4 rounded-xl border ${paceTooFast ? 'bg-rove-red/5 border-rove-red/20' : 'bg-[#5B9A8B]/10 border-[#5B9A8B]/20'}`}>
                     {paceTooFast ? (
                       <Text className="text-rove-charcoal text-sm font-semibold leading-relaxed">
-                        Losing {totalToLoseKg.toFixed(1)}kg in {desiredMonths} {desiredMonths === 1 ? 'month' : 'months'} needs ~{rawWeeklyRateKg.toFixed(2)}kg/week — faster than the safe 0.5–1kg/week limit. We've capped your plan at 1kg/week; at that pace it'll realistically take about {Math.ceil(safeMonthsNeeded)} months.
+                        {t('plan.index.paceTooFast', {
+                          totalKg: totalToLoseKg.toFixed(1),
+                          months: monthsLabel(desiredMonths),
+                          rate: rawWeeklyRateKg.toFixed(2),
+                          cappedMonths: Math.ceil(safeMonthsNeeded),
+                        })}
                       </Text>
                     ) : (
                       <Text className="text-rove-charcoal text-sm font-semibold leading-relaxed">
-                        That's about {safeWeeklyRateKg.toFixed(2)}kg/week{paceIsGentle ? ' — a gentle, safe pace.' : ', within the safe 0.5–1kg/week range.'}
+                        {t('plan.index.paceOk', { rate: safeWeeklyRateKg.toFixed(2) })}
+                        {paceIsGentle ? t('plan.index.paceGentleSuffix') : t('plan.index.paceRangeSuffix')}
                       </Text>
                     )}
                   </View>
@@ -366,14 +416,14 @@ export default function PlanScreen() {
 
           {setupStep === 5 && (
             <View>
-              <Text className="text-lg font-bold text-rove-charcoal mb-4">Dietary Preference</Text>
+              <Text className="text-lg font-bold text-rove-charcoal mb-4">{t('plan.index.dietaryPreference')}</Text>
               {['Veg', 'Non-Veg', 'Vegan', 'Jain'].map((opt) => (
                 <TouchableOpacity
                   key={opt}
                   onPress={() => setDiet(opt)}
                   className={`p-4 rounded-xl border mb-3 flex-row items-center justify-between ${diet === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                 >
-                  <Text className={`font-bold ${diet === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                  <Text className={`font-bold ${diet === opt ? 'text-white' : 'text-rove-charcoal'}`}>{DIET_LABELS[opt]}</Text>
                   {diet === opt && <Feather name="check" size={20} color="white" />}
                 </TouchableOpacity>
               ))}
@@ -383,17 +433,17 @@ export default function PlanScreen() {
           <View className="flex-row justify-between mt-8">
             {setupStep > 1 ? (
               <TouchableOpacity onPress={() => setSetupStep(s => s - 1)} className="py-4">
-                <Text className="text-rove-stone font-bold">Back</Text>
+                <Text className="text-rove-stone font-bold">{t('common.buttons.back')}</Text>
               </TouchableOpacity>
             ) : <View />}
-            
+
             {setupStep < 5 ? (
               <TouchableOpacity onPress={() => setSetupStep(s => s + 1)} className="bg-rove-charcoal px-8 py-4 rounded-2xl">
-                <Text className="text-white font-bold">Next</Text>
+                <Text className="text-white font-bold">{t('plan.index.next')}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity onPress={handleSaveSetup} disabled={isSaving} className="bg-rove-charcoal px-8 py-4 rounded-2xl">
-                {isSaving ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Generate Plan</Text>}
+                {isSaving ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">{t('plan.index.generatePlan')}</Text>}
               </TouchableOpacity>
             )}
           </View>
@@ -414,8 +464,8 @@ export default function PlanScreen() {
         
         <Link href={`/plan/${phaseName}`} asChild>
           <TouchableOpacity className="items-center">
-            <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Regular', color: theme.textColor }}>{phaseName}</Text>
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">Day {data.day} of Cycle</Text>
+            <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language), color: theme.textColor }}>{headerTitle}</Text>
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">{t('plan.index.dayOfCycle', { day: data.day })}</Text>
           </TouchableOpacity>
         </Link>
 
@@ -497,8 +547,8 @@ export default function PlanScreen() {
                   <View style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.2)' }} />
                   <View className="z-10 flex-row items-center justify-between">
                     <View className="flex-1">
-                      <Text className="text-white/70 uppercase tracking-widest text-[10px] font-bold mb-2">Current Focus</Text>
-                      <Text className="text-white text-[28px] leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{bp?.rituals?.focus}</Text>
+                      <Text className="text-white/70 uppercase tracking-widest text-[10px] font-bold mb-2">{t('plan.index.currentFocus')}</Text>
+                      <Text className="text-white text-[28px] leading-tight" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{bp?.rituals?.focus}</Text>
                     </View>
                     <View className="w-12 h-12 rounded-full border border-white/20 items-center justify-center bg-white/10 ml-4">
                       <Feather name="compass" size={20} color="rgba(255,255,255,0.6)" />
@@ -516,8 +566,8 @@ export default function PlanScreen() {
               const totalDiff = Math.abs(startW - targetW);
               const currentDiff = Math.abs(startW - currentW);
               const progressPct = totalDiff === 0 ? 0 : Math.min(100, Math.max(0, (currentDiff / totalDiff) * 100));
-              const lostText = `${Math.abs(startW - currentW).toFixed(1)}kg lost`;
-              const togoText = `${Math.abs(currentW - targetW).toFixed(1)}kg to go`;
+              const lostText = t('plan.index.kgLost', { value: Math.abs(startW - currentW).toFixed(1) });
+              const togoText = t('plan.index.kgToGo', { value: Math.abs(currentW - targetW).toFixed(1) });
               
               return (
                 <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-8 rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
@@ -541,8 +591,8 @@ export default function PlanScreen() {
                           <Feather name="target" size={16} color={theme.color} />
                         </View>
                         <View>
-                          <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Your Journey</Text>
-                          <Text className="text-rove-charcoal text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Your Goal</Text>
+                          <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.index.yourJourney')}</Text>
+                          <Text className="text-rove-charcoal text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('plan.index.yourGoal')}</Text>
                         </View>
                       </View>
                       <View className="flex-row items-center gap-2">
@@ -557,7 +607,7 @@ export default function PlanScreen() {
                         )}
                         <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: theme.color }}>
                           <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
-                            {data.weightGoal.fitnessGoal?.replace('_', ' ')}
+                            {GOAL_LABELS[data.weightGoal.fitnessGoal] ?? data.weightGoal.fitnessGoal?.replace('_', ' ')}
                           </Text>
                         </View>
                       </View>
@@ -566,9 +616,9 @@ export default function PlanScreen() {
                     {isEditingGoal ? (
                       <Animated.View entering={FadeInUp.duration(300)}>
                         {[
-                          { label: 'Start', key: 'start' as const },
-                          { label: 'Now', key: 'current' as const },
-                          { label: 'Goal', key: 'target' as const },
+                          { label: t('plan.index.startLabel'), key: 'start' as const },
+                          { label: t('plan.index.nowLabel'), key: 'current' as const },
+                          { label: t('plan.index.goalLabel'), key: 'target' as const },
                         ].map(({ label, key }) => (
                           <View
                             key={key}
@@ -580,10 +630,10 @@ export default function PlanScreen() {
                                 onPress={() => setTempGoalData((p) => ({ ...p, [key]: Math.max(0, p[key] - 0.5) }))}
                                 className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
                               >
-                                <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>−</Text>
+                                <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>−</Text>
                               </TouchableOpacity>
                               <View style={{ minWidth: 56 }}>
-                                <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                                <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
                                   {tempGoalData[key]}
                                 </Text>
                               </View>
@@ -591,7 +641,7 @@ export default function PlanScreen() {
                                 onPress={() => setTempGoalData((p) => ({ ...p, [key]: p[key] + 0.5 }))}
                                 className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
                               >
-                                <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>+</Text>
+                                <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>+</Text>
                               </TouchableOpacity>
                             </View>
                           </View>
@@ -599,16 +649,16 @@ export default function PlanScreen() {
 
                         {/* Height */}
                         <View className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60 mb-3">
-                          <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Height (cm)</Text>
+                          <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{t('plan.index.heightCm')}</Text>
                           <View className="flex-row items-center gap-3">
                             <TouchableOpacity
                               onPress={() => setTempHeight((h) => String(Math.max(100, (parseFloat(h) || 0) - 1)))}
                               className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
                             >
-                              <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>−</Text>
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>−</Text>
                             </TouchableOpacity>
                             <View style={{ minWidth: 56 }}>
-                              <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                              <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
                                 {tempHeight}
                               </Text>
                             </View>
@@ -616,13 +666,13 @@ export default function PlanScreen() {
                               onPress={() => setTempHeight((h) => String((parseFloat(h) || 0) + 1))}
                               className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
                             >
-                              <Text className="text-rove-stone text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>+</Text>
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>+</Text>
                             </TouchableOpacity>
                           </View>
                         </View>
 
                         {/* Activity Level */}
-                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Activity Level</Text>
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">{t('plan.index.activityLevel')}</Text>
                         <View className="flex-row flex-wrap mb-3" style={{ marginHorizontal: -4 }}>
                           {['Sedentary', 'Active', 'Highly Active'].map((opt) => (
                             <TouchableOpacity
@@ -630,21 +680,21 @@ export default function PlanScreen() {
                               onPress={() => setTempActivity(opt)}
                               className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempActivity === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                             >
-                              <Text className={`font-bold text-xs ${tempActivity === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                              <Text className={`font-bold text-xs ${tempActivity === opt ? 'text-white' : 'text-rove-charcoal'}`}>{ACTIVITY_LABELS[opt]}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
 
                         {/* Fitness Goal */}
-                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Primary Goal</Text>
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">{t('plan.index.primaryGoal')}</Text>
                         <View className="flex-row flex-wrap mb-3" style={{ marginHorizontal: -4 }}>
-                          {[{ id: 'weight_loss', label: 'Fat Loss' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'muscle_gain', label: 'Build Muscle' }].map((opt) => (
+                          {[{ id: 'weight_loss' }, { id: 'maintenance' }, { id: 'muscle_gain' }].map((opt) => (
                             <TouchableOpacity
                               key={opt.id}
                               onPress={() => setTempFitnessGoal(opt.id)}
                               className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempFitnessGoal === opt.id ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                             >
-                              <Text className={`font-bold text-xs ${tempFitnessGoal === opt.id ? 'text-white' : 'text-rove-charcoal'}`}>{opt.label}</Text>
+                              <Text className={`font-bold text-xs ${tempFitnessGoal === opt.id ? 'text-white' : 'text-rove-charcoal'}`}>{GOAL_LABELS[opt.id]}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -652,7 +702,7 @@ export default function PlanScreen() {
                         {/* Desired Month / safe pace — same 0.5-1kg/week clamp as the setup wizard */}
                         {editTotalToLoseKg > 0 && (
                           <View className="mb-3">
-                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Desired Month — Reach it by</Text>
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">{t('plan.index.desiredMonth')}</Text>
                             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
                               {GOAL_MONTH_OPTIONS.map((m) => (
                                 <TouchableOpacity
@@ -660,18 +710,19 @@ export default function PlanScreen() {
                                   onPress={() => setTempDesiredMonths(m)}
                                   className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempDesiredMonths === m ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                                 >
-                                  <Text className={`font-bold text-xs ${tempDesiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{m} {m === 1 ? 'month' : 'months'}</Text>
+                                  <Text className={`font-bold text-xs ${tempDesiredMonths === m ? 'text-white' : 'text-rove-charcoal'}`}>{monthsLabel(m)}</Text>
                                 </TouchableOpacity>
                               ))}
                             </View>
                             <View className={`mt-2 p-3 rounded-xl border ${editPaceTooFast ? 'bg-rove-red/5 border-rove-red/20' : 'bg-[#5B9A8B]/10 border-[#5B9A8B]/20'}`}>
                               {editPaceTooFast ? (
                                 <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
-                                  That needs ~{editRawWeeklyRateKg.toFixed(2)}kg/week — faster than the safe 0.5–1kg/week limit. Capped at 1kg/week, so it'll realistically take about {Math.ceil(editSafeMonthsNeeded)} months.
+                                  {t('plan.index.editPaceTooFast', { rate: editRawWeeklyRateKg.toFixed(2), cappedMonths: Math.ceil(editSafeMonthsNeeded) })}
                                 </Text>
                               ) : (
                                 <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
-                                  About {editSafeWeeklyRateKg.toFixed(2)}kg/week{editPaceIsGentle ? ' — a gentle, safe pace.' : ', within the safe 0.5–1kg/week range.'}
+                                  {t('plan.index.editPaceOk', { rate: editSafeWeeklyRateKg.toFixed(2) })}
+                                  {editPaceIsGentle ? t('plan.index.paceGentleSuffix') : t('plan.index.paceRangeSuffix')}
                                 </Text>
                               )}
                             </View>
@@ -679,7 +730,7 @@ export default function PlanScreen() {
                         )}
 
                         {/* Dietary Preference */}
-                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Dietary Preference</Text>
+                        <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">{t('plan.index.dietaryPreference')}</Text>
                         <View className="flex-row flex-wrap mb-1" style={{ marginHorizontal: -4 }}>
                           {['Veg', 'Non-Veg', 'Vegan', 'Jain'].map((opt) => (
                             <TouchableOpacity
@@ -687,14 +738,14 @@ export default function PlanScreen() {
                               onPress={() => setTempDiet(opt)}
                               className={`px-4 py-2.5 rounded-xl border mb-2 mx-1 ${tempDiet === opt ? 'bg-[#2D2420] border-[#2D2420]' : 'bg-white border-rove-stone/20'}`}
                             >
-                              <Text className={`font-bold text-xs ${tempDiet === opt ? 'text-white' : 'text-rove-charcoal'}`}>{opt}</Text>
+                              <Text className={`font-bold text-xs ${tempDiet === opt ? 'text-white' : 'text-rove-charcoal'}`}>{DIET_LABELS[opt]}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
 
                         <View className="flex-row justify-end gap-3 mt-2">
                           <TouchableOpacity onPress={() => setIsEditingGoal(false)} className="px-3 py-2">
-                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Cancel</Text>
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{t('common.buttons.cancel')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             onPress={handleSaveGoal}
@@ -703,7 +754,7 @@ export default function PlanScreen() {
                             style={{ backgroundColor: theme.color, opacity: isSavingGoal ? 0.6 : 1 }}
                           >
                             <Text className="text-[10px] font-bold uppercase tracking-widest text-white">
-                              {isSavingGoal ? '...' : 'Save'}
+                              {isSavingGoal ? '...' : t('common.buttons.save')}
                             </Text>
                           </TouchableOpacity>
                         </View>
@@ -713,18 +764,18 @@ export default function PlanScreen() {
                         {/* Weight Dashboard */}
                         <View className="flex-row items-center justify-between mb-6 p-4 rounded-[20px] border border-white/40 bg-white/30">
                           <View className="items-center flex-1">
-                            <Text className="text-lg text-rove-charcoal/70" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
-                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Start</Text>
+                            <Text className="text-lg text-rove-charcoal/70" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{startW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">{t('plan.index.startLabel')}</Text>
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1 px-4 py-2 rounded-[14px]" style={{ backgroundColor: `${theme.color}15` }}>
-                            <Text className="text-xl" style={{ fontFamily: 'CormorantGaramond-Bold', color: theme.textColor }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
-                            <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.textColor, opacity: 0.7 }}>Now</Text>
+                            <Text className="text-xl" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language), color: theme.textColor }}>{currentW}<Text className="text-xs" style={{ opacity: 0.6 }}>kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{ color: theme.textColor, opacity: 0.7 }}>{t('plan.index.nowLabel')}</Text>
                           </View>
                           <Text className="text-rove-stone/30 text-lg mx-1">→</Text>
                           <View className="items-center flex-1">
-                            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
-                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">Goal</Text>
+                            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{targetW}<Text className="text-xs text-rove-stone">kg</Text></Text>
+                            <Text className="text-[8px] font-bold uppercase tracking-widest text-rove-stone mt-0.5">{t('plan.index.goalLabel')}</Text>
                           </View>
                         </View>
 
@@ -749,7 +800,7 @@ export default function PlanScreen() {
             {data?.trackerMode !== 'ttc' && (
             <>
             <Animated.View entering={FadeInUp.delay(200).duration(500)} className="mb-10">
-              <SectionHeader icon="book-open" title="The Science" color={theme.color} />
+              <SectionHeader icon="book-open" title={t('plan.index.theScience')} color={theme.color} />
 
               <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
                 {Platform.OS === 'ios' ? (
@@ -777,8 +828,8 @@ export default function PlanScreen() {
                       <Feather name="zap" size={14} color="white" />
                     </View>
                     <View>
-                      <Text className="text-white/70 text-[9px] font-bold uppercase tracking-widest">Your Biology</Text>
-                      <Text className="text-white text-lg" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Hormones Now</Text>
+                      <Text className="text-white/70 text-[9px] font-bold uppercase tracking-widest">{t('plan.index.yourBiology')}</Text>
+                      <Text className="text-white text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('plan.index.hormonesNow')}</Text>
                     </View>
                   </View>
                   <View className="px-3 py-1 rounded-full bg-white/20">
@@ -794,7 +845,7 @@ export default function PlanScreen() {
                   </Text>
 
                   {/* Symptom Label */}
-                  <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>What You May Feel</Text>
+                  <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>{t('plan.index.whatYouMayFeel')}</Text>
 
                   {/* Symptoms as individual cards */}
                   <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
@@ -824,6 +875,21 @@ export default function PlanScreen() {
               </View>
             </Animated.View>
 
+            {/* PCOS note — TTC mode gets this inside TtcTimingCard; cycle-sync
+                users who've flagged PCOS in onboarding get the equivalent
+                here, since it's just as relevant outside TTC mode. */}
+            {!!data?.hasPcos && (
+              <Animated.View entering={FadeInUp.delay(250).duration(500)} className="mb-8 rounded-2xl bg-white/60 p-4 border border-white/60">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <Feather name="info" size={13} color={theme.color} />
+                  <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>
+                    {t('plan.index.pcosNoteTitle')}
+                  </Text>
+                </View>
+                <Text className="text-[12.5px] leading-[19px] text-rove-charcoal">{t('plan.index.pcosNoteBody')}</Text>
+              </Animated.View>
+            )}
+
             <Animated.View entering={FadeInUp.delay(300).duration(500)} className="mb-16">
               <ActivitiesWidget practices={bp?.rituals?.practices || []} themeColor={theme.color} />
             </Animated.View>
@@ -839,7 +905,102 @@ export default function PlanScreen() {
         )}
 
         {activeTab === 'diet' && data?.trackerMode === 'ttc' && (
-          <TtcNourishSection />
+          <View>
+            {/* Same sequence cycle-sync's Nourish tab uses (macro tracker →
+                recommended-fuel carousel → [meal ideas replaces the
+                symptom-decoder slot, since TTC has no per-symptom food map] →
+                focus/avoid → AI chef), just fed TTC's guidance content. Only
+                the visible copy is TTC-worded on the shared components; the
+                real phase/theme stay underneath so colors and the AI's
+                context still match the rest of the app. */}
+            {bp?.nutrition_guide?.macro_fuel ? (
+              <Animated.View entering={FadeInUp.delay(50).duration(500)}>
+                <MacroFuelGauge
+                  phase={phaseName}
+                  data={bp?.nutrition_guide?.macro_fuel}
+                  scrollY={scrollY}
+                  onScrollToChef={() => scrollRef.current?.scrollTo({ y: chefSectionY, animated: true })}
+                />
+              </Animated.View>
+            ) : null}
+            {bp?.nutrition_guide?.macro_fuel ? (
+              <Animated.View entering={FadeInUp.delay(75).duration(500)}>
+                <NutritionTrackerCard
+                  targets={{
+                    calories: bp.nutrition_guide.macro_fuel.calories ?? 2000,
+                    protein: bp.nutrition_guide.macro_fuel.protein,
+                    carbs: bp.nutrition_guide.macro_fuel.carbs,
+                    fats: bp.nutrition_guide.macro_fuel.fats,
+                  }}
+                  theme={theme}
+                />
+              </Animated.View>
+            ) : null}
+
+            {(() => {
+              const getFoodIcon = (label: string) => {
+                const l = label.toLowerCase();
+                if (l.includes('leafy') || l.includes('greens')) return 'Leaf';
+                if (l.includes('lentil') || l.includes('dal')) return 'Bean';
+                if (l.includes('grain') || l.includes('millet')) return 'Wheat';
+                if (l.includes('nut') || l.includes('seed')) return 'Nut';
+                if (l.includes('dairy') || l.includes('paneer') || l.includes('curd') || l.includes('milk')) return 'Milk';
+                if (l.includes('fruit')) return 'Cherry';
+                if (l.includes('fish') || l.includes('egg')) return 'Fish';
+                return 'Leaf';
+              };
+              const splitFoodItem = (raw: string) => {
+                const m = raw.match(/^([^,(—]+)[,(—]?\s*(.*)$/);
+                const title = (m?.[1] || raw).replace(/\)$/, '').trim();
+                const desc = (m?.[2] || '').replace(/\)$/, '').trim();
+                return { title, desc };
+              };
+              const riverItems = TTC_GUIDANCE.emphasize.map((raw) => {
+                const { title, desc } = splitFoodItem(raw);
+                return { title, desc, detail: desc, icon: getFoodIcon(raw), bg: `${ACCENT}18`, color: ACCENT };
+              });
+              const half = Math.ceil(riverItems.length / 2);
+              const row1 = riverItems.slice(0, half);
+              const row2 = riverItems.slice(half);
+              return (
+                <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-10">
+                  <SectionHeader icon="coffee" title={t('plan.index.recommendedFuel')} color={ACCENT} />
+                  <View className="-mx-5">
+                    <RiverTrack label={t('plan.index.eatMore')} items={row1} speed={40} direction="left" onCardClick={setExpandedFoodItem} />
+                    <View className="mt-4">
+                      <RiverTrack label={t('plan.index.alsoGood')} items={row2} speed={40} direction="right" onCardClick={setExpandedFoodItem} />
+                    </View>
+                  </View>
+                </Animated.View>
+              );
+            })()}
+
+            <TtcNourishSection />
+
+            <Animated.View entering={FadeInUp.delay(250).duration(500)}>
+              <DietCheatSheet
+                phase={phaseName}
+                data={{
+                  focus: { title: t('plan.index.focusTitle'), items: TTC_GUIDANCE.emphasize },
+                  avoid: { title: t('plan.index.avoidTitle'), items: TTC_GUIDANCE.limit },
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.delay(350).duration(500)}
+              className="pb-16"
+              onLayout={(e) => setChefSectionY(e.nativeEvent.layout.y)}
+            >
+              <RoveChef
+                phase={phaseName}
+                diet={data?.lifestyle?.diet_preference || "Veg"}
+                fitnessGoal={data?.lifestyle?.fitness_goal}
+                contextLabel={t('plan.index.fertilityNutrition')}
+                contextNote={t('plan.index.chooseProtocolTtc')}
+              />
+            </Animated.View>
+          </View>
         )}
 
         {activeTab === 'diet' && data?.trackerMode !== 'ttc' && (
@@ -852,6 +1013,19 @@ export default function PlanScreen() {
                 onScrollToChef={() => scrollRef.current?.scrollTo({ y: chefSectionY, animated: true })}
               />
             </Animated.View>
+            {bp?.nutrition_guide?.macro_fuel ? (
+              <Animated.View entering={FadeInUp.delay(75).duration(500)}>
+                <NutritionTrackerCard
+                  targets={{
+                    calories: bp.nutrition_guide.macro_fuel.calories ?? 2000,
+                    protein: bp.nutrition_guide.macro_fuel.protein,
+                    carbs: bp.nutrition_guide.macro_fuel.carbs,
+                    fats: bp.nutrition_guide.macro_fuel.fats,
+                  }}
+                  theme={theme}
+                />
+              </Animated.View>
+            ) : null}
             {/* River Tracks for Recommended Fuel */}
             {(() => {
               const phaseMap: Record<string, 'menstrual' | 'follicular' | 'ovulatory' | 'luteal'> = {
@@ -882,6 +1056,7 @@ export default function PlanScreen() {
               const styledItems = uniqueItems.map(item => ({
                 ...item,
                 desc: item.description,
+                detail: item.description,
                 bg: theme.iconBg,
                 color: theme.iconColor
               }));
@@ -892,11 +1067,11 @@ export default function PlanScreen() {
 
               return (
                 <Animated.View entering={FadeInUp.delay(150).duration(500)} className="mb-10">
-                  <SectionHeader icon="coffee" title="Recommended Fuel" color={theme.color} />
+                  <SectionHeader icon="coffee" title={t('plan.index.recommendedFuel')} color={theme.color} />
                   <View className="-mx-5">
-                    <RiverTrack label="Eat More" items={row1} speed={40} direction="left" />
+                    <RiverTrack label={t('plan.index.eatMore')} items={row1} speed={40} direction="left" onCardClick={setExpandedFoodItem} />
                     <View className="mt-4">
-                      <RiverTrack label="Power Foods" items={row2} speed={40} direction="right" />
+                      <RiverTrack label={t('plan.index.powerFoods')} items={row2} speed={40} direction="right" onCardClick={setExpandedFoodItem} />
                     </View>
                   </View>
                 </Animated.View>
@@ -907,7 +1082,7 @@ export default function PlanScreen() {
               <SymptomDecoder phase={phaseName} data={bp?.nutrition_guide?.symptom_decoder} />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(350).duration(500)}>
-              <DietCheatSheet phase={phaseName} data={{ focus: { title: "Focus", items: bp?.diet?.core_needs || [] }, avoid: { title: "Avoid", items: bp?.diet?.avoid || [] } }} />
+              <DietCheatSheet phase={phaseName} data={{ focus: { title: t('plan.index.focusTitle'), items: bp?.diet?.core_needs || [] }, avoid: { title: t('plan.index.avoidTitle'), items: bp?.diet?.avoid || [] } }} />
             </Animated.View>
 
             {/* The Rove Chef */}
@@ -922,7 +1097,83 @@ export default function PlanScreen() {
         )}
 
         {activeTab === 'exercise' && data?.trackerMode === 'ttc' && (
-          <TtcMoveSection hasPcos={!!data?.hasPcos} signal={data?.ovulation ?? null} />
+          <View>
+            <TtcMoveSection hasPcos={!!data?.hasPcos} signal={data?.ovulation ?? null} />
+
+            {/* Same active-days guide cycle-sync shows — activeDaysPerWeek is
+                computed from lifestyle/pace, not tied to cycle phase, so it's
+                just as valid here. */}
+            {!!bp?.exercise?.activeDaysPerWeek && (
+              <Animated.View
+                entering={FadeInUp.delay(50).duration(500)}
+                className="flex-row items-center p-4 rounded-[20px] border border-white/40 mb-8"
+                style={{ backgroundColor: `${ACCENT}12` }}
+              >
+                <View className="w-10 h-10 rounded-xl items-center justify-center mr-3 border border-white/50 bg-white/50">
+                  <Feather name="calendar" size={16} color={ACCENT} />
+                </View>
+                <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
+                  {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: ACCENT, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
+                </Text>
+              </Animated.View>
+            )}
+
+            {/* Same AI workout builder + session log sync mode gets — only the
+                visible "Optimized for"/"Completion by Phase" copy is
+                TTC-worded; the phase/theme underneath stay real. */}
+            <Animated.View entering={FadeInUp.delay(150).duration(500)} className="mb-16">
+              <SectionHeader icon="barbell" iconFamily="Ionicons" title={t('plan.exerciseBuilder.roveCoachHeader')} color={theme.color} />
+
+              <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFillObject} />
+                ) : (
+                  <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(255,255,255,0.92)' }]} />
+                )}
+                <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.cardTint }]} />
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.05)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0.7, y: 0.7 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View className="p-5">
+                  {/* Coach / History Toggle */}
+                  <View className="flex-row bg-white/40 p-1 rounded-xl border border-white/60 mb-5" style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+                    <Pressable
+                      onPress={() => setExerciseView('coach')}
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(exerciseView === 'coach' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
+                    >
+                      <Feather name="zap" size={13} color={exerciseView === 'coach' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
+                      <Text className={`text-[11px] font-bold ${exerciseView === 'coach' ? 'text-white' : 'text-rove-stone'}`}>{t('plan.exerciseBuilder.workoutCoachTab')}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setExerciseView('history')}
+                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(exerciseView === 'history' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
+                    >
+                      <Feather name="bar-chart-2" size={13} color={exerciseView === 'history' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
+                      <Text className={`text-[11px] font-bold ${exerciseView === 'history' ? 'text-white' : 'text-rove-stone'}`}>{t('plan.exerciseBuilder.sessionLogTab')}</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Conditional View */}
+                  {exerciseView === 'coach' ? (
+                    <ExerciseBuilder
+                      phase={phaseName}
+                      openSignal={coachOpenSignal}
+                      activityLevel={data?.lifestyle?.activity_level}
+                      fitnessGoal={data?.lifestyle?.fitness_goal}
+                      defaultDuration={`${bp?.exercise?.time || 30}m`}
+                      contextLabel={t('plan.index.optimizedForCycle')}
+                      insightsLabel={t('plan.index.recentSessions')}
+                    />
+                  ) : (
+                    <WorkoutHistory phase={phaseName} insightsLabel={t('plan.index.recentSessions')} />
+                  )}
+                </View>
+              </View>
+            </Animated.View>
+          </View>
         )}
 
         {activeTab === 'exercise' && data?.trackerMode !== 'ttc' && (
@@ -956,7 +1207,7 @@ export default function PlanScreen() {
                   <Feather name="calendar" size={16} color={theme.color} />
                 </View>
                 <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
-                  Aim for about <Text style={{ color: theme.textColor, fontWeight: '800' }}>{bp.exercise.activeDaysPerWeek} active days</Text> this week to support your pace and goal.
+                  {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: theme.textColor, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
                 </Text>
               </Animated.View>
             )}
@@ -965,7 +1216,7 @@ export default function PlanScreen() {
             <Animated.View entering={FadeInUp.delay(100).duration(500)} className="mb-8">
               <View className="flex-row items-center mb-4">
                 <View className="w-6 h-0.5 rounded-full mr-2" style={{ backgroundColor: theme.color }} />
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-charcoal/80">Best For This Phase</Text>
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-charcoal/80">{t('plan.index.bestForThisPhase')}</Text>
               </View>
 
               <View className="flex-row flex-wrap" style={{ marginHorizontal: -5 }}>
@@ -1007,13 +1258,13 @@ export default function PlanScreen() {
                         <View className="flex-1 p-4 justify-between">
                           {/* Top: label + emoji */}
                           <View className="flex-row items-start justify-between">
-                            <Text className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: theme.textColor }}>Exercise</Text>
+                            <Text className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.index.exerciseBadge')}</Text>
                             <Text className="text-2xl opacity-80">{getEmoji(ex.title)}</Text>
                           </View>
 
                           {/* Bottom: title + time */}
                           <View>
-                            <Text className="text-[16px] text-rove-charcoal leading-tight mb-2" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{ex.title}</Text>
+                            <Text className="text-[16px] text-rove-charcoal leading-tight mb-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{ex.title}</Text>
                             <View className="flex-row items-center">
                               <View className="px-2 py-1 rounded-md bg-white/50 border border-white/80 flex-row items-center shadow-sm" style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }}>
                                 <Feather name="clock" size={9} color={theme.color} style={{ marginRight: 4 }} />
@@ -1034,7 +1285,7 @@ export default function PlanScreen() {
                 style={{ backgroundColor: theme.color }}
               >
                 <Feather name="play" size={14} color="white" style={{ marginRight: 8 }} />
-                <Text className="text-white font-bold text-sm">Start Guided Session</Text>
+                <Text className="text-white font-bold text-sm">{t('plan.exerciseBuilder.startGuidedSession')}</Text>
               </TouchableOpacity>
             </Animated.View>
 
@@ -1051,7 +1302,7 @@ export default function PlanScreen() {
                   <View className="p-5">
                     <View className="flex-row items-center mb-3">
                       <Feather name="slash" size={12} color={theme.color} style={{ marginRight: 6 }} />
-                      <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Avoid This Phase</Text>
+                      <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.index.avoidThisPhase')}</Text>
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       <View className="flex-row gap-2">
@@ -1072,7 +1323,7 @@ export default function PlanScreen() {
               entering={FadeInUp.delay(300).duration(500)}
               className="mb-16"
             >
-              <SectionHeader icon="barbell" iconFamily="Ionicons" title="Rove Coach" color={theme.color} />
+              <SectionHeader icon="barbell" iconFamily="Ionicons" title={t('plan.exerciseBuilder.roveCoachHeader')} color={theme.color} />
 
               <View className="rounded-[28px] overflow-hidden relative border" style={{ borderColor: 'rgba(255,255,255,0.5)', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 0 }}>
                 {Platform.OS === 'ios' ? (
@@ -1095,14 +1346,14 @@ export default function PlanScreen() {
                       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(exerciseView === 'coach' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                     >
                       <Feather name="zap" size={13} color={exerciseView === 'coach' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                      <Text className={`text-[11px] font-bold ${exerciseView === 'coach' ? 'text-white' : 'text-rove-stone'}`}>Workout Coach</Text>
+                      <Text className={`text-[11px] font-bold ${exerciseView === 'coach' ? 'text-white' : 'text-rove-stone'}`}>{t('plan.exerciseBuilder.workoutCoachTab')}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => setExerciseView('history')}
                       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(exerciseView === 'history' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                     >
                       <Feather name="bar-chart-2" size={13} color={exerciseView === 'history' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                      <Text className={`text-[11px] font-bold ${exerciseView === 'history' ? 'text-white' : 'text-rove-stone'}`}>Session Log</Text>
+                      <Text className={`text-[11px] font-bold ${exerciseView === 'history' ? 'text-white' : 'text-rove-stone'}`}>{t('plan.exerciseBuilder.sessionLogTab')}</Text>
                     </Pressable>
                   </View>
 
@@ -1121,6 +1372,20 @@ export default function PlanScreen() {
                 </View>
               </View>
             </Animated.View>
+
+            {/* PCOS note — TTC's Move tab shows this via TtcMoveSection; the
+                same content applies to cycle-sync users flagged PCOS. */}
+            {!!data?.hasPcos && (
+              <Animated.View entering={FadeInUp.duration(500)} className="mb-8 mt-2 rounded-2xl bg-white/60 p-4 border border-white/60">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <Feather name="info" size={13} color={theme.color} />
+                  <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.color }}>
+                    {t('plan.move.withPcos')}
+                  </Text>
+                </View>
+                <Text className="text-[12.5px] leading-[19px] text-rove-charcoal">{TTC_GUIDANCE.movePcosNote}</Text>
+              </Animated.View>
+            )}
           </View>
         )}
 
@@ -1160,14 +1425,14 @@ export default function PlanScreen() {
                   <View className="px-3 py-1 rounded-full flex-row items-center" style={{ backgroundColor: `${theme.color}15` }}>
                     <Feather name="zap" size={10} color={theme.color} style={{ marginRight: 4 }} />
                     <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>
-                      {bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('hiit') || bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('strength') ? 'High Intensity' : 'Mod Intensity'}
+                      {bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('hiit') || bp.exercise.best[expandedExerciseIndex].title.toLowerCase().includes('strength') ? t('plan.index.highIntensity') : t('plan.index.modIntensity')}
                     </Text>
                   </View>
                 </View>
               </View>
 
               <View className="bg-white/50 rounded-2xl p-4 border border-rove-stone/10 mb-6">
-                <Text className="text-[10px] font-bold uppercase tracking-[2px] text-rove-stone mb-2">Why it works right now</Text>
+                <Text className="text-[10px] font-bold uppercase text-rove-stone mb-2" style={{ letterSpacing: getLocalizedTracking(2, i18n.language) }}>{t('plan.index.whyItWorksRightNow')}</Text>
                 <DialogDescription className="text-rove-charcoal/80 leading-5">
                   {bp.exercise.best[expandedExerciseIndex].desc}
                 </DialogDescription>
@@ -1178,8 +1443,33 @@ export default function PlanScreen() {
                   setExpandedExerciseIndex(null);
                   setGuidedSessionOpen(true);
                 }}>
-                  Start Session
+                  {t('plan.index.startSession')}
                 </Button>
+              </View>
+            </View>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Food Card Detail Dialog — "Eat More"/"Also Good"/"Power Foods" */}
+      <Dialog open={!!expandedFoodItem} onOpenChange={(o) => !o && setExpandedFoodItem(null)}>
+        <DialogContent>
+          {expandedFoodItem && (
+            <View className="py-2">
+              <View className="items-center mb-6">
+                <View
+                  className="w-16 h-16 rounded-2xl items-center justify-center mb-4"
+                  style={{ backgroundColor: expandedFoodItem.bg }}
+                >
+                  {React.createElement(iconMap[expandedFoodItem.icon] || CircleIcon, { size: 28, color: expandedFoodItem.color })}
+                </View>
+                <DialogTitle className="text-center text-2xl">{expandedFoodItem.title}</DialogTitle>
+              </View>
+
+              <View className="bg-white/50 rounded-2xl p-4 border border-rove-stone/10">
+                <DialogDescription className="text-rove-charcoal/80 leading-5">
+                  {expandedFoodItem.detail}
+                </DialogDescription>
               </View>
             </View>
           )}

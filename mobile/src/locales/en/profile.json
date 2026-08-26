@@ -1,0 +1,183 @@
+{
+  "language": {
+    "title": "App language",
+    "restartNote": "Text updates right away. Restart the app after switching for headings to render in the right script.",
+    "comingSoon": "Soon"
+  },
+  "account": {
+    "title": "Account Management",
+    "contactInfo": {
+      "title": "Contact Information",
+      "noPhone": "No phone added",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "security": {
+      "title": "Login & Security",
+      "subtitle": "Name, email, sign out, and password reset"
+    },
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "subtitle": "How your data is handled, and account deletion"
+    },
+    "terms": {
+      "title": "Terms & Conditions",
+      "subtitle": "The terms you agreed to"
+    },
+    "signOut": "Sign Out",
+    "deleteAccount": {
+      "title": "Delete Account",
+      "subtitle": "Permanently delete your data and login",
+      "confirmTitle": "Delete your account?",
+      "confirmMessage": "This permanently deletes your cycle logs, health data, and login. This can't be undone.",
+      "confirmButton": "Delete",
+      "finalConfirmTitle": "Are you absolutely sure?",
+      "finalConfirmMessage": "There's no way to recover your data after this.",
+      "finalConfirmButton": "Yes, delete everything",
+      "deleting": "Deleting…"
+    },
+    "version": "Rove Health v{{version}}"
+  },
+  "loginSecurity": {
+    "headerTitle": "Login & Security",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "signOut": "Sign Out",
+    "forgotPassword": {
+      "rowTitle": "Forgot password",
+      "rowSubtitle": "Send a verification code to your email",
+      "sendCode": "Send code",
+      "sending": "Sending code…",
+      "sendFailed": "Could not send the code",
+      "codeSentTitle": "Enter your code",
+      "codeSentBody": "We sent a 6-digit code to {{email}}.",
+      "codePlaceholder": "000000",
+      "verify": "Verify code",
+      "verifying": "Verifying…",
+      "verifyFailed": "That code didn't work",
+      "resend": "Resend code",
+      "resendCooldown": "Resend in {{seconds}}s",
+      "resendSent": "A new code was sent.",
+      "invalidCode": "Enter the code sent to your email.",
+      "newPasswordTitle": "Set a new password",
+      "newPasswordBody": "Choose a new password for your account.",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords don't match.",
+      "savePassword": "Save new password",
+      "saving": "Saving…",
+      "saveFailed": "Could not update your password",
+      "successTitle": "Password updated",
+      "successBody": "Your password has been changed.",
+      "done": "Done"
+    }
+  },
+  "focusGoals": {
+    "title": "Focus & Care Mode",
+    "subtitle": "What we tailor your plan around",
+    "yourGoals": "Your Goals",
+    "items": {
+      "syncing": "Cycle Syncing",
+      "tracking": "Cycle Tracking",
+      "weight_loss": "Weight Loss"
+    }
+  },
+  "healthPassport": {
+    "title": "Health Passport",
+    "subtitle": "Primary biomarkers & conditions",
+    "weight": "Weight (kg)",
+    "height": "Height (cm)",
+    "activityLevel": "Activity Level",
+    "dietType": "Diet Type",
+    "conditionsManaged": "Conditions Managed",
+    "tapToAdd": "Tap to add",
+    "otherButton": "+ Other",
+    "conditionPlaceholder": "Condition...",
+    "saveButton": "Save Passport Data",
+    "activityOptions": {
+      "sedentary": "Sedentary",
+      "moderate": "Moderate",
+      "active": "Active",
+      "athlete": "Athlete"
+    },
+    "dietOptions": {
+      "vegetarian": "Vegetarian",
+      "nonVeg": "Non-Vegetarian",
+      "vegan": "Vegan",
+      "jain": "Jain"
+    },
+    "conditions": {
+      "pmos": "PMOS",
+      "endometriosis": "Endometriosis",
+      "uterineFibroids": "Uterine Fibroids",
+      "adenomyosis": "Adenomyosis",
+      "thyroidDisorder": "Thyroid Disorder",
+      "prematureOvarianInsufficiency": "Premature Ovarian Insufficiency",
+      "diminishedOvarianReserve": "Diminished Ovarian Reserve",
+      "recurrentPregnancyLoss": "Recurrent Pregnancy Loss",
+      "pelvicInflammatoryDisease": "Pelvic Inflammatory Disease"
+    },
+    "addConditionTitle": "Add a Condition"
+  },
+  "healthSync": {
+    "title": "Health Data",
+    "syncWith": "Sync with {{platform}}",
+    "syncing": "Syncing…",
+    "description": "Reads basal temperature, sleep, and fertility-test results. Your logged temperature and period days are written back to {{platform}}.",
+    "filledIn_one": "Filled in {{count}} reading from the last 30 days.",
+    "filledIn_other": "Filled in {{count}} readings from the last 30 days.",
+    "upToDate": "Up to date — nothing new to fill in.",
+    "permissionNeeded": {
+      "title": "Permission needed",
+      "description": "Allow access in {{platform}} to sync your readings.",
+      "action": "Open {{platform}}"
+    },
+    "syncFailed": {
+      "title": "Couldn't sync",
+      "description": "Try again in a moment."
+    }
+  },
+  "partnerShare": {
+    "title": "Partner Sharing",
+    "shareCta": "Share your fertile window",
+    "shareAgain": "Share the link again",
+    "inactiveDescription": "A read-only link your partner can open — no account needed on their end.",
+    "activeDescription": "Your partner can see today’s status only — no login, no account, no daily logs.",
+    "turnOffLink": "Turn off link",
+    "shareMessage": "See my fertile-window status on Rove: {{url}}",
+    "createFailed": {
+      "title": "Couldn't create a link",
+      "description": "Try again in a moment."
+    },
+    "revokeFailed": "Couldn't turn off the link",
+    "revokedTitle": "Link turned off",
+    "revokedDescription": "Anyone who had it can no longer see your status."
+  },
+  "screen": {
+    "title": "Profile",
+    "namePlaceholder": "Your Name",
+    "saveProfileFailed": "Failed to save profile",
+    "profileUpdated": "Profile updated",
+    "saveFailed": "Failed to save",
+    "updateFailed": "Update failed",
+    "contactUpdated": "Contact info updated",
+    "contactUpdatedDescription": "Please check your new email for a confirmation link.",
+    "resetEmailFailed": "Failed to send reset email",
+    "resetEmailSent": "Password reset email sent",
+    "deleteAccountFailed": "Failed to delete account",
+    "trackingMode": {
+      "title": "Tracking Mode",
+      "description": "Conceiving mode adds basal temperature and ovulation test logging, and detects your ovulation from them.",
+      "tabs": {
+        "cycle": "Rove Sync",
+        "conceiving": "Rove Pregnancy",
+        "menopause": "Rove Menopause"
+      },
+      "irregularToggle": {
+        "label": "Irregular cycle",
+        "description": "Also adds basal temperature and ovulation test logging, same as Conceiving mode."
+      }
+    }
+  }
+}

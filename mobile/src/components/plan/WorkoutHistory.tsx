@@ -3,8 +3,12 @@ import { Platform,  View, Text, TouchableOpacity, ScrollView, ActivityIndicator 
 import { Feather } from '@expo/vector-icons';
 import { Dumbbell } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { supabase } from '../../lib/supabase';
 import { phaseThemes } from '../../data/home-content';
+import { getDateLocaleTag } from '../../lib/i18n';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 interface WorkoutSession {
     id: string;
@@ -35,15 +39,15 @@ function formatDuration(secs: number) {
     return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, t: TFunction) {
     const d = new Date(dateStr);
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
 
-    if (d.toDateString() === today.toDateString()) return "Today";
-    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    if (d.toDateString() === today.toDateString()) return t('plan.workoutHistory.today');
+    if (d.toDateString() === yesterday.toDateString()) return t('plan.workoutHistory.yesterday');
+    return d.toLocaleDateString(getDateLocaleTag(), { weekday: "short", month: "short", day: "numeric" });
 }
 
 function completionPct(session: WorkoutSession) {
@@ -54,6 +58,7 @@ function completionPct(session: WorkoutSession) {
 import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
 
 function SessionCard({ session }: { session: WorkoutSession }) {
+    const { t: translate } = useTranslation();
     const [expanded, setExpanded] = useState(false);
     const t = phaseThemes[session.phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     const pct = completionPct(session);
@@ -75,12 +80,12 @@ function SessionCard({ session }: { session: WorkoutSession }) {
                 </View>
                 <View className="flex-1 justify-center">
                     <Text className="font-bold text-[14px] text-rove-charcoal leading-tight">
-                        {session.plan_title || `${session.focus} Workout`}
+                        {session.plan_title || translate('plan.workoutHistory.focusWorkout', { focus: session.focus })}
                     </Text>
                     <View className="flex-row items-center mt-1.5 flex-wrap gap-x-3 gap-y-1">
                         <View className="flex-row items-center">
                             <Feather name="calendar" size={10} color="#A8A29E" />
-                            <Text className="text-[11px] text-rove-stone font-medium ml-1.5">{formatDate(session.date)}</Text>
+                            <Text className="text-[11px] text-rove-stone font-medium ml-1.5">{formatDate(session.date, translate)}</Text>
                         </View>
                         <View className="flex-row items-center">
                             <Feather name="clock" size={10} color="#A8A29E" />
@@ -120,7 +125,7 @@ function SessionCard({ session }: { session: WorkoutSession }) {
 
                     {session.warmup?.length > 0 && (
                         <View className="mb-2">
-                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">Warmup</Text>
+                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">{translate('plan.workoutHistory.warmup')}</Text>
                             {session.warmup.map((item, i) => (
                                 <View key={i} className="flex-row items-center py-1">
                                     <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: t.color, opacity: 0.6 }} />
@@ -131,7 +136,7 @@ function SessionCard({ session }: { session: WorkoutSession }) {
                     )}
                     {session.cooldown?.length > 0 && (
                         <View className="mt-2">
-                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">Cooldown</Text>
+                            <Text className="text-[9px] uppercase font-bold tracking-widest mb-1.5 text-rove-charcoal">{translate('plan.workoutHistory.cooldown')}</Text>
                             {session.cooldown.map((item, i) => (
                                 <View key={i} className="flex-row items-center py-1">
                                     <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: t.color, opacity: 0.5 }} />
@@ -146,7 +151,9 @@ function SessionCard({ session }: { session: WorkoutSession }) {
     );
 }
 
-export function WorkoutHistory({ phase }: { phase: string }) {
+export function WorkoutHistory({ phase, insightsLabel }: { phase: string; insightsLabel?: string }) {
+    const { t, i18n } = useTranslation();
+    const resolvedInsightsLabel = insightsLabel ?? t('plan.workoutHistory.completionByPhase');
     const theme = phaseThemes[phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     const [sessions, setSessions] = useState<WorkoutSession[]>([]);
     const [stats, setStats] = useState<PhaseStats[]>([]);
@@ -154,7 +161,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
     const [activeTab, setActiveTab] = useState<"history" | "insights">("history");
 
     const grouped = sessions.reduce<Record<string, WorkoutSession[]>>((acc, s) => {
-        const label = formatDate(s.date);
+        const label = formatDate(s.date, t);
         if (!acc[label]) acc[label] = [];
         acc[label].push(s);
         return acc;
@@ -206,7 +213,7 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                     >
                         <Feather name={tab === "history" ? "calendar" : "pie-chart"} size={11} color={activeTab === tab ? theme.color : '#A8A29E'} />
                         <Text className={`text-[10px] font-bold uppercase tracking-widest ml-1.5 ${activeTab === tab ? 'text-rove-charcoal' : 'text-rove-stone'}`}>
-                            {tab}
+                            {tab === "history" ? t('plan.workoutHistory.historyTab') : t('plan.workoutHistory.insightsTab')}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -222,16 +229,16 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                     {sessions.length > 0 && (
                         <View className="flex-row gap-2 mb-5">
                             {[
-                                { icon: 'award' as const, value: totalSessions, label: 'Sessions' },
-                                { icon: 'clock' as const, value: `${totalMinutes}`, label: 'Minutes' },
-                                { icon: 'check-circle' as const, value: `${avgCompletion}%`, label: 'Avg Done' },
+                                { icon: 'award' as const, value: totalSessions, label: t('plan.workoutHistory.sessions') },
+                                { icon: 'clock' as const, value: `${totalMinutes}`, label: t('plan.workoutHistory.minutes') },
+                                { icon: 'check-circle' as const, value: `${avgCompletion}%`, label: t('plan.workoutHistory.avgDone') },
                             ].map((stat, i) => (
                                 <View key={i} className="flex-1 rounded-[16px] p-3 items-center bg-white/40 border border-white/50"
                                     style={{ shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}>
                                     <View className="w-7 h-7 rounded-full items-center justify-center mb-1.5" style={{ backgroundColor: `${theme.color}12` }}>
                                         <Feather name={stat.icon} size={12} color={theme.color} />
                                     </View>
-                                    <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{stat.value}</Text>
+                                    <Text className="text-base text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{stat.value}</Text>
                                     <Text className="text-[8px] text-rove-stone font-bold uppercase tracking-widest mt-0.5">{stat.label}</Text>
                                 </View>
                             ))}
@@ -243,14 +250,14 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                             <View className="w-14 h-14 rounded-full bg-white/40 items-center justify-center mb-3">
                                 <Feather name="wind" size={24} color="#D6D3D1" />
                             </View>
-                            <Text className="text-sm text-rove-stone" style={{ fontFamily: 'CormorantGaramond-Bold' }}>No sessions yet</Text>
-                            <Text className="text-[11px] text-rove-stone mt-1">Generate a plan above to get started</Text>
+                            <Text className="text-sm text-rove-stone" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('plan.workoutHistory.noSessionsYet')}</Text>
+                            <Text className="text-[11px] text-rove-stone mt-1">{t('plan.workoutHistory.generatePlanAbove')}</Text>
                         </View>
                     ) : (
                         <View>
                             {Object.entries(grouped).map(([label, daySessions]) => (
                                 <View key={label} className="mb-3">
-                                    <Text className="text-[9px] uppercase font-bold text-rove-stone tracking-widest mb-2 ml-1">{label}</Text>
+                                    <Text className="text-[9px] uppercase font-bold text-rove-stone tracking-widest mb-2 ml-1">{label as string}</Text>
                                     {daySessions.map(s => <SessionCard key={s.id} session={s} />)}
                                 </View>
                             ))}
@@ -264,13 +271,13 @@ export function WorkoutHistory({ phase }: { phase: string }) {
                             <View className="w-14 h-14 rounded-full bg-white/40 items-center justify-center mb-3">
                                 <Feather name="bar-chart-2" size={24} color="#D6D3D1" />
                             </View>
-                            <Text className="text-sm text-rove-stone" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Not enough data yet</Text>
-                            <Text className="text-[11px] text-rove-stone mt-1">Complete a few sessions to see insights</Text>
+                            <Text className="text-sm text-rove-stone" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{t('plan.workoutHistory.notEnoughData')}</Text>
+                            <Text className="text-[11px] text-rove-stone mt-1">{t('plan.workoutHistory.completeSessionsForInsights')}</Text>
                         </View>
                     ) : (
                         <View className="rounded-[18px] bg-white/40 border border-white/50 p-5"
                             style={{ shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
-                            <Text className="text-[9px] font-bold uppercase tracking-widest mb-4 text-rove-charcoal">Completion by Phase</Text>
+                            <Text className="text-[9px] font-bold uppercase tracking-widest mb-4 text-rove-charcoal">{resolvedInsightsLabel}</Text>
                             {stats.map(s => {
                                 const t = phaseThemes[s.phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
                                 const pct = Math.round((s.completion_rate || 0) * 100);

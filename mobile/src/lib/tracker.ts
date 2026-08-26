@@ -1,6 +1,9 @@
 import { supabase } from './supabase';
-import type { CycleSettings } from '@shared/cycle/phase';
+import { daysBetween, parseLocalDate, type CycleSettings } from '@shared/cycle/phase';
 import type { OpkResult } from '@shared/cycle/ttc';
+import { writeHealthData } from './healthSync';
+import type { FlowIntensity } from '@shared/health/platformMapping';
+import { hasPcosFlag } from './pcos';
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -41,6 +44,10 @@ export type TrackerData = {
   hasSettings: boolean;
   /** Drives whether the Tracker offers the Fertility section. */
   trackerMode: TrackerMode;
+  /** From onboarding goals/conditions — see hasPcosFlag. */
+  hasPcos: boolean;
+  /** From user_cycle_settings.is_irregular. */
+  isIrregular: boolean;
 };
 
 const TRACKER_MODES: TrackerMode[] = ['menstruation', 'ttc', 'menopause'];
@@ -79,7 +86,7 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
       .eq('user_id', user.id)
       .gte('date', formatDate(pastDate))
       .order('date', { ascending: false }),
-    supabase.from('user_onboarding').select('tracker_mode').eq('user_id', user.id).single(),
+    supabase.from('user_onboarding').select('tracker_mode, goals, conditions').eq('user_id', user.id).single(),
   ]);
 
   const settings = settingsResult.data;
@@ -99,6 +106,8 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
     monthLogs,
     hasSettings: !!settings?.last_period_start,
     trackerMode: normaliseTrackerMode(onboardingResult.data?.tracker_mode),
+    hasPcos: hasPcosFlag(onboardingResult.data?.goals, onboardingResult.data?.conditions),
+    isIrregular: settings?.is_irregular === true,
   };
 }
 
@@ -134,11 +143,42 @@ export async function fetchMonthLogs(year: number, month0: number): Promise<Trac
   return (data || []) as TrackerLog[];
 }
 
+export interface MedicationLogEntry {
+  date: string;
+  medication: string;
+  dose: string | null;
+}
+
+/** Most recent first — days that actually had a fertility medication logged, for the Clinical tab's medication tracker. */
+export async function fetchRecentMedicationLogs(limit = 30): Promise<MedicationLogEntry[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('daily_logs')
+    .select('date, fertility_medication, fertility_medication_dose')
+    .eq('user_id', user.id)
+    .not('fertility_medication', 'is', null)
+    .order('date', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return data.map((row: any) => ({
+    date: row.date,
+    medication: row.fertility_medication,
+    dose: row.fertility_medication_dose,
+  }));
+}
+
 export type LogDailySymptomsPayload = {
   date: string;
   symptoms: string[];
   symptomSeverity?: Record<string, number>;
   isPeriod: boolean | null;
+  /** Whether this date is the first day of a new period streak — only meaningful when isPeriod is true. Feeds HealthKit's HKMenstrualCycleStart metadata. */
+  isPeriodStart?: boolean;
   flowIntensity?: string | null;
   moods?: string[];
   notes?: string;
@@ -204,6 +244,17 @@ export async function logDailySymptoms(
   );
 
   if (error) return { success: false, error: error.message };
+
+  // Fire-and-forget — never blocks or fails the tracker save the user is
+  // actually looking at (see writeHealthData).
+  writeHealthData({
+    date: payload.date,
+    bbtCelsius: payload.bbtCelsius,
+    isPeriod: payload.isPeriod,
+    isPeriodStart: payload.isPeriodStart,
+    flowIntensity: payload.flowIntensity as FlowIntensity | null,
+  }).catch((err) => console.error('[tracker] health write-back failed:', err));
+
   return { success: true };
 }
 
@@ -222,6 +273,16 @@ export async function logTtcQuickEntry(payload: {
   bbtCelsius?: number | null;
   opkResult?: OpkResult | null;
   nsaidTaken?: boolean | null;
+  /** Ovulation-induction medication (e.g. Letrozole, Clomiphene), if any was taken this day. */
+  fertilityMedication?: string | null;
+  fertilityMedicationDose?: string | null;
+  /** Graded LH strip reading — separate table (see lh_readings), not daily_logs. */
+  lhBand?: {
+    bandLevel: number;
+    kitStripNumber?: number | null;
+    /** Current cycle's start date, to compute cycle_day at write time. */
+    cycleStart?: string | null;
+  } | null;
 }): Promise<{ success: boolean; error?: string }> {
   const {
     data: { user },
@@ -233,14 +294,55 @@ export async function logTtcQuickEntry(payload: {
       user_id: user.id,
       date: payload.date,
       ...(payload.bbtCelsius !== undefined ? { bbt_celsius: payload.bbtCelsius } : {}),
+      // Auto-captured at save time rather than a manual time picker — she's
+      // logging in the moment in the vast majority of real cases, and this
+      // is what the exclusion check needs (a reading far from her usual
+      // wake time this cycle is dropped), not a separate UI.
+      ...(payload.bbtCelsius !== undefined ? { bbt_wake_time: new Date().toISOString() } : {}),
       ...(payload.opkResult !== undefined ? { opk_result: payload.opkResult } : {}),
       ...(payload.nsaidTaken !== undefined ? { nsaid_taken: payload.nsaidTaken } : {}),
+      ...(payload.fertilityMedication !== undefined ? { fertility_medication: payload.fertilityMedication } : {}),
+      ...(payload.fertilityMedicationDose !== undefined ? { fertility_medication_dose: payload.fertilityMedicationDose } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id, date' }
   );
 
   if (error) return { success: false, error: error.message };
+
+  if (payload.bbtCelsius !== undefined && payload.bbtCelsius !== null) {
+    // Fire-and-forget — never blocks or fails the quick-log the user is
+    // actually looking at (see writeHealthData).
+    writeHealthData({ date: payload.date, bbtCelsius: payload.bbtCelsius }).catch((err) =>
+      console.error('[tracker] health write-back failed:', err)
+    );
+  }
+
+  if (payload.lhBand) {
+    const cycleDay = payload.lhBand.cycleStart
+      ? Math.max(1, daysBetween(parseLocalDate(payload.lhBand.cycleStart), parseLocalDate(payload.date)) + 1)
+      : null;
+
+    // surge_flag is left at its column default here, not computed at write
+    // time — the engine (detectOvulation) recomputes surge status live from
+    // band_level against her rolling baseline every time it runs, the same
+    // way BBT/thermal-shift detection already works. Pre-baking it here
+    // would need a full history fetch just to write one reading, and risks
+    // going stale if her baseline shifts later.
+    const { error: lhError } = await supabase.from('lh_readings').upsert(
+      {
+        user_id: user.id,
+        date: payload.date,
+        test_time: new Date().toISOString(),
+        cycle_day: cycleDay,
+        band_level: payload.lhBand.bandLevel,
+        kit_strip_number: payload.lhBand.kitStripNumber ?? null,
+      },
+      { onConflict: 'user_id, date' }
+    );
+    if (lhError) return { success: false, error: lhError.message };
+  }
+
   return { success: true };
 }
 

@@ -1,0 +1,30 @@
+{
+  "appName": "Rove Health",
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "done": "Done",
+    "back": "Back",
+    "continue": "Continue",
+    "close": "Close"
+  },
+  "days": {
+    "day": "Day"
+  },
+  "splash": {
+    "quote": "You were built in cycles,\nnot straight lines."
+  },
+  "loadingFacts": [
+    "The menstrual cycle has four phases: Menstrual, Follicular, Ovulatory, and Luteal.",
+    "Your energy naturally peaks during the ovulatory phase.",
+    "Gentle movement during your period can help relieve cramps.",
+    "Hydration is especially important in the luteal phase to reduce bloating."
+  ],
+  "tabs": {
+    "home": "Home",
+    "tracker": "Tracker",
+    "insights": "Insights",
+    "plan": "Plan",
+    "learn": "Learn"
+  }
+}

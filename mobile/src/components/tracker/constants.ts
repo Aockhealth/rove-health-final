@@ -4,64 +4,96 @@ import { CATEGORY_COLORS } from './CycleCalendar';
 
 export type ChipType = 'positive' | 'negative' | 'orange' | 'blue';
 
+// `label` is the exact string persisted to the selected* state arrays (and,
+// on save, to daily_logs) — it stays in English regardless of app language.
+// `key` looks up the localized display text via
+// `tracker.options.<listName>.<key>` (see ChipGrid/TypedChipGrid's
+// `getLabel` prop in tracker.tsx, which is what actually renders it).
 export interface TypedOption {
   label: string;
+  key: string;
   type: ChipType;
 }
 
-export const SYMPTOM_OPTIONS = [
-  'Headache', 'Cramps', 'Bloating', 'Acne',
-  'Muscle pain', 'Fatigue', 'Breast Pain', 'Nausea',
-  'Diarrhoea', 'Constipation', 'Hot flushes', 'Vulvular pain',
+export interface PlainOption {
+  label: string;
+  key: string;
+}
+
+export const SYMPTOM_OPTIONS: PlainOption[] = [
+  { label: 'Headache', key: 'headache' },
+  { label: 'Cramps', key: 'cramps' },
+  { label: 'Bloating', key: 'bloating' },
+  { label: 'Acne', key: 'acne' },
+  { label: 'Muscle pain', key: 'musclePain' },
+  { label: 'Fatigue', key: 'fatigue' },
+  { label: 'Breast Pain', key: 'breastPain' },
+  { label: 'Nausea', key: 'nausea' },
+  { label: 'Diarrhoea', key: 'diarrhoea' },
+  { label: 'Constipation', key: 'constipation' },
+  { label: 'Hot flushes', key: 'hotFlushes' },
+  { label: 'Vulvular pain', key: 'vulvularPain' },
 ];
 
 export const MOODS_LIST: TypedOption[] = [
-  { label: 'Energetic', type: 'blue' },
-  { label: 'Calm', type: 'blue' },
-  { label: 'Anxious', type: 'orange' },
-  { label: 'Unfocused', type: 'orange' },
-  { label: 'Irritable', type: 'negative' },
-  { label: 'Low mood', type: 'negative' },
-  { label: 'Overwhelmed', type: 'negative' },
+  { label: 'Energetic', key: 'energetic', type: 'blue' },
+  { label: 'Calm', key: 'calm', type: 'blue' },
+  { label: 'Anxious', key: 'anxious', type: 'orange' },
+  { label: 'Unfocused', key: 'unfocused', type: 'orange' },
+  { label: 'Irritable', key: 'irritable', type: 'negative' },
+  { label: 'Low mood', key: 'lowMood', type: 'negative' },
+  { label: 'Overwhelmed', key: 'overwhelmed', type: 'negative' },
 ];
 
-export const EXERCISE_OPTIONS = [
-  'Rest Day',
-  'Light (Walk, Yoga)',
-  'Moderate (Gym, Pilates)',
-  'Intense (HIIT, Run)',
+export const EXERCISE_OPTIONS: PlainOption[] = [
+  { label: 'Rest Day', key: 'restDay' },
+  { label: 'Light (Walk, Yoga)', key: 'light' },
+  { label: 'Moderate (Gym, Pilates)', key: 'moderate' },
+  { label: 'Intense (HIIT, Run)', key: 'intense' },
 ];
 
-export const SELF_LOVE_OPTIONS = ['Travel', 'Meditation', 'Journal', 'Hobbies'];
+export const SELF_LOVE_OPTIONS: PlainOption[] = [
+  { label: 'Travel', key: 'travel' },
+  { label: 'Meditation', key: 'meditation' },
+  { label: 'Journal', key: 'journal' },
+  { label: 'Hobbies', key: 'hobbies' },
+];
 
 export const SLEEP_OPTIONS: TypedOption[] = [
-  { label: 'Restful', type: 'positive' },
-  { label: 'Light/Broken', type: 'negative' },
-  { label: 'Vivid dreams', type: 'orange' },
-  { label: 'Insomnia', type: 'negative' },
-  { label: 'Night sweats', type: 'negative' },
+  { label: 'Restful', key: 'restful', type: 'positive' },
+  { label: 'Light/Broken', key: 'lightBroken', type: 'negative' },
+  { label: 'Vivid dreams', key: 'vividDreams', type: 'orange' },
+  { label: 'Insomnia', key: 'insomnia', type: 'negative' },
+  { label: 'Night sweats', key: 'nightSweats', type: 'negative' },
 ];
 
 export const DISRUPTORS_LIST: TypedOption[] = [
-  { label: 'Alcohol', type: 'negative' },
-  { label: 'Caffeine overload', type: 'orange' },
-  { label: 'High sugar', type: 'orange' },
-  { label: 'Travel/Jet lag', type: 'orange' },
-  { label: 'Illness', type: 'negative' },
-  { label: 'High stress event', type: 'negative' },
-  { label: 'Painkillers', type: 'orange' },
-  { label: 'Emergency contraceptive', type: 'orange' },
+  { label: 'Alcohol', key: 'alcohol', type: 'negative' },
+  { label: 'Caffeine overload', key: 'caffeineOverload', type: 'orange' },
+  { label: 'High sugar', key: 'highSugar', type: 'orange' },
+  { label: 'Travel/Jet lag', key: 'travelJetLag', type: 'orange' },
+  { label: 'Illness', key: 'illness', type: 'negative' },
+  { label: 'High stress event', key: 'highStressEvent', type: 'negative' },
+  { label: 'Painkillers', key: 'painkillers', type: 'orange' },
+  { label: 'Emergency contraceptive', key: 'emergencyContraceptive', type: 'orange' },
 ];
 
 export const SEX_ACTIVITY_OPTIONS: TypedOption[] = [
-  { label: 'Sex', type: 'positive' },
-  { label: 'Painful', type: 'negative' },
-  { label: 'High sex drive', type: 'positive' },
-  { label: 'Low sex drive', type: 'negative' },
-  { label: 'Enjoyable', type: 'positive' },
+  { label: 'Sex', key: 'sex', type: 'positive' },
+  { label: 'Painful', key: 'painful', type: 'negative' },
+  { label: 'High sex drive', key: 'highSexDrive', type: 'positive' },
+  { label: 'Low sex drive', key: 'lowSexDrive', type: 'negative' },
+  { label: 'Enjoyable', key: 'enjoyable', type: 'positive' },
 ];
 
-export const CONTRACEPTION_OPTIONS = ['OC pill', 'Emergency pill', 'Condom', 'IUD', 'Withdrawal', 'None'];
+export const CONTRACEPTION_OPTIONS: PlainOption[] = [
+  { label: 'OC pill', key: 'ocPill' },
+  { label: 'Emergency pill', key: 'emergencyPill' },
+  { label: 'Condom', key: 'condom' },
+  { label: 'IUD', key: 'iud' },
+  { label: 'Withdrawal', key: 'withdrawal' },
+  { label: 'None', key: 'none' },
+];
 
 // RN color for each chip "type" — used with SymptomChip's activeVariant="soft"
 // to mirror the web's green/red/orange/blue tinted active states (Sleep

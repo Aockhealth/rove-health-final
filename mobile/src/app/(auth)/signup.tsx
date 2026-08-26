@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
-import { Mail, Lock, User } from 'lucide-react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { GoogleIcon } from '../../components/ui/GoogleIcon';
 import { supabase } from '../../lib/supabase';
-import { signInWithGoogle } from '../../lib/auth';
-import { AnimatedBackground } from '../../components/ui/AnimatedBackground';
+import { signInWithGoogle, signInWithApple } from '../../lib/auth';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function SignupScreen() {
@@ -62,101 +62,79 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-rove-cream" edges={['top', 'bottom']}>
-      <AnimatedBackground />
-
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
-          
-          <Animated.View 
-            entering={FadeInDown.duration(1000).springify()}
-            className={`w-full bg-white/80 p-8 rounded-[2rem] border border-white overflow-hidden ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`}
-            style={{ shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, shadowOffset: { width: 0, height: 10 } }}
-          >
-            
-            {/* Header & Logo */}
-            <View className="items-center mb-8">
-              <View className={`w-16 h-16 mb-4 bg-white rounded-[2rem] items-center justify-center ${Platform.OS === 'ios' ? 'shadow-sm' : ''}`} style={{ shadowColor: '#AF6B6B', shadowOpacity: 0.1, shadowRadius: 10 }}>
-                 <Image
-                   source={require('../../../assets/images/splash-mark.png')}
-                   className="w-10 h-10"
-                   resizeMode="contain"
-                 />
-              </View>
-              <Text className="text-4xl text-rove-charcoal mb-2 text-center" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-                Join ROVE
-              </Text>
-              <Text className="text-sm text-rove-stone font-medium text-center">
-                Start your cycle-sync journey today
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 28 }} showsVerticalScrollIndicator={false}>
+
+          <Animated.View entering={FadeInDown.duration(600).withInitialValues({ transform: [{ translateY: 20 }] })}>
+
+            <View className="items-center mb-9">
+              <Text className="text-[13px] tracking-[5px] text-rove-stone uppercase" style={{ fontFamily: 'CormorantGaramond-Medium' }}>
+                Rove
               </Text>
             </View>
 
+            <Text className="text-[34px] text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
+              Create your account
+            </Text>
+            <Text className="text-[13px] text-rove-stone font-medium mb-8">
+              A quiet, considered way to know your body.
+            </Text>
+
             {/* Form */}
-            <View className="space-y-6 mb-8 gap-5">
-              
+            <View className="gap-6 mb-2">
+
               <View>
-                <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px] ml-1 mb-2">
+                <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-[2.5px] mb-2.5">
                   Name
                 </Text>
-                <View className="relative justify-center">
-                  <View className="absolute left-4 z-10">
-                    <User size={18} color="#A8A29E" />
-                  </View>
-                  <Input
-                    className="pl-12 bg-rove-cream/50 h-14 rounded-2xl border-transparent"
-                    placeholder="Your Full Name"
-                    value={name}
-                    onChangeText={setName}
-                    autoCapitalize="words"
-                    error={errors.name}
-                  />
-                </View>
+                <Input
+                  className="border-0 border-b border-rove-stone/30 rounded-none bg-transparent px-0 pb-3 h-auto text-rove-charcoal"
+                  placeholder="Your full name"
+                  placeholderTextColor="#A99B87"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  error={errors.name}
+                />
               </View>
 
               <View>
-                <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px] ml-1 mb-2">
+                <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-[2.5px] mb-2.5">
                   Email
                 </Text>
-                <View className="relative justify-center">
-                  <View className="absolute left-4 z-10">
-                    <Mail size={18} color="#A8A29E" />
-                  </View>
-                  <Input
-                    className="pl-12 bg-rove-cream/50 h-14 rounded-2xl border-transparent"
-                    placeholder="hello@rove.com"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    error={errors.email}
-                  />
-                </View>
+                <Input
+                  className="border-0 border-b border-rove-stone/30 rounded-none bg-transparent px-0 pb-3 h-auto text-rove-charcoal"
+                  placeholder="hello@rove.com"
+                  placeholderTextColor="#A99B87"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  error={errors.email}
+                />
               </View>
 
               <View>
-                <Text className="text-[10px] font-bold text-rove-charcoal/60 uppercase tracking-[2px] ml-1 mb-2">
+                <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-[2.5px] mb-2.5">
                   Password
                 </Text>
-                <View className="relative justify-center">
-                  <View className="absolute left-4 z-10">
-                    <Lock size={18} color="#A8A29E" />
-                  </View>
-                  <Input
-                    className="pl-12 bg-rove-cream/50 h-14 rounded-2xl border-transparent"
-                    placeholder="••••••••"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    error={errors.password}
-                  />
-                </View>
+                <Input
+                  className="border-0 border-b border-rove-stone/30 rounded-none bg-transparent px-0 pb-3 h-auto text-rove-charcoal"
+                  placeholder="••••••••"
+                  placeholderTextColor="#A99B87"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  error={errors.password}
+                />
               </View>
 
               {errors.server ? (
-                <View className="bg-rove-red/10 border border-rove-red/20 p-4 rounded-2xl items-center mt-2">
-                  <Text className="text-rove-red text-sm font-medium text-center">
+                <View className="bg-phase-menstrual/10 border border-phase-menstrual/20 p-4 rounded-2xl items-center">
+                  <Text className="text-phase-menstrual text-sm font-medium text-center">
                     {errors.server}
                   </Text>
                 </View>
@@ -164,48 +142,74 @@ export default function SignupScreen() {
 
             </View>
 
-            <Button 
-              onPress={handleSignup} 
+            <Button
+              onPress={handleSignup}
               disabled={loading}
-              className="w-full h-14 rounded-full bg-rove-charcoal"
+              className="w-full h-[54px] rounded mt-6"
             >
-              <Text className="text-rove-cream font-semibold text-lg">{loading ? "Creating Account..." : "Create Account"}</Text>
+              <Text className="text-rove-cream font-bold uppercase tracking-[2.5px] text-[13px]">{loading ? "Creating Account..." : "Create Account"}</Text>
             </Button>
 
             {/* Separator */}
-            <View className="relative mt-8 mb-6 justify-center items-center">
+            <View className="relative mt-6 mb-5 justify-center items-center">
               <View className="absolute w-full h-[1px] bg-rove-stone/20" />
-              <View className="bg-white px-4 z-10">
-                <Text className="text-rove-stone font-medium text-sm">Or continue with</Text>
+              <View className="bg-rove-cream px-4 z-10">
+                <Text className="text-rove-stone font-bold text-[10px] tracking-[2px] uppercase">Or</Text>
               </View>
             </View>
 
             {/* Google */}
-            <Button 
-              variant="outline" 
-              className="w-full h-14 rounded-full border-rove-stone/20 bg-white"
+            <Button
+              variant="outline"
+              className="w-full h-[50px] rounded border-rove-stone/30 bg-white mb-3"
               onPress={async () => {
                 setLoading(true);
                 setErrors({});
                 const res = await signInWithGoogle();
-                if (!res.success && !res.cancelled) {
+                if (res.success) {
+                  router.replace('/');
+                } else if (!res.cancelled) {
                   setErrors({ server: res.error || 'Google sign up failed' });
                 }
                 setLoading(false);
               }}
               disabled={loading}
             >
-              <Text className="text-rove-charcoal font-semibold text-base">Continue with Google</Text>
+              <View style={{ marginRight: 10 }}>
+                <GoogleIcon size={16} />
+              </View>
+              <Text className="text-rove-charcoal font-semibold text-[13px]">Continue with Google</Text>
             </Button>
 
+            {/* Apple */}
+            {Platform.OS === 'ios' ? (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={4}
+                style={{ width: '100%', height: 50 }}
+                onPress={async () => {
+                  setLoading(true);
+                  setErrors({});
+                  const res = await signInWithApple();
+                  if (res.success) {
+                    router.replace('/');
+                  } else if (!res.cancelled) {
+                    setErrors({ server: res.error || 'Apple sign up failed' });
+                  }
+                  setLoading(false);
+                }}
+              />
+            ) : null}
+
             {/* Footer Links */}
-            <View className="mt-8 items-center space-y-3 gap-2">
+            <View className="mt-8 items-center gap-4">
               <View className="flex-row justify-center items-center">
-                <Text className="text-sm text-rove-stone font-medium">
-                  Already have an account? 
+                <Text className="text-rove-stone text-xs font-medium">
+                  Already have an account?{' '}
                 </Text>
                 <Link href="/(auth)/login">
-                  <Text className="text-rove-charcoal font-bold ml-1">Log in</Text>
+                  <Text className="text-rove-charcoal font-bold text-xs">Log in</Text>
                 </Link>
               </View>
               <Text className="text-[11px] text-rove-stone text-center">

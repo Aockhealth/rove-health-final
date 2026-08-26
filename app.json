@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "1fbd6417-5f43-485f-bb05-af99267ad10c"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.rovehealth.rovehealthmonorepo",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

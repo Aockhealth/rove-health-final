@@ -3,35 +3,57 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import type { SymptomInput } from '@shared/onboarding/types';
 import { Input } from '../ui/Input';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
+// `value` is what's persisted (to formData.conditions / symptom logs) and
+// what hasPcosFlag string-matches against — it stays in English regardless
+// of app language. `key` looks up the localized display text via
+// `onboarding.aboutYou.conditions.<key>`.
 const MEDICAL_CONDITIONS = [
-  'None',
-  'PCOS / PCOD',
-  'Recurrent UTI',
-  'Bacterial Vaginosis',
-  'Endometriosis',
-  'Fibroids',
-  'Diabetes',
-  'Hypertension',
-  'Thyroid',
+  { value: 'None', key: 'none' },
+  { value: 'PCOS / PCOD', key: 'pcosPcod' },
+  { value: 'Recurrent UTI', key: 'recurrentUti' },
+  { value: 'Bacterial Vaginosis', key: 'bacterialVaginosis' },
+  { value: 'Endometriosis', key: 'endometriosis' },
+  { value: 'Fibroids', key: 'fibroids' },
+  { value: 'Diabetes', key: 'diabetes' },
+  { value: 'Hypertension', key: 'hypertension' },
+  { value: 'Thyroid', key: 'thyroid' },
 ];
 
-const PHYSICAL_SYMPTOMS = ['Cramps', 'Bloating', 'Fatigue', 'Headache', 'Backache', 'Acne', 'Breast pain'];
-const EMOTIONAL_SYMPTOMS = ['Mood swings', 'Feeling low', 'Irritability', 'Anger', 'Food cravings'];
+// Same value/key split — `name` is persisted as part of SymptomInput, `key`
+// looks up `onboarding.aboutYou.symptoms.<key>`.
+const PHYSICAL_SYMPTOMS = [
+  { value: 'Cramps', key: 'cramps' },
+  { value: 'Bloating', key: 'bloating' },
+  { value: 'Fatigue', key: 'fatigue' },
+  { value: 'Headache', key: 'headache' },
+  { value: 'Backache', key: 'backache' },
+  { value: 'Acne', key: 'acne' },
+  { value: 'Breast pain', key: 'breastPain' },
+];
+const EMOTIONAL_SYMPTOMS = [
+  { value: 'Mood swings', key: 'moodSwings' },
+  { value: 'Feeling low', key: 'feelingLow' },
+  { value: 'Irritability', key: 'irritability' },
+  { value: 'Anger', key: 'anger' },
+  { value: 'Food cravings', key: 'foodCravings' },
+];
 const ALL_SYMPTOMS = [
-  ...PHYSICAL_SYMPTOMS.map((s) => ({ name: s, category: 'Physical' as const })),
-  ...EMOTIONAL_SYMPTOMS.map((s) => ({ name: s, category: 'Emotional' as const })),
+  ...PHYSICAL_SYMPTOMS.map((s) => ({ name: s.value, key: s.key, category: 'Physical' as const })),
+  ...EMOTIONAL_SYMPTOMS.map((s) => ({ name: s.value, key: s.key, category: 'Emotional' as const })),
 ];
 
 const DIET_OPTIONS = [
-  { id: 'vegetarian', label: 'Vegetarian' },
-  { id: 'non_vegetarian', label: 'Non-Veg' },
-  { id: 'vegan', label: 'Vegan' },
-  { id: 'jain', label: 'Jain' },
-  { id: 'eggetarian', label: 'Eggetarian' },
-  { id: 'pescatarian', label: 'Pescatarian' },
+  { id: 'vegetarian', key: 'vegetarian' },
+  { id: 'non_vegetarian', key: 'nonVeg' },
+  { id: 'vegan', key: 'vegan' },
+  { id: 'jain', key: 'jain' },
+  { id: 'eggetarian', key: 'eggetarian' },
+  { id: 'pescatarian', key: 'pescatarian' },
 ];
 
 type StepAboutYouProps = {
@@ -61,6 +83,7 @@ export function StepAboutYou({
   onDietChange,
   errors,
 }: StepAboutYouProps) {
+  const { t, i18n } = useTranslation();
   const [showSymptoms, setShowSymptoms] = useState(false);
 
   return (
@@ -68,28 +91,28 @@ export function StepAboutYou({
       <Animated.View entering={FadeInDown.delay(100).duration(400)} className="gap-2">
         <Text
           className="text-2xl text-rove-charcoal"
-          style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+          style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
         >
-          About You
+          {t('onboarding.aboutYou.title')}
         </Text>
         <Text className="max-w-[320px] text-sm leading-relaxed text-rove-stone">
-          A few details about your health and lifestyle to tailor your experience.
+          {t('onboarding.aboutYou.subtitle')}
         </Text>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(200).duration(400)} className="gap-3">
         <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
-          Health Conditions
+          {t('onboarding.aboutYou.healthConditions')}
         </Text>
         <View className="flex-row flex-wrap gap-2">
           {MEDICAL_CONDITIONS.map((condition) => {
-            const isSelected = conditions.includes(condition);
+            const isSelected = conditions.includes(condition.value);
             return (
               <TouchableOpacity
-                key={condition}
+                key={condition.value}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onToggleCondition(condition);
+                  onToggleCondition(condition.value);
                 }}
                 className={`flex-row items-center gap-1.5 rounded-full border px-4 py-2 ${
                   isSelected
@@ -100,9 +123,9 @@ export function StepAboutYou({
                 <Text
                   className={`text-sm font-medium ${isSelected ? 'text-rove-cream' : 'text-rove-charcoal'}`}
                 >
-                  {condition}
+                  {t(`onboarding.aboutYou.conditions.${condition.key}`)}
                 </Text>
-                {isSelected ? <Check size={14} color="#FAF7F2" /> : null}
+                {isSelected ? <Check size={14} color="#FAF9F6" /> : null}
               </TouchableOpacity>
             );
           })}
@@ -119,10 +142,12 @@ export function StepAboutYou({
         >
           <View>
             <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
-              Typical Symptoms
+              {t('onboarding.aboutYou.typicalSymptoms')}
             </Text>
             <Text className="text-xs text-rove-stone">
-              {symptoms.length > 0 ? `${symptoms.length} selected` : 'Optional — helps personalize insights'}
+              {symptoms.length > 0
+                ? t('onboarding.aboutYou.symptomsSelected', { count: symptoms.length })
+                : t('onboarding.aboutYou.symptomsOptional')}
             </Text>
           </View>
           {showSymptoms ? (
@@ -134,7 +159,7 @@ export function StepAboutYou({
 
         {showSymptoms ? (
           <Animated.View entering={FadeIn.duration(250)} className="flex-row flex-wrap gap-2 pt-1">
-            {ALL_SYMPTOMS.map(({ name, category }) => {
+            {ALL_SYMPTOMS.map(({ name, key, category }) => {
               const isSelected = symptoms.some((s) => s.name === name);
               return (
                 <TouchableOpacity
@@ -152,7 +177,7 @@ export function StepAboutYou({
                   <Text
                     className={`text-sm font-medium ${isSelected ? 'text-rove-cream' : 'text-rove-charcoal'}`}
                   >
-                    {name}
+                    {t(`onboarding.aboutYou.symptoms.${key}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -163,13 +188,14 @@ export function StepAboutYou({
 
       <Animated.View entering={FadeInDown.delay(400).duration(400)} className="gap-4">
         <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
-          Lifestyle
+          {t('onboarding.aboutYou.lifestyle')}
         </Text>
 
         <View className="flex-row gap-3">
           <View className="flex-1 gap-1.5">
-            <Text className="text-xs font-semibold text-rove-stone">Height (cm)</Text>
+            <Text className="text-xs font-semibold text-rove-stone">{t('onboarding.aboutYou.heightLabel')}</Text>
             <Input
+              className="border-0 border-b border-rove-stone/30 rounded-none bg-transparent px-0 pb-3 h-auto text-rove-charcoal"
               keyboardType="numeric"
               value={heightCm != null ? String(heightCm) : ''}
               onChangeText={(text) => {
@@ -177,11 +203,13 @@ export function StepAboutYou({
                 onHeightChange(v != null && Number.isNaN(v) ? null : v);
               }}
               placeholder="165"
+              placeholderTextColor="#A99B87"
             />
           </View>
           <View className="flex-1 gap-1.5">
-            <Text className="text-xs font-semibold text-rove-stone">Weight (kg)</Text>
+            <Text className="text-xs font-semibold text-rove-stone">{t('onboarding.aboutYou.weightLabel')}</Text>
             <Input
+              className="border-0 border-b border-rove-stone/30 rounded-none bg-transparent px-0 pb-3 h-auto text-rove-charcoal"
               keyboardType="numeric"
               value={weightKg != null ? String(weightKg) : ''}
               onChangeText={(text) => {
@@ -189,12 +217,13 @@ export function StepAboutYou({
                 onWeightChange(v != null && Number.isNaN(v) ? null : v);
               }}
               placeholder="60"
+              placeholderTextColor="#A99B87"
             />
           </View>
         </View>
 
         <View className="gap-2">
-          <Text className="text-xs font-semibold text-rove-stone">Diet preference</Text>
+          <Text className="text-xs font-semibold text-rove-stone">{t('onboarding.aboutYou.dietPreference')}</Text>
           <View className="flex-row flex-wrap">
             {DIET_OPTIONS.map((diet) => {
               const isSelected = dietPreference === diet.id;
@@ -214,7 +243,7 @@ export function StepAboutYou({
                     <Text
                       className={`text-xs font-semibold ${isSelected ? 'text-rove-cream' : 'text-rove-charcoal'}`}
                     >
-                      {diet.label}
+                      {t(`onboarding.aboutYou.dietOptions.${diet.key}`)}
                     </Text>
                   </TouchableOpacity>
                 </View>

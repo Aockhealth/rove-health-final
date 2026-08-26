@@ -13,18 +13,25 @@ import {
   collectCycleReadings,
   currentCoverline,
   detectOvulation,
+  type AnovulatoryReason,
   type BbtReading,
   type OpkReading,
   type OpkResult,
   type OvulationSignal,
   type TtcDailyLog,
 } from '@shared/cycle/ttc';
+import { computeLhBaselineBand, findLhPeak, type LhBandReading } from '@shared/cycle/lh';
+import type { MucusReading } from '@shared/cycle/mucus';
 
 export type TtcHistoryLog = {
   date: string;
   is_period: boolean | null;
   bbt_celsius: number | null;
   opk_result: OpkResult | null | undefined;
+  disruptors?: string[] | null;
+  sleep_minutes?: number | null;
+  bbt_wake_time?: string | null;
+  nsaid_taken?: boolean | null;
 };
 
 export interface TtcHistoryCycle {
@@ -35,6 +42,10 @@ export interface TtcHistoryCycle {
   /** Days from this cycle's start to the next one's. Null while the cycle is still ongoing — there's no next start yet to measure to. */
   cycleLengthDays: number | null;
   signal: OvulationSignal;
+  /** Highest BBT reading logged this cycle, null if none logged. Per-cycle peak, not comparable to another cycle's raw readings (each has its own baseline) — but the peak itself trends meaningfully across cycles. */
+  bbtPeak: number | null;
+  /** Band level (0–4) of this cycle's peak LH/OPK strip reading, null if no graded reading was logged. */
+  lhPeakGrade: number | null;
 }
 
 export interface TtcCycleStats {
@@ -117,16 +128,23 @@ export function scoreTtcCycles(
   cycleStarts: string[],
   settings: CycleSettings,
   windowEnd: Date,
-  hasPcos: boolean
+  hasPcos: boolean,
+  lhReadings: LhBandReading[] = [],
+  mucusReadings: MucusReading[] = []
 ): TtcHistoryCycle[] {
   if (cycleStarts.length === 0) return [];
 
   const ttcLogs: Record<string, TtcDailyLog> = {};
   for (const l of logs) {
-    ttcLogs[l.date] = { date: l.date, is_period: l.is_period === true, bbt_celsius: l.bbt_celsius, opk_result: l.opk_result };
+    ttcLogs[l.date] = { date: l.date, is_period: l.is_period === true, bbt_celsius: l.bbt_celsius, opk_result: l.opk_result, disruptors: l.disruptors, sleep_minutes: l.sleep_minutes, bbt_wake_time: l.bbt_wake_time, nsaid_taken: l.nsaid_taken };
   }
 
   const windowEndStr = formatDate(windowEnd);
+
+  // Hoisted, not recomputed per cycle — her personal LH baseline is derived
+  // from her whole logged history (see computeLhBaselineBand), the same
+  // value detectOvulation itself would compute internally from lhReadings.
+  const lhBaseline = computeLhBaselineBand(lhReadings);
 
   return cycleStarts
     .map((cycleStart, i) => {
@@ -142,8 +160,16 @@ export function scoreTtcCycles(
           )
         : null;
 
-      const signal = detectOvulation(cycleStart, targetDate, ttcLogs, settings, { hasPcos });
-      return { cycleStart, cycleEnd, isOngoing, cycleLengthDays, signal };
+      const signal = detectOvulation(cycleStart, targetDate, ttcLogs, settings, { hasPcos, lhReadings, mucusReadings });
+
+      const { bbt } = collectCycleReadings(cycleStart, targetDate, ttcLogs);
+      const bbtPeak = bbt.length ? Math.max(...bbt.map((r) => r.value)) : null;
+
+      const cycleLhReadings = lhReadings.filter((r) => r.date >= cycleStart && r.date <= cycleEnd);
+      const lhPeak = findLhPeak(cycleLhReadings, lhBaseline);
+      const lhPeakGrade = lhPeak ? lhPeak.bandLevel : null;
+
+      return { cycleStart, cycleEnd, isOngoing, cycleLengthDays, signal, bbtPeak, lhPeakGrade };
     })
     .reverse(); // most recent first
 }
@@ -158,7 +184,7 @@ export function latestCycleChart(
 
   const ttcLogs: Record<string, TtcDailyLog> = {};
   for (const l of logs) {
-    ttcLogs[l.date] = { date: l.date, is_period: l.is_period === true, bbt_celsius: l.bbt_celsius, opk_result: l.opk_result };
+    ttcLogs[l.date] = { date: l.date, is_period: l.is_period === true, bbt_celsius: l.bbt_celsius, opk_result: l.opk_result, disruptors: l.disruptors, sleep_minutes: l.sleep_minutes, bbt_wake_time: l.bbt_wake_time, nsaid_taken: l.nsaid_taken };
   }
 
   const latestCycleStart = cycleStarts[cycleStarts.length - 1];
@@ -171,6 +197,42 @@ export function latestCycleChart(
     opk: readings.opk,
     coverline: currentCoverline(readings.bbt),
   };
+}
+
+/** Minimum confirmed cycles before trusting a personalized luteal length over the population default. */
+export const MIN_CYCLES_FOR_PERSONALIZED_LUTEAL = 3;
+
+/** Clamp so a single mis-scored cycle can't drag the fallback outside a physiologically sane range. */
+const MIN_SANE_LUTEAL_LENGTH = 8;
+const MAX_SANE_LUTEAL_LENGTH = 16;
+
+/**
+ * The user's own average luteal length, computed only from cycles where
+ * ovulation was actually *confirmed* by a biomarker — not merely predicted,
+ * since a predicted date is itself already a date-math guess, and letting it
+ * seed the next cycle's guess would be circular. Luteal length is
+ * comparatively stable within a woman (median within-woman variability ~3
+ * days, vs ~5 for the follicular phase/cycle length overall — Human
+ * Reproduction, 2024), so this is a better prior than the population default
+ * of 14 days once there's enough of her own history to trust.
+ *
+ * Returns null (callers fall back to DEFAULT_LUTEAL_LENGTH) until there are
+ * at least `MIN_CYCLES_FOR_PERSONALIZED_LUTEAL` confirmed cycles with a known
+ * length.
+ */
+export function getPersonalizedLutealLength(cycles: TtcHistoryCycle[]): number | null {
+  const lutealLengths: number[] = [];
+
+  for (const c of cycles) {
+    if (!c.signal.confirmedDate || c.cycleLengthDays === null) continue;
+    const dayInCycle = daysBetween(parseLocalDate(c.cycleStart), parseLocalDate(c.signal.confirmedDate)) + 1;
+    lutealLengths.push(c.cycleLengthDays - dayInCycle);
+  }
+
+  if (lutealLengths.length < MIN_CYCLES_FOR_PERSONALIZED_LUTEAL) return null;
+
+  const avg = Math.round(average(lutealLengths)!);
+  return Math.min(MAX_SANE_LUTEAL_LENGTH, Math.max(MIN_SANE_LUTEAL_LENGTH, avg));
 }
 
 /** "Across your cycles" stat tiles. */
@@ -245,4 +307,78 @@ export function detectTtcPatterns(cycles: TtcHistoryCycle[], stats: TtcCycleStat
   }
 
   return out.slice(0, 3);
+}
+
+// ============================================================================
+// PCOS / ANOVULATORY PATTERN HISTORY
+// ============================================================================
+
+/**
+ * Need at least this many scored cycles before a frequency count ("2 of your
+ * last 3 cycles...") means anything rather than reading as alarming noise
+ * from a single unusual cycle.
+ */
+export const MIN_CYCLES_FOR_PCOS_PATTERNS = 2;
+
+export interface PcosPatternInsight {
+  reason: AnovulatoryReason;
+  title: string;
+  body: string;
+  /** How many of the scored cycles showed this reason. */
+  count: number;
+  /** Total scored (non-ongoing) cycles the count is out of. */
+  totalCycles: number;
+}
+
+const REASON_COPY: Record<AnovulatoryReason, { title: string; body: (count: number, total: number) => string }> = {
+  persistent_opk_highs_no_peak: {
+    title: 'Tests stayed high without a clear peak',
+    body: (count, total) =>
+      `${count} of your last ${total} cycle${total === 1 ? '' : 's'} showed persistently high ovulation-test readings that never reached a clear peak.`,
+  },
+  no_thermal_shift_late_in_cycle: {
+    title: 'No temperature rise, well past expected ovulation',
+    body: (count, total) =>
+      `${count} of your last ${total} cycle${total === 1 ? '' : 's'} ran well past when ovulation was expected with no sustained temperature rise.`,
+  },
+  cycle_overdue_no_signals: {
+    title: 'Cycles running long with no ovulation signs',
+    body: (count, total) =>
+      `${count} of your last ${total} cycle${total === 1 ? '' : 's'} ran longer than expected with no ovulation signs at all.`,
+  },
+};
+
+/**
+ * Turns the per-cycle `anovulatory.reasons` the engine already computes (see
+ * detectAnovulatoryPattern in shared/cycle/ttc.ts) into a longitudinal view —
+ * how often each pattern actually showed up across her logged history, not
+ * just whether it fired on the most recent cycle.
+ *
+ * Same rule as detectTtcPatterns: state what was observed, across however
+ * many cycles she's logged, never interpret or diagnose. Every reason here
+ * already required real logged evidence at the single-cycle level (see the
+ * engine's own comment on detectAnovulatoryPattern) — this only counts how
+ * often that evidence recurred.
+ *
+ * Sorted most-frequent first — the pattern most worth raising with a doctor.
+ */
+export function summarizePcosPatterns(cycles: TtcHistoryCycle[]): PcosPatternInsight[] {
+  const scoredCycles = cycles.filter((c) => !c.isOngoing);
+  if (scoredCycles.length < MIN_CYCLES_FOR_PCOS_PATTERNS) return [];
+
+  const counts = new Map<AnovulatoryReason, number>();
+  for (const c of scoredCycles) {
+    for (const reason of c.signal.anovulatory?.reasons ?? []) {
+      counts.set(reason, (counts.get(reason) ?? 0) + 1);
+    }
+  }
+
+  const total = scoredCycles.length;
+  const out: PcosPatternInsight[] = [];
+  for (const [reason, count] of counts) {
+    const copy = REASON_COPY[reason];
+    out.push({ reason, count, totalCycles: total, title: copy.title, body: copy.body(count, total) });
+  }
+
+  return out.sort((a, b) => b.count - a.count);
 }

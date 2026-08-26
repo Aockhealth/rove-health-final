@@ -19,10 +19,12 @@ import Animated, {
     withRepeat,
     Easing,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { phaseThemes } from '../../data/home-content';
 import { fetchChefOptions, fetchChefDetail } from '../../lib/api';
 import { logFoodChoice, fetchFoodChoiceContext, type ChefOption } from '../../lib/foodChoices';
 import { mapGoalToCoachGoal } from '../../lib/exercisePersonalization';
+import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import { BottomSheet } from '../ui/BottomSheet';
 import { AIGeneratingIndicator } from './AIGeneratingIndicator';
 
@@ -37,60 +39,23 @@ type ChefDetail = {
     why: string;
 };
 
-const OPTIONS_LOADING_MESSAGES = [
-    'Reading your cycle data...',
-    'Remembering what you liked...',
-    'Pulling real dishes for your phase...',
-    'Setting the menu...',
-];
-
-const DETAIL_LOADING_MESSAGES = [
-    'Good pick!',
-    'Writing it up the classic way...',
-    'Measuring out one serving...',
-];
-
 const SERVING_META: Record<ChefOption['serving_style'], { icon: any; color: string }> = {
     warm: { icon: 'thermometer', color: '#E8924E' },
     cold: { icon: 'wind', color: '#7CB9E8' },
     room: { icon: 'sun', color: '#D4A25F' },
 };
 
-const CUISINE_OPTIONS: { label: string; value: string }[] = [
-    { label: 'Auto (Profile)', value: 'auto' },
-    { label: 'Indian', value: 'Indian' },
-    { label: 'Mediterranean', value: 'Mediterranean' },
-    { label: 'Asian', value: 'Asian' },
-    { label: 'Global', value: 'Global' },
-];
+const CUISINE_VALUES = ['auto', 'Indian', 'Mediterranean', 'Asian', 'Global'] as const;
 
 // ─── Rotating "Maybe: ..." suggestion — a lightweight typewriter effect
 // (type → pause → delete → next phrase, looping) so the empty state feels
-// alive without needing an extra animation library. ─────────────────────────
-const ANIMATED_EXAMPLES: Record<string, Record<TabType, string[]>> = {
-    Menstrual: {
-        snack: ['Warm Ragi Ladoo...', 'Jaggery Til Chikki...', 'Roasted Makhana...'],
-        smoothie: ['Beetroot Iron Boost...', 'Warm Turmeric Milk...', 'Date & Almond Shake...'],
-        salad: ['Warm Moong Bowl...', 'Steamed Veggie Khichdi...', 'Spiced Sweet Potato...'],
-    },
-    Follicular: {
-        snack: ['Sprouted Moong Chaat...', 'Roasted Chana...', 'Fresh Fruit Chaat...'],
-        smoothie: ['Green Detox Blend...', 'Mixed Berry Lassi...', 'Cucumber Mint Cooler...'],
-        salad: ['Sprout & Veggie Bowl...', 'Kachumber Salad...', 'Citrus Quinoa Bowl...'],
-    },
-    Ovulatory: {
-        snack: ['Chilled Fruit Bowl...', 'Cucumber Raita Cups...', 'Coconut Ladoo...'],
-        smoothie: ['Coconut Water Cooler...', 'Watermelon Mint Blend...', 'Chilled Buttermilk...'],
-        salad: ['Watermelon Feta Bowl...', 'Curd Rice Bowl...', 'Cooling Cucumber Salad...'],
-    },
-    Luteal: {
-        snack: ['Dark Chocolate Bites...', 'Roasted Nut Mix...', 'Baked Sweet Potato...'],
-        smoothie: ['Banana Cacao Shake...', 'Warm Golden Milk...', 'Peanut Butter Blend...'],
-        salad: ['Warm Grain Bowl...', 'Roasted Veggie Bowl...', 'Paneer Bhurji Bowl...'],
-    },
-};
+// alive without needing an extra animation library. Dish-name phrases live
+// in plan.roveChef.animatedExamples.<Phase>.<tab> (see below) since this
+// data is authored in this component rather than a shared content module. ──
+const ANIMATED_EXAMPLE_PHASES = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'] as const;
 
 function AnimatedPlaceholder({ phrases }: { phrases: string[] }) {
+    const { t } = useTranslation();
     const [text, setText] = useState('');
     const [phraseIndex, setPhraseIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -133,7 +98,7 @@ function AnimatedPlaceholder({ phrases }: { phrases: string[] }) {
 
     return (
         <Text className="text-rove-stone text-sm italic mb-8 text-center px-4">
-            Maybe: {text}
+            {t('plan.roveChef.maybePrefix', { text })}
             <Text style={{ opacity: 0.5 }}>|</Text>
         </Text>
     );
@@ -143,7 +108,12 @@ function AnimatedPlaceholder({ phrases }: { phrases: string[] }) {
 // next to it, opening a bottom sheet rather than the full-size form <Select> //
 // used elsewhere (that control is sized for forms, not an inline badge).    //
 function CuisinePicker({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: string }) {
+    const { t, i18n } = useTranslation();
     const sheetRef = useRef<BottomSheetModal>(null);
+    const CUISINE_OPTIONS = CUISINE_VALUES.map((v) => ({
+        label: t(`plan.roveChef.cuisineOptions.${v}`),
+        value: v,
+    }));
     const selected = CUISINE_OPTIONS.find((o) => o.value === value) || CUISINE_OPTIONS[0];
 
     return (
@@ -163,7 +133,7 @@ function CuisinePicker({ value, onChange, color }: { value: string; onChange: (v
                 <Feather name="chevron-down" size={10} color={color} style={{ marginLeft: 4 }} />
             </Pressable>
 
-            <BottomSheet ref={sheetRef} title="Cuisine Style" snapPoints={['40%']}>
+            <BottomSheet ref={sheetRef} title={t('plan.roveChef.cuisineStyleTitle')} snapPoints={['40%']}>
                 <BottomSheetFlatList
                     data={CUISINE_OPTIONS}
                     keyExtractor={(item) => item.value}
@@ -180,7 +150,7 @@ function CuisinePicker({ value, onChange, color }: { value: string; onChange: (v
                             >
                                 <Text
                                     className="text-[17px]"
-                                    style={{ fontFamily: isSelected ? 'Raleway-Bold' : 'Raleway-Medium', color: isSelected ? '#37332E' : 'rgba(55,51,46,0.8)' }}
+                                    style={{ fontFamily: getLocalizedFontFamily(isSelected ? 'Raleway-Bold' : 'Raleway-Medium', i18n.language), color: isSelected ? '#37332E' : 'rgba(55,51,46,0.8)' }}
                                 >
                                     {item.label}
                                 </Text>
@@ -208,6 +178,7 @@ function OptionCard({
     accentColor: string;
     onPress: () => void;
 }) {
+    const { i18n } = useTranslation();
     const scale = useSharedValue(1);
     const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
     const serving = SERVING_META[option.serving_style] || SERVING_META.room;
@@ -241,7 +212,7 @@ function OptionCard({
                         <View className="flex-row items-center justify-between mb-1">
                             <Text
                                 className="font-bold text-lg text-rove-charcoal flex-1 mr-2"
-                                style={{ fontFamily: 'CormorantGaramond-Regular' }}
+                                style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}
                             >
                                 {option.name}
                             </Text>
@@ -333,9 +304,37 @@ function BreathingIcon({ color, icon }: { color: string; icon: any }) {
     );
 }
 
-export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: string, fitnessGoal?: string | null }) {
+export function RoveChef({
+    phase,
+    diet,
+    fitnessGoal,
+    contextLabel,
+    contextNote,
+}: {
+    phase: string
+    diet: string
+    fitnessGoal?: string | null
+    /** Overrides the "Phase Nutrition" kicker — e.g. TTC mode uses "Fertility Nutrition" instead. */
+    contextLabel?: string
+    /** Overrides the "Choose one protocol at a time for your {phase} phase" line below the title. */
+    contextNote?: string
+}) {
+    const { t, i18n } = useTranslation();
+    const resolvedContextLabel = contextLabel ?? t('plan.roveChef.phaseNutrition');
+    const OPTIONS_LOADING_MESSAGES = [
+        t('plan.roveChef.loadingMessages.readingCycleData'),
+        t('plan.roveChef.loadingMessages.rememberingLiked'),
+        t('plan.roveChef.loadingMessages.pullingDishes'),
+        t('plan.roveChef.loadingMessages.settingMenu'),
+    ];
+    const DETAIL_LOADING_MESSAGES = [
+        t('plan.roveChef.detailLoadingMessages.goodPick'),
+        t('plan.roveChef.detailLoadingMessages.writingUp'),
+        t('plan.roveChef.detailLoadingMessages.measuring'),
+    ];
     const currentPhase = phase || "Menstrual";
     const theme = phaseThemes[currentPhase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
+    const animatedPhaseKey = (ANIMATED_EXAMPLE_PHASES as readonly string[]).includes(currentPhase) ? currentPhase : 'Menstrual';
     // RN's native <Modal> renders in a separate native window on iOS, and
     // SafeAreaView's auto-detected insets are unreliable there (often report
     // 0, clipping content under the status bar/notch) — fall back to a
@@ -394,7 +393,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                 throw new Error('empty options');
             }
         } catch (e) {
-            Alert.alert('Error', 'Could not fetch options. Please try again.');
+            Alert.alert(t('plan.roveChef.errorTitle'), t('plan.roveChef.errorFetchOptions'));
         } finally {
             setIsLoadingOptions(false);
         }
@@ -425,16 +424,16 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
             });
             setDetails(prev => ({ ...prev, [activeTab]: detail }));
         } catch (e) {
-            Alert.alert('Error', 'Could not load the recipe. Please try again.');
+            Alert.alert(t('plan.roveChef.errorTitle'), t('plan.roveChef.errorLoadRecipe'));
         } finally {
             setIsLoadingDetail(false);
         }
     };
 
     const TABS: { id: TabType; label: string; icon: any }[] = [
-        { id: 'snack', label: 'Snack', icon: 'coffee' },
-        { id: 'smoothie', label: 'Smoothie', icon: 'droplet' },
-        { id: 'salad', label: 'Salad', icon: 'sun' },
+        { id: 'snack', label: t('plan.roveChef.tabs.snack'), icon: 'coffee' },
+        { id: 'smoothie', label: t('plan.roveChef.tabs.smoothie'), icon: 'droplet' },
+        { id: 'salad', label: t('plan.roveChef.tabs.salad'), icon: 'sun' },
     ];
 
     return (
@@ -442,15 +441,15 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
             <View className="mb-4">
                 <View className="flex-row items-center mb-1.5">
                     <ChefHat size={13} color={theme.color} style={{ marginRight: 6 }} />
-                    <Text className="text-[10px] font-bold uppercase" style={{ color: theme.textColor, letterSpacing: 2.5 }}>
-                        Phase Nutrition
+                    <Text className="text-[10px] font-bold uppercase" style={{ color: theme.textColor, letterSpacing: getLocalizedTracking(2.5, i18n.language) }}>
+                        {resolvedContextLabel}
                     </Text>
                 </View>
-                <Text className="text-3xl text-rove-charcoal mb-1" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-                    Rove Chef
+                <Text className="text-3xl text-rove-charcoal mb-1" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+                    {t('plan.roveChef.title')}
                 </Text>
                 <Text className="text-sm text-rove-stone">
-                    Choose one protocol at a time for your {currentPhase} phase.
+                    {contextNote ?? t('plan.roveChef.chooseProtocol', { phase: currentPhase })}
                 </Text>
             </View>
 
@@ -542,10 +541,10 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             <View className="flex-1 mr-2">
                                 <Text
                                     className="font-bold text-base text-rove-charcoal"
-                                    style={{ fontFamily: 'CormorantGaramond-Regular' }}
+                                    style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}
                                     numberOfLines={1}
                                 >
-                                    {currentDetail ? currentDetail.name : `${currentOptions?.length || 0} dishes to pick from`}
+                                    {currentDetail ? currentDetail.name : t('plan.roveChef.dishesToPickFrom', { count: currentOptions?.length || 0 })}
                                 </Text>
                                 <Text className="text-[12px] text-rove-stone" numberOfLines={1}>
                                     {currentDetail
@@ -567,15 +566,15 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                     <Animated.View key="empty" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                         <View className="flex-row flex-wrap justify-center gap-2 mb-8">
                             <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10" style={{ backgroundColor: `${theme.color}05` }}>
-                                <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Curating for: {diet || 'Veg'}</Text>
+                                <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.roveChef.curatingFor', { diet: diet || t('plan.roveChef.dietFallback') })}</Text>
                             </View>
                             <CuisinePicker value={cuisine} onChange={setCuisine} color={theme.color} />
                         </View>
 
                         <BreathingIcon color={theme.color} icon={TABS.find(t => t.id === activeTab)?.icon} />
 
-                        <Text className="font-bold text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Regular' }}>Ready to nourish?</Text>
-                        <AnimatedPlaceholder phrases={ANIMATED_EXAMPLES[currentPhase]?.[activeTab] || ANIMATED_EXAMPLES.Menstrual[activeTab]} />
+                        <Text className="font-bold text-2xl text-rove-charcoal mb-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}>{t('plan.roveChef.readyToNourish')}</Text>
+                        <AnimatedPlaceholder phrases={t(`plan.roveChef.animatedExamples.${animatedPhaseKey}.${activeTab}`, { returnObjects: true }) as string[]} />
 
                         <Pressable
                             onPress={() => handleGenerateOptions(false)}
@@ -590,7 +589,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             }}
                         >
                             <Feather name="zap" size={16} color="white" />
-                            <Text className="text-white font-bold ml-2 text-[11px] uppercase tracking-widest">Generate {TABS.find(t => t.id === activeTab)?.label}</Text>
+                            <Text className="text-white font-bold ml-2 text-[11px] uppercase tracking-widest">{t('plan.roveChef.generateTab', { tab: TABS.find(tb => tb.id === activeTab)?.label })}</Text>
                         </Pressable>
                     </Animated.View>
                 )}
@@ -621,7 +620,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                         >
                             <Feather name="x" size={16} color={theme.color} />
                         </Pressable>
-                        <Text className="text-[11px] font-bold uppercase tracking-widest text-rove-charcoal">Rove Chef</Text>
+                        <Text className="text-[11px] font-bold uppercase tracking-widest text-rove-charcoal">{t('plan.roveChef.title')}</Text>
                         <View className="w-9" />
                     </View>
 
@@ -677,7 +676,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                 className="bg-white rounded-2xl border border-rove-stone/10 p-5"
                             >
                                 <Animated.View entering={FadeInDown.delay(40).duration(300)} className="flex-row items-center justify-between mb-2">
-                                    <Text className="font-bold text-2xl text-rove-charcoal flex-1 mr-2" style={{ fontFamily: 'CormorantGaramond-Regular' }}>{currentDetail.name}</Text>
+                                    <Text className="font-bold text-2xl text-rove-charcoal flex-1 mr-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}>{currentDetail.name}</Text>
                                     <View className="px-2.5 py-1 rounded-full flex-row items-center" style={{ backgroundColor: `${theme.color}12` }}>
                                         <Feather name="clock" size={11} color={theme.color} />
                                         <Text className="text-[10px] font-bold ml-1" style={{ color: theme.textColor }}>{currentDetail.prep_time_minutes} min</Text>
@@ -691,12 +690,12 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                 </Animated.Text>
 
                                 <Animated.View entering={FadeInDown.delay(120).duration(300)} className="mb-4 bg-[#FAF9F6] p-4 rounded-xl border border-rove-stone/5">
-                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">Why it works</Text>
+                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-2">{t('plan.roveChef.whyItWorks')}</Text>
                                     <Text className="text-sm text-rove-charcoal leading-5">{currentDetail.why}</Text>
                                 </Animated.View>
 
                                 <Animated.View entering={FadeInDown.delay(160).duration(300)} className="mb-4 bg-[#FAF9F6] p-4 rounded-xl border border-rove-stone/5">
-                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-3">Ingredients</Text>
+                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-3">{t('plan.roveChef.ingredients')}</Text>
                                     {currentDetail.ingredients?.map((ing: string, i: number) => (
                                         <Animated.View key={i} entering={FadeInDown.delay(180 + i * 40).duration(250)} className="flex-row items-start mb-2">
                                             <View className="w-1.5 h-1.5 rounded-full mt-1.5 mr-3" style={{ backgroundColor: theme.color }} />
@@ -706,7 +705,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                 </Animated.View>
 
                                 <Animated.View entering={FadeInDown.delay(220).duration(300)} className="mb-6 bg-[#FAF9F6] p-4 rounded-xl border border-rove-stone/5">
-                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-3">Steps</Text>
+                                    <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-3">{t('plan.roveChef.steps')}</Text>
                                     {currentDetail.instructions?.map((step: string, i: number) => (
                                         <Animated.View key={i} entering={FadeInDown.delay(260 + i * 60).duration(250)} className="flex-row items-start mb-2.5">
                                             <View className="w-5 h-5 rounded-full items-center justify-center mr-3 mt-0.5" style={{ backgroundColor: `${theme.color}15` }}>
@@ -727,7 +726,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                         style={{ borderColor: `${theme.color}40`, backgroundColor: 'white' }}
                                     >
                                         <Feather name="arrow-left" size={14} color={theme.color} />
-                                        <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>Back to options</Text>
+                                        <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>{t('plan.roveChef.backToOptions')}</Text>
                                     </Pressable>
                                     <Pressable
                                         onPress={() => handleGenerateOptions(false)}
@@ -735,7 +734,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                         style={{ backgroundColor: theme.color }}
                                     >
                                         <Feather name="rotate-cw" size={14} color="white" />
-                                        <Text className="text-white font-bold tracking-wider ml-2 text-[10px] uppercase">Fresh menu</Text>
+                                        <Text className="text-white font-bold tracking-wider ml-2 text-[10px] uppercase">{t('plan.roveChef.freshMenu')}</Text>
                                     </Pressable>
                                 </View>
                             </Animated.View>
@@ -743,7 +742,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             /* ── The menu: 3-4 real dishes to pick from ── */
                             <Animated.View key="options" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)}>
                                 <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mb-3 text-center">
-                                    What do you feel like? Tap one
+                                    {t('plan.roveChef.tapOnePrompt')}
                                 </Text>
                                 {currentOptions.map((option, i) => (
                                     <OptionCard
@@ -761,7 +760,7 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                                     style={{ borderColor: `${theme.color}40`, backgroundColor: 'rgba(255,255,255,0.7)' }}
                                 >
                                     <Feather name="rotate-cw" size={13} color={theme.color} />
-                                    <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>None of these — show me others</Text>
+                                    <Text className="font-bold tracking-wider ml-2 text-[10px] uppercase" style={{ color: theme.textColor }}>{t('plan.roveChef.noneOfThese')}</Text>
                                 </Pressable>
                             </Animated.View>
                         ) : (
@@ -770,20 +769,20 @@ export function RoveChef({ phase, diet, fitnessGoal }: { phase: string, diet: st
                             <Animated.View key="empty-modal" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                                 <View className="flex-row flex-wrap justify-center gap-2 mb-8">
                                     <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10" style={{ backgroundColor: `${theme.color}05` }}>
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Curating for: {diet || 'Veg'}</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.roveChef.curatingFor', { diet: diet || t('plan.roveChef.dietFallback') })}</Text>
                                     </View>
                                     <CuisinePicker value={cuisine} onChange={setCuisine} color={theme.color} />
                                 </View>
                                 <BreathingIcon color={theme.color} icon={TABS.find(t => t.id === activeTab)?.icon} />
-                                <Text className="font-bold text-2xl text-rove-charcoal mb-2 text-center" style={{ fontFamily: 'CormorantGaramond-Regular' }}>Ready to nourish?</Text>
-                                <AnimatedPlaceholder phrases={ANIMATED_EXAMPLES[currentPhase]?.[activeTab] || ANIMATED_EXAMPLES.Menstrual[activeTab]} />
+                                <Text className="font-bold text-2xl text-rove-charcoal mb-2 text-center" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}>{t('plan.roveChef.readyToNourish')}</Text>
+                                <AnimatedPlaceholder phrases={t(`plan.roveChef.animatedExamples.${animatedPhaseKey}.${activeTab}`, { returnObjects: true }) as string[]} />
                                 <Pressable
                                     onPress={() => handleGenerateOptions(false)}
                                     className="w-full py-4 rounded-2xl items-center justify-center flex-row"
                                     style={{ backgroundColor: theme.color }}
                                 >
                                     <Feather name="zap" size={16} color="white" />
-                                    <Text className="text-white font-bold ml-2 text-[11px] uppercase tracking-widest">Generate {TABS.find(t => t.id === activeTab)?.label}</Text>
+                                    <Text className="text-white font-bold ml-2 text-[11px] uppercase tracking-widest">{t('plan.roveChef.generateTab', { tab: TABS.find(tb => tb.id === activeTab)?.label })}</Text>
                                 </Pressable>
                             </Animated.View>
                         )}

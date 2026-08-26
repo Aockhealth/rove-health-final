@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 export interface DurationInputProps {
   hours: number;
@@ -17,10 +18,12 @@ export function DurationInput({
   minutes,
   onChangeHours,
   onChangeMinutes,
-  label = 'TOTAL DURATION',
+  label,
   accentColor = '#5B9A8B',
   onTotalDurationPress,
 }: DurationInputProps) {
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t('tracker.duration.totalDuration');
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
@@ -30,7 +33,7 @@ export function DurationInput({
         <View style={styles.fields}>
           {/* Hours */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>HOURS</Text>
+            <Text style={styles.fieldLabel}>{t('tracker.duration.hours')}</Text>
             <TextInput
               style={styles.fieldInput}
               value={String(hours)}
@@ -48,7 +51,7 @@ export function DurationInput({
 
           {/* Minutes */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>MINS</Text>
+            <Text style={styles.fieldLabel}>{t('tracker.duration.mins')}</Text>
             <TextInput
               style={styles.fieldInput}
               value={pad(minutes)}
@@ -66,7 +69,7 @@ export function DurationInput({
 
       {/* Total duration link */}
       <TouchableOpacity onPress={onTotalDurationPress} style={styles.totalBtn}>
-        <Text style={[styles.totalLabel, { color: accentColor }]}>{label}</Text>
+        <Text style={[styles.totalLabel, { color: accentColor }]}>{resolvedLabel}</Text>
       </TouchableOpacity>
     </View>
   );

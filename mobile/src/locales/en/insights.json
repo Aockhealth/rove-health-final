@@ -1,0 +1,144 @@
+{
+  "comingSoon": {
+    "badge": "Coming soon",
+    "body": "We're still building this out — check back soon."
+  },
+  "cycleInsights": {
+    "acrossCycles": "Across your cycles",
+    "tiles": {
+      "cyclesLogged": "Cycles logged",
+      "cyclesLoggedSub": "{{count}} confirmed",
+      "cycleLength": "Cycle length",
+      "cycleLengthSub": "Days, across logged cycles",
+      "ovulationDay": "Ovulation day",
+      "ovulationDayAvgSub": "Average, confirmed + predicted",
+      "ovulationDayNotEstimated": "Not yet estimated",
+      "lutealLength": "Luteal length",
+      "lutealLengthSub": "Days, averaged"
+    },
+    "cycleHistory": {
+      "title": "Cycle history",
+      "subtitle": "Each bar is one cycle. The mark shows how that cycle's ovulation was established, if it was.",
+      "inProgress": "In progress"
+    },
+    "patternsTitle": "Patterns worth noticing",
+    "doctorExport": {
+      "title": "Doctor export",
+      "body": "Your cycle lengths, ovulation evidence, and BBT/strip readings — on one page for your appointment.",
+      "preview": "Preview"
+    },
+    "footerDisclaimer": "A cycle showing an ovulatory signature is not proof an egg was released, and a cycle without one is not a diagnosis. This page describes what your signals did, nothing more.",
+    "toast": {
+      "noDataTitle": "Not enough data yet",
+      "noDataDesc": "Log a few days first — the report needs something to summarise.",
+      "errorTitle": "Could not create the report",
+      "errorDesc": "Please try again in a moment."
+    }
+  },
+  "fertilityCard": {
+    "title": "Fertility Signals",
+    "ovulationDay": "Ovulation day",
+    "dpo": "{{count}} DPO",
+    "coverline": "Coverline",
+    "peakMucus": "Peak mucus",
+    "mucusLogged": "Mucus logged",
+    "emptyState": "Log a morning temperature and an ovulation test in the Tracker and your chart will build here across the cycle.",
+    "sparseNote": " Daily readings sharpen the coverline.",
+    "healthSyncNote": "Synced from Health — informational only, not part of the read above.",
+    "hrv": "HRV",
+    "restingHr": "Resting HR",
+    "skinTemp": "Skin temp"
+  },
+  "screen": {
+    "eyebrow": "Your Body Intelligence",
+    "title": "Insights",
+    "tabs": {
+      "cycle": "Cycle",
+      "patterns": "Patterns",
+      "clinical": "Clinical"
+    }
+  },
+  "cycleOverview": {
+    "nextPeriod": "Next Period",
+    "daysLate": "days late",
+    "days": "days",
+    "dayUnit": "d",
+    "whatThisMeans": "What this means",
+    "likelyWindow": "Likely Window",
+    "lateMessageLong": "A week or more is worth looking into. If pregnancy is possible, a test will tell you more — otherwise consider checking in with a doctor.",
+    "lateMessageShort": "A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle.",
+    "cycleTile": "Cycle",
+    "flowTile": "Flow",
+    "rhythmTile": "Rhythm",
+    "matchesAvg": "matches your avg",
+    "vsAvg": "{{delta}}d vs your avg",
+    "regular": "Reg",
+    "irregular": "Irreg",
+    "ovulationConfirmed": "This cycle: ovulation confirmed.",
+    "ovulationConfirmedWithDate": "This cycle: ovulation confirmed, {{date}}.",
+    "ovulationNotTypical": "This cycle didn't show a typical ovulation pattern — common, usually not urgent, worth mentioning if it happens often."
+  },
+  "habitsOverview": {
+    "title": "30-Day Habits",
+    "avgSleep": "Avg Sleep",
+    "hrs": "hrs",
+    "avgWorkout": "Avg Workout",
+    "mins": "mins",
+    "avgSteps": "Avg Steps",
+    "avgHydration": "Avg Hydration",
+    "litersPerDay": "L/day",
+    "noData": "No Data"
+  },
+  "cycleAnomaly": {
+    "title": "Cycles worth a second look",
+    "subtitle": "Flagged against your own cycle-length history, not a population average.",
+    "itemTitle": "Cycle starting {{date}} ran {{count}} days",
+    "longerBody": "That's {{diff}} days longer than your personal average of {{mean}} days.",
+    "shorterBody": "That's {{diff}} days shorter than your personal average of {{mean}} days.",
+    "likelyExplanation": " You logged \"{{tag}}\" more than usual during this cycle — worth noting as a possible factor.",
+    "footer": "A cycle standing out from your own pattern isn't a diagnosis — just something to keep an eye on, or mention to a doctor if it keeps happening."
+  },
+  "hormoneRhythm": {
+    "title": "Thermal & autonomic rhythm",
+    "subtitle": "Your skin temperature, resting heart rate, and HRV — signals known to shift after ovulation — combined into one trend across this cycle.",
+    "cycleDay1": "Cycle day 1",
+    "day": "Day {{count}}",
+    "risingNote": "These signals have climbed later in this cycle — consistent with the post-ovulatory shift the same signals show around when temperature-based ovulation detection confirms a cycle.",
+    "footer": "Not a hormone measurement — wearables can't read estrogen or progesterone directly. This is a pattern derived from temperature and heart signals, shown so you can see how it moves across your own cycle."
+  },
+  "labResults": {
+    "title": "Lab Values",
+    "addResult": "Add result",
+    "testNamePlaceholder": "Test name",
+    "valuePlaceholder": "Value",
+    "unitPlaceholder": "Unit",
+    "empty": "No lab values logged yet."
+  },
+  "medicationTracker": {
+    "title": "Medication",
+    "logToday": "Log today",
+    "medicationNamePlaceholder": "Medication name",
+    "dosePlaceholder": "Dose (e.g. 5mg, Day 3–7)",
+    "empty": "No medication logged yet."
+  },
+  "pcosPatterns": {
+    "title": "PCOS patterns",
+    "subtitle": "How often each pattern has shown up across your logged cycles, not just this one.",
+    "footer": "Patterns in what your signals showed, not a diagnosis — worth mentioning to your doctor if they keep showing up."
+  },
+  "pmosScore": {
+    "title": "PMOS-pattern check-in",
+    "subtitle": "{{flagged}} of {{total}} assessable {{indicatorWord}} commonly discussed alongside PMOS show up in your logged patterns.",
+    "indicatorSingular": "indicator",
+    "indicatorPlural": "indicators",
+    "footer": "Educational only — not a diagnosis or a risk score. PMOS is diagnosed clinically, usually with bloodwork and an ultrasound. Worth bringing this up with a doctor if it resonates, not something to act on alone."
+  },
+  "cycleTrendChart": {
+    "title": "BBT & test-strip trend",
+    "subtitle": "Each cycle's peak reading, side by side — not the daily chart above, which is this cycle only.",
+    "peakTemperature": "Peak temperature",
+    "testStripPeakGrade": "Test-strip peak grade",
+    "latest": "Latest:",
+    "gradeValue": "Grade {{n}}"
+  }
+}

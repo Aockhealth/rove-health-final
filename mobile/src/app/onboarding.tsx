@@ -280,12 +280,12 @@ export default function OnboardingScreen() {
               {cute.desc}
             </Text>
             <TouchableOpacity
-              onPress={() => router.replace('/(app)/home')}
+              onPress={() => router.replace('/intro/phase-menstrual')}
               className="w-full rounded-full bg-rove-charcoal py-4"
               style={{ minWidth: 280 }}
             >
               <Text className="text-center text-base font-semibold text-rove-cream">
-                Go to Dashboard
+                Continue
               </Text>
             </TouchableOpacity>
           </Animated.View>

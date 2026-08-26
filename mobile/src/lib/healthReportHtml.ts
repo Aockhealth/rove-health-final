@@ -352,6 +352,43 @@ export function renderHealthReportHtml(r: HealthReport): string {
     ${metric('Log coverage', `${coverage.completenessPct}%`, `${coverage.daysWithAnyLog} of ${r.windowDays} days`)}
   </div>
 
+  ${
+    r.nutrition
+      ? `
+  <h2>Nutrition</h2>
+  <div class="metrics">
+    ${metric('Calories', r.nutrition.calories.average !== null ? `${Math.round(r.nutrition.calories.average)} kcal` : '—', `${r.nutrition.daysLogged} days logged`)}
+    ${metric('Protein', r.nutrition.proteinG.average !== null ? `${Math.round(r.nutrition.proteinG.average)} g` : '—')}
+    ${metric('Carbs', r.nutrition.carbsG.average !== null ? `${Math.round(r.nutrition.carbsG.average)} g` : '—')}
+    ${metric('Fat', r.nutrition.fatG.average !== null ? `${Math.round(r.nutrition.fatG.average)} g` : '—')}
+    ${metric('Sugar', r.nutrition.sugarG.average !== null ? `${Math.round(r.nutrition.sugarG.average)} g` : '—', r.nutrition.avgGlycemicIndex !== null ? `avg GI ${r.nutrition.avgGlycemicIndex}` : undefined)}
+  </div>
+  <p class="sub" style="margin-top:8px">
+    Daily averages from ${r.nutrition.mealsLogged} logged meal${r.nutrition.mealsLogged === 1 ? '' : 's'} across ${r.nutrition.daysLogged} day${r.nutrition.daysLogged === 1 ? '' : 's'}.
+    Macros and glycemic index are AI-estimated from what was typed in when logged, not a lab measurement.
+  </p>
+  ${r.nutrition.topFoods.length ? `<h3 style="margin-top:12px">Most frequently logged</h3>${countedList(r.nutrition.topFoods, '')}` : ''}
+  `
+      : ''
+  }
+
+  ${
+    r.wearable
+      ? `
+  <h2>Wearable Signals</h2>
+  <div class="metrics">
+    ${metric('Resting HR', r.wearable.restingHeartRate.average !== null ? `${Math.round(r.wearable.restingHeartRate.average)} bpm` : '—', `${r.wearable.restingHeartRate.daysLogged} days`)}
+    ${metric('HRV', r.wearable.hrv.average !== null ? `${Math.round(r.wearable.hrv.average)} ms` : '—', `${r.wearable.hrv.daysLogged} days`)}
+    ${metric('Steps', r.wearable.steps.average !== null ? Math.round(r.wearable.steps.average).toLocaleString('en-IN') : '—', `${r.wearable.steps.daysLogged} days`)}
+    ${metric('Skin temp', r.wearable.skinTempDelta.average !== null ? `${r.wearable.skinTempDelta.average >= 0 ? '+' : ''}${r.wearable.skinTempDelta.average.toFixed(2)} °C` : '—', `vs. own baseline · ${r.wearable.skinTempDelta.daysLogged} days`)}
+  </div>
+  <p class="sub" style="margin-top:8px">
+    Synced from Apple Health / Health Connect. Informational only — never used to detect ovulation, and not a medical-grade measurement.
+  </p>
+  `
+      : ''
+  }
+
   <h2>Symptoms</h2>
   ${
     r.symptoms.matrix.length === 0

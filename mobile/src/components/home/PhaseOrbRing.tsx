@@ -16,7 +16,15 @@ export function PhaseOrbRing({ colors, size = 220 }: { colors: readonly [string,
     rotation2.value = withRepeat(withTiming(-360, { duration: 25000, easing: Easing.linear }), -1, false);
   }, []);
 
+  // failOffsetY hands the touch straight to the parent ScrollView once a drag
+  // moves more than ~12pt vertically, instead of contesting it — this orb
+  // sits right at the top of Home's scroll content, a very natural place to
+  // start a scroll gesture, and an unconstrained Pan here made a slow
+  // vertical drag ambiguous between "wobble the orb" and "scroll the page"
+  // until the gesture resolved, which read as a stutter/catch (a fast flick
+  // blew past the threshold in one frame, so it never showed up there).
   const panGesture = Gesture.Pan()
+    .failOffsetY([-12, 12])
     .onUpdate((e) => {
       // Bound the movement so it doesn't go too far out of the circle
       panX.value = interpolate(e.translationX, [-size, size], [-size * 0.25, size * 0.25], Extrapolation.CLAMP);

@@ -13,7 +13,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { phaseThemes } from '../../data/home-content';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 import {
   ChevronLeft,
   ChevronRight,
@@ -25,11 +28,15 @@ import {
   CheckCircle2,
 } from 'lucide-react-native';
 
-const DAYS_OF_WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+// Already-abbreviated per locale (not sliced from a full name at render
+// time) — slicing Devanagari by character index can cut a conjunct or matra
+// in half, unlike Latin abbreviations where slice(0, 3) is a no-op.
+function getDaysOfWeek(t: TFunction): string[] {
+  return t('tracker.calendar.daysOfWeek', { returnObjects: true }) as string[];
+}
+function getMonths(t: TFunction): string[] {
+  return t('tracker.calendar.months', { returnObjects: true }) as string[];
+}
 
 export type Phase = 'Menstrual' | 'Follicular' | 'Ovulatory' | 'Luteal' | null;
 
@@ -139,9 +146,13 @@ export function CycleCalendar({
   onExitPeriodLogging,
   onEndPeriod,
   headline,
-  subtext = 'Tap a date to log symptoms',
+  subtext,
   currentPhase,
 }: CycleCalendarProps) {
+  const { t, i18n } = useTranslation();
+  const resolvedSubtext = subtext ?? t('tracker.calendar.defaultSubtext');
+  const DAYS_OF_WEEK = getDaysOfWeek(t);
+  const MONTHS = getMonths(t);
   const [gridWidth, setGridWidth] = useState(0);
   const [showGuide, setShowGuide] = useState(false);
 
@@ -172,10 +183,15 @@ export function CycleCalendar({
 
   // Swipe left/right across the grid to change months, in addition to the
   // arrow buttons. Requires 20px of horizontal movement before activating so
-  // plain taps on a day cell still pass straight through to it.
+  // plain taps on a day cell still pass straight through to it. failOffsetY
+  // is deliberately tighter than activeOffsetX (10pt vs 20pt) so a slow,
+  // mostly-vertical drag concedes to the page's ScrollView quickly instead of
+  // sitting in the ambiguous zone where both recognizers are still
+  // negotiating — that negotiation window was reading as a stutter on slow
+  // scrolls (a fast flick clears it in one frame, so it never showed there).
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
-    .failOffsetY([-15, 15])
+    .failOffsetY([-10, 10])
     .onEnd((e) => {
       if (e.translationX < -50) {
         runOnJS(changeMonth)('next');
@@ -207,8 +223,8 @@ export function CycleCalendar({
       {!isPeriodLoggingMode ? (
         <View style={styles.topRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headline}>{headline}</Text>
-            <Text style={styles.subtext}>{subtext}</Text>
+            <Text style={[styles.headline, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>{headline}</Text>
+            <Text style={styles.subtext}>{resolvedSubtext}</Text>
           </View>
           <TouchableOpacity
             style={styles.periodBtn}
@@ -219,14 +235,16 @@ export function CycleCalendar({
             activeOpacity={0.85}
           >
             <Text style={styles.periodBtnText}>
-              {currentPhase === 'Menstrual' ? 'Edit Period' : 'Log Period'}
+              {currentPhase === 'Menstrual' ? t('tracker.calendar.editPeriod') : t('tracker.calendar.logPeriod')}
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.loggingBanner}>
-          <Text style={styles.loggingTitle}>Select period dates</Text>
-          <Text style={styles.loggingSub}>Tap days to mark/unmark bleeding</Text>
+          <Text style={[styles.loggingTitle, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+            {t('tracker.calendar.selectPeriodDates')}
+          </Text>
+          <Text style={styles.loggingSub}>{t('tracker.calendar.tapDaysHint')}</Text>
           <View style={styles.loggingBtnRow}>
             <TouchableOpacity
               style={styles.endPeriodBtn}
@@ -236,7 +254,7 @@ export function CycleCalendar({
               }}
               activeOpacity={0.85}
             >
-              <Text style={styles.endPeriodText}>End Period Here</Text>
+              <Text style={styles.endPeriodText}>{t('tracker.calendar.endPeriodHere')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.doneBtn}
@@ -246,7 +264,7 @@ export function CycleCalendar({
               }}
               activeOpacity={0.85}
             >
-              <Text style={styles.doneText}>Done</Text>
+              <Text style={styles.doneText}>{t('common.buttons.done')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -255,7 +273,7 @@ export function CycleCalendar({
       {/* Month header */}
       <View style={styles.monthHeader}>
         <View style={styles.monthTitleRow}>
-          <Text style={styles.monthTitle}>
+          <Text style={[styles.monthTitle, { fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }]}>
             {MONTHS[month].toUpperCase()} {year}
           </Text>
           <TouchableOpacity onPress={() => setShowGuide(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -289,7 +307,7 @@ export function CycleCalendar({
       >
         {DAYS_OF_WEEK.map((d) => (
           <View key={d} style={{ width: cellSize || undefined, flex: cellSize ? undefined : 1, alignItems: 'center' }}>
-            <Text style={styles.weekLabel}>{d.slice(0, 3)}</Text>
+            <Text style={styles.weekLabel}>{d}</Text>
           </View>
         ))}
       </View>
@@ -323,7 +341,19 @@ export function CycleCalendar({
             let bg = 'transparent';
             if (isSelected) bg = TODAY_COLOR;
             else if (isPeriod) bg = withAlpha(PHASE_COLORS.Menstrual, dayAlpha);
-            else if (phase) bg = withAlpha(PHASE_COLORS[phase], dayAlpha);
+            // A computed Menstrual phase without an actual log is just the
+            // cycle-length projection landing on this day (e.g. exactly one
+            // average cycle before/after a real logged period) — tinting it
+            // the same red as a real logged day reads as "you bled here,"
+            // which isn't something the engine actually knows. Follicular/
+            // Ovulatory/Luteal don't carry that same false claim, so those
+            // still get their light estimate tint as before.
+            else if (phase && phase !== 'Menstrual') bg = withAlpha(PHASE_COLORS[phase], dayAlpha);
+            // A genuinely upcoming predicted period still deserves a preview —
+            // that's a real forward prediction, not a false claim about the
+            // past — but at a visibly lighter alpha than a logged day, so it
+            // never reads as "you bled here already."
+            else if (phase === 'Menstrual' && isFuture) bg = withAlpha(PHASE_COLORS.Menstrual, '18');
 
             let numberColor = '#4B5563';
             if (isPeriod && !isSelected) numberColor = PHASE_COLORS.Menstrual;
@@ -419,14 +449,19 @@ export function CycleCalendar({
 // ─── Tracker Guide modal ────────────────────────────────────────────────────
 // Content ported from the web's tutorial modal
 // (frontend/src/app/cycle-sync/tracker/components/PeriodLoggingCard.tsx)
+// `sub` text is looked up via `tracker.calendar.guide.phases.<phase>.sub` —
+// `phase` itself reuses `tracker.quickPhaseLog.phaseNames.<phase>` so the
+// phase name matches what Quick Phase Log already shows.
 const PHASE_GUIDE = [
-  { phase: 'Menstrual' as const, tint: '#F5E8E8', border: withAlpha(PHASE_COLORS.Menstrual, '33'), textColor: PHASE_COLORS.Menstrual, sub: 'Days 1-5 (Period)' },
-  { phase: 'Follicular' as const, tint: '#E0F5F0', border: '#B8E0D4', textColor: '#0F7A5C', sub: 'Pre-ovulation energy' },
-  { phase: 'Ovulatory' as const, tint: '#FDF0DC', border: '#F0D6A8', textColor: '#9A6B1E', sub: 'Highest fertility' },
-  { phase: 'Luteal' as const, tint: '#ECEEF5', border: '#CBD1E8', textColor: '#4C5590', sub: 'Winding down' },
+  { phase: 'Menstrual' as const, tint: '#F5E8E8', border: withAlpha(PHASE_COLORS.Menstrual, '33'), textColor: PHASE_COLORS.Menstrual },
+  { phase: 'Follicular' as const, tint: '#E0F5F0', border: '#B8E0D4', textColor: '#0F7A5C' },
+  { phase: 'Ovulatory' as const, tint: '#FDF0DC', border: '#F0D6A8', textColor: '#9A6B1E' },
+  { phase: 'Luteal' as const, tint: '#ECEEF5', border: '#CBD1E8', textColor: '#4C5590' },
 ];
 
 function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
+  const fontHeading = getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={guideStyles.backdrop} onPress={onClose}>
@@ -437,7 +472,7 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
               <View style={guideStyles.headerIcon}>
                 <HelpCircle size={20} color={PHASE_COLORS.Menstrual} />
               </View>
-              <Text style={guideStyles.headerTitle}>Tracker Guide</Text>
+              <Text style={[guideStyles.headerTitle, { fontFamily: fontHeading }]}>{t('tracker.calendar.guide.title')}</Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <X size={20} color="#9CA3AF" />
@@ -451,10 +486,9 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
                 <CalendarIcon size={20} color="#3B82F6" />
               </View>
               <View style={guideStyles.stepBody}>
-                <Text style={guideStyles.stepTitle}>1. Navigate &amp; Select</Text>
+                <Text style={[guideStyles.stepTitle, { fontFamily: fontHeading }]}>{t('tracker.calendar.guide.step1.title')}</Text>
                 <Text style={guideStyles.stepText}>
-                  Use the arrows at the top of the calendar to switch months. Tap any date to select
-                  it — the tracker cards below will instantly update to show your logs for that specific day.
+                  {t('tracker.calendar.guide.step1.body')}
                 </Text>
               </View>
             </View>
@@ -465,11 +499,11 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
                 <Edit3 size={20} color={PHASE_COLORS.Menstrual} />
               </View>
               <View style={guideStyles.stepBody}>
-                <Text style={guideStyles.stepTitle}>2. Log Your Period</Text>
+                <Text style={[guideStyles.stepTitle, { fontFamily: fontHeading }]}>{t('tracker.calendar.guide.step2.title')}</Text>
                 <Text style={guideStyles.stepText}>
-                  Tap the <Text style={guideStyles.stepTextEmphasis}>LOG PERIOD</Text> button. The
-                  calendar will highlight in pink. Tap days to toggle bleeding on or off. Tap Done to
-                  save your cycle dates.
+                  {t('tracker.calendar.guide.step2.bodyPrefix')}
+                  <Text style={guideStyles.stepTextEmphasis}>{t('tracker.calendar.guide.step2.bodyEmphasis')}</Text>
+                  {t('tracker.calendar.guide.step2.bodySuffix')}
                 </Text>
               </View>
             </View>
@@ -480,10 +514,9 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
                 <NotebookPen size={20} color="#D97706" />
               </View>
               <View style={guideStyles.stepBody}>
-                <Text style={guideStyles.stepTitle}>3. Log Daily Rhythm</Text>
+                <Text style={[guideStyles.stepTitle, { fontFamily: fontHeading }]}>{t('tracker.calendar.guide.step3.title')}</Text>
                 <Text style={guideStyles.stepText}>
-                  Scroll down to see dynamic cards for symptoms, moods, water intake, and more. Each
-                  card is tailored to your current phase. Changes are saved automatically as you tap.
+                  {t('tracker.calendar.guide.step3.body')}
                 </Text>
               </View>
             </View>
@@ -491,23 +524,31 @@ function TrackerGuideModal({ visible, onClose }: { visible: boolean; onClose: ()
             {/* Cycle Phases */}
             <View style={guideStyles.phasesHeader}>
               <CheckCircle2 size={18} color="#22C55E" />
-              <Text style={guideStyles.phasesTitle}>Cycle Phases</Text>
+              <Text style={[guideStyles.phasesTitle, { fontFamily: fontHeading }]}>{t('tracker.calendar.guide.cyclePhases')}</Text>
             </View>
             <View style={guideStyles.phaseGrid}>
-              {PHASE_GUIDE.map((p) => (
-                <View
-                  key={p.phase}
-                  style={[guideStyles.phaseCard, { backgroundColor: p.tint, borderColor: p.border }]}
-                >
-                  <View style={[guideStyles.phaseDot, { backgroundColor: PHASE_COLORS[p.phase] }]} />
-                  <Text style={[guideStyles.phaseName, { color: p.textColor }]}>{p.phase}</Text>
-                  <Text style={[guideStyles.phaseSub, { color: p.textColor }]}>{p.sub}</Text>
+              {[0, 2].map((rowStart) => (
+                <View key={rowStart} style={guideStyles.phaseRow}>
+                  {PHASE_GUIDE.slice(rowStart, rowStart + 2).map((p) => (
+                    <View
+                      key={p.phase}
+                      style={[guideStyles.phaseCard, { backgroundColor: p.tint, borderColor: p.border }]}
+                    >
+                      <View style={[guideStyles.phaseDot, { backgroundColor: PHASE_COLORS[p.phase] }]} />
+                      <Text style={[guideStyles.phaseName, { color: p.textColor }]}>
+                        {t(`tracker.quickPhaseLog.phaseNames.${p.phase}`)}
+                      </Text>
+                      <Text style={[guideStyles.phaseSub, { color: p.textColor }]}>
+                        {t(`tracker.calendar.guide.phases.${p.phase}.sub`)}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
 
             <TouchableOpacity style={guideStyles.ctaBtn} onPress={onClose} activeOpacity={0.85}>
-              <Text style={guideStyles.ctaText}>Start Tracking</Text>
+              <Text style={guideStyles.ctaText}>{t('tracker.calendar.guide.startTracking')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </Pressable>
@@ -610,13 +651,15 @@ const guideStyles = StyleSheet.create({
     color: '#2D2420',
   },
   phaseGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
     marginBottom: 20,
   },
+  phaseRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   phaseCard: {
-    width: '47%',
+    flex: 1,
     borderRadius: 16,
     borderWidth: 1,
     padding: 12,

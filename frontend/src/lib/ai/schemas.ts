@@ -45,7 +45,14 @@ export const ChefOptionSchema = z.object({
     why: z.string(),
     // How the dish is served — drives the hard phase rules (e.g. no "cold"
     // options during the Menstrual phase) in the quality gate.
-    serving_style: z.enum(["warm", "room", "cold"])
+    serving_style: z.enum(["warm", "room", "cold"]),
+    // Only meaningful when mealType is "smoothie" — lets the quality gate
+    // verify the 2 smoothie / 1 juice / 1 soup composition rule without
+    // guessing from the dish name.
+    drink_type: z.enum(["smoothie", "juice", "soup"]).optional(),
+    // Self-reported added/free sugar estimate in grams, checked against a
+    // hard cap in the quality gate.
+    estimated_sugar_g: z.number().optional()
 });
 
 export const ChefOptionsResponseSchema = z.object({

@@ -1,0 +1,141 @@
+{
+  "states": {
+    "insufficient": {
+      "orbTitle": "Learning",
+      "actionLabel": "Log your period to begin",
+      "gateReason": "There is no cycle history to work from yet.",
+      "timingKicker": "While we learn your cycle",
+      "timingTitle": "Steady habits, no timing yet",
+      "timingBody": "We haven't seen enough of your cycle to time anything, and we'd rather say that than put a day in front of you.",
+      "focus": [
+        "Log the first day of your next period — that unlocks everything else",
+        "Ask your doctor which preconception multivitamin fits you",
+        "Keep meals and sleep on a regular rhythm while we watch a cycle"
+      ],
+      "moveIntro": "Nothing here is timed to a cycle day — this is the steady week."
+    },
+    "predicted": {
+      "orbTitle": "Predicted",
+      "actionLabel": "Testing window ahead",
+      "gateReason": "",
+      "timingKicker": "Ovulation window ahead",
+      "timingTitle": "Start testing, start trying",
+      "timingBody": "This is an estimate from your cycle lengths, not something observed. Treat the window as wide until a signal narrows it.",
+      "focus": [
+        "Test LH once daily, early afternoon",
+        "Intercourse every one to two days across the window beats aiming at a single day",
+        "Take a waking temperature each morning — it is what confirms afterwards"
+      ],
+      "moveIntro": "Ordinary week — keep intensity where it usually sits."
+    },
+    "surge": {
+      "orbTitle": "Surging",
+      "actionLabel": "Peak fertility — test and try",
+      "gateReason": "",
+      "timingKicker": "LH surging",
+      "timingTitle": "Today and tomorrow matter most",
+      "timingBody": "A surge is the clearest read in the cycle. It predicts ovulation; it does not confirm one happened.",
+      "focus": [
+        "Today and tomorrow are the two days that matter most",
+        "Keep testing until the band fades, so the peak can be dated",
+        "Take a waking temperature tomorrow — a shift is how this gets confirmed"
+      ],
+      "moveIntro": "Keep it easy for a day or two if that suits you — there is no evidence it changes the outcome either way."
+    },
+    "likely_confirmed": {
+      "orbTitle": "Likely confirmed",
+      "actionLabel": "One signal confirms it",
+      "gateReason": "",
+      "timingKicker": "Window likely closed",
+      "timingTitle": "One signal says ovulation happened",
+      "timingBody": "A sustained temperature shift places ovulation. One lagging signal dates it; it cannot corroborate itself.",
+      "focus": [
+        "Nothing left to time this cycle",
+        "Keep the waking temperature going — the shift has to hold to mean anything",
+        "A wearable or ovulation test would add the second independent signal full confirmation needs"
+      ],
+      "moveIntro": "Back to whatever your normal week looks like."
+    },
+    "confirmed": {
+      "orbTitle": "Confirmed",
+      "actionLabel": "Fertile window closed",
+      "gateReason": "",
+      "timingKicker": "Ovulation confirmed",
+      "timingTitle": "Fertile window closed",
+      "timingBody": "Two independent signals agree on the day. Your cycle showed an ovulatory signature.",
+      "focus": [
+        "Nothing to time until your next period",
+        "Keep logging temperature through the luteal phase",
+        "If your period is late, a test is reasonable"
+      ],
+      "moveIntro": "Back to whatever your normal week looks like."
+    },
+    "surge_unconfirmed": {
+      "orbTitle": "Unconfirmed",
+      "actionLabel": "Signals disagree",
+      "gateReason": "A surge appeared but no shift confirmed it, so we cannot place the day.",
+      "timingKicker": "Signals disagree",
+      "timingTitle": "A surge, but no confirming shift",
+      "timingBody": "We saw the surge and then nothing followed it. We don't know what happened this cycle, and we'd rather say so.",
+      "focus": [
+        "Keep testing — a late surge is possible",
+        "Keep taking a waking temperature; a delayed shift would still show",
+        "Worth mentioning at your next appointment, with your logged cycles"
+      ],
+      "moveIntro": "Nothing here is timed to a cycle day — this is the steady week."
+    },
+    "anovulatory": {
+      "orbTitle": "No pattern found",
+      "actionLabel": "No pattern this cycle",
+      "gateReason": "No ovulatory signature was found this cycle.",
+      "timingKicker": "No ovulatory signature this cycle",
+      "timingTitle": "Information, not failure",
+      "timingBody": "This cycle did not show an ovulation pattern. One cycle on its own is common and is not a diagnosis.",
+      "focus": [
+        "Nothing to time — keep logging as normal",
+        "Bring these logged cycles to a doctor if it happens again",
+        "The habits below matter more across months than any single cycle"
+      ],
+      "moveIntro": "Nothing here is timed to a cycle day — this is the steady week."
+    }
+  },
+  "method": {
+    "combined": "Temperature + test",
+    "bbt_only": "Temperature",
+    "opk_only": "Ovulation test",
+    "date_math": "Cycle dates"
+  },
+  "confidence": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "confidenceWithLabel": {
+    "high": "High confidence",
+    "medium": "Medium confidence",
+    "low": "Low confidence"
+  },
+  "opk": {
+    "negative": "Negative",
+    "low": "Low",
+    "high": "High",
+    "peak": "Peak"
+  },
+  "lhBand": ["No line", "Faint", "Medium", "Dark", "Darker than control"],
+  "weekStrip": {
+    "thisWeek": "This week",
+    "dow": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "marks": {
+      "test": "Test",
+      "try": "Try",
+      "rest": "Rest",
+      "none": "—"
+    },
+    "captions": {
+      "predicted": "Testing days come from the predicted window, which widens when confidence is low.",
+      "surge": "Marked from your own surge, not from an average cycle.",
+      "likely_confirmed": "The window has likely closed. Nothing this week needs timing.",
+      "confirmed": "Confirmed closed. Nothing this week needs timing."
+    }
+  }
+}

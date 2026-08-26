@@ -3,9 +3,11 @@ import { View, Text, Pressable, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { ChevronLeft, ChevronRight, RotateCcw, Minus, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { compareDateStrings, formatLocalDate, monthLabel } from '@shared/onboarding/date';
 import { Calendar } from 'react-native-calendars';
 import type { PeriodRangeDraft, AutoStats } from '../../lib/onboarding-state';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 type StepHistoryProps = {
   viewDate: Date;
@@ -69,6 +71,7 @@ function Stepper({
   max: number;
   onChange: (value: number) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View className="flex-1 gap-1.5">
       <Text className="text-xs font-semibold text-rove-stone">{label}</Text>
@@ -84,7 +87,7 @@ function Stepper({
         >
           <Minus size={16} color="#2D2420" />
         </TouchableOpacity>
-        <Text className="text-base font-semibold text-rove-charcoal">{value}d</Text>
+        <Text className="text-base font-semibold text-rove-charcoal">{t('onboarding.history.daysValue', { count: value })}</Text>
         <TouchableOpacity
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -116,6 +119,7 @@ export function StepHistory({
   onCycleLengthChange,
   onPeriodLengthChange,
 }: StepHistoryProps) {
+  const { t, i18n } = useTranslation();
   const today = formatLocalDate(new Date());
   const grid = getMonthGrid(viewDate);
   const activeMonth = viewDate.getMonth();
@@ -126,19 +130,19 @@ export function StepHistory({
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const isCurrentOrFutureMonth = viewDate.getTime() >= currentMonthStart.getTime();
 
-  let hintMessage = 'Tap the first day of your most recent period';
+  let hintMessage = t('onboarding.history.hints.tapFirstDay');
   let hintClasses = 'border-rove-charcoal/10 bg-white/40';
   let hintTextClass = 'text-rove-charcoal/70';
   if (isSelectingRangeEnd) {
-    hintMessage = 'Now tap the last day of that period';
+    hintMessage = t('onboarding.history.hints.tapLastDay');
     hintClasses = 'border-phase-menstrual/20 bg-phase-menstrual/5';
     hintTextClass = 'text-phase-menstrual';
   } else if (rangesLogged === 1) {
-    hintMessage = 'Range saved — add one more for better accuracy';
+    hintMessage = t('onboarding.history.hints.rangeSaved');
     hintClasses = 'border-phase-follicular/20 bg-phase-follicular/5';
     hintTextClass = 'text-phase-follicular';
   } else if (rangesLogged >= 2) {
-    hintMessage = `${rangesLogged} ranges logged — cycle auto-calculated`;
+    hintMessage = t('onboarding.history.hints.rangesLogged', { count: rangesLogged });
     hintClasses = 'border-phase-follicular/20 bg-phase-follicular/5';
     hintTextClass = 'text-phase-follicular';
   }
@@ -148,12 +152,12 @@ export function StepHistory({
       <Animated.View entering={FadeInDown.delay(100).duration(400)} className="gap-2">
         <Text
           className="text-2xl text-rove-charcoal"
-          style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+          style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
         >
-          Period History
+          {t('onboarding.history.title')}
         </Text>
         <Text className="max-w-[320px] text-sm leading-relaxed text-rove-stone">
-          Mark your recent periods. Adding 2+ ranges gives the most accurate predictions.
+          {t('onboarding.history.subtitle')}
         </Text>
       </Animated.View>
 
@@ -185,7 +189,7 @@ export function StepHistory({
               const dates: any = {};
               periodHistory.forEach((range) => {
                 if (!range.endDate || range.startDate === range.endDate) {
-                  dates[range.startDate] = { startingDay: true, endingDay: true, color: '#CD8B76', textColor: 'white' };
+                  dates[range.startDate] = { startingDay: true, endingDay: true, color: '#AF6B6B', textColor: 'white' };
                 } else {
                   let currDate = new Date(range.startDate);
                   const end = new Date(range.endDate);
@@ -196,8 +200,8 @@ export function StepHistory({
                     dates[dateStr] = {
                       startingDay: isStart,
                       endingDay: isEnd,
-                      color: isStart || isEnd ? '#CD8B76' : '#E8C7BE',
-                      textColor: isStart || isEnd ? 'white' : '#CD8B76',
+                      color: isStart || isEnd ? '#AF6B6B' : '#E4C3C3',
+                      textColor: isStart || isEnd ? 'white' : '#AF6B6B',
                     };
                     currDate.setDate(currDate.getDate() + 1);
                   }
@@ -208,7 +212,7 @@ export function StepHistory({
             theme={{
               calendarBackground: 'transparent',
               textSectionTitleColor: '#A8A29E',
-              selectedDayBackgroundColor: '#CD8B76',
+              selectedDayBackgroundColor: '#AF6B6B',
               selectedDayTextColor: '#ffffff',
               todayTextColor: '#2D2420',
               dayTextColor: '#2D2420',
@@ -232,7 +236,7 @@ export function StepHistory({
               className="flex-row items-center gap-1.5 rounded-full border border-rove-charcoal/10 px-3 py-1.5"
             >
               <RotateCcw size={12} color="#78716C" />
-              <Text className="text-xs font-semibold text-rove-stone">Clear this month</Text>
+              <Text className="text-xs font-semibold text-rove-stone">{t('onboarding.history.clearMonth')}</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -244,22 +248,22 @@ export function StepHistory({
           className="rounded-2xl border border-phase-follicular/20 bg-phase-follicular/5 p-4"
         >
           <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-phase-follicular">
-            Auto-Calculated
+            {t('onboarding.history.autoCalculated')}
           </Text>
           <View className="flex-row">
             <View className="flex-1 items-center">
               <Text className="text-2xl font-semibold text-rove-charcoal">{autoStats.avgCycle}</Text>
-              <Text className="text-xs text-rove-stone">Cycle days</Text>
+              <Text className="text-xs text-rove-stone">{t('onboarding.history.cycleDays')}</Text>
             </View>
             <View className="flex-1 items-center">
               <Text className="text-2xl font-semibold text-rove-charcoal">{autoStats.avgBleed}</Text>
-              <Text className="text-xs text-rove-stone">Period days</Text>
+              <Text className="text-xs text-rove-stone">{t('onboarding.history.periodDays')}</Text>
             </View>
             <View className="flex-1 items-center">
               <Text className="text-2xl font-semibold text-rove-charcoal">
-                {autoStats.isIrregular ? 'Irregular' : 'Regular'}
+                {autoStats.isIrregular ? t('onboarding.history.irregular') : t('onboarding.history.regular')}
               </Text>
-              <Text className="text-xs text-rove-stone">Pattern</Text>
+              <Text className="text-xs text-rove-stone">{t('onboarding.history.pattern')}</Text>
             </View>
           </View>
         </Animated.View>
@@ -271,18 +275,18 @@ export function StepHistory({
           className="gap-3 rounded-2xl border border-rove-charcoal/10 bg-white/60 p-4"
         >
           <Text className="text-[11px] font-semibold uppercase tracking-widest text-rove-stone">
-            Or set manually
+            {t('onboarding.history.orSetManually')}
           </Text>
           <View className="flex-row gap-3">
             <Stepper
-              label="Cycle length"
+              label={t('onboarding.history.cycleLength')}
               value={cycleLength}
               min={15}
               max={60}
               onChange={onCycleLengthChange}
             />
             <Stepper
-              label="Period length"
+              label={t('onboarding.history.periodLength')}
               value={periodLength}
               min={1}
               max={15}

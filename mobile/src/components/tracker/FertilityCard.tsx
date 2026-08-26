@@ -4,20 +4,21 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Thermometer } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { SymptomChip } from './SymptomChip';
 import type { OpkResult } from '@shared/cycle/ttc';
+import { getTtcOpkLabel } from '../../lib/ttcEngine';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 // Shown only in TTC mode, alongside Flow/Discharge — the two readings the
 // ovulation algorithm runs on. Everything here is one-per-day, same shape as
 // the rest of daily_logs.
 const ACCENT = '#C77D8F';
 
-const OPK_OPTIONS: { value: OpkResult; label: string }[] = [
-  { value: 'negative', label: 'Negative' },
-  { value: 'low', label: 'Low' },
-  { value: 'high', label: 'High' },
-  { value: 'peak', label: 'Peak' },
-];
+// Labels come from getTtcOpkLabel (ttcEngine.json's `opk.*` keys) — reusing
+// the same strings Home/Insights already use for OPK results instead of a
+// second, possibly-drifting translation of "Negative/Low/High/Peak".
+const OPK_OPTIONS: OpkResult[] = ['negative', 'low', 'high', 'peak'];
 
 type Unit = 'C' | 'F';
 
@@ -54,6 +55,7 @@ export function FertilityCard({
   dateKey,
   cardTint,
 }: FertilityCardProps) {
+  const { t, i18n } = useTranslation();
   const [unit, setUnit] = useState<Unit>('C');
   // The text box keeps its own buffer so half-typed values ("36.", "9") stay
   // on screen — echoing the parsed number back would erase them mid-keystroke.
@@ -129,11 +131,13 @@ export function FertilityCard({
 
       <View style={styles.header}>
         <Thermometer size={18} color={ACCENT} />
-        <Text style={styles.title}>Fertility</Text>
+        <Text style={[styles.title, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+          {t('tracker.fertility.title')}
+        </Text>
       </View>
 
       {/* ── Basal body temperature ── */}
-      <Text style={styles.subLabel}>Basal Body Temperature</Text>
+      <Text style={styles.subLabel}>{t('tracker.fertility.bbtLabel')}</Text>
       <View style={styles.bbtRow}>
         <TextInput
           value={text}
@@ -163,21 +167,21 @@ export function FertilityCard({
       </View>
       <Text style={[styles.hint, showRangeHint && styles.hintWarning]}>
         {showRangeHint
-          ? `Enter a temperature between ${rangeLabel}.`
-          : 'Take it on waking, before getting out of bed.'}
+          ? t('tracker.fertility.rangeHint', { range: rangeLabel })
+          : t('tracker.fertility.bbtHint')}
       </Text>
 
       {/* ── Ovulation test ── */}
-      <Text style={[styles.subLabel, { marginTop: 18 }]}>Ovulation Test</Text>
+      <Text style={[styles.subLabel, { marginTop: 18 }]}>{t('tracker.fertility.opkLabel')}</Text>
       <View style={styles.chipWrap}>
-        {OPK_OPTIONS.map((option) => {
-          const isActive = opkResult === option.value;
+        {OPK_OPTIONS.map((value) => {
+          const isActive = opkResult === value;
           return (
             <SymptomChip
-              key={option.value}
-              label={option.label}
+              key={value}
+              label={getTtcOpkLabel(value, t)}
               isSelected={isActive}
-              onToggle={() => onOpkChange(isActive ? null : option.value)}
+              onToggle={() => onOpkChange(isActive ? null : value)}
               accentColor={ACCENT}
               activeColor={ACCENT}
               activeVariant="soft"
@@ -185,7 +189,7 @@ export function FertilityCard({
           );
         })}
       </View>
-      <Text style={styles.hint}>A peak means your surge was detected — ovulation usually follows within a day.</Text>
+      <Text style={styles.hint}>{t('tracker.fertility.opkHint')}</Text>
     </View>
   );
 }

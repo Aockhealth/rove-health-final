@@ -1,0 +1,326 @@
+{
+  "move": {
+    "title": "Movement this week",
+    "howHard": "How hard to push",
+    "withPcos": "With PCOS",
+    "defaultIntro": "Moderate, steady movement — nothing here needs to change day to day.",
+    "disclaimer": "General educational information, not medical advice. If you're being treated for infertility or have been told to limit activity, follow your doctor's guidance over this."
+  },
+  "timing": {
+    "paused": "Timing guidance paused",
+    "pausedBody": "{{reason}} Everything below is steady guidance — none of it depends on knowing the day.",
+    "gettingStarted": "Getting Started",
+    "yourFertility": "Your Fertility",
+    "notOnYetTitle": "Fertile-window tracking isn't on yet",
+    "notOnYetBody": "Log a cycle or two — a period start, a temperature, or an ovulation test — and this card will start showing where you are in your fertile window.",
+    "whatMattersNow": "What matters right now",
+    "cardTitle": "What this means"
+  },
+  "gi": {
+    "pill": "GI",
+    "title": "Glycemic Index",
+    "intro": "How quickly a food raises blood sugar, on a 0–100 scale. Useful context if you're managing PCOS or blood-sugar swings.",
+    "searchPlaceholder": "Search a food...",
+    "commonlyAsked": "Commonly asked",
+    "noResults": "No match. Try a shorter search.",
+    "category": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
+  },
+  "guidanceSection": {
+    "dailyRhythm": "Daily Rhythm"
+  },
+  "activitiesWidget": {
+    "recommendedForYou": "Recommended For You",
+    "personalGoal": "Personal Goal",
+    "addActivityPlaceholder": "Add activity or supplement..."
+  },
+  "moveSection": {
+    "thisWeeksSessions": "This Week's Sessions",
+    "thisWeekBadge": "This Week",
+    "whyItsHere": "Why it's here"
+  },
+  "exerciseBuilder": {
+    "loadingMessages": {
+      "readingCycleData": "Reading your cycle data...",
+      "matchingIntensity": "Matching intensity to your phase...",
+      "checkingEquipment": "Checking your equipment & limits...",
+      "buildingSet": "Building your set..."
+    },
+    "errorTitle": "Error",
+    "errorGeneratePlan": "Could not generate plan",
+    "errorSaveWorkout": "Could not save workout.",
+    "exercisesCount": "{{count}} exercises · {{duration}}",
+    "optimizedFor": "Optimized for: {{phase}}",
+    "readyToMove": "Ready to move?",
+    "tellRoveCoach": "Tell Rove Coach your setting, focus, and how you're feeling.",
+    "buildMyWorkout": "Build My Workout",
+    "roveCoachHeader": "Rove Coach",
+    "workoutCoachTab": "Workout Coach",
+    "sessionLogTab": "Session Log",
+    "liveSession": "Live Session",
+    "warmup": "✦ Warmup",
+    "cooldown": "✦ Cooldown",
+    "mainCircuit": "✦ Main Circuit",
+    "setsLabel": "{{count}} Sets",
+    "repsLabel": "{{count}} Reps",
+    "finishSaveWorkout": "Finish & Save Workout",
+    "aiGeneratedPlan": "AI Generated Plan",
+    "intensityLabel": "{{intensity}} Intensity",
+    "mainCircuitCount": "✦ Main Circuit · {{count}} exercises",
+    "startGuidedSession": "Start Guided Session",
+    "whereQuestion": "Where?",
+    "settingOptions": {
+      "home": "Home",
+      "gym": "Gym"
+    },
+    "focusArea": "Focus Area",
+    "focusOptions": {
+      "fullBody": "Full Body",
+      "upperBody": "Upper Body",
+      "lowerBody": "Lower Body",
+      "cardio": "Cardio",
+      "core": "Core",
+      "mobility": "Mobility"
+    },
+    "energyQuestion": "How's your energy today?",
+    "energyOptions": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "symptomsQuestion": "Anything to keep in mind?",
+    "symptomsPlaceholder": "e.g. cramps, sore knees...",
+    "generateAiPlan": "Generate AI Plan"
+  },
+  "macroFuelGauge": {
+    "dailyFuel": "Daily Fuel",
+    "kcal": "kCal",
+    "roveChef": "Rove Chef",
+    "phaseGuidance": {
+      "Menstrual": {
+        "0": { "title": "Iron Focus", "tip": "Prioritize iron-rich foods", "desc": "Replace what you're losing" },
+        "1": { "title": "Gentle Fats", "tip": "Embrace healthy fats", "desc": "Avocado, nuts & olive oil soothe inflammation" },
+        "2": { "title": "Warming Carbs", "tip": "Don't skip carbs now", "desc": "Complex carbs reduce cramps & boost mood" },
+        "3": { "title": "Hydration", "tip": "Drink warm liquids", "desc": "Herbal teas & warm water ease discomfort" }
+      },
+      "Follicular": {
+        "0": { "title": "Light & Fresh", "tip": "Go light on heavy fats", "desc": "Your body processes lighter foods better now" },
+        "1": { "title": "Protein Power", "tip": "Aim for {{grams}}g today", "desc": "Building phase - support with amino acids" },
+        "2": { "title": "Fiber Up", "tip": "Load up on fiber", "desc": "Helps metabolize rising estrogen" },
+        "3": { "title": "Energizing Carbs", "tip": "Complex carbs fuel workouts", "desc": "You can handle more intensity now" }
+      },
+      "Ovulatory": {
+        "0": { "title": "Anti-Inflammatory", "tip": "Avoid processed foods", "desc": "Keep inflammation low at peak fertility" },
+        "1": { "title": "Omega Balance", "tip": "Focus on omega-3s", "desc": "Fish, flax & walnuts support hormones" },
+        "2": { "title": "Light Meals", "tip": "Eat smaller, frequent meals", "desc": "High energy means faster metabolism" },
+        "3": { "title": "Skip Heavy Fats", "tip": "Avoid fried & greasy foods", "desc": "Your liver is processing extra estrogen" }
+      },
+      "Luteal": {
+        "0": { "title": "Protein Stabilizer", "tip": "Maintain {{grams}}g protein", "desc": "Supports mood stability & muscle retention" },
+        "1": { "title": "Complex Carbs", "tip": "Don't cut carbs!", "desc": "They boost serotonin & reduce PMS anxiety" },
+        "2": { "title": "Healthy Fats", "tip": "Increase good fats now", "desc": "Supports progesterone production" },
+        "3": { "title": "Magnesium Rich", "tip": "Dark chocolate is okay!", "desc": "Magnesium eases cramps & cravings" },
+        "4": { "title": "Limit Salt & Sugar", "tip": "Reduce bloating triggers", "desc": "Avoid processed & salty snacks" }
+      }
+    }
+  },
+  "roveChef": {
+    "title": "Rove Chef",
+    "phaseNutrition": "Phase Nutrition",
+    "chooseProtocol": "Choose one protocol at a time for your {{phase}} phase.",
+    "maybePrefix": "Maybe: {{text}}",
+    "cuisineStyleTitle": "Cuisine Style",
+    "cuisineOptions": {
+      "auto": "Auto (Profile)",
+      "Indian": "Indian",
+      "Mediterranean": "Mediterranean",
+      "Asian": "Asian",
+      "Global": "Global"
+    },
+    "loadingMessages": {
+      "readingCycleData": "Reading your cycle data...",
+      "rememberingLiked": "Remembering what you liked...",
+      "pullingDishes": "Pulling real dishes for your phase...",
+      "settingMenu": "Setting the menu..."
+    },
+    "detailLoadingMessages": {
+      "goodPick": "Good pick!",
+      "writingUp": "Writing it up the classic way...",
+      "measuring": "Measuring out one serving..."
+    },
+    "errorTitle": "Error",
+    "errorFetchOptions": "Could not fetch options. Please try again.",
+    "errorLoadRecipe": "Could not load the recipe. Please try again.",
+    "tabs": {
+      "snack": "Snack",
+      "smoothie": "Smoothie",
+      "salad": "Salad"
+    },
+    "curatingFor": "Curating for: {{diet}}",
+    "dietFallback": "Veg",
+    "readyToNourish": "Ready to nourish?",
+    "generateTab": "Generate {{tab}}",
+    "whyItWorks": "Why it works",
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "backToOptions": "Back to options",
+    "freshMenu": "Fresh menu",
+    "tapOnePrompt": "What do you feel like? Tap one",
+    "noneOfThese": "None of these — show me others",
+    "dishesToPickFrom": "{{count}} dishes to pick from",
+    "animatedExamples": {
+      "Menstrual": {
+        "snack": ["Warm Ragi Ladoo...", "Jaggery Til Chikki...", "Roasted Makhana..."],
+        "smoothie": ["Beetroot Iron Boost...", "Warm Turmeric Milk...", "Date & Almond Shake..."],
+        "salad": ["Warm Moong Bowl...", "Steamed Veggie Khichdi...", "Spiced Sweet Potato..."]
+      },
+      "Follicular": {
+        "snack": ["Sprouted Moong Chaat...", "Roasted Chana...", "Fresh Fruit Chaat..."],
+        "smoothie": ["Green Detox Blend...", "Mixed Berry Lassi...", "Cucumber Mint Cooler..."],
+        "salad": ["Sprout & Veggie Bowl...", "Kachumber Salad...", "Citrus Quinoa Bowl..."]
+      },
+      "Ovulatory": {
+        "snack": ["Chilled Fruit Bowl...", "Cucumber Raita Cups...", "Coconut Ladoo..."],
+        "smoothie": ["Coconut Water Cooler...", "Watermelon Mint Blend...", "Chilled Buttermilk..."],
+        "salad": ["Watermelon Feta Bowl...", "Curd Rice Bowl...", "Cooling Cucumber Salad..."]
+      },
+      "Luteal": {
+        "snack": ["Dark Chocolate Bites...", "Roasted Nut Mix...", "Baked Sweet Potato..."],
+        "smoothie": ["Banana Cacao Shake...", "Warm Golden Milk...", "Peanut Butter Blend..."],
+        "salad": ["Warm Grain Bowl...", "Roasted Veggie Bowl...", "Paneer Bhurji Bowl..."]
+      }
+    }
+  },
+  "workoutHistory": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "focusWorkout": "{{focus}} Workout",
+    "warmup": "Warmup",
+    "cooldown": "Cooldown",
+    "completionByPhase": "Completion by Phase",
+    "historyTab": "history",
+    "insightsTab": "insights",
+    "sessions": "Sessions",
+    "minutes": "Minutes",
+    "avgDone": "Avg Done",
+    "noSessionsYet": "No sessions yet",
+    "generatePlanAbove": "Generate a plan above to get started",
+    "notEnoughData": "Not enough data yet",
+    "completeSessionsForInsights": "Complete a few sessions to see insights"
+  },
+  "mealLogSheet": {
+    "fields": {
+      "calories": "Calories",
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat",
+      "sugar": "Sugar"
+    },
+    "matchedFromHistory": "Matched from history",
+    "confidentEstimate": "Confident estimate",
+    "roughEstimate": "Rough estimate",
+    "looseGuess": "Loose guess",
+    "couldNotEstimate": "Could not estimate macros",
+    "enterManually": "Enter them manually instead.",
+    "logAMeal": "Log a meal",
+    "whatDidYouEat": "What did you eat?",
+    "namePlaceholder": "e.g. Dal, rice & curd",
+    "macrosLabel": "Macros (leave blank if you're not sure)",
+    "estimating": "Estimating…",
+    "logged": "Logged",
+    "saveMeal": "Save meal"
+  },
+  "nutritionTrackerCard": {
+    "todaysIntake": "Today's Intake",
+    "fats": "Fats",
+    "kcal": "{{count}} kcal",
+    "nothingLoggedYet": "Nothing logged yet today."
+  },
+  "index": {
+    "tabs": {
+      "guide": "Guide",
+      "diet": "Nourish",
+      "exercise": "Move"
+    },
+    "activityOptions": {
+      "sedentary": "Sedentary",
+      "active": "Active",
+      "highlyActive": "Highly Active"
+    },
+    "goalOptions": {
+      "weightLoss": "Fat Loss",
+      "maintenance": "Maintenance",
+      "muscleGain": "Build Muscle"
+    },
+    "dietOptions": {
+      "veg": "Veg",
+      "nonVeg": "Non-Veg",
+      "vegan": "Vegan",
+      "jain": "Jain"
+    },
+    "monthsCount_one": "{{count}} month",
+    "monthsCount_other": "{{count}} months",
+    "errorTitle": "Error",
+    "errorUpdatePlan": "Could not update your plan settings",
+    "errorSavePlan": "Could not save plan settings",
+    "kgLost": "{{value}}kg lost",
+    "kgToGo": "{{value}}kg to go",
+    "buildYourPlan": "Build Your Plan",
+    "stepOf5": "Step {{step}} of 5",
+    "biometricsQuestion": "What are your biometrics?",
+    "heightCm": "Height (cm)",
+    "weightKg": "Weight (kg)",
+    "activityQuestion": "How active are you?",
+    "primaryGoalQuestion": "What is your primary goal?",
+    "targetWeightPace": "Target Weight & Pace",
+    "targetWeightKg": "Target Weight (kg)",
+    "desiredMonth": "Desired Month — Reach it by",
+    "paceTooFast": "Losing {{totalKg}}kg in {{months}} needs ~{{rate}}kg/week — faster than the safe 0.5–1kg/week limit. We've capped your plan at 1kg/week; at that pace it'll realistically take about {{cappedMonths}} months.",
+    "paceOk": "That's about {{rate}}kg/week",
+    "editPaceTooFast": "That needs ~{{rate}}kg/week — faster than the safe 0.5–1kg/week limit. Capped at 1kg/week, so it'll realistically take about {{cappedMonths}} months.",
+    "editPaceOk": "About {{rate}}kg/week",
+    "paceGentleSuffix": " — a gentle, safe pace.",
+    "paceRangeSuffix": ", within the safe 0.5–1kg/week range.",
+    "dietaryPreference": "Dietary Preference",
+    "next": "Next",
+    "generatePlan": "Generate Plan",
+    "dayOfCycle": "Day {{day}} of Cycle",
+    "currentFocus": "Current Focus",
+    "yourJourney": "Your Journey",
+    "yourGoal": "Your Goal",
+    "startLabel": "Start",
+    "nowLabel": "Now",
+    "goalLabel": "Goal",
+    "activityLevel": "Activity Level",
+    "primaryGoal": "Primary Goal",
+    "theScience": "The Science",
+    "yourBiology": "Your Biology",
+    "hormonesNow": "Hormones Now",
+    "whatYouMayFeel": "What You May Feel",
+    "pcosNoteTitle": "With PCOS",
+    "pcosNoteBody": "Cycles without a confirmed ovulation are common with PCOS. That's expected, not a sign something's wrong. A daily temperature or ovulation test can show your own pattern more clearly than cycle-length averages alone. Bring your logged cycles to your doctor if you'd like to discuss it.",
+    "recommendedFuel": "Recommended Fuel",
+    "eatMore": "Eat More",
+    "alsoGood": "Also Good",
+    "powerFoods": "Power Foods",
+    "focusTitle": "Focus",
+    "avoidTitle": "Avoid",
+    "fertilityNutrition": "Fertility Nutrition",
+    "chooseProtocolTtc": "Choose one protocol at a time — recipes tailored to where you are in your cycle.",
+    "aimForActiveDaysPrefix": "Aim for about ",
+    "activeDaysCount": "{{count}} active days",
+    "aimForActiveDaysSuffix": " this week to support your pace and goal.",
+    "bestForThisPhase": "Best For This Phase",
+    "exerciseBadge": "Exercise",
+    "avoidThisPhase": "Avoid This Phase",
+    "highIntensity": "High Intensity",
+    "modIntensity": "Mod Intensity",
+    "whyItWorksRightNow": "Why it works right now",
+    "startSession": "Start Session",
+    "optimizedForCycle": "Optimized for your cycle",
+    "recentSessions": "Recent Sessions"
+  }
+}

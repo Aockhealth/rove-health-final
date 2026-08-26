@@ -20,7 +20,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeOut, Layout, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ChevronUp, ChevronDown, Info, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { CATEGORY_COLORS } from './constants';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 const ACCENT = CATEGORY_COLORS.discharge; // Soft Blue, #7CB9E8 — matches web's DischargeCard theme
 
@@ -67,6 +69,7 @@ function VideoOption({
   isSelected: boolean;
   onPress: () => void;
 }) {
+  const { i18n } = useTranslation();
   const player = useVideoPlayer(source, (p: any) => {
     p.loop = true;
     p.muted = true;
@@ -82,7 +85,15 @@ function VideoOption({
       <View style={styles.mediaFrame}>
         <VideoView player={player} style={styles.media} contentFit="cover" nativeControls={false} />
       </View>
-      <Text style={[styles.mediaLabel, isSelected && styles.mediaLabelSelected]}>{label}</Text>
+      <Text
+        style={[
+          styles.mediaLabel,
+          { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) },
+          isSelected && styles.mediaLabelSelected,
+        ]}
+      >
+        {label}
+      </Text>
       <Text style={styles.mediaSublabel}>{sublabel}</Text>
     </TouchableOpacity>
   );
@@ -100,6 +111,7 @@ function PhotoOption({
   isSelected: boolean;
   onPress: () => void;
 }) {
+  const { i18n } = useTranslation();
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -109,7 +121,15 @@ function PhotoOption({
       <View style={styles.mediaFrame}>
         <Image source={source} style={styles.media} resizeMode="cover" />
       </View>
-      <Text style={[styles.mediaLabel, isSelected && styles.mediaLabelSelected]}>{label}</Text>
+      <Text
+        style={[
+          styles.mediaLabel,
+          { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) },
+          isSelected && styles.mediaLabelSelected,
+        ]}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -126,13 +146,22 @@ function PillOption({
   isSelected: boolean;
   onPress: () => void;
 }) {
+  const { i18n } = useTranslation();
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
       style={[styles.pillOption, isSelected && styles.pillOptionSelected]}
     >
-      <Text style={[styles.pillLabel, isSelected && styles.pillLabelSelected]}>{label}</Text>
+      <Text
+        style={[
+          styles.pillLabel,
+          { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) },
+          isSelected && styles.pillLabelSelected,
+        ]}
+      >
+        {label}
+      </Text>
       {sublabel ? (
         <Text style={[styles.pillSublabel, isSelected && styles.pillSublabelSelected]}>{sublabel}</Text>
       ) : null}
@@ -146,6 +175,7 @@ export function DischargeQuestionnaire({
   onAnswersChange,
   cardTint,
 }: DischargeQuestionnaireProps) {
+  const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -192,7 +222,9 @@ export function DischargeQuestionnaire({
 
         <View style={styles.headerText}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.headerTitle}>Cervical Discharge</Text>
+            <Text style={[styles.headerTitle, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+              {t('tracker.discharge.title')}
+            </Text>
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
@@ -205,7 +237,7 @@ export function DischargeQuestionnaire({
             </TouchableOpacity>
           </View>
           <Text style={styles.headerSubtitle}>
-            Answer 3 questions for accurate phase prediction
+            {t('tracker.discharge.subtitle')}
           </Text>
         </View>
 
@@ -231,9 +263,7 @@ export function DischargeQuestionnaire({
             <X size={12} color={ACCENT} />
           </TouchableOpacity>
           <Text style={styles.infoText}>
-            This questionnaire (MPIQ) helps predict your cycle phase with{' '}
-            <Text style={styles.infoTextBold}>more than 95% accuracy</Text> by analyzing your body's biological
-            markers.
+            {t('tracker.discharge.infoText')}
           </Text>
         </Animated.View>
       )}
@@ -242,35 +272,37 @@ export function DischargeQuestionnaire({
       {expanded && (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={styles.body}>
           {/* Q1: Vaginal Fluid */}
-          <Text style={styles.questionNum}>1. Vaginal Fluid</Text>
+          <Text style={[styles.questionNum, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+            {t('tracker.discharge.q1.heading')}
+          </Text>
           <Text style={styles.questionDesc}>
-            On touch and feel, what is the consistency of the discharge?
+            {t('tracker.discharge.q1.description')}
           </Text>
           <View style={styles.mediaGrid}>
             <VideoOption
-              label="Tacky"
-              sublabel="Sticky, glue-like"
+              label={t('tracker.discharge.q1.options.tacky.label')}
+              sublabel={t('tracker.discharge.q1.options.tacky.sublabel')}
               source={TACKY_VIDEO}
               isSelected={answers.vaginalFluid === 'Tacky'}
               onPress={() => toggle('vaginalFluid', 'Tacky')}
             />
             <VideoOption
-              label="Creamy"
-              sublabel="Lotion-like, smooth"
+              label={t('tracker.discharge.q1.options.creamy.label')}
+              sublabel={t('tracker.discharge.q1.options.creamy.sublabel')}
               source={CREAMY_VIDEO}
               isSelected={answers.vaginalFluid === 'Creamy'}
               onPress={() => toggle('vaginalFluid', 'Creamy')}
             />
             <VideoOption
-              label="Stretchy"
-              sublabel="Raw egg white, elastic"
+              label={t('tracker.discharge.q1.options.stretchy.label')}
+              sublabel={t('tracker.discharge.q1.options.stretchy.sublabel')}
               source={STRETCHY_VIDEO}
               isSelected={answers.vaginalFluid === 'Stretchy'}
               onPress={() => toggle('vaginalFluid', 'Stretchy')}
             />
             <VideoOption
-              label="Bloody"
-              sublabel="Red/brown tint"
+              label={t('tracker.discharge.q1.options.bloody.label')}
+              sublabel={t('tracker.discharge.q1.options.bloody.sublabel')}
               source={BLOODY_VIDEO}
               isSelected={answers.vaginalFluid === 'Bloody'}
               onPress={() => toggle('vaginalFluid', 'Bloody')}
@@ -280,25 +312,27 @@ export function DischargeQuestionnaire({
           <View style={styles.divider} />
 
           {/* Q2: How does it look? */}
-          <Text style={styles.questionNum}>2. How does it look?</Text>
+          <Text style={[styles.questionNum, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+            {t('tracker.discharge.q2.heading')}
+          </Text>
           <Text style={styles.questionDesc}>
-            Observe the color and clarity of your cervical fluid.
+            {t('tracker.discharge.q2.description')}
           </Text>
           <View style={styles.mediaGrid}>
             <PhotoOption
-              label="White/Yellow"
+              label={t('tracker.discharge.q2.options.whiteYellow')}
               source={WHITE_YELLOW_IMAGE}
               isSelected={answers.appearance === 'White/Yellow'}
               onPress={() => toggle('appearance', 'White/Yellow')}
             />
             <PhotoOption
-              label="Clear"
+              label={t('tracker.discharge.q2.options.clear')}
               source={CLEAR_IMAGE}
               isSelected={answers.appearance === 'Clear'}
               onPress={() => toggle('appearance', 'Clear')}
             />
             <PhotoOption
-              label="Red"
+              label={t('tracker.discharge.q2.options.red')}
               source={RED_IMAGE}
               isSelected={answers.appearance === 'Red'}
               onPress={() => toggle('appearance', 'Red')}
@@ -308,25 +342,27 @@ export function DischargeQuestionnaire({
           <View style={styles.divider} />
 
           {/* Q3: Vaginal Sensation */}
-          <Text style={styles.questionNum}>3. Vaginal Sensation</Text>
+          <Text style={[styles.questionNum, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+            {t('tracker.discharge.q3.heading')}
+          </Text>
           <Text style={styles.questionDesc}>
-            How does it feel down there throughout the day?
+            {t('tracker.discharge.q3.description')}
           </Text>
           <View style={styles.pillGrid}>
             {(
               [
-                { label: 'Dry', sublabel: 'No fluid felt' },
-                { label: 'Moist', sublabel: 'Slightly damp' },
-                { label: 'Wet', sublabel: 'Distinctly wet' },
-                { label: 'Slippery', sublabel: 'Lubricated, sliding' },
-              ] as { label: NonNullable<Sensation>; sublabel: string }[]
-            ).map(({ label, sublabel }) => (
+                { value: 'Dry', key: 'dry' },
+                { value: 'Moist', key: 'moist' },
+                { value: 'Wet', key: 'wet' },
+                { value: 'Slippery', key: 'slippery' },
+              ] as { value: NonNullable<Sensation>; key: string }[]
+            ).map(({ value, key }) => (
               <PillOption
-                key={label}
-                label={label}
-                sublabel={sublabel}
-                isSelected={answers.sensation === label}
-                onPress={() => toggle('sensation', label)}
+                key={value}
+                label={t(`tracker.discharge.q3.options.${key}.label`)}
+                sublabel={t(`tracker.discharge.q3.options.${key}.sublabel`)}
+                isSelected={answers.sensation === value}
+                onPress={() => toggle('sensation', value)}
               />
             ))}
           </View>

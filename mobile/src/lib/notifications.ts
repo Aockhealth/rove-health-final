@@ -1,5 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { OvulationSignal } from '@shared/cycle/ttc';
 
 // Fixed identifiers so re-scheduling (e.g. cycle dates refresh) replaces the
 // existing notification instead of stacking duplicates.
@@ -137,4 +139,76 @@ export async function schedulePeriodReminder(nextPeriodDateIso: string | null) {
       date: reminderDate,
     },
   });
+}
+
+// ============================================================================
+// OVULATION STATUS TRANSITIONS
+// ============================================================================
+
+/**
+ * Remembers only the *last seen* status for TTC mode, keyed to the cycle it
+ * was seen on — not a history, just enough to tell "she just crossed into
+ * this status" apart from "she's been here for a week." One key, overwritten
+ * every call, so it can never grow unbounded across cycles.
+ */
+const LAST_STATUS_KEY = 'rove:ttc:last-ovulation-status';
+
+type StoredStatus = { cycleStart: string; status: OvulationSignal['status'] };
+
+/** Copy for the statuses actually worth interrupting her for — not every status change is. */
+const TRANSITION_COPY: Partial<Record<OvulationSignal['status'], { title: string; body: string }>> = {
+  fertile_window: {
+    title: 'Your fertile window has opened',
+    body: 'This is your most fertile stretch — a good time to test daily if you aren’t already.',
+  },
+  ovulation_likely: {
+    title: 'Your test peaked',
+    body: 'Ovulation is likely in the next day or so. Keep logging your morning temperature to confirm it.',
+  },
+  ovulation_confirmed: {
+    title: 'Ovulation confirmed for this cycle',
+    body: 'Your temperature stayed up for three days, confirming ovulation. Check Insights for the details.',
+  },
+};
+
+/**
+ * Fires a one-time local notification the moment `signal.status` first
+ * crosses into one of TRANSITION_COPY's statuses this cycle — never on the
+ * first read of a fresh app install/cycle (nothing to transition *from* yet),
+ * and never again for the same status on the same cycle.
+ *
+ * Call this every time a fresh OvulationSignal is computed in TTC mode (see
+ * dashboard.ts, right where persistOvulationEstimate fires) — cheap, local,
+ * and safe to call as often as the signal is recomputed.
+ */
+export async function syncOvulationStatusNotification(
+  cycleStart: string,
+  signal: OvulationSignal
+): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(LAST_STATUS_KEY);
+    const previous: StoredStatus | null = raw ? JSON.parse(raw) : null;
+    const isSameCycle = previous?.cycleStart === cycleStart;
+    const statusChanged = !isSameCycle || previous!.status !== signal.status;
+
+    if (statusChanged) {
+      const shouldNotify = isSameCycle && previous !== null && previous.status !== signal.status;
+      const copy = TRANSITION_COPY[signal.status];
+
+      if (shouldNotify && copy) {
+        const granted = await ensureNotificationPermissions();
+        if (granted) {
+          await Notifications.scheduleNotificationAsync({
+            content: { title: copy.title, body: copy.body },
+            trigger: null, // deliver immediately — this reports something that already happened, not something to schedule ahead
+          });
+        }
+      }
+
+      await AsyncStorage.setItem(LAST_STATUS_KEY, JSON.stringify({ cycleStart, status: signal.status }));
+    }
+  } catch (err) {
+    // Never let a notification bookkeeping failure affect the dashboard load it rides in on.
+    console.error('[notifications] syncOvulationStatusNotification failed:', err);
+  }
 }

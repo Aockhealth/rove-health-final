@@ -216,6 +216,25 @@ export async function requestPasswordReset(email: string): Promise<{ success?: b
   return { success: true };
 }
 
+/**
+ * Verifies the numeric code from the password-reset email (same 'Token'
+ * that requestPasswordReset's underlying Supabase call generates — the
+ * redirectTo link and this code are two views of the same recovery
+ * request). A successful verify re-establishes her session, which is what
+ * lets updatePassword below succeed without her having ever left the app.
+ */
+export async function verifyPasswordResetOtp(email: string, token: string): Promise<{ success?: boolean; error?: string }> {
+  const { error } = await supabase.auth.verifyOtp({ email, token, type: 'recovery' });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function updatePassword(newPassword: string): Promise<{ success?: boolean; error?: string }> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
 export async function updateContactInfo(
   email: string,
   phone: string
@@ -253,6 +272,13 @@ export async function deleteUserAccount(): Promise<{ success?: boolean; error?: 
     supabase.from('user_cycle_settings').delete().eq('user_id', userId),
     supabase.from('ai_cache_keys').delete().eq('user_id', userId),
     supabase.from('onboarding_events').delete().eq('user_id', userId),
+    // These five don't have an RLS delete policy for lh_readings/ovulation_estimates
+    // (view+insert+update only), so they're cleaned up by the ON DELETE CASCADE added
+    // in 20260824010000_cascade_delete_ttc_tables.sql when the auth user is removed
+    // below, not here. lab_results and meal_logs do have a delete policy, so those
+    // two are removed proactively for immediate consistency.
+    supabase.from('lab_results').delete().eq('user_id', userId),
+    supabase.from('meal_logs').delete().eq('user_id', userId),
   ]);
 
   const errors = deletions.filter((d) => d.error).map((d) => d.error?.message);

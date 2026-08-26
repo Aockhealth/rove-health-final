@@ -18,7 +18,10 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { I18nextProvider } from 'react-i18next';
 import { SplashIntro } from '../components/ui/SplashIntro';
+import i18n, { initI18n } from '../lib/i18n';
+import { DEVANAGARI_FONT_MAP, getLocalizedFontFamily } from '../lib/fonts';
 
 import {
   CormorantGaramond_400Regular,
@@ -96,6 +99,7 @@ function RootLayout() {
     storage: AsyncStorage,
   }));
   const [showIntro, setShowIntro] = useState(true);
+  const [i18nReady, setI18nReady] = useState(false);
   const [loaded, error] = useFonts({
     'CormorantGaramond-Regular': CormorantGaramond_400Regular,
     'CormorantGaramond-Italic': CormorantGaramond_400Regular_Italic,
@@ -115,43 +119,75 @@ function RootLayout() {
     'Raleway-BoldItalic': Raleway_700Bold_Italic,
     'Raleway-ExtraBold': Raleway_800ExtraBold,
     'Raleway-ExtraBoldItalic': Raleway_800ExtraBold_Italic,
+    ...DEVANAGARI_FONT_MAP,
   });
 
   useEffect(() => {
-    if (loaded || error) {
+    initI18n().then((language) => {
+      // Default-styled Text (no explicit fontFamily) picks up the right
+      // script for the language resolved at startup. A language switched
+      // later from Profile settings takes effect for translated strings
+      // immediately, but this default-font update only applies to Text
+      // rendered fresh after the switch — expo-font's font map is loaded
+      // once at startup and can't be hot-swapped (see lib/fonts.ts).
+      const bodyFont = getLocalizedFontFamily('Raleway-Medium', language);
+      (Text as any).defaultProps.style = { fontFamily: bodyFont, includeFontPadding: false };
+      (TextInput as any).defaultProps.style = { fontFamily: bodyFont, includeFontPadding: false };
+      setI18nReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if ((loaded || error) && i18nReady) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loaded, error]);
+  }, [loaded, error, i18nReady]);
 
   useEffect(() => {
     trackEvent('app_opened');
   }, []);
 
-  if (!loaded && !error) {
+  useEffect(() => {
+    // Registers the background-sync task executor (see
+    // healthBackgroundSync.ts) — must happen on every app start, not just
+    // when Profile mounts, so the OS can find and re-invoke a task it
+    // already scheduled from a previous session. Native-only: neither
+    // expo-task-manager's background delivery nor HealthKit/Health Connect
+    // exist on web.
+    if (Platform.OS !== 'web') {
+      import('../lib/healthBackgroundSync').catch((err) => {
+        console.error('[_layout] failed to register health background task:', err);
+      });
+    }
+  }, []);
+
+  if ((!loaded && !error) || !i18nReady) {
     return null;
   }
 
   return (
-    <SafeAreaProvider>
-      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#FAF9F6' },
-              }}
-            >
-              <Stack.Screen name="wellbeing/intro" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="wellbeing/assessment" options={{ presentation: 'modal' }} />
-            </Stack>
-            <Toaster />
-            {showIntro && <SplashIntro onFinish={() => setShowIntro(false)} />}
-          </BottomSheetModalProvider>
-        </GestureHandlerRootView>
-      </PersistQueryClientProvider>
-    </SafeAreaProvider>
+    <I18nextProvider i18n={i18n}>
+      <SafeAreaProvider>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetModalProvider>
+              <StatusBar style="dark" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#FAF9F6' },
+                }}
+              >
+                <Stack.Screen name="wellbeing/intro" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="wellbeing/assessment" options={{ presentation: 'modal' }} />
+              </Stack>
+              <Toaster />
+              {showIntro && <SplashIntro onFinish={() => setShowIntro(false)} />}
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
+        </PersistQueryClientProvider>
+      </SafeAreaProvider>
+    </I18nextProvider>
   );
 }
 

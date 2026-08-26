@@ -28,34 +28,129 @@ Options (all under 30 chars):
 - "Your Cycle, Understood" (22)
 
 ## Promotional Text (170 characters max, editable after release without a new build)
-> Rove pairs cycle tracking with AI-powered insights on your energy, mood, and nutrition — synced to every phase of your cycle, not a generic calendar.
+> Built by clinicians. Science-led, cycle-personalized guidance for nutrition, fitness, and health — plus AI-powered insights. More than a period tracker.
 
-## Description (4000 characters max)
-> **Rove Health — Cycle Syncing, Reimagined**
->
-> Rove is a cycle-aware wellness companion built for how your body actually changes month to month. Instead of a generic period calendar, Rove maps your energy, mood, nutrition, and workouts to the phase you're actually in — menstrual, follicular, ovulatory, or luteal.
->
-> **What you get:**
-> - Cycle & symptom tracking that adapts as your patterns emerge
-> - AI-generated, phase-based insights on nutrition, exercise, and mood
-> - A personalized plan that shifts with your cycle, not against it
-> - A private, judgment-free space for logging symptoms and patterns
->
-> **Built on privacy first.** Your health data is never sold. Read our full Privacy Policy and Terms of Service in-app.
->
-> Rove Health is a wellness and lifestyle app. It is not a substitute for professional medical advice, and is not a form of contraception. Always consult a healthcare professional for medical concerns.
+*(154 characters)*
 
-(Edit freely — especially the feature bullets, since they should match whatever's actually shipped in this build, not the full roadmap.)
+## Description (4000 characters max — refined from your draft, 3,542 characters)
+> • Built by clinicians
+> • Science-led and evidence-informed
+> • Personalized to your unique cycle
+> • Cycle syncing made simple
+> • AI-powered health insights
+> • Nutrition, fitness, and health in one app
+> • More than a period tracker
+>
+> Rove Health is a doctor-built women's health and lifestyle app designed to help you understand your body, not just track your period.
+>
+> Your hormones influence energy, mood, focus, exercise performance, nutrition needs, sleep, skin health, and overall wellbeing. Rove Health helps you connect the dots through cycle tracking, symptom logging, personalized insights, nutrition guidance, fitness recommendations, and AI-powered analysis.
+>
+> Whether you're looking to understand your symptoms, optimize your lifestyle, improve fitness, or feel more in sync with your body, Rove Health provides practical, science-led guidance tailored to your cycle.
+>
+> **TRACK YOUR CYCLE**
+> Stay informed with:
+> • Period predictions
+> • Ovulation estimates
+> • Fertile window tracking
+> • Current cycle phase identification
+> • Cycle history and trends
+>
+> Know where you are in your cycle and what to expect next.
+>
+> **DAILY FLOW: PERSONALIZED CYCLE SYNCING**
+> Your body's needs change throughout the menstrual cycle. Receive daily guidance on:
+> • Key nutrients to prioritize
+> • Foods that support hormonal health
+> • Recommended activities
+> • Lifestyle habits aligned with your current phase
+>
+> Cycle syncing made practical and personalized.
+>
+> **UNDERSTAND YOUR BODY**
+> Today's Snapshot explains how your cycle phase may influence:
+> • Hormones
+> • Mood and mental performance
+> • Energy and physical health
+> • Skin health
+>
+> Each insight includes actionable recommendations to support your wellbeing.
+>
+> **COMPREHENSIVE HEALTH TRACKING**
+> Track what matters most:
+> • Symptoms
+> • Mood
+> • Exercise
+> • Sleep
+> • Hydration
+> • Lifestyle disruptors
+> • Sexual wellness
+> • Discharge
+>
+> View your data in a monthly calendar and identify meaningful trends over time. The more you track, the stronger the insights.
+>
+> **PERSONALIZED INSIGHTS & AI ANALYSIS**
+> Move beyond tracking. Rove Health analyzes your data to uncover patterns and explain the science behind them. Learn why symptoms like cramps, bloating, mood changes, or energy fluctuations occur, and discover evidence-informed strategies to manage them.
+>
+> Our AI transforms daily health data into personalized insights that help you make better decisions about nutrition, fitness, recovery, and self-care.
+>
+> **NOURISH: CYCLE-SYNCED NUTRITION**
+> Receive personalized guidance including:
+> • Daily calorie requirements
+> • Protein targets
+> • Phase-specific nutrients
+> • Recommended foods and meals
+>
+> Generate personalized snacks, smoothies, and salads with Rove Chef, tailored to your cycle and preferences.
+>
+> **EXERCISE WITH YOUR CYCLE**
+> Get cycle-aware fitness guidance designed to support performance and recovery. Use the AI Workout Generator to create personalized workouts based on your goals, available equipment, location, and current cycle phase.
+>
+> **LEARN WITH CONFIDENCE**
+> Access evidence-informed content on:
+> • Menstrual health
+> • Hormones
+> • Nutrition
+> • Fitness
+> • Mental wellbeing
+> • Fertility awareness
+> • Women's health topics
+>
+> Understand your cycle. Decode your symptoms. Make informed decisions.
+>
+> Rove Health helps women move from simply tracking their cycle to truly understanding their health.
+>
+> Rove Health is a wellness and lifestyle app. It is not a substitute for professional medical advice and is not a form of contraception. Always consult a healthcare professional for medical concerns.
+
+Changes made to your draft:
+- Removed the stray leading spaces before each "•" bullet (copy-paste artifact — Apple would have shown uneven indentation)
+- Turned section labels into a consistent CAPS + line-break pattern so each block reads as its own section
+- Fixed minor grammar ("well-being" → "wellbeing" consistently, "The more you track - the stronger" → "The more you track, the stronger")
+- Replaced the ✓ checkmarks with plain "•" bullets — App Store Connect's description field rejected the checkmark character ("invalid characters"); the bullet character is standard and works fine
+- Left every claim and feature bullet as you wrote it — no content cut or added
+
+One thing to flag: this description doesn't mention TTC (trying-to-conceive) mode, which you've been actively building (`de32749 Add TTC mode screens and logic`). If that's shipping in this build, it's worth a short section — happy to draft one if you want it in.
 
 ## Keywords (100 characters max, comma-separated, no spaces needed, don't repeat the app name or category words like "health")
-> `cycle,period,tracker,pms,hormone,ovulation,fertility,wellness,ai,mood,nutrition,symptoms`
+> `cycle,period,tracker,hormone,ovulation,fertility,ttc,pregnancy,wellness,ai,nutrition,fitness`
+
+*(92 characters — added "ttc" and "pregnancy" since that mode is now in the app; swap "pregnancy" out if TTC mode isn't in this build yet.)*
 
 (Count this against the live 100-char field before submitting — keyword limits are strict and Apple silently truncates over the limit.)
 
 ## Support URL
-You already have `rovehealthofficial@gmail.com` live in the Privacy Policy page. Two options:
-1. **Fastest:** use `mailto:rovehealthofficial@gmail.com` as the Support URL — Apple does accept a mailto link, though a real webpage looks more polished.
-2. **Better long-term:** stand up `rovehealth.in/support` (even a single static page with the email + a short FAQ) — support URLs get visited by both Apple review and users, so a page reads more legitimate than a bare mailto link.
+> `https://rovehealth.in/privacy`
+
+**Correction:** App Store Connect's Support URL field only accepts `http(s)` links — `mailto:` gets rejected ("The URL is formatted incorrectly"), so my earlier suggestion was wrong for this field specifically. (A plain email address *is* accepted elsewhere in App Store Connect, under Contact Information — just not here.)
+
+Since no dedicated `/support` page exists yet, use `https://rovehealth.in/privacy` — it's already live and has a "Contact Us" section with the support email. Swap it for a real `rovehealth.in/support` page later if you want something more polished than pointing reviewers/users at the privacy page.
 
 ## Marketing URL (optional)
 `https://rovehealth.in` — leave blank if you'd rather not commit to keeping the homepage evergreen for App Store visitors.
+
+## Version
+`2.0.0` — matches `mobile/app.json`. This is the *app* version shown in "What's New"; App Store Connect's build number is separate and comes from EAS at submission time, so no action needed here beyond confirming this matches what you intend to ship.
+
+## Copyright
+> `© 2026 Rove Health`
+
+Use the legal entity name here if incorporation differs from the brand name (e.g. "© 2026 Aock Health Ventures" — matches the Sentry org `aock-health-ventures` in `app.json`). Worth double-checking which entity actually owns the App Store Connect account before submitting.

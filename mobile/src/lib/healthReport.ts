@@ -6,8 +6,11 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
 import { type BbtReading, type OpkReading, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
+import type { LhBandReading } from '@shared/cycle/lh';
+import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
 import { renderHealthReportHtml } from './healthReportHtml';
-import { deriveCycleStarts, latestCycleChart, scoreTtcCycles } from './ttcCycleHistory';
+import { deriveCycleStarts, getPersonalizedLutealLength, latestCycleChart, scoreTtcCycles } from './ttcCycleHistory';
+import { hasPcosFlag } from './pcos';
 
 /**
  * Health report data layer.
@@ -51,6 +54,26 @@ export type ReportLog = {
   disruptors: string[] | null;
   bbt_celsius: number | null;
   opk_result: TtcDailyLog['opk_result'];
+  bbt_wake_time: string | null;
+  nsaid_taken: boolean | null;
+  cervical_discharge: string | null;
+  /** Apple Health / Health Connect only — see 20260819010000_add_secondary_health_signals.sql, 20260819020000_add_daily_steps.sql. No manual-entry path for any of these four. */
+  steps: number | null;
+  hrv_ms: number | null;
+  hrv_source: string | null;
+  resting_heart_rate_bpm: number | null;
+  skin_temp_delta_celsius: number | null;
+};
+
+export type ReportMealLog = {
+  date: string;
+  name: string;
+  calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  sugarG: number | null;
+  glycemicIndex: number | null;
 };
 
 export type Observed = {
@@ -75,9 +98,31 @@ export type CycleStats = {
 };
 
 export type Suggestion = {
-  area: 'Hydration' | 'Sleep' | 'Movement' | 'Cycle' | 'Tracking' | 'Symptoms';
+  area: 'Hydration' | 'Sleep' | 'Movement' | 'Cycle' | 'Tracking' | 'Symptoms' | 'Nutrition';
   finding: string;
   action: string;
+};
+
+export type NutritionStats = {
+  calories: Observed;
+  proteinG: Observed;
+  carbsG: Observed;
+  fatG: Observed;
+  sugarG: Observed;
+  /** Average across meals that had a GI estimate — not every logged meal gets one. */
+  avgGlycemicIndex: number | null;
+  mealsLogged: number;
+  daysLogged: number;
+  topFoods: Counted[];
+};
+
+/** Apple Health / Health Connect only — informational, same as HormoneRhythmCard/daily_logs itself: never an input to detectOvulation. */
+export type WearableStats = {
+  restingHeartRate: Observed;
+  hrv: Observed;
+  steps: Observed;
+  /** Deviation from her own recent baseline, in Celsius — can be negative, unlike the other three. */
+  skinTempDelta: Observed;
 };
 
 export type ClinicalFlag = {
@@ -145,6 +190,10 @@ export type HealthReport = {
   clinicalFlags: ClinicalFlag[];
   /** Only populated for accounts in TTC (trying-to-conceive) mode. */
   ttc: TtcReportData | null;
+  /** Null when no meals were logged in the window — section is omitted rather than shown empty. */
+  nutrition: NutritionStats | null;
+  /** Null when no Apple Health / Health Connect signal appears anywhere in the window — section is omitted rather than shown empty. */
+  wearable: WearableStats | null;
 };
 
 export type Counted = { name: string; count: number };
@@ -193,11 +242,37 @@ function standardDeviation(nums: number[]): number | null {
   return Math.sqrt(variance);
 }
 
-function observedFrom(logs: ReportLog[], pick: (l: ReportLog) => number | null | undefined): Observed {
-  const values = logs
+/**
+ * `requirePositive` (default true) drops zero/negative readings, which is
+ * correct for fields where this app's UI uses 0 as "not logged" (water
+ * glasses, sleep minutes, exercise minutes). Pass false for fields where 0 or
+ * negative is a real, meaningful reading — skin_temp_delta_celsius (can run
+ * below baseline) and daily nutrition totals (a genuinely zero-sugar day is
+ * a real day, not a missing one — see dailyNutritionTotals, whose rows only
+ * exist for days with at least one logged meal).
+ */
+function observedFrom<T>(items: T[], pick: (t: T) => number | null | undefined, requirePositive = true): Observed {
+  const values = items
     .map(pick)
-    .filter((v): v is number => typeof v === 'number' && !Number.isNaN(v) && v > 0);
+    .filter((v): v is number => typeof v === 'number' && !Number.isNaN(v) && (!requirePositive || v > 0));
   return { average: average(values), daysLogged: values.length };
+}
+
+type DailyNutritionTotal = { date: string; calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number };
+
+/** One row per day that had at least one meal logged, summed across that day's meals. */
+function dailyNutritionTotals(meals: ReportMealLog[]): DailyNutritionTotal[] {
+  const byDate = new Map<string, DailyNutritionTotal>();
+  for (const m of meals) {
+    const cur = byDate.get(m.date) ?? { date: m.date, calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 };
+    cur.calories += m.calories ?? 0;
+    cur.proteinG += m.proteinG ?? 0;
+    cur.carbsG += m.carbsG ?? 0;
+    cur.fatG += m.fatG ?? 0;
+    cur.sugarG += m.sugarG ?? 0;
+    byDate.set(m.date, cur);
+  }
+  return Array.from(byDate.values());
 }
 
 /**
@@ -213,10 +288,23 @@ function buildTtcReportData(
   settings: CycleSettings,
   windowEnd: Date,
   hasPcos: boolean,
+  lhReadings: LhBandReading[] = [],
+  mucusReadings: MucusReading[] = [],
 ): TtcReportData | null {
   if (cycleStarts.length === 0) return null;
 
-  const cycles: TtcReportCycle[] = scoreTtcCycles(logs, cycleStarts, settings, windowEnd, hasPcos).map((c) => ({
+  // First pass with the base settings establishes her own confirmed-cycle
+  // history. luteal_length_days only ever changes the date-math fallback —
+  // never a biomarker-confirmed signal — so re-scoring with the personalized
+  // value below can't disturb any cycle that already confirmed on its own.
+  const baseCycles = scoreTtcCycles(logs, cycleStarts, settings, windowEnd, hasPcos, lhReadings, mucusReadings);
+  const personalizedLuteal = getPersonalizedLutealLength(baseCycles);
+  const scoredCycles =
+    personalizedLuteal === null
+      ? baseCycles
+      : scoreTtcCycles(logs, cycleStarts, { ...settings, luteal_length_days: personalizedLuteal }, windowEnd, hasPcos, lhReadings, mucusReadings);
+
+  const cycles: TtcReportCycle[] = scoredCycles.map((c) => ({
     cycleStart: c.cycleStart,
     cycleEnd: c.cycleEnd,
     isOngoing: c.isOngoing,
@@ -231,9 +319,14 @@ function buildTtcReportData(
 
 // ── suggestions (deterministic, non-diagnostic) ─────────────────────────────
 
+// WHO's stricter "for additional benefits" free-sugar guideline (<5% of a
+// 2000 kcal reference diet). Expressed as an absolute gram figure since the
+// report doesn't have a personalized calorie target to compare against.
+const WHO_FREE_SUGAR_MAX_G = 25;
+
 function buildSuggestions(report: Omit<HealthReport, 'suggestions' | 'clinicalFlags'>): Suggestion[] {
   const out: Suggestion[] = [];
-  const { hydration, sleep, exercise, cycle, coverage, symptoms } = report;
+  const { hydration, sleep, exercise, cycle, coverage, symptoms, nutrition } = report;
 
   if (hydration.average !== null && hydration.average < HYDRATION_TARGET_ML) {
     const shortfall = Math.round(HYDRATION_TARGET_ML - hydration.average);
@@ -282,6 +375,14 @@ function buildSuggestions(report: Omit<HealthReport, 'suggestions' | 'clinicalFl
       area: 'Symptoms',
       finding: `${topSymptom.name} was the most frequently logged symptom, on ${topSymptom.count} days.`,
       action: 'Note which cycle phase it clusters in — the phase breakdown overleaf is the useful part for a clinician.',
+    });
+  }
+
+  if (nutrition && nutrition.sugarG.average !== null && nutrition.sugarG.average > WHO_FREE_SUGAR_MAX_G) {
+    out.push({
+      area: 'Nutrition',
+      finding: `Averaging ${Math.round(nutrition.sugarG.average)} g of sugar a day across ${nutrition.daysLogged} logged days, above the WHO's ${WHO_FREE_SUGAR_MAX_G} g guideline for additional health benefits.`,
+      action: 'Swapping one sugary drink or dessert a day for a lower-sugar alternative usually closes most of this gap.',
     });
   }
 
@@ -343,7 +444,7 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   // Profile data is spread across three tables (see fetchProfilePageData) — the
   // name lives on `profiles`, conditions on `user_onboarding`, and the body/diet
   // fields on `user_lifestyle`.
-  const [settingsRes, profileRes, onboardingRes, lifestyleRes, logsRes] = await Promise.all([
+  const [settingsRes, profileRes, onboardingRes, lifestyleRes, logsRes, lhReadingsRes, mealsRes] = await Promise.all([
     supabase.from('user_cycle_settings').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
     supabase.from('user_onboarding').select('conditions, goals, tracker_mode').eq('user_id', user.id).maybeSingle(),
@@ -355,13 +456,42 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     supabase
       .from('daily_logs')
       .select(
-        'date, is_period, flow_intensity, symptoms, moods, exercise_types, exercise_minutes, water_intake, sleep_quality, sleep_minutes, disruptors, bbt_celsius, opk_result',
+        'date, is_period, flow_intensity, symptoms, moods, exercise_types, exercise_minutes, water_intake, sleep_quality, sleep_minutes, disruptors, bbt_celsius, opk_result, bbt_wake_time, nsaid_taken, cervical_discharge, steps, hrv_ms, hrv_source, resting_heart_rate_bpm, skin_temp_delta_celsius',
       )
       .eq('user_id', user.id)
       .gte('date', formatDate(windowStart))
       .lte('date', formatDate(windowEnd))
       .order('date', { ascending: true }),
+    supabase
+      .from('lh_readings')
+      .select('date, test_time, band_level')
+      .eq('user_id', user.id)
+      .gte('date', formatDate(windowStart))
+      .lte('date', formatDate(windowEnd))
+      .order('date', { ascending: true }),
+    supabase
+      .from('meal_logs')
+      .select('date, name, calories, protein_g, carbs_g, fat_g, sugar_g, glycemic_index')
+      .eq('user_id', user.id)
+      .gte('date', formatDate(windowStart))
+      .lte('date', formatDate(windowEnd))
+      .order('date', { ascending: true }),
   ]);
+  const lhReadings: LhBandReading[] = (lhReadingsRes.data ?? []).map((r: any) => ({
+    date: r.date,
+    testTime: r.test_time,
+    bandLevel: Number(r.band_level),
+  }));
+  const meals: ReportMealLog[] = (mealsRes.data ?? []).map((m: any) => ({
+    date: m.date,
+    name: m.name,
+    calories: m.calories,
+    proteinG: m.protein_g,
+    carbsG: m.carbs_g,
+    fatG: m.fat_g,
+    sugarG: m.sugar_g,
+    glycemicIndex: m.glycemic_index,
+  }));
 
   const settingsRow = settingsRes.data;
   if (!settingsRow) return null;
@@ -381,6 +511,9 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     ...l,
     bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
   }));
+  const mucusReadings: MucusReading[] = logs
+    .map((l) => parseMucusJson(l.cervical_discharge, l.date))
+    .filter((m): m is MucusReading => m !== null);
 
   const settings: CycleSettings = {
     last_period_start: settingsRow.last_period_start,
@@ -460,11 +593,46 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
 
   const daysWithAnyLog = new Set(logs.map((l) => l.date)).size;
 
-  const hasPcos = [...(onboarding.goals || []), ...(onboarding.conditions || [])].some((v) =>
-    String(v).toLowerCase().includes('pcos'),
-  );
+  const hasPcos = hasPcosFlag(onboarding.goals, onboarding.conditions);
   const ttc =
-    onboarding.tracker_mode === 'ttc' ? buildTtcReportData(logs, starts, settings, windowEnd, hasPcos) : null;
+    onboarding.tracker_mode === 'ttc' ? buildTtcReportData(logs, starts, settings, windowEnd, hasPcos, lhReadings, mucusReadings) : null;
+
+  // ── nutrition, from meal logging ─────────────────────────────────────────
+  const dailyTotals = dailyNutritionTotals(meals);
+  const mealGiValues = meals.map((m) => m.glycemicIndex).filter((v): v is number => typeof v === 'number');
+  const nutrition: NutritionStats | null = meals.length
+    ? {
+        // requirePositive: false — every row here is already a real logged day
+        // (dailyNutritionTotals only emits rows for days with ≥1 meal), and a
+        // genuinely zero-sugar day is a real, informative day, not a missing one.
+        calories: observedFrom(dailyTotals, (d) => d.calories, false),
+        proteinG: observedFrom(dailyTotals, (d) => d.proteinG, false),
+        carbsG: observedFrom(dailyTotals, (d) => d.carbsG, false),
+        fatG: observedFrom(dailyTotals, (d) => d.fatG, false),
+        sugarG: observedFrom(dailyTotals, (d) => d.sugarG, false),
+        avgGlycemicIndex: mealGiValues.length ? Math.round(average(mealGiValues)!) : null,
+        mealsLogged: meals.length,
+        daysLogged: dailyTotals.length,
+        topFoods: tally(meals.map((m) => [m.name])).slice(0, 8),
+      }
+    : null;
+
+  // ── wearable signals, from Apple Health / Health Connect ────────────────
+  const wearableCandidate: WearableStats = {
+    restingHeartRate: observedFrom(logs, (l) => l.resting_heart_rate_bpm),
+    hrv: observedFrom(logs, (l) => l.hrv_ms),
+    steps: observedFrom(logs, (l) => l.steps),
+    // requirePositive: false — a below-baseline delta is a real, meaningful
+    // reading here, unlike the app's "0 means not logged" convention elsewhere.
+    skinTempDelta: observedFrom(logs, (l) => l.skin_temp_delta_celsius, false),
+  };
+  const hasAnyWearableData = [
+    wearableCandidate.restingHeartRate,
+    wearableCandidate.hrv,
+    wearableCandidate.steps,
+    wearableCandidate.skinTempDelta,
+  ].some((o) => o.daysLogged > 0);
+  const wearable = hasAnyWearableData ? wearableCandidate : null;
 
   const base: Omit<HealthReport, 'suggestions' | 'clinicalFlags'> = {
     generatedAt: new Date(),
@@ -504,6 +672,8 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     moods: tally(logs.map((l) => l.moods)).slice(0, 6),
     sleepDisruptors: tally(logs.map((l) => l.disruptors)).slice(0, 5),
     ttc,
+    nutrition,
+    wearable,
   };
 
   return {

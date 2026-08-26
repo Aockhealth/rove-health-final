@@ -1,0 +1,275 @@
+{
+  "brandLine": "ROVE · TTC MODE",
+  "greeting": "Hey, {{name}}",
+  "defaultName": "Love",
+  "gettingStarted": {
+    "title": "Getting started",
+    "body": "Log a period start in the Tracker and your fertility status will appear here."
+  },
+  "dayLabel": "Day {{day}}",
+  "ttcStatus": "TTC Status",
+  "confidenceSuffix": "{{label}} confidence",
+  "cards": {
+    "testing": "Testing",
+    "fertileWindow": "Fertile Window",
+    "confidence": "Confidence"
+  },
+  "testing": {
+    "notTested": "Not tested",
+    "peaked": "Peaked {{date}}",
+    "logStrip": "Log a strip to begin"
+  },
+  "fertileWindow": {
+    "closed": "Closed",
+    "estimate": "Estimate, sharpens with signals",
+    "placeholder": "—"
+  },
+  "worthKnowing": {
+    "title": "Worth knowing",
+    "body": "You logged an NSAID/painkiller close to this cycle's fertile window. They're linked to suppressed ovulation around that time — worth mentioning to your doctor before your next cycle."
+  },
+  "logSignals": "Log Your Signals",
+  "readsLabel": "Reads",
+  "todaysSnapshot": "Today's Snapshot",
+  "viewFullTracker": "View Full Tracker →",
+  "snapshot": {
+    "lh": {
+      "label": "LH",
+      "loggedToday": "Logged today",
+      "notLoggedToday": "Not logged today",
+      "peaked": "Your test peaked on {{date}}.",
+      "startBuilding": "Log a strip test today to start building this read."
+    },
+    "mucus": {
+      "label": "Cervical mucus",
+      "notLoggedToday": "Not logged today",
+      "detail": "Logged from the Tracker screen — mucus consistency is one of the earliest fertility signs."
+    },
+    "temp": {
+      "label": "Basal temperature",
+      "notLoggedToday": "Not logged today",
+      "coverline": "Your coverline is {{value}}°C — three readings at or above it confirm a shift.",
+      "keepLogging": "Keep logging a waking temperature — a coverline needs a few mornings of baseline first."
+    },
+    "confirmation": {
+      "label": "Confirmation status"
+    }
+  },
+  "signalRail": {
+    "lh": {
+      "title": "LH Strip",
+      "desc": "Manual band read"
+    },
+    "mucus": {
+      "title": "Cervical Mucus",
+      "desc": "Consistency & look"
+    },
+    "bbt": {
+      "title": "BBT",
+      "desc": "Waking temperature"
+    },
+    "sex": {
+      "title": "Intercourse",
+      "desc": "Timing vs. window"
+    },
+    "med": {
+      "title": "Medication",
+      "desc": "NSAID & flag check"
+    }
+  },
+  "reads": {
+    "lhLeadTime": {
+      "title": "Why LH has less lead time than mucus",
+      "desc": "Engine notes"
+    },
+    "nsaid": {
+      "title": "NSAIDs and the fertile window",
+      "desc": "Medication"
+    },
+    "irregular": {
+      "title": "What irregular really means",
+      "desc": "PCOS basics"
+    },
+    "bbtChart": {
+      "title": "Reading your own BBT chart",
+      "desc": "Guide"
+    }
+  },
+  "quickLog": {
+    "title": "Log today",
+    "lhStrip": "LH strip",
+    "stripOfKit": "Strip {{current}} of {{total}}",
+    "lastStrip": "Last strip in this kit",
+    "wakingTemperature": "Waking temperature",
+    "nsaidToggle": "On an NSAID / painkiller today?",
+    "saved": "Saved",
+    "saveEntry": "Save entry"
+  },
+  "phases": {
+    "Menstrual": {
+      "keyword": "Rest & Reset",
+      "explainer": "\"A time for inward reflection, deep rest, and honoring your body's sacred reset.\"",
+      "snapshot": {
+        "hormones": {
+          "title": "The Great Reset",
+          "desc": "Biological baseline reached.",
+          "detail": "Estrogen and progesterone hit their monthly nadir to trigger the shed. This 'biological winter' is a vital system reboot, not a shutdown.",
+          "protocol": "Protect your energy. Magnesium glycinate (200-400mg) can soothe cramps and support deep restorative sleep tonight."
+        },
+        "mind": {
+          "title": "Intuitive Clarity",
+          "desc": "Left & right brain sync.",
+          "detail": "Communication between brain hemispheres is strongest now. It's the perfect time for evaluating your path and setting intentions.",
+          "protocol": "Journaling tonight is non-negotiable. Your intuition is louder than logic right now, listen to it."
+        },
+        "body": {
+          "title": "Active Recovery",
+          "desc": "Inflammation peaks slightly.",
+          "detail": "Your body is working hard to release. High intensity will backfire by spiking cortisol when resilience is low.",
+          "protocol": "Focus on Gentle Yoga or a slow 20-minute walk. Keep your lower back and feet warm to support circulation."
+        },
+        "skin": {
+          "title": "Hydration Barrier",
+          "desc": "Skin is driest now.",
+          "detail": "Low estrogen means less natural oil and moisture retention. Your skin barrier is more permeable and sensitive.",
+          "protocol": "Skip the harsh exfoliants. Layer a hydrating serum with a rich ceramide moisturizer to lock in water."
+        }
+      }
+    },
+    "Follicular": {
+      "keyword": "Energy Rising",
+      "explainer": "\"A season of renewal. Your energy blooms and creative potential awakens.\"",
+      "snapshot": {
+        "hormones": {
+          "title": "The Awakening",
+          "desc": "Estrogen begins its climb.",
+          "detail": "FSH stimulates new follicles, and estrogen begins to climb. This neuro-stimulant hormone lifts your mood, energy, and mental speed.",
+          "protocol": "Capitalize on this rising energy. Schedule your most demanding creative work for the morning hours."
+        },
+        "mind": {
+          "title": "Architect Mode",
+          "desc": "Pattern recognition peaks.",
+          "detail": "You are primed for learning and complex problem solving. Brain fog clears as you become open to new ideas and social connection.",
+          "protocol": "Tackle that complex project you've been putting off. Your brain is hungry for challenge."
+        },
+        "body": {
+          "title": "Building Power",
+          "desc": "Insulin sensitivity rises.",
+          "detail": "Your body is ready to burn carbs for fuel and build muscle. Recovery time is faster now than at any other time.",
+          "protocol": "Increase cardio intensity or heavy lifting. Your body can handle the stress and bounce back stronger."
+        },
+        "skin": {
+          "title": "Collagen Bloom",
+          "desc": "Natural plumpness returns.",
+          "detail": "Rising estrogen boosts collagen and hyaluronic acid production. Your skin is naturally more resilient and glowing.",
+          "protocol": "A great time for a vitamin C serum to amplify that natural glow. You can tolerate more active treatments now."
+        }
+      }
+    },
+    "Ovulatory": {
+      "keyword": "Peak Confidence",
+      "explainer": "\"Peak vitality. You are radiant, communicative, and vibrating with confidence.\"",
+      "snapshot": {
+        "hormones": {
+          "title": "The Main Event",
+          "desc": "Peak estrogen & testosterone.",
+          "detail": "The biological zenith. Estrogen peaks to trigger ovulation, while testosterone gives you a surge of confidence and libido.",
+          "protocol": "You are magnetic. Schedule dates, pitches, or difficult conversations. You are chemically wired to persuade."
+        },
+        "mind": {
+          "title": "Social Butterfly",
+          "desc": "Verbal centers light up.",
+          "detail": "Your verbal skills and emotional intelligence are at their height. You are more articulate and persuasive.",
+          "protocol": "Network, present, or record content. Your ability to connect with others is at its peak."
+        },
+        "body": {
+          "title": "Peak Performance",
+          "desc": "Maximum power output.",
+          "detail": "Testosterone adds a strength boost. You are at your strongest, but your ligaments are also looser (higher injury risk).",
+          "protocol": "Go for a PR in the gym, but watch your form. High-intensity interval training (HIIT) is highly effective now."
+        },
+        "skin": {
+          "title": "Radiant but Oily",
+          "desc": "The 'glow' is real.",
+          "detail": "Sebum production increases slightly. You look vibrant, but pores may be more visible due to the surge.",
+          "protocol": "Double cleanse in the evenings. Using a clay mask can help manage the extra oil without stripping your glow."
+        }
+      }
+    },
+    "Luteal": {
+      "keyword": "Deep Reflection",
+      "explainer": "\"The inward turn. A time for nesting, deep focus, and profound intuition.\"",
+      "snapshot": {
+        "hormones": {
+          "title": "The Shift",
+          "desc": "Progesterone takes over.",
+          "detail": "Estrogen drops and progesterone rises. This has a sedative, calming effect, but withdrawal later triggers PMS.",
+          "protocol": "Prioritize stability. Eat regular meals with protein to stabilize blood sugar and combat mood swings."
+        },
+        "mind": {
+          "title": "Deep Focus",
+          "desc": "Detail-oriented brain.",
+          "detail": "Brain chemistry shifts from social/expansive to internal/analytical. You notice things you missed before.",
+          "protocol": "Edit, organize, and wrap up loose ends. It's the best time for administrative tasks and deep work."
+        },
+        "body": {
+          "title": "Metabolic Burn",
+          "desc": "Calorie burn increases.",
+          "detail": "Your metabolism speeds up (burning ~100-300 more calories), but endurance drops. Heat tolerance is lower.",
+          "protocol": "Switch to strength training with longer rests. Honor your hunger with complex carbs to boost serotonin."
+        },
+        "skin": {
+          "title": "Congestion Alert",
+          "desc": "Pores are prone to clogging.",
+          "detail": "Progesterone stimulates oil production while pores tighten, leading to trapped bacteria and breakouts.",
+          "protocol": "Use salicylic acid (BHA) to keep pores clear. Avoid heavy, pore-clogging makeup if possible."
+        }
+      }
+    }
+  },
+  "currentPhase": "Current Phase",
+  "logButton": "LOG",
+  "periodCard": {
+    "label": "Period",
+    "nextCycle": "Next cycle",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days"
+  },
+  "ovulationCard": {
+    "label": "Ovulation",
+    "peakFertility": "Peak fertility"
+  },
+  "fertileCard": {
+    "label": "Fertile",
+    "highestChance": "Highest chance"
+  },
+  "datesConfidence": {
+    "logs": "Predicted ± 1 day, based on your logged periods.",
+    "estimated": "Predicted ± 3 days, estimated from your cycle settings. Log a period to sharpen this."
+  },
+  "dailyFlow": "Daily Flow",
+  "nutrientsForPhase": "Nutrients For This Phase",
+  "whatToFocusOn": "What To Focus On",
+  "viewFullPlan": "View Full Plan →",
+  "foodSources": "Food Sources",
+  "protocol": "Protocol",
+  "snapshotCategories": {
+    "hormones": "Hormones",
+    "mind": "Mind",
+    "body": "Body",
+    "skin": "Skin"
+  },
+  "emptyState": {
+    "title": "Log your first period",
+    "body": "Once you log a period start, your phase, fertile window, and insights will appear here.",
+    "cta": "Go to Tracker"
+  },
+  "menopausePlaceholder": {
+    "title": "Symptom Management",
+    "body": "Your menopause support hub is coming soon. Track hot flashes, sleep quality, and HRT adherence.",
+    "cta": "Log Symptom"
+  },
+  "newPhase": "New Phase",
+  "welcomeToPhase": "Welcome to {{phase}}",
+  "seeWhatsAhead": "See What's Ahead"
+}

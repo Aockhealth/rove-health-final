@@ -55,6 +55,8 @@ export async function generateRoveCoachPlan(
     recentChosen?: string[],
     preferenceSummary?: string
 ) {
+    const reqBody = { phase, energyLevel, goal, equipment, injuries, fitnessLevel, workoutFocus, sessionDuration, recentChosen, preferenceSummary };
+    console.log('[ROVE_DEBUG rove-coach] request', JSON.stringify(reqBody));
     const res = await fetch(`${API_URL}/api/rove-coach`, {
         method: 'POST',
         headers: {
@@ -62,14 +64,18 @@ export async function generateRoveCoachPlan(
             'Bypass-Tunnel-Reminder': 'true',
             ...(await getAuthHeader()),
         },
-        body: JSON.stringify({ phase, energyLevel, goal, equipment, injuries, fitnessLevel, workoutFocus, sessionDuration, recentChosen, preferenceSummary })
+        body: JSON.stringify(reqBody)
     });
-    
+
     if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        console.log('[ROVE_DEBUG rove-coach] non-ok', res.status, body);
         throw new Error('Failed to fetch plan');
     }
-    
-    return res.json();
+
+    const json = await res.json();
+    console.log('[ROVE_DEBUG rove-coach] response', JSON.stringify(json).slice(0, 500));
+    return json;
 }
 
 // ─── Chef v2: "pick your plate" ──────────────────────────────────────────────
@@ -86,27 +92,36 @@ export async function fetchChefOptions(input: {
     /** Descriptive goal (e.g. "Fat Loss" / "Build Muscle") — biases 1 of the 4 options toward it. */
     fitnessGoal?: string;
 }) {
-    const res = await fetch(`${API_URL}/api/rove-chef-options`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Bypass-Tunnel-Reminder': 'true',
-            ...(await getAuthHeader()),
-        },
-        body: JSON.stringify({
-            phase: input.phase,
-            mealType: input.mealType,
-            dietary_preferences: input.dietaryPreferences,
-            cuisine: input.cuisine,
-            symptoms: input.symptoms,
-            recentChosen: input.recentChosen,
-            recentShown: input.recentShown,
-            preferenceSummary: input.preferenceSummary,
-            fitnessGoal: input.fitnessGoal,
-        }),
-    });
+    console.log('[ROVE_DEBUG rove-chef-options] calling', `${API_URL}/api/rove-chef-options`);
+    let res: Response;
+    try {
+        res = await fetch(`${API_URL}/api/rove-chef-options`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Bypass-Tunnel-Reminder': 'true',
+                ...(await getAuthHeader()),
+            },
+            body: JSON.stringify({
+                phase: input.phase,
+                mealType: input.mealType,
+                dietary_preferences: input.dietaryPreferences,
+                cuisine: input.cuisine,
+                symptoms: input.symptoms,
+                recentChosen: input.recentChosen,
+                recentShown: input.recentShown,
+                preferenceSummary: input.preferenceSummary,
+                fitnessGoal: input.fitnessGoal,
+            }),
+        });
+    } catch (networkErr: any) {
+        console.log('[ROVE_DEBUG rove-chef-options] network error', networkErr?.message, networkErr);
+        throw networkErr;
+    }
 
     if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        console.log('[ROVE_DEBUG rove-chef-options] non-ok', res.status, body);
         throw new Error('Failed to fetch chef options');
     }
 

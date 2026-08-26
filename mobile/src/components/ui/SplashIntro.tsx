@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,14 +10,15 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-
-const QUOTE = 'You were built in cycles,\nnot straight lines.';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 type SplashIntroProps = {
   onFinish: () => void;
 };
 
 export function SplashIntro({ onFinish }: SplashIntroProps) {
+  const { t, i18n } = useTranslation();
   const markOpacity = useSharedValue(0);
   const markScale = useSharedValue(0.88);
   const quoteOpacity = useSharedValue(0);
@@ -57,11 +59,20 @@ export function SplashIntro({ onFinish }: SplashIntroProps) {
       <Animated.View style={markStyle}>
         <Image
           source={require('../../../assets/images/splash-mark.png')}
-          style={{ width: 100, height: 100 * (532 / 257) }}
-          resizeMode="contain"
+          style={{ width: 100, height: Math.round(100 * (532 / 257)) }}
+          contentFit="contain"
+          transition={0}
         />
       </Animated.View>
-      <Animated.Text style={[styles.quote, quoteStyle]}>{QUOTE}</Animated.Text>
+      <Animated.Text
+        style={[
+          styles.quote,
+          { fontFamily: getLocalizedFontFamily('CormorantGaramond-Medium', i18n.language) },
+          quoteStyle,
+        ]}
+      >
+        {t('common.splash.quote')}
+      </Animated.Text>
     </Animated.View>
   );
 }

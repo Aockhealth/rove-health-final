@@ -3,15 +3,26 @@ import { View, Text, StyleSheet , Platform} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Droplets } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { SymptomChip } from './SymptomChip';
 import { PHASE_COLORS } from './CycleCalendar';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 // Ported from frontend/src/app/cycle-sync/tracker/components/FlowCard.tsx —
 // shown on menstrual days instead of the Discharge questionnaire (mobile
 // previously always showed Discharge regardless of phase, which is what
 // FlowCard fixes: menstrual days ask about flow intensity, non-menstrual
 // days ask about discharge).
-const FLOW_OPTIONS = ['Spotting', 'Low', 'Normal', 'High', 'Heavy'];
+// `value` is the exact FlowIntensity persisted (see shared/health/platformMapping.ts)
+// — stays in English. `key` looks up the localized label via
+// `tracker.flow.options.<key>`.
+const FLOW_OPTIONS = [
+  { value: 'Spotting', key: 'spotting' },
+  { value: 'Low', key: 'low' },
+  { value: 'Normal', key: 'normal' },
+  { value: 'High', key: 'high' },
+  { value: 'Heavy', key: 'heavy' },
+];
 const ACCENT = PHASE_COLORS.Menstrual;
 
 export interface FlowCardProps {
@@ -24,6 +35,7 @@ export interface FlowCardProps {
 }
 
 export function FlowCard({ flowIntensity, onFlowIntensityChange, cardTint }: FlowCardProps) {
+  const { t, i18n } = useTranslation();
   return (
     <View style={styles.card}>
       {Platform.OS === 'ios' ? (
@@ -40,18 +52,20 @@ export function FlowCard({ flowIntensity, onFlowIntensityChange, cardTint }: Flo
       />
       <View style={styles.header}>
         <Droplets size={18} color={ACCENT} />
-        <Text style={styles.title}>Flow</Text>
+        <Text style={[styles.title, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>
+          {t('tracker.flow.title')}
+        </Text>
       </View>
 
       <View style={styles.chipWrap}>
         {FLOW_OPTIONS.map((f) => {
-          const isActive = flowIntensity === f;
+          const isActive = flowIntensity === f.value;
           return (
             <SymptomChip
-              key={f}
-              label={f}
+              key={f.value}
+              label={t(`tracker.flow.options.${f.key}`)}
               isSelected={isActive}
-              onToggle={() => onFlowIntensityChange(isActive ? null : f)}
+              onToggle={() => onFlowIntensityChange(isActive ? null : f.value)}
               accentColor={ACCENT}
               activeColor={ACCENT}
               activeVariant="soft"

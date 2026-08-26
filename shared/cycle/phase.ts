@@ -43,9 +43,25 @@ export const DEFAULT_LUTEAL_LENGTH = 14;
 // Ovulation window: ±1 day around ovulation for "Ovulatory" phase
 export const OVULATION_PHASE_WINDOW = 1;
 
-// Fertility window: wider range for fertility tracking
+// Fertility window: wider range for fertility tracking. These are the
+// population defaults — used as-is until she has enough cycle history to
+// personalize (see computeFertileWindowRadius below).
 export const FERTILE_WINDOW_BEFORE = 5;  // Days before ovulation
 export const FERTILE_WINDOW_AFTER = 1;   // Days after ovulation
+
+// Need at least this many recent cycle lengths logged before trusting her
+// own variability over the population default.
+export const MIN_CYCLES_FOR_PERSONAL_VARIANCE = 3;
+// SD assumed for a new user with no cycle history yet — deliberately wide.
+export const POPULATION_SIGMA_DAYS = 4;
+// A cycle-length SD floor: even a handful of identical-looking cycles
+// shouldn't collapse the window to near-zero width.
+export const MIN_SIGMA_DAYS = 1.5;
+// Above this SD, a window is false precision, not a helpful estimate —
+// callers should stop drawing one and switch to "test daily" messaging.
+export const MAX_USABLE_SIGMA_DAYS = 5;
+// How many recent cycles to look at when estimating her own variability.
+export const CYCLE_HISTORY_LOOKBACK = 6;
 
 // ============================================================================
 // HELPERS
@@ -250,7 +266,18 @@ export function calculatePhase(
         // 5b. Forward-period anchoring: if there's a FUTURE logged period within
         //     one cycle, anchor backwards from it instead. This prevents editing
         //     an old period from cascading through months with their own anchors.
-        if (!isLate && source !== 'none') {
+        //
+        //     But only when the forward anchor isn't already a fresh, real log:
+        //     when `source === 'logs'` and we're still within a single cycle of
+        //     it, that forward calculation is already grounded in what actually
+        //     happened and produces one coherent phase progression for the
+        //     month. Running the backward projection on top of it anyway was
+        //     producing a second, contradictory phase window (e.g. a fake
+        //     second "Ovulatory" block) purely from projecting off an unrelated
+        //     future period — logged data wins outright here, not just for the
+        //     Menstrual-specific case guarded below.
+        const hasFreshLoggedAnchor = source === 'logs' && diffDays < cycleLength;
+        if (!isLate && source !== 'none' && !hasFreshLoggedAnchor) {
             const futurePeriodDates = Object.keys(monthLogs)
                 .filter(d => monthLogs[d]?.is_period && d > dateStr)
                 .sort();
@@ -261,8 +288,18 @@ export function calculatePhase(
                 const daysToNext = daysBetween(target, nextStart);
                 // If the next period is within one cycle AND anchor gives a valid position
                 if (daysToNext > 0 && daysToNext <= cycleLength) {
-                    // Recalculate dayInCycle counting backwards from the future period
-                    dayInCycle = cycleLength - daysToNext + 1;
+                    const backwardDayInCycle = cycleLength - daysToNext + 1;
+                    // Only ever use this to correctly show Luteal ("approaching
+                    // the next period") — never to invent a Menstrual day that
+                    // was never logged. Without this guard, any unlogged day
+                    // exactly one cycle-length before a real future period gets
+                    // labeled Menstrual purely from projection, overriding what
+                    // the actual logged period (counted forward) already say
+                    // is Follicular. Logged data wins; a backward projection
+                    // never gets to claim a period happened.
+                    if (backwardDayInCycle > periodLength) {
+                        dayInCycle = backwardDayInCycle;
+                    }
                 }
             }
         }
@@ -321,8 +358,14 @@ export function calculatePhase(
                 walker.setDate(walker.getDate() + 1);
             }
             // `walker` is now the first non-period day after the streak. Only trust the
-            // observed length once that day has actually arrived.
-            if (streak > 0 && normalizeToLocalMidnight(walker) <= today) {
+            // observed length once that day has actually arrived, AND only when it was
+            // explicitly logged as not-period ("End Period Here") — an unlogged day is
+            // silence, not a signal that the period ended, and must not shorten it.
+            if (
+                streak > 0 &&
+                monthLogs[formatDate(walker)]?.is_period === false &&
+                normalizeToLocalMidnight(walker) <= today
+            ) {
                 effectivePeriodLength = streak;
             }
         }
@@ -381,17 +424,134 @@ export function calculatePhase(
 // FERTILITY HELPERS
 // ============================================================================
 
+export interface FertileWindowRadius {
+    before: number;
+    after: number;
+    /** The SD this radius was computed from — population default when data is thin. */
+    sigma: number;
+    /**
+     * True when her own cycles vary too much for a window to mean anything.
+     * Callers should stop drawing one and switch to "test daily" messaging
+     * instead of widening it further.
+     */
+    tooIrregularForWindow: boolean;
+}
+
+/**
+ * How wide the fertile window should be, personalized from her own recent
+ * cycle-length variability instead of one fixed number for everyone.
+ *
+ * Widens asymmetrically — sperm survival means the window has to extend
+ * further *before* ovulation than after, never symmetrically — and falls
+ * back to a deliberately wide population SD until she has logged enough
+ * cycles of her own to trust.
+ */
+export function computeFertileWindowRadius(recentCycleLengths: number[]): FertileWindowRadius {
+    const lengths = recentCycleLengths.filter((n) => Number.isFinite(n) && n > 0);
+
+    let sigma: number;
+    if (lengths.length < MIN_CYCLES_FOR_PERSONAL_VARIANCE) {
+        sigma = POPULATION_SIGMA_DAYS;
+    } else {
+        const mean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+        const variance = lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / lengths.length;
+        sigma = Math.max(MIN_SIGMA_DAYS, Math.sqrt(variance));
+    }
+
+    return {
+        before: FERTILE_WINDOW_BEFORE + Math.ceil(sigma),
+        after: FERTILE_WINDOW_AFTER + Math.ceil(sigma / 2),
+        sigma,
+        tooIrregularForWindow: sigma > MAX_USABLE_SIGMA_DAYS,
+    };
+}
+
+/** One completed cycle inferred from logged period starts: `start` is the
+ * cycle's own first day, `length` is how many days until the *next* period
+ * start (i.e. this cycle's length, not the gap before it). */
+export interface CycleHistoryEntry {
+    start: string;
+    length: number;
+}
+
+/**
+ * Recent cycles (newest first), derived purely from logged period days — no
+ * BBT/OPK needed, so this works identically in Cycle Sync and TTC mode.
+ * Best-effort: returns however many cycles the available log history
+ * actually covers, down to zero.
+ */
+export function deriveRecentCycleHistory(
+    referenceDate: Date,
+    monthLogs: Record<string, DailyLog>,
+    maxCycles: number = CYCLE_HISTORY_LOOKBACK
+): CycleHistoryEntry[] {
+    const emptySettings: CycleSettings = {
+        last_period_start: '',
+        cycle_length_days: DEFAULT_CYCLE_LENGTH,
+        period_length_days: DEFAULT_PERIOD_LENGTH,
+    };
+
+    const periodStarts: string[] = [];
+    const seen = new Set<string>();
+    let cursor = normalizeToLocalMidnight(referenceDate);
+    let scanned = 0;
+
+    // Walk backward one found period streak at a time (not day by day), so
+    // this stays cheap even over a long log history.
+    while (periodStarts.length <= maxCycles && scanned < 400) {
+        scanned++;
+        const { start } = getRelevantPeriodStart(cursor, emptySettings, monthLogs);
+        if (!start || seen.has(start)) break;
+        seen.add(start);
+        periodStarts.push(start);
+
+        cursor = parseLocalDate(start);
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    const history: CycleHistoryEntry[] = [];
+    for (let i = 0; i < periodStarts.length - 1; i++) {
+        const length = daysBetween(parseLocalDate(periodStarts[i + 1]), parseLocalDate(periodStarts[i]));
+        if (length > 0) history.push({ start: periodStarts[i + 1], length });
+    }
+    return history.slice(0, maxCycles);
+}
+
+/**
+ * Recent cycle lengths only (see deriveRecentCycleHistory) — kept as a thin
+ * wrapper since computeFertileWindowRadius and older callers just want the
+ * numbers, not the dates.
+ */
+export function deriveRecentCycleLengths(
+    referenceDate: Date,
+    monthLogs: Record<string, DailyLog>,
+    maxCycles: number = CYCLE_HISTORY_LOOKBACK
+): number[] {
+    return deriveRecentCycleHistory(referenceDate, monthLogs, maxCycles).map((c) => c.length);
+}
+
 /**
  * Check if a given day is within the fertile window.
+ *
+ * Pass `recentCycleLengths` (see deriveRecentCycleLengths) to widen the
+ * window for her own observed cycle variability instead of using the same
+ * fixed range for everyone. Omitting it keeps the old fixed-window behavior.
  */
 export function isInFertileWindow(
     dayInCycle: number,
     cycleLength: number,
-    lutealLength: number = DEFAULT_LUTEAL_LENGTH
+    lutealLength: number = DEFAULT_LUTEAL_LENGTH,
+    recentCycleLengths?: number[]
 ): boolean {
     const ovulationDay = cycleLength - lutealLength;
-    return dayInCycle >= ovulationDay - FERTILE_WINDOW_BEFORE &&
-        dayInCycle <= ovulationDay + FERTILE_WINDOW_AFTER;
+    const radius = recentCycleLengths
+        ? computeFertileWindowRadius(recentCycleLengths)
+        : { before: FERTILE_WINDOW_BEFORE, after: FERTILE_WINDOW_AFTER, sigma: 0, tooIrregularForWindow: false };
+
+    if (radius.tooIrregularForWindow) return false;
+
+    return dayInCycle >= ovulationDay - radius.before &&
+        dayInCycle <= ovulationDay + radius.after;
 }
 
 /**

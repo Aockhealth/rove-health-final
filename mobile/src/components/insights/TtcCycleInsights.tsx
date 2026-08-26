@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { toast } from 'sonner-native';
+import { useTranslation } from 'react-i18next';
 import { daysBetween, parseLocalDate } from '@shared/cycle/phase';
 import type { TtcHistoryCycle, TtcCycleStats, TtcPattern } from '../../lib/ttcCycleHistory';
 import { getTtcStateMeta } from '../../lib/ttcEngine';
+import { getDateLocaleTag } from '../../lib/i18n';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 import { prepareHealthReport, type PreparedReport } from '../../lib/healthReport';
 import { HealthReportViewer } from './HealthReportViewer';
+import { TtcCycleTrendChart } from './TtcCycleTrendChart';
 
 const HISTORY_LIMIT = 5;
 
 function monthLabel(dateStr: string): string {
-  return parseLocalDate(dateStr).toLocaleDateString('en-US', { month: 'long' });
+  return parseLocalDate(dateStr).toLocaleDateString(getDateLocaleTag(), { month: 'long' });
 }
 
 export function TtcCycleInsights({
@@ -25,6 +29,7 @@ export function TtcCycleInsights({
   patterns: TtcPattern[];
   theme: { color: string };
 }) {
+  const { t, i18n } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [prepared, setPrepared] = useState<PreparedReport | null>(null);
 
@@ -36,28 +41,28 @@ export function TtcCycleInsights({
     if (result.ok) {
       setPrepared(result.prepared);
     } else if (result.reason === 'no-data') {
-      toast.error('Not enough data yet', { description: 'Log a few days first — the report needs something to summarise.' });
+      toast.error(t('insights.cycleInsights.toast.noDataTitle'), { description: t('insights.cycleInsights.toast.noDataDesc') });
     } else {
-      toast.error('Could not create the report', { description: 'Please try again in a moment.' });
+      toast.error(t('insights.cycleInsights.toast.errorTitle'), { description: t('insights.cycleInsights.toast.errorDesc') });
     }
   };
 
   const statTiles = [
-    { label: 'Cycles logged', value: String(stats.cyclesLogged), sub: `${stats.confirmedCount} confirmed` },
+    { label: t('insights.cycleInsights.tiles.cyclesLogged'), value: String(stats.cyclesLogged), sub: t('insights.cycleInsights.tiles.cyclesLoggedSub', { count: stats.confirmedCount }) },
     {
-      label: 'Cycle length',
+      label: t('insights.cycleInsights.tiles.cycleLength'),
       value: stats.cycleLengthAvg !== null ? `${stats.cycleLengthAvg}${stats.cycleLengthVariation !== null ? ` ± ${stats.cycleLengthVariation.toFixed(1)}` : ''}` : '—',
-      sub: 'Days, across logged cycles',
+      sub: t('insights.cycleInsights.tiles.cycleLengthSub'),
     },
     {
-      label: 'Ovulation day',
+      label: t('insights.cycleInsights.tiles.ovulationDay'),
       value: stats.ovulationDayAvg !== null ? `~${stats.ovulationDayAvg}` : '—',
-      sub: stats.ovulationDayAvg !== null ? 'Average, confirmed + predicted' : 'Not yet estimated',
+      sub: stats.ovulationDayAvg !== null ? t('insights.cycleInsights.tiles.ovulationDayAvgSub') : t('insights.cycleInsights.tiles.ovulationDayNotEstimated'),
     },
     {
-      label: 'Luteal length',
+      label: t('insights.cycleInsights.tiles.lutealLength'),
       value: stats.lutealLengthAvg !== null ? String(stats.lutealLengthAvg) : '—',
-      sub: 'Days, averaged',
+      sub: t('insights.cycleInsights.tiles.lutealLengthSub'),
     },
   ];
 
@@ -65,32 +70,40 @@ export function TtcCycleInsights({
 
   return (
     <View className="mt-4">
-      <Text className="mb-3 px-1 text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-        Across your cycles
+      <Text className="mb-3 px-1 text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+        {t('insights.cycleInsights.acrossCycles')}
       </Text>
-      <View className="flex-row flex-wrap gap-2.5">
-        {statTiles.map((tile) => (
-          <View key={tile.label} className="rounded-2xl border border-black/[0.06] p-3.5" style={{ width: '48%' }}>
-            <Text className="mb-1.5 text-[9px] font-extrabold uppercase tracking-wide text-rove-stone">{tile.label}</Text>
-            <Text className="text-[22px] leading-none text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-              {tile.value}
-            </Text>
-            <Text className="mt-1.5 text-[10.5px] font-semibold text-rove-stone">{tile.sub}</Text>
+      <View className="gap-2.5">
+        {[statTiles.slice(0, 2), statTiles.slice(2, 4)].map((row, rowIndex) => (
+          <View key={rowIndex} className="flex-row gap-2.5">
+            {row.map((tile) => (
+              <View key={tile.label} className="flex-1 rounded-2xl border border-black/[0.06] p-3.5">
+                <Text className="mb-1.5 text-[9px] font-extrabold uppercase tracking-wide text-rove-stone">{tile.label}</Text>
+                {/* tile.value is always a number/±/~/— composition, never actual
+                    Devanagari text — kept on the Latin font regardless of
+                    language. Noto Sans Devanagari's "~1" kerning otherwise
+                    opens up an odd visible gap between the digits. */}
+                <Text className="text-[22px] leading-none text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                  {tile.value}
+                </Text>
+                <Text className="mt-1.5 text-[10.5px] font-semibold text-rove-stone">{tile.sub}</Text>
+              </View>
+            ))}
           </View>
         ))}
       </View>
 
       {historyCycles.length > 0 ? (
         <View className="mt-4 rounded-[22px] border border-black/[0.06] p-4">
-          <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-            Cycle history
+          <Text className="text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+            {t('insights.cycleInsights.cycleHistory.title')}
           </Text>
           <Text className="mb-3.5 mt-0.5 text-[11.5px] leading-relaxed text-rove-stone">
-            Each bar is one cycle. The mark shows how that cycle's ovulation was established, if it was.
+            {t('insights.cycleInsights.cycleHistory.subtitle')}
           </Text>
           <View className="gap-3">
             {historyCycles.map((cycle) => {
-              const meta = getTtcStateMeta(cycle.signal);
+              const meta = getTtcStateMeta(cycle.signal, t);
               const length = cycle.cycleLengthDays;
               const fertileStart = cycle.signal.fertileWindowStart;
               const fertileEnd = cycle.signal.fertileWindowEnd;
@@ -115,7 +128,7 @@ export function TtcCycleInsights({
                   <View className="mb-1 flex-row items-baseline justify-between">
                     <Text className="text-[11.5px] font-bold text-rove-charcoal">{monthLabel(cycle.cycleStart)}</Text>
                     <Text className="text-[10.5px] font-bold" style={{ color: meta.colorText }}>
-                      {cycle.isOngoing ? 'In progress' : meta.orbTitle}
+                      {cycle.isOngoing ? t('insights.cycleInsights.cycleHistory.inProgress') : meta.orbTitle}
                     </Text>
                   </View>
                   <View className="h-2.5 overflow-hidden rounded-full bg-black/[0.04]">
@@ -140,10 +153,12 @@ export function TtcCycleInsights({
         </View>
       ) : null}
 
+      <TtcCycleTrendChart cycles={cycles} />
+
       {patterns.length > 0 ? (
         <View className="mt-4 rounded-[22px] border border-black/[0.06] p-4">
-          <Text className="mb-3 text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-            Patterns worth noticing
+          <Text className="mb-3 text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+            {t('insights.cycleInsights.patternsTitle')}
           </Text>
           <View className="gap-3.5">
             {patterns.map((p) => (
@@ -162,11 +177,11 @@ export function TtcCycleInsights({
       <View className="mt-4 rounded-[22px] border border-black/[0.06] p-4">
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1">
-            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
-              Doctor export
+            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+              {t('insights.cycleInsights.doctorExport.title')}
             </Text>
             <Text className="mt-1 text-xs leading-relaxed text-rove-stone">
-              Your cycle lengths, ovulation evidence, and BBT/strip readings — on one page for your appointment.
+              {t('insights.cycleInsights.doctorExport.body')}
             </Text>
           </View>
           <Pressable
@@ -178,15 +193,14 @@ export function TtcCycleInsights({
             {isGenerating ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text className="text-[11.5px] font-bold text-white">Preview</Text>
+              <Text className="text-[11.5px] font-bold text-white">{t('insights.cycleInsights.doctorExport.preview')}</Text>
             )}
           </Pressable>
         </View>
       </View>
 
       <Text className="mt-4 px-1 text-[11px] leading-relaxed text-rove-stone">
-        A cycle showing an ovulatory signature is not proof an egg was released, and a cycle without one is not a
-        diagnosis. This page describes what your signals did, nothing more.
+        {t('insights.cycleInsights.footerDisclaimer')}
       </Text>
 
       <HealthReportViewer prepared={prepared} accentColor={theme.color} onClose={() => setPrepared(null)} />

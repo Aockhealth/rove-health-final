@@ -1,0 +1,291 @@
+{
+  "calendar": {
+    "daysOfWeek": ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
+    "months": [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ],
+    "defaultSubtext": "Tap a date to log symptoms",
+    "editPeriod": "Edit Period",
+    "logPeriod": "Log Period",
+    "selectPeriodDates": "Select period dates",
+    "tapDaysHint": "Tap days to mark/unmark bleeding",
+    "endPeriodHere": "End Period Here",
+    "guide": {
+      "title": "Tracker Guide",
+      "step1": {
+        "title": "1. Navigate & Select",
+        "body": "Use the arrows at the top of the calendar to switch months. Tap any date to select it, and the tracker cards below instantly update to show your logs for that day."
+      },
+      "step2": {
+        "title": "2. Log Your Period",
+        "bodyPrefix": "Tap the ",
+        "bodyEmphasis": "LOG PERIOD",
+        "bodySuffix": " button. The calendar will highlight in pink. Tap days to toggle bleeding on or off. Tap Done to save your cycle dates."
+      },
+      "step3": {
+        "title": "3. Log Daily Rhythm",
+        "body": "Scroll down to see dynamic cards for symptoms, moods, water intake, and more. Each card is tailored to your current phase. Changes are saved automatically as you tap."
+      },
+      "cyclePhases": "Cycle Phases",
+      "phases": {
+        "Menstrual": { "sub": "Days 1-5 (Period)" },
+        "Follicular": { "sub": "Pre-ovulation energy" },
+        "Ovulatory": { "sub": "Highest fertility" },
+        "Luteal": { "sub": "Winding down" }
+      },
+      "startTracking": "Start Tracking"
+    }
+  },
+  "quickPhaseLog": {
+    "title": "{{phase}} Patterns",
+    "subtitle": "Quick log common symptoms",
+    "phaseNames": {
+      "Menstrual": "Menstrual",
+      "Follicular": "Follicular",
+      "Ovulatory": "Ovulatory",
+      "Luteal": "Luteal"
+    },
+    "suggestions": {
+      "cramps": "Cramps",
+      "fatigue": "Fatigue",
+      "lowMood": "Low mood",
+      "painkillers": "Painkillers",
+      "energetic": "Energetic",
+      "calm": "Calm",
+      "highSexDrive": "High sex drive",
+      "breastPain": "Breast Pain",
+      "bloating": "Bloating",
+      "acne": "Acne",
+      "irritable": "Irritable",
+      "highSugar": "High sugar"
+    }
+  },
+  "fertility": {
+    "title": "Fertility",
+    "bbtLabel": "Basal Body Temperature",
+    "bbtHint": "Take it on waking, before getting out of bed.",
+    "rangeHint": "Enter a temperature between {{range}}.",
+    "opkLabel": "Ovulation Test",
+    "opkHint": "A peak means your surge was detected. Ovulation usually follows within a day.",
+    "suggestionTitle": "More accurate tracking, on us",
+    "suggestionBody": "Cycle-length math is a rougher estimate for irregular or PCOS cycles. A daily temperature or ovulation test (or a synced wearable) gives a clearer signal, so we've turned this section on for you.",
+    "suggestionWearableLink": "Sync a wearable instead →"
+  },
+  "hydration": {
+    "goalReached": "Goal Reached! 💧",
+    "mlUnit": "ml",
+    "glassesLoggedGoal_one": "{{count}} glass logged",
+    "glassesLoggedGoal_other": "{{count}} glasses logged",
+    "glassesOfGoal_one": "{{count}} glass / {{goal}} glasses",
+    "glassesOfGoal_other": "{{count}} glasses / {{goal}} glasses"
+  },
+  "duration": {
+    "hours": "HOURS",
+    "mins": "MINS",
+    "totalDuration": "TOTAL DURATION"
+  },
+  "jumpBar": {
+    "jumpTo": "Jump to",
+    "sections": {
+      "daily": "Daily",
+      "lifestyle": "Lifestyle",
+      "intimacy": "Intimacy",
+      "fertility": "Fertility"
+    }
+  },
+  "flow": {
+    "title": "Flow",
+    "options": {
+      "spotting": "Spotting",
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "heavy": "Heavy"
+    }
+  },
+  "discharge": {
+    "title": "Cervical Discharge",
+    "subtitle": "Answer 3 questions for accurate phase prediction",
+    "infoText": "This questionnaire (MPIQ) helps track your cycle phase by analyzing your body's biological markers.",
+    "q1": {
+      "heading": "1. Vaginal Fluid",
+      "description": "On touch and feel, what is the consistency of the discharge?",
+      "options": {
+        "tacky": {
+          "label": "Tacky",
+          "sublabel": "Sticky, glue-like"
+        },
+        "creamy": {
+          "label": "Creamy",
+          "sublabel": "Lotion-like, smooth"
+        },
+        "stretchy": {
+          "label": "Stretchy",
+          "sublabel": "Raw egg white, elastic"
+        },
+        "bloody": {
+          "label": "Bloody",
+          "sublabel": "Red/brown tint"
+        }
+      }
+    },
+    "q2": {
+      "heading": "2. How does it look?",
+      "description": "Observe the color and clarity of your cervical fluid.",
+      "options": {
+        "whiteYellow": "White/Yellow",
+        "clear": "Clear",
+        "red": "Red"
+      }
+    },
+    "q3": {
+      "heading": "3. Vaginal Sensation",
+      "description": "How does it feel down there throughout the day?",
+      "options": {
+        "dry": {
+          "label": "Dry",
+          "sublabel": "No fluid felt"
+        },
+        "moist": {
+          "label": "Moist",
+          "sublabel": "Slightly damp"
+        },
+        "wet": {
+          "label": "Wet",
+          "sublabel": "Distinctly wet"
+        },
+        "slippery": {
+          "label": "Slippery",
+          "sublabel": "Lubricated, sliding"
+        }
+      }
+    }
+  },
+  "navEyebrow": "Log Your Daily Rhythm",
+  "phaseUnknown": "Phase Unknown",
+  "fertileInline": "Fertile",
+  "logFirstPeriodHint": "Log your first period to unlock phase tracking and fertile window predictions.",
+  "howBad": "How bad?",
+  "exerciseDurationLabel": "Duration (minutes)",
+  "minAbbrev": "MIN",
+  "sexualActivity": "SEXUAL ACTIVITY",
+  "contraceptionProtection": "CONTRACEPTION & PROTECTION",
+  "notePlaceholder": "How are you feeling today?",
+  "charactersLeft_one": "{{count}} character left",
+  "charactersLeft_other": "{{count}} characters left",
+  "saving": "Saving...",
+  "saveLog": "Save Log",
+  "headline": {
+    "logFirstPeriod": "Log your first period",
+    "periodDay": "Period Day {{day}}",
+    "periodDueToday": "Period due today",
+    "lateBy_one": "{{count}} day late",
+    "lateBy_other": "{{count}} days late",
+    "startsToday": "Period starts today",
+    "periodIn_one": "Period in {{count}} day",
+    "periodIn_other": "Period in {{count}} days",
+    "lateAdviceLong": "A week or more is worth looking into. If pregnancy is possible, a test will tell you more. Otherwise, consider checking in with a doctor.",
+    "lateAdviceShort": "A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle."
+  },
+  "toasts": {
+    "periodSaveFailed": "Failed to save some period dates",
+    "tryAgain": "Please try again",
+    "periodDatesUpdated": "Period dates updated!",
+    "autoSaveFailed": "Couldn't auto-save",
+    "saveEntryFailed": "Failed to save entry",
+    "tapSaveLogRetry": "Tap {{saveLog}} to try again.",
+    "entrySaved": "Entry Saved!",
+    "entrySavedDescription": "Your daily log has been updated."
+  },
+  "sections": {
+    "bodySignals": "Body Signals",
+    "innerWeather": "Inner Weather",
+    "lifestyle": "Lifestyle",
+    "exerciseLog": "Exercise Log",
+    "exerciseInfo": "Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health.",
+    "hydration": "Hydration",
+    "hydrationInfo": "Drink at least 2L of water (8 glasses) daily to stay hydrated, support detoxification, and maintain healthy cognitive function.",
+    "sleepLog": "Sleep Log",
+    "sleepInfo": "7-9 hours of quality sleep is recommended for optimal hormonal balance, mood regulation, and physical recovery.",
+    "intimacy": "Intimacy",
+    "sexualWellness": "Sexual Wellness",
+    "sexualWellnessSubtitle": "Track activity & contraception",
+    "disruptors": "Disruptors",
+    "note": "Note"
+  },
+  "predictionPrompt": {
+    "title": "Were we right?",
+    "exact": "We predicted your period would start today, and it did.",
+    "early_one": "We predicted this period {{count}} day earlier than it arrived.",
+    "early_other": "We predicted this period {{count}} days earlier than it arrived.",
+    "late_one": "Your period arrived {{count}} day earlier than we predicted.",
+    "late_other": "Your period arrived {{count}} days earlier than we predicted.",
+    "question": "Did that feel about right to you?",
+    "notReally": "Not really",
+    "spotOn": "Spot on"
+  },
+  "options": {
+    "symptoms": {
+      "headache": "Headache",
+      "cramps": "Cramps",
+      "bloating": "Bloating",
+      "acne": "Acne",
+      "musclePain": "Muscle pain",
+      "fatigue": "Fatigue",
+      "breastPain": "Breast Pain",
+      "nausea": "Nausea",
+      "diarrhoea": "Diarrhoea",
+      "constipation": "Constipation",
+      "hotFlushes": "Hot flushes",
+      "vulvularPain": "Vulvular pain"
+    },
+    "moods": {
+      "energetic": "Energetic",
+      "calm": "Calm",
+      "anxious": "Anxious",
+      "unfocused": "Unfocused",
+      "irritable": "Irritable",
+      "lowMood": "Low mood",
+      "overwhelmed": "Overwhelmed"
+    },
+    "exercise": {
+      "restDay": "Rest Day",
+      "light": "Light (Walk, Yoga)",
+      "moderate": "Moderate (Gym, Pilates)",
+      "intense": "Intense (HIIT, Run)"
+    },
+    "sleep": {
+      "restful": "Restful",
+      "lightBroken": "Light/Broken",
+      "vividDreams": "Vivid dreams",
+      "insomnia": "Insomnia",
+      "nightSweats": "Night sweats"
+    },
+    "sexActivity": {
+      "sex": "Sex",
+      "painful": "Painful",
+      "highSexDrive": "High sex drive",
+      "lowSexDrive": "Low sex drive",
+      "enjoyable": "Enjoyable"
+    },
+    "contraception": {
+      "ocPill": "OC pill",
+      "emergencyPill": "Emergency pill",
+      "condom": "Condom",
+      "iud": "IUD",
+      "withdrawal": "Withdrawal",
+      "none": "None"
+    },
+    "disruptors": {
+      "alcohol": "Alcohol",
+      "caffeineOverload": "Caffeine overload",
+      "highSugar": "High sugar",
+      "travelJetLag": "Travel/Jet lag",
+      "illness": "Illness",
+      "highStressEvent": "High stress event",
+      "painkillers": "Painkillers",
+      "emergencyContraceptive": "Emergency contraceptive"
+    }
+  }
+}

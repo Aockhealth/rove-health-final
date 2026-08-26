@@ -1,12 +1,19 @@
 import { supabase } from './supabase';
 import {
   calculatePhase,
+  deriveRecentCycleLengths,
   getRelevantPeriodStart,
   type CycleSettings,
   type DailyLog,
 } from '@shared/cycle/phase';
 import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
+import type { LhBandReading } from '@shared/cycle/lh';
+import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
+import { deriveCycleStarts, getPersonalizedLutealLength, scoreTtcCycles } from './ttcCycleHistory';
+import { persistOvulationEstimate } from './ovulationEstimates';
+import { syncOvulationStatusNotification } from './notifications';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
+import { hasPcosFlag } from './pcos';
 
 const LOG_WINDOW_DAYS = 90;
 
@@ -48,17 +55,13 @@ export type DashboardData = {
   nsaidTakenByDate: Record<string, boolean>;
   cervicalDischargeByDate: Record<string, string>;
   sexActivityByDate: Record<string, string[]>;
+  /** This cycle's start date, resolved once here so every TTC surface (and the quick-log sheet) anchors to the same cycle. Null outside TTC mode or with no data yet. */
+  cycleStart: string | null;
+  /** How many LH strips she's already logged this cycle — drives the "Strip N of 5" countdown. */
+  lhReadingsThisCycleCount: number;
+  /** LH band level already logged, by date — lets the quick-log sheet prefill today's reading if she reopens it. */
+  lhBandByDate: Record<string, number>;
 };
-
-/**
- * PCOS is captured two different ways depending on when the user onboarded: as
- * a goal chip ('pcos') and as a health condition ('PCOS'). Either counts.
- */
-function hasPcosFlag(goals: unknown, conditions: unknown): boolean {
-  const toLower = (v: unknown): string[] =>
-    Array.isArray(v) ? v.map((item) => String(item).toLowerCase()) : [];
-  return [...toLower(goals), ...toLower(conditions)].some((item) => item.includes('pcos'));
-}
 
 function normaliseTrackerMode(stored: string | null | undefined): DashboardData['trackerMode'] {
   if (stored === 'menopause' || stored === 'ttc') return stored;
@@ -80,7 +83,7 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   const pastDate = new Date();
   pastDate.setDate(pastDate.getDate() - LOG_WINDOW_DAYS);
 
-  const [profileResult, onboardingResult, settingsResult, logsResult, lifestyleResult] = await Promise.all([
+  const [profileResult, onboardingResult, settingsResult, logsResult, lifestyleResult, lhReadingsResult] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
     supabase.from('user_onboarding').select('tracker_mode, goals, conditions').eq('user_id', user.id).single(),
     supabase.from('user_cycle_settings').select('*').eq('user_id', user.id).single(),
@@ -89,8 +92,12 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
     // `|| []` fallback below then turns that error into "this user has no
     // logs" — which reads as a wrong phase/day on Home rather than as a
     // failure. Check a new column exists remotely before adding it here.
-    supabase.from('daily_logs').select('date, is_period, bbt_celsius, opk_result, nsaid_taken, cervical_discharge, sex_activity').eq('user_id', user.id).gte('date', formatDate(pastDate)).order('date', { ascending: false }),
+    supabase.from('daily_logs').select('date, is_period, bbt_celsius, opk_result, nsaid_taken, cervical_discharge, sex_activity, disruptors, sleep_minutes, bbt_wake_time').eq('user_id', user.id).gte('date', formatDate(pastDate)).order('date', { ascending: false }),
     supabase.from('user_lifestyle').select('diet_preference').eq('user_id', user.id).maybeSingle(),
+    // Her LH baseline needs "all logged cycles", not just this cycle — but
+    // this shares the same 90-day practical window as everything else here
+    // for now, same tradeoff as monthLogs below.
+    supabase.from('lh_readings').select('date, test_time, band_level').eq('user_id', user.id).gte('date', formatDate(pastDate)).order('date', { ascending: false }),
   ]);
 
   const profile = profileResult.data;
@@ -104,6 +111,18 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   }
   const logs = logsResult.data || [];
   const lifestyle = lifestyleResult.data;
+  if (lhReadingsResult.error) {
+    console.error('[dashboard] lh_readings query failed:', lhReadingsResult.error.message);
+  }
+  const lhReadings: LhBandReading[] = (lhReadingsResult.data || []).map((r: any) => ({
+    date: r.date,
+    testTime: r.test_time,
+    bandLevel: Number(r.band_level),
+  }));
+  const lhBandByDate: Record<string, number> = {};
+  lhReadings.forEach((r) => {
+    lhBandByDate[r.date] = r.bandLevel;
+  });
 
   if (!settings) return null;
 
@@ -111,6 +130,7 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
   const nsaidTakenByDate: Record<string, boolean> = {};
   const cervicalDischargeByDate: Record<string, string> = {};
   const sexActivityByDate: Record<string, string[]> = {};
+  const mucusReadings: MucusReading[] = [];
   logs.forEach((l: any) => {
     monthLogs[l.date] = {
       date: l.date,
@@ -120,17 +140,52 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
       // failing loudly.
       bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
       opk_result: l.opk_result ?? null,
+      disruptors: l.disruptors ?? null,
+      sleep_minutes: l.sleep_minutes === null || l.sleep_minutes === undefined ? null : Number(l.sleep_minutes),
+      bbt_wake_time: l.bbt_wake_time ?? null,
+      nsaid_taken: l.nsaid_taken ?? null,
     };
     if (l.nsaid_taken) nsaidTakenByDate[l.date] = true;
-    if (l.cervical_discharge) cervicalDischargeByDate[l.date] = l.cervical_discharge;
+    if (l.cervical_discharge) {
+      cervicalDischargeByDate[l.date] = l.cervical_discharge;
+      const mucus = parseMucusJson(l.cervical_discharge, l.date);
+      if (mucus) mucusReadings.push(mucus);
+    }
     if (Array.isArray(l.sex_activity) && l.sex_activity.length > 0) sexActivityByDate[l.date] = l.sex_activity;
   });
 
-  const phaseSettings: CycleSettings = {
+  const trackerMode = normaliseTrackerMode(onboarding?.tracker_mode);
+  const hasPcos = hasPcosFlag(onboarding?.goals, onboarding?.conditions);
+
+  const baseSettings: CycleSettings = {
     last_period_start: settings.last_period_start || '',
     cycle_length_days: settings.cycle_length_days || 28,
     period_length_days: settings.period_length_days || 5,
   };
+
+  // Anchors the date-math fallback (both the phase calculation and the TTC
+  // ovulation read below) off her own history once there's enough of it —
+  // luteal length is comparatively stable within a woman, so it's a better
+  // prior than the 14-day population default. See getPersonalizedLutealLength.
+  let phaseSettings = baseSettings;
+  if (trackerMode === 'ttc') {
+    const ttcHistoryLogs = logs.map((l: any) => ({
+      date: l.date as string,
+      is_period: l.is_period as boolean | null,
+      bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
+      opk_result: (l.opk_result ?? null) as TtcDailyLog['opk_result'],
+      disruptors: l.disruptors ?? null,
+      sleep_minutes: l.sleep_minutes === null || l.sleep_minutes === undefined ? null : Number(l.sleep_minutes),
+      bbt_wake_time: l.bbt_wake_time ?? null,
+      nsaid_taken: l.nsaid_taken ?? null,
+    }));
+    const { starts } = deriveCycleStarts(ttcHistoryLogs);
+    const historyCycles = scoreTtcCycles(ttcHistoryLogs, starts, baseSettings, new Date(), hasPcos, lhReadings, mucusReadings);
+    const personalizedLuteal = getPersonalizedLutealLength(historyCycles);
+    if (personalizedLuteal !== null) {
+      phaseSettings = { ...baseSettings, luteal_length_days: personalizedLuteal };
+    }
+  }
 
   const phaseResult = calculatePhase(new Date(), phaseSettings, monthLogs);
   const phase = phaseResult.phase || 'Menstrual';
@@ -157,14 +212,22 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
 
   const content = PHASE_CONTENT[phase] || PHASE_CONTENT['Menstrual'];
 
-  const trackerMode = normaliseTrackerMode(onboarding?.tracker_mode);
+  const recentCycleLengths = deriveRecentCycleLengths(new Date(), monthLogs);
+  const lhReadingsThisCycleCount = cycleStart
+    ? lhReadings.filter((r) => r.date >= cycleStart && r.date <= formatDate(new Date())).length
+    : 0;
 
   const ovulation =
     trackerMode === 'ttc' && cycleStart
-      ? detectOvulation(cycleStart, new Date(), monthLogs, phaseSettings, {
-          hasPcos: hasPcosFlag(onboarding?.goals, onboarding?.conditions),
-        })
+      ? detectOvulation(cycleStart, new Date(), monthLogs, phaseSettings, { hasPcos, recentCycleLengths, lhReadings, mucusReadings })
       : null;
+
+  // Fire-and-forget audit write — never blocks or fails the dashboard load
+  // the user is actually looking at (see persistOvulationEstimate).
+  if (ovulation && cycleStart) {
+    void persistOvulationEstimate(user.id, cycleStart, ovulation);
+    void syncOvulationStatusNotification(cycleStart, ovulation);
+  }
 
   return {
     user: { id: user.id, name: profile?.full_name || 'Rove Member' },
@@ -186,5 +249,8 @@ export async function fetchDashboardData(): Promise<DashboardData | null> {
     nsaidTakenByDate,
     cervicalDischargeByDate,
     sexActivityByDate,
+    cycleStart,
+    lhReadingsThisCycleCount,
+    lhBandByDate,
   };
 }

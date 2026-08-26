@@ -13,6 +13,8 @@ const CONTENTS = [
   { icon: 'repeat', label: 'Cycle regularity, length and bleed statistics' },
   { icon: 'activity', label: 'Symptoms and mood, broken down by cycle phase' },
   { icon: 'moon', label: 'Sleep, hydration and movement averages' },
+  { icon: 'pie-chart', label: 'Nutrition from logged meals, when you have any' },
+  { icon: 'heart', label: 'Heart rate, HRV and steps, if Apple Health or Health Connect is synced' },
   { icon: 'target', label: 'Personal suggestions, on their own page' },
 ] as const;
 

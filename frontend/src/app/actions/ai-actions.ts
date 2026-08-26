@@ -841,8 +841,12 @@ function evaluateCoachQuality(
             phaseRulePassed = false;
         }
     }
-    if (!Array.isArray(candidate.main_set) || candidate.main_set.length < 3) {
-        console.log("[Quality] main_set check failed. Is array:", Array.isArray(candidate.main_set), "Length:", candidate.main_set?.length);
+    // A genuinely gentle/low-intensity session (the correct call for Menstrual
+    // or a Low energy request) legitimately has fewer exercises — requiring 3+
+    // regardless of intensity was rejecting good, phase-appropriate output.
+    const minMainSetLength = normalizedIntensity === "low" ? 2 : 3;
+    if (!Array.isArray(candidate.main_set) || candidate.main_set.length < minMainSetLength) {
+        console.log("[Quality] main_set check failed. Is array:", Array.isArray(candidate.main_set), "Length:", candidate.main_set?.length, "Required:", minMainSetLength);
         phaseRulePassed = false;
     }
 
@@ -1216,7 +1220,8 @@ function evaluateChefOptionsQuality(
     candidate: ChefOptionsResponse,
     phase: string,
     recentChosen: string[],
-    retryCount: number
+    retryCount: number,
+    mealType: ChefOptionsInput["mealType"]
 ): GenerationQualityMetadata {
     const normalizedPhase = phase.toLowerCase();
     const reasons: string[] = [];
@@ -1237,7 +1242,36 @@ function evaluateChefOptionsQuality(
     const repeatsChosen = names.some((name) => chosenSet.has(name));
     if (repeatsChosen) reasons.push("repeats_recently_chosen_dish");
 
-    const phaseRulePassed = !servingViolation && distinct && !repeatsChosen;
+    // Sugar cap — every category, checked whenever the model reported an estimate.
+    const sugarViolation = candidate.options.some(
+        (o) => typeof o.estimated_sugar_g === "number" && o.estimated_sugar_g > 12
+    );
+    if (sugarViolation) reasons.push("sugar_cap_exceeded");
+
+    // Beverage composition — only meaningful for the smoothie tab: exactly
+    // 2 smoothie / 1 juice / 1 soup, and one of the two smoothies must carry
+    // a protein scoop. Checked via the model's own self-reported drink_type
+    // rather than guessing from the dish name.
+    let compositionViolation = false;
+    let proteinScoopViolation = false;
+    if (mealType === "smoothie") {
+        const counts = { smoothie: 0, juice: 0, soup: 0 };
+        for (const o of candidate.options) {
+            if (o.drink_type) counts[o.drink_type] += 1;
+        }
+        compositionViolation = !(counts.smoothie === 2 && counts.juice === 1 && counts.soup === 1);
+        if (compositionViolation) reasons.push("beverage_composition_wrong");
+
+        const smoothieOptions = candidate.options.filter((o) => o.drink_type === "smoothie");
+        const hasProteinScoop = smoothieOptions.some((o) =>
+            o.key_ingredients.some((ing) => /protein/i.test(ing))
+        );
+        proteinScoopViolation = smoothieOptions.length > 0 && !hasProteinScoop;
+        if (proteinScoopViolation) reasons.push("smoothie_missing_protein_scoop");
+    }
+
+    const phaseRulePassed = !servingViolation && distinct && !repeatsChosen
+        && !sugarViolation && !compositionViolation && !proteinScoopViolation;
     const genericScore = computeGenericScore(
         candidate.options.flatMap((o) => [o.name, o.description, o.why])
     );
@@ -1301,7 +1335,7 @@ export async function generateChefOptions(input: ChefOptionsInput): Promise<Chef
             ? parseCandidate(lastResponse.structuredPayload)
             : null;
         let quality = candidate
-            ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+            ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount, input.mealType)
             : {
                 quality_passed: false,
                 retry_count: retryCount,
@@ -1322,7 +1356,7 @@ export async function generateChefOptions(input: ChefOptionsInput): Promise<Chef
                 ? parseCandidate(lastResponse.structuredPayload)
                 : null;
             quality = candidate
-                ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount)
+                ? evaluateChefOptionsQuality(candidate, input.phase, recentChosen, retryCount, input.mealType)
                 : {
                     quality_passed: false,
                     retry_count: retryCount,

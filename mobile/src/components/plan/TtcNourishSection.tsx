@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { TTC_GUIDANCE, type TtcMealIdea } from '@shared/content/ttc-guidance';
-import { Card, Chip, Label, ACCENT } from './ttcCardKit';
+import { Card, ACCENT } from './ttcCardKit';
 
 const MEAL_ICONS: Record<TtcMealIdea['time'], keyof typeof Feather.glyphMap> = {
   Morning: 'sunrise',
@@ -14,21 +14,22 @@ const MEAL_ICONS: Record<TtcMealIdea['time'], keyof typeof Feather.glyphMap> = {
 };
 
 /**
- * TTC mode's Nourish tab — replaces MacroFuelGauge/DietCheatSheet/RoveChef
- * (all cycle-phase framed) with the same food guidance that used to live in
- * the Guide tab, since "what to eat" belongs in Nourish like every other
- * tracker mode, not bundled in with the conception-prep overview.
+ * TTC mode's Nourish tab — leads with concrete meal ideas (no cycle-sync
+ * analog: sync's Nourish tab doesn't have a time-of-day meal list, so this
+ * stays its own card), then the same MacroFuelGauge/NutritionTrackerCard/
+ * RiverTrack/DietCheatSheet/RoveChef sequence cycle-sync uses, fed TTC data —
+ * see plan/index.tsx's TTC diet branch for the rest of the tab.
  */
 export function TtcNourishSection() {
   const g = TTC_GUIDANCE;
 
   return (
     <View className="mb-2">
-      <Card icon="coffee" title="Fertility Nutrition">
+      <Card icon="coffee" title="Meal Ideas">
         {g.mealIdeas.map((meal, i) => (
           <View
             key={`${meal.time}-${i}`}
-            className={`flex-row gap-3 ${i === g.mealIdeas.length - 1 ? 'mb-5' : 'mb-4 pb-4 border-b border-white/50'}`}
+            className={`flex-row gap-3 ${i === g.mealIdeas.length - 1 ? '' : 'mb-4 pb-4 border-b border-white/50'}`}
           >
             <View className="w-8 h-8 rounded-xl items-center justify-center" style={{ backgroundColor: `${ACCENT}18` }}>
               <Feather name={MEAL_ICONS[meal.time]} size={14} color={ACCENT} />
@@ -42,19 +43,6 @@ export function TtcNourishSection() {
             </View>
           </View>
         ))}
-
-        <Label text="Foods to lean on" />
-        <View className="flex-row flex-wrap mb-4">
-          {g.emphasize.map((item) => (
-            <Chip key={item} label={item} />
-          ))}
-        </View>
-        <Label text="Foods to cut back on" />
-        <View className="flex-row flex-wrap">
-          {g.limit.map((item) => (
-            <Chip key={item} label={item} />
-          ))}
-        </View>
       </Card>
 
       <Animated.View

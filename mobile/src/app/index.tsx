@@ -5,11 +5,13 @@ import { Session } from '@supabase/supabase-js';
 import { fetchOnboardingCompleted } from '../lib/onboarding';
 import { scheduleDailyTrackerReminder } from '../lib/notifications';
 import { identifyUser } from '../lib/analytics';
+import { hasSeenIntro } from '../lib/introFlow';
 import LoadingScreen from '../components/ui/LoadingScreen';
 
 export default function Index() {
   const [session, setSession] = useState<Session | null>(null);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [introSeen, setIntroSeen] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,6 +21,8 @@ export default function Index() {
         setOnboarded(await fetchOnboardingCompleted(session.user.id));
         identifyUser(session.user.id, { email: session.user.email });
         scheduleDailyTrackerReminder();
+      } else {
+        setIntroSeen(await hasSeenIntro());
       }
       setLoading(false);
     });
@@ -30,7 +34,7 @@ export default function Index() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading || (session && onboarded === null)) {
+  if (loading || (session && onboarded === null) || (!session && introSeen === null)) {
     return <LoadingScreen />;
   }
 
@@ -39,6 +43,10 @@ export default function Index() {
       return <Redirect href="/onboarding" />;
     }
     return <Redirect href="/(app)/home" />;
+  }
+
+  if (!introSeen) {
+    return <Redirect href="/intro/why-matters" />;
   }
 
   return <Redirect href="/(auth)/login" />;

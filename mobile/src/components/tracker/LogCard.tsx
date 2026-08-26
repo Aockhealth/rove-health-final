@@ -10,6 +10,8 @@ import Animated, {
   Layout,
 } from 'react-native-reanimated';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 export interface LogCardProps {
   title: string;
@@ -56,6 +58,7 @@ export function LogCard({
   infoText,
   children,
 }: LogCardProps) {
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -115,7 +118,7 @@ export function LogCard({
         {/* Title + subtitle */}
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title, { fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }]}>{title}</Text>
             {hasInfo && (
               <TouchableOpacity onPress={handleInfoPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Info size={14} color="#A8A29E" style={{ marginLeft: 4 }} />

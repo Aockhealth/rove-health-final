@@ -14,6 +14,7 @@ import { BlurView } from 'expo-blur';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import {
   Activity,
   Smile,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react-native';
 
 import ProfileAvatar from '../../components/home/ProfileAvatar';
+import { Link } from 'expo-router';
 import { phaseThemes } from '../../data/home-content';
 import {
   CycleCalendar,
@@ -64,7 +66,9 @@ import {
   CONTRACEPTION_OPTIONS,
   TYPE_COLORS,
   TypedOption,
+  PlainOption,
 } from '../../components/tracker/constants';
+import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import {
   calculatePhase,
   getRelevantPeriodStart,
@@ -123,6 +127,14 @@ function parseCervicalDischarge(raw: string | null): DischargeAnswers {
     // rather than show something wrong.
   }
   return { vaginalFluid: null, appearance: null, sensation: null };
+}
+
+// Looks up the localized display text for an already-selected symptom (a
+// persisted SYMPTOM_OPTIONS[].label value) — used by the "How bad?" severity
+// rows, which only have the raw persisted string, not the option's `key`.
+function getSymptomLabel(symptom: string, t: (key: string) => string): string {
+  const option = SYMPTOM_OPTIONS.find((o) => o.label === symptom);
+  return option ? t(`tracker.options.symptoms.${option.key}`) : symptom;
 }
 
 // ─── Chip toggle helper ────────────────────────────────────────────────────────
@@ -265,27 +277,33 @@ function SubSectionLabel({
 // Uniform category-colored chips (Body Signals, Inner Weather, Exercise
 // types, Self Love, Contraception) — active state fills solid with
 // `activeColor`, matching the web's flat per-card theme.
+// `item.label` is the value persisted to `selected` (and, on save, to
+// daily_logs) — stays in English. `namespace` + `item.key` look up the
+// localized display text via `tracker.options.<namespace>.<key>`.
 function ChipGrid({
   items,
   selected,
   onToggle,
   activeColor,
+  namespace,
 }: {
-  items: string[];
+  items: PlainOption[];
   selected: string[];
   onToggle: (v: string) => void;
   activeColor?: string;
+  namespace: string;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.chipWrap}>
       {items.map((item) => {
-        const isActive = selected.includes(item);
+        const isActive = selected.includes(item.label);
         return (
           <SymptomChip
-            key={item}
-            label={item}
+            key={item.label}
+            label={t(`tracker.options.${namespace}.${item.key}`)}
             isSelected={isActive}
-            onToggle={() => onToggle(item)}
+            onToggle={() => onToggle(item.label)}
             accentColor={activeColor}
             activeColor={activeColor}
             icon={isActive ? <Check size={12} color="#FFFFFF" /> : undefined}
@@ -306,12 +324,15 @@ function TypedChipGrid({
   selected,
   onToggle,
   accentColor,
+  namespace,
 }: {
   items: TypedOption[];
   selected: string[];
   onToggle: (v: string) => void;
   accentColor?: string;
+  namespace: string;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.chipWrap}>
       {items.map((item) => {
@@ -320,7 +341,7 @@ function TypedChipGrid({
         return (
           <SymptomChip
             key={item.label}
-            label={item.label}
+            label={t(`tracker.options.${namespace}.${item.key}`)}
             isSelected={isActive}
             onToggle={() => onToggle(item.label)}
             accentColor={accentColor}
@@ -336,6 +357,7 @@ function TypedChipGrid({
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function TrackerScreen() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   // The tab bar is absolutely positioned over screen content (see
   // (app)/_layout.tsx), so a fixed `bottom` on the floating Save bar left it
@@ -350,6 +372,13 @@ export default function TrackerScreen() {
   // Gates the Fertility card and its jump target. Defaults to off, so a failed
   // or still-loading profile fetch simply shows the standard tracker.
   const isTtcMode = trackerData?.trackerMode === 'ttc';
+
+  // PCOS and irregular cycles both make date-math cycle prediction unreliable
+  // — a BBT/LH signal is the more accurate read for these users even when
+  // they're not trying to conceive, so the Fertility card unlocks for them
+  // too, not just TTC mode.
+  const showFertilityTracking = isTtcMode || !!trackerData?.hasPcos || !!trackerData?.isIrregular;
+  const fertilityTrackingSuggested = !isTtcMode && (!!trackerData?.hasPcos || !!trackerData?.isIrregular);
 
   // Calendar / selection state
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -480,16 +509,16 @@ export default function TrackerScreen() {
   }, [cycleSettings, sharedLogs, todayResult]);
 
   const headline = todayResult.phase === null
-    ? 'Log your first period'
+    ? t('tracker.headline.logFirstPeriod')
     : currentPhase === 'Menstrual'
-      ? `Period Day ${Math.max(1, dayInCycle || 1)}`
+      ? t('tracker.headline.periodDay', { day: Math.max(1, dayInCycle || 1) })
       : todayResult.latePeriod
         ? todayLateByDays === 0
-          ? 'Period due today'
-          : `${todayLateByDays} day${todayLateByDays === 1 ? '' : 's'} late`
+          ? t('tracker.headline.periodDueToday')
+          : t('tracker.headline.lateBy', { count: todayLateByDays })
         : daysUntilPeriod === 0
-          ? 'Period starts today'
-          : `Period in ${daysUntilPeriod} day${daysUntilPeriod === 1 ? '' : 's'}`;
+          ? t('tracker.headline.startsToday')
+          : t('tracker.headline.periodIn', { count: daysUntilPeriod });
 
   // A late period is the most anxious moment in the cycle, and a bare number with no
   // context is what makes it worse. Normalise the common case, and only at a week or
@@ -498,9 +527,9 @@ export default function TrackerScreen() {
   const headlineSubtext =
     todayResult.latePeriod && todayLateByDays > 0
       ? todayLateByDays >= LATE_ADVICE_THRESHOLD_DAYS
-        ? 'A week or more is worth looking into. If pregnancy is possible, a test will tell you more — otherwise consider checking in with a doctor.'
-        : 'A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle.'
-      : 'Tap a date to log symptoms';
+        ? t('tracker.headline.lateAdviceLong')
+        : t('tracker.headline.lateAdviceShort')
+      : t('tracker.calendar.defaultSubtext');
 
   // ─── Per-cell calendar data for the visible month, keyed by real date ─────
   const dayInfo: DayInfoMap = useMemo(() => {
@@ -531,38 +560,39 @@ export default function TrackerScreen() {
   // day one auto-fills the days after it as bleeding, and un-marking it
   // clears the same forward span, so undoing a period doesn't require
   // tapping every day by hand either.
+  // A date is the start of a new period streak when the day right before it
+  // isn't already logged as period. Used both to scope the auto-fill-forward
+  // convenience to genuine period starts, and to tell HealthKit which day is
+  // the cycle start via HKMenstrualCycleStart metadata.
+  const isPeriodStreakStart = (dateStr: string): boolean => {
+    const prevDay = parseLocalDate(dateStr);
+    prevDay.setDate(prevDay.getDate() - 1);
+    return monthLogs[formatDate(prevDay)]?.is_period !== true;
+  };
+
+  // Tapping a day toggles only that day — no auto-fill of a "typical"
+  // period length. That convenience used to fill forward period_length_days
+  // from whatever day was tapped, but tying it to the stored average caused
+  // real confusion: re-adding a single day within an existing streak could
+  // spill into unrelated days, and logging an actual period that ran
+  // shorter/longer/earlier than the stored average would mark days beyond
+  // what was actually true. "End Period Here" already covers the "fill the
+  // rest of a range" case explicitly, so a plain tap should just mean this
+  // one day, nothing more.
   const handleTogglePeriodDate = (dateStr: string) => {
-    const isCurrentlyLogged = monthLogs[dateStr]?.is_period === true;
-    const turningOn = !isCurrentlyLogged;
-    const span = Math.max(cycleSettings.period_length_days || 5, 1);
-
-    const datesToSet: string[] = [];
-    const cur = parseLocalDate(dateStr);
-    for (let i = 0; i < span; i++) {
-      datesToSet.push(formatDate(cur));
-      cur.setDate(cur.getDate() + 1);
-    }
-
-    const wasLoggedByDate: Record<string, boolean> = {};
-    datesToSet.forEach((d) => {
-      wasLoggedByDate[d] = monthLogs[d]?.is_period === true;
-    });
+    const turningOn = monthLogs[dateStr]?.is_period !== true;
+    const wasLogged = monthLogs[dateStr]?.is_period === true;
 
     setPendingPeriodChanges((prev) => {
       const next = new Map(prev);
-      datesToSet.forEach((d) => {
-        if (wasLoggedByDate[d] === turningOn) next.delete(d);
-        else next.set(d, turningOn);
-      });
+      if (wasLogged === turningOn) next.delete(dateStr);
+      else next.set(dateStr, turningOn);
       return next;
     });
-    setMonthLogs((prev) => {
-      const merged = { ...prev };
-      datesToSet.forEach((d) => {
-        merged[d] = { ...(merged[d] ?? emptyLog(d)), is_period: turningOn };
-      });
-      return merged;
-    });
+    setMonthLogs((prev) => ({
+      ...prev,
+      [dateStr]: { ...(prev[dateStr] ?? emptyLog(dateStr)), is_period: turningOn },
+    }));
   };
 
   const handleEndPeriod = () => {
@@ -607,6 +637,7 @@ export default function TrackerScreen() {
           date: dateStr,
           symptoms: log.symptoms ?? [],
           isPeriod,
+          isPeriodStart: isPeriod ? isPeriodStreakStart(dateStr) : undefined,
           flowIntensity: isPeriod ? log.flow_intensity || 'Normal' : undefined,
           moods: log.moods ?? [],
           notes: log.notes ?? '',
@@ -626,7 +657,7 @@ export default function TrackerScreen() {
     );
 
     if (results.some((r) => !r.success)) {
-      toast.error('Failed to save some period dates', { description: 'Please try again' });
+      toast.error(t('tracker.toasts.periodSaveFailed'), { description: t('tracker.toasts.tryAgain') });
       return;
     }
 
@@ -638,7 +669,7 @@ export default function TrackerScreen() {
 
     setPendingPeriodChanges(new Map());
     setIsPeriodLoggingMode(false);
-    toast.success('Period dates updated!');
+    toast.success(t('tracker.toasts.periodDatesUpdated'));
 
     // This path can move last_period_start (see reanchorLastPeriodStart) —
     // every screen reading cycle data needs to know, same as the regular
@@ -933,18 +964,19 @@ export default function TrackerScreen() {
       isPeriod: existingIsPeriod,
       flowIntensity: resolvedFlowIntensity,
       cervicalDischarge,
-      // Left undefined outside TTC mode so the write doesn't touch these
-      // columns at all — someone who switches modes mid-cycle keeps the
+      // Left undefined when fertility tracking isn't shown so the write
+      // doesn't touch these columns at all — someone who switches modes (or
+      // stops qualifying for PCOS/irregular tracking) mid-cycle keeps the
       // readings she already logged.
-      bbtCelsius: isTtcMode ? bbtCelsius : undefined,
-      opkResult: isTtcMode ? opkResult : undefined,
+      bbtCelsius: showFertilityTracking ? bbtCelsius : undefined,
+      opkResult: showFertilityTracking ? opkResult : undefined,
       notes: note,
     });
     if (!silent) setIsSaving(false);
 
     if (!result.success) {
-      toast.error(silent ? "Couldn't auto-save" : 'Failed to save entry', {
-        description: silent ? 'Tap Save Log to try again.' : result.error,
+      toast.error(silent ? t('tracker.toasts.autoSaveFailed') : t('tracker.toasts.saveEntryFailed'), {
+        description: silent ? t('tracker.toasts.tapSaveLogRetry', { saveLog: t('tracker.saveLog') }) : result.error,
       });
       return;
     }
@@ -970,9 +1002,9 @@ export default function TrackerScreen() {
         is_period: existingIsPeriod,
         flow_intensity: resolvedFlowIntensity ?? null,
         cervical_discharge: cervicalDischarge ?? null,
-        // Mirrors the omit-when-not-TTC rule above: keep whatever the row
-        // already held rather than blanking the local copy too.
-        ...(isTtcMode ? { bbt_celsius: bbtCelsius, opk_result: opkResult } : {}),
+        // Mirrors the omit-when-fertility-tracking-is-hidden rule above: keep
+        // whatever the row already held rather than blanking the local copy too.
+        ...(showFertilityTracking ? { bbt_celsius: bbtCelsius, opk_result: opkResult } : {}),
         notes: note,
       };
       // Recorded so the field-reset effect can tell this exact update apart
@@ -982,7 +1014,7 @@ export default function TrackerScreen() {
     });
 
     if (!silent) {
-      toast.success('Entry Saved!', { description: 'Your daily log has been updated.' });
+      toast.success(t('tracker.toasts.entrySaved'), { description: t('tracker.toasts.entrySavedDescription') });
     }
 
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -1059,8 +1091,12 @@ export default function TrackerScreen() {
           bordered bar this screen used to have on its own. ── */}
       <View style={styles.nav}>
         <View>
-          <Text style={styles.navEyebrow}>Log Your Daily Rhythm</Text>
-          <Text style={[styles.navTitle, { color: phaseThemeColor }]}>Tracker</Text>
+          <Text style={[styles.navEyebrow, { letterSpacing: getLocalizedTracking(2, i18n.language) }]}>
+            {t('tracker.navEyebrow')}
+          </Text>
+          <Text style={[styles.navTitle, { color: phaseThemeColor, fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }]}>
+            {t('common.tabs.tracker')}
+          </Text>
         </View>
         <ProfileAvatar />
       </View>
@@ -1113,19 +1149,19 @@ export default function TrackerScreen() {
                 ]}
               >
                 <Text style={[styles.phaseBadgeText, currentPhase && { color: PHASE_COLORS[currentPhase] }]}>
-                  {currentPhase ?? 'Phase Unknown'}
+                  {currentPhase ? t(`tracker.quickPhaseLog.phaseNames.${currentPhase}`) : t('tracker.phaseUnknown')}
                 </Text>
-                {isFertileDay && <Text style={styles.fertileInline}> • Fertile</Text>}
+                {isFertileDay && <Text style={styles.fertileInline}> • {t('tracker.fertileInline')}</Text>}
               </View>
             </View>
 
-            <Text style={styles.statusDay}>{dayInCycle ? `Day ${dayInCycle}` : '—'}</Text>
+            <Text style={styles.statusDay}>{dayInCycle ? t('home.dayLabel', { day: dayInCycle }) : '—'}</Text>
           </View>
 
           {!hasPhaseData && (
             <View style={styles.statusHint}>
               <Text style={styles.statusHintText}>
-                Log your first period to unlock phase tracking and fertile window predictions.
+                {t('tracker.logFirstPeriodHint')}
               </Text>
             </View>
           )}
@@ -1166,7 +1202,7 @@ export default function TrackerScreen() {
             collapsed and sit far down the page, so this jumps straight to
             (and opens) whichever one someone actually wants, instead of
             making them scroll past everything else first. */}
-        <SectionJumpBar onJump={handleJumpToSection} accentColor={phaseThemeColor} showFertility={isTtcMode} />
+        <SectionJumpBar onJump={handleJumpToSection} accentColor={phaseThemeColor} showFertility={showFertilityTracking} />
 
         {/* 7. Quick Phase Log — dynamic per currentPhase, matching the web's
             QuickPhaseLog.tsx. Title/suggestions change with the selected
@@ -1201,12 +1237,30 @@ export default function TrackerScreen() {
           />
         )}
 
-        {/* 8b. Fertility (TTC mode only) — the morning temperature and
-            ovulation test the detection algorithm runs on. Sits directly under
-            Flow/Discharge because it's the same kind of once-a-day body
-            reading, and high enough up to be quick to reach each morning. */}
-        {isTtcMode && (
+        {/* 8b. Fertility (TTC mode, or PCOS/irregular cycles) — the morning
+            temperature and ovulation test the detection algorithm runs on.
+            Sits directly under Flow/Discharge because it's the same kind of
+            once-a-day body reading, and high enough up to be quick to reach
+            each morning. PCOS/irregular users see this even outside TTC mode
+            because date-math prediction is unreliable for them — a BBT/LH
+            signal (or a synced wearable) is the more accurate read. */}
+        {showFertilityTracking && (
           <View onLayout={(e) => setFertilitySectionY(e.nativeEvent.layout.y)}>
+            {fertilityTrackingSuggested && (
+              <View className="mb-3 rounded-2xl bg-white/60 p-4 border border-white/60">
+                <Text className="mb-1 text-[9.5px] font-extrabold uppercase tracking-wide text-rove-stone">
+                  {t('tracker.fertility.suggestionTitle')}
+                </Text>
+                <Text className="text-xs font-medium leading-relaxed text-rove-charcoal">
+                  {t('tracker.fertility.suggestionBody')}
+                </Text>
+                <Link href="/profile" asChild>
+                  <Text className="mt-2 text-xs font-bold text-rove-charcoal underline">
+                    {t('tracker.fertility.suggestionWearableLink')}
+                  </Text>
+                </Link>
+              </View>
+            )}
             <FertilityCard
               bbtCelsius={bbtCelsius}
               onBbtChange={setBbtCelsius}
@@ -1220,7 +1274,7 @@ export default function TrackerScreen() {
 
         {/* 9. Body Signals */}
         <LogCard
-          title="Body Signals"
+          title={t('tracker.sections.bodySignals')}
           icon={<Activity size={18} color={CATEGORY_COLORS.bodySignals} />}
           iconBgColor={`${CATEGORY_COLORS.bodySignals}1A`}
           accentColor={CATEGORY_COLORS.bodySignals}
@@ -1228,6 +1282,7 @@ export default function TrackerScreen() {
         >
           <ChipGrid
             items={SYMPTOM_OPTIONS}
+            namespace="symptoms"
             selected={bodySignals}
             onToggle={(v) => {
               const next = toggleChip(bodySignals, v);
@@ -1249,12 +1304,12 @@ export default function TrackerScreen() {
           {bodySignals.length > 0 && (
             <View style={{ marginTop: 10, gap: 2 }}>
               <Text style={{ fontSize: 10, fontFamily: 'Raleway-SemiBold', color: '#8A8378', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>
-                How bad?
+                {t('tracker.howBad')}
               </Text>
               {bodySignals.map((symptom) => (
                 <SeverityRow
                   key={symptom}
-                  label={symptom}
+                  label={getSymptomLabel(symptom, t)}
                   value={symptomSeverity[symptom] ?? 3}
                   onChange={(v) => setSymptomSeverity((sev) => ({ ...sev, [symptom]: v }))}
                   color={CATEGORY_COLORS.bodySignals}
@@ -1266,14 +1321,15 @@ export default function TrackerScreen() {
 
         {/* 10. Inner Weather */}
         <LogCard
-          title="Inner Weather"
+          title={t('tracker.sections.innerWeather')}
           icon={<Smile size={18} color={CATEGORY_COLORS.innerWeather} />}
           iconBgColor={`${CATEGORY_COLORS.innerWeather}1A`}
           accentColor={CATEGORY_COLORS.innerWeather}
           cardTint={phaseCardTint}
         >
           <ChipGrid
-            items={MOODS_LIST.map((m) => m.label)}
+            items={MOODS_LIST}
+            namespace="moods"
             selected={innerWeather}
             onToggle={(v) => setInnerWeather(toggleChip(innerWeather, v))}
             activeColor={CATEGORY_COLORS.innerWeather}
@@ -1286,7 +1342,7 @@ export default function TrackerScreen() {
         <View onLayout={(e) => setLifestyleSectionY(e.nativeEvent.layout.y)}>
         <SectionGroup
           icon={<Zap size={18} color="#4DB6AC" />}
-          title="Lifestyle"
+          title={t('tracker.sections.lifestyle')}
           iconBgColor="#4DB6AC1A"
           accentColor="#4DB6AC"
           cardTint={phaseCardTint}
@@ -1295,15 +1351,16 @@ export default function TrackerScreen() {
         >
           {/* 12a. Exercise Log */}
           <LogCard
-            title="Exercise Log"
+            title={t('tracker.sections.exerciseLog')}
             icon={<Dumbbell size={16} color={CATEGORY_COLORS.exerciseLog} />}
             iconBgColor={`${CATEGORY_COLORS.exerciseLog}1A`}
             accentColor={CATEGORY_COLORS.exerciseLog}
             cardTint={phaseCardTint}
-            infoText="Aim for at least 30 minutes of moderate activity daily for better cycle regularity and hormonal health."
+            infoText={t('tracker.sections.exerciseInfo')}
           >
             <ChipGrid
               items={EXERCISE_OPTIONS}
+              namespace="exercise"
               selected={exerciseType}
               onToggle={(v) => setExerciseType(toggleChip(exerciseType, v))}
               activeColor={CATEGORY_COLORS.exerciseLog}
@@ -1315,14 +1372,14 @@ export default function TrackerScreen() {
                   { borderWidth: 1, borderColor: `${CATEGORY_COLORS.exerciseLog}33` },
                 ]}
               >
-                <Text style={styles.exerciseDurationLabel}>Duration (minutes)</Text>
+                <Text style={styles.exerciseDurationLabel}>{t('tracker.exerciseDurationLabel')}</Text>
                 <View style={styles.exerciseDurationInner}>
                   {/* Type it directly, or use the stepper below */}
                   <TextInput
                     style={styles.exerciseDurationNum}
                     value={String(exerciseMins)}
-                    onChangeText={(t) => {
-                      const digits = t.replace(/[^0-9]/g, '');
+                    onChangeText={(txt) => {
+                      const digits = txt.replace(/[^0-9]/g, '');
                       const n = digits === '' ? 0 : parseInt(digits, 10);
                       setExerciseMins(Math.min(300, n));
                     }}
@@ -1330,7 +1387,7 @@ export default function TrackerScreen() {
                     maxLength={3}
                     selectTextOnFocus
                   />
-                  <Text style={styles.exerciseDurationUnit}>MIN</Text>
+                  <Text style={styles.exerciseDurationUnit}>{t('tracker.minAbbrev')}</Text>
                 </View>
                 {/* Stepper using +/- touch */}
                 <NumericStepper
@@ -1347,12 +1404,12 @@ export default function TrackerScreen() {
 
           {/* 12b. Hydration */}
           <LogCard
-            title="Hydration"
+            title={t('tracker.sections.hydration')}
             icon={<Droplet size={16} color={CATEGORY_COLORS.hydration} fill={CATEGORY_COLORS.hydration} />}
             iconBgColor={`${CATEGORY_COLORS.hydration}1A`}
             accentColor={CATEGORY_COLORS.hydration}
             cardTint={phaseCardTint}
-            infoText="Drink at least 2L of water (8 glasses) daily to stay hydrated, support detoxification, and maintain healthy cognitive function."
+            infoText={t('tracker.sections.hydrationInfo')}
           >
             <HydrationTracker
               glasses={hydrationGlasses}
@@ -1363,15 +1420,16 @@ export default function TrackerScreen() {
 
           {/* 12c. Sleep Log */}
           <LogCard
-            title="Sleep Log"
+            title={t('tracker.sections.sleepLog')}
             icon={<Moon size={16} color={CATEGORY_COLORS.sleepLog} fill={CATEGORY_COLORS.sleepLog} />}
             iconBgColor={`${CATEGORY_COLORS.sleepLog}1A`}
             accentColor={CATEGORY_COLORS.sleepLog}
             cardTint={phaseCardTint}
-            infoText="7-9 hours of quality sleep is recommended for optimal hormonal balance, mood regulation, and physical recovery."
+            infoText={t('tracker.sections.sleepInfo')}
           >
             <TypedChipGrid
               items={SLEEP_OPTIONS}
+              namespace="sleep"
               selected={sleepQuality}
               onToggle={(v) => setSleepQuality(toggleChip(sleepQuality, v))}
               accentColor={CATEGORY_COLORS.sleepLog}
@@ -1383,7 +1441,6 @@ export default function TrackerScreen() {
                 onChangeHours={setSleepHours}
                 onChangeMinutes={setSleepMins}
                 accentColor={CATEGORY_COLORS.sleepLog}
-                label="TOTAL DURATION"
               />
             </View>
           </LogCard>
@@ -1394,7 +1451,7 @@ export default function TrackerScreen() {
         <View onLayout={(e) => setIntimacySectionY(e.nativeEvent.layout.y)}>
         <SectionGroup
           icon={<Heart size={18} color="#E8924E" />}
-          title="Intimacy"
+          title={t('tracker.sections.intimacy')}
           iconBgColor="#E8924E1A"
           accentColor="#E8924E"
           cardTint={phaseCardTint}
@@ -1403,8 +1460,8 @@ export default function TrackerScreen() {
         >
           {/* 13a. Sexual Wellness */}
           <LogCard
-            title="Sexual Wellness"
-            subtitle="Track activity & contraception"
+            title={t('tracker.sections.sexualWellness')}
+            subtitle={t('tracker.sections.sexualWellnessSubtitle')}
             icon={<Flame size={16} color={CATEGORY_COLORS.sexualWellness} fill={CATEGORY_COLORS.sexualWellness} />}
             iconBgColor={`${CATEGORY_COLORS.sexualWellness}1A`}
             accentColor={CATEGORY_COLORS.sexualWellness}
@@ -1412,7 +1469,7 @@ export default function TrackerScreen() {
           >
             <SubSectionLabel
               icon={<Heart size={12} color={CATEGORY_COLORS.sexualWellness} />}
-              label="SEXUAL ACTIVITY"
+              label={t('tracker.sexualActivity')}
             />
             {/* Positive options solid-fill the category color (matches web's
                 theme.active); the one negative option ("Painful") gets a
@@ -1425,7 +1482,7 @@ export default function TrackerScreen() {
                 return (
                   <SymptomChip
                     key={item.label}
-                    label={item.label}
+                    label={t(`tracker.options.sexActivity.${item.key}`)}
                     isSelected={isActive}
                     onToggle={() => setSexualActivity(toggleChip(sexualActivity, item.label))}
                     accentColor={CATEGORY_COLORS.sexualWellness}
@@ -1438,10 +1495,11 @@ export default function TrackerScreen() {
             </View>
             <SubSectionLabel
               icon={<Shield size={12} color={CATEGORY_COLORS.sexualWellness} />}
-              label="CONTRACEPTION & PROTECTION"
+              label={t('tracker.contraceptionProtection')}
             />
             <ChipGrid
               items={CONTRACEPTION_OPTIONS}
+              namespace="contraception"
               selected={contraception}
               onToggle={(v) => setContraception(toggleChip(contraception, v))}
               activeColor={CATEGORY_COLORS.sexualWellness}
@@ -1452,7 +1510,7 @@ export default function TrackerScreen() {
 
         {/* 14. Disruptors */}
         <LogCard
-          title="Disruptors"
+          title={t('tracker.sections.disruptors')}
           icon={<ZapOff size={18} color={CATEGORY_COLORS.disruptors} />}
           iconBgColor={`${CATEGORY_COLORS.disruptors}1A`}
           accentColor={CATEGORY_COLORS.disruptors}
@@ -1461,6 +1519,7 @@ export default function TrackerScreen() {
         >
           <TypedChipGrid
             items={DISRUPTORS_LIST}
+            namespace="disruptors"
             selected={disruptors}
             onToggle={(v) => setDisruptors(toggleChip(disruptors, v))}
             accentColor={CATEGORY_COLORS.disruptors}
@@ -1469,7 +1528,7 @@ export default function TrackerScreen() {
 
         {/* 15. Note — phase-themed like the web's NoteCard */}
         <LogCard
-          title="Note"
+          title={t('tracker.sections.note')}
           icon={<PenLine size={18} color={phaseThemeColor} />}
           iconBgColor={`${phaseThemeColor}1A`}
           accentColor={phaseThemeColor}
@@ -1479,15 +1538,15 @@ export default function TrackerScreen() {
           <View style={[styles.noteContainer, { borderColor: `${phaseThemeColor}33` }]}>
             <TextInput
               style={styles.noteInput}
-              placeholder="How are you feeling today?"
+              placeholder={t('tracker.notePlaceholder')}
               placeholderTextColor="#C0BAB4"
               value={note}
-              onChangeText={(t) => setNote(t.slice(0, noteMax))}
+              onChangeText={(txt) => setNote(txt.slice(0, noteMax))}
               multiline
               textAlignVertical="top"
             />
             <Text style={styles.noteCounter}>
-              {noteMax - note.length} characters left
+              {t('tracker.charactersLeft', { count: noteMax - note.length })}
             </Text>
           </View>
         </LogCard>
@@ -1509,7 +1568,7 @@ export default function TrackerScreen() {
             disabled={isSaving || isFutureDate(selectedDate)}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Log'}</Text>
+            <Text style={styles.saveBtnText}>{isSaving ? t('tracker.saving') : t('tracker.saveLog')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -1519,17 +1578,17 @@ export default function TrackerScreen() {
           {predictionPrompt && (
             <>
               <DialogHeader>
-                <DialogTitle>Were we right?</DialogTitle>
+                <DialogTitle>{t('tracker.predictionPrompt.title')}</DialogTitle>
                 <DialogDescription>
                   {predictionPrompt.daysOff === 0
-                    ? 'We predicted your period would start today — and it did.'
+                    ? t('tracker.predictionPrompt.exact')
                     : predictionPrompt.daysOff! > 0
-                      ? `We predicted this period ${predictionPrompt.daysOff} day${predictionPrompt.daysOff === 1 ? '' : 's'} earlier than it arrived.`
-                      : `Your period arrived ${Math.abs(predictionPrompt.daysOff!)} day${Math.abs(predictionPrompt.daysOff!) === 1 ? '' : 's'} earlier than we predicted.`}
+                      ? t('tracker.predictionPrompt.early', { count: predictionPrompt.daysOff })
+                      : t('tracker.predictionPrompt.late', { count: Math.abs(predictionPrompt.daysOff!) })}
                 </DialogDescription>
               </DialogHeader>
               <Text className="text-sm text-rove-charcoal/80 text-center mb-6">
-                Did that feel about right to you?
+                {t('tracker.predictionPrompt.question')}
               </Text>
               <View className="flex-row gap-3">
                 <Button
@@ -1538,14 +1597,14 @@ export default function TrackerScreen() {
                   textClassName="text-sm"
                   onPress={() => answerPredictionPrompt(false)}
                 >
-                  Not really
+                  {t('tracker.predictionPrompt.notReally')}
                 </Button>
                 <Button
                   className="flex-1 px-2"
                   textClassName="text-sm"
                   onPress={() => answerPredictionPrompt(true)}
                 >
-                  Spot on
+                  {t('tracker.predictionPrompt.spotOn')}
                 </Button>
               </View>
             </>

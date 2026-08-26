@@ -5,20 +5,25 @@ import {
   Calendar,
   BarChart3,
   Scale,
-  HeartPulse,
   Check,
   Target,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 import type { ProfileTheme } from './CycleSignature';
 
 // Mirrors GOALS in ../onboarding/StepGoals.tsx so editing goals here feels
 // like a continuation of onboarding rather than a new pattern. Scoped to the
-// four things the app actually delivers on, rather than vaguer catch-alls.
+// things the app actually delivers on, rather than vaguer catch-alls. PCOS
+// (PMOS) guidance dropped as a separate goal — it's now captured properly in
+// Health Passport's Conditions Managed picker instead (see hasPcosFlag,
+// which still recognizes existing users' saved 'pcos' goal for
+// backward compatibility — this only removes the option going forward).
+// Labels translated at render time via `profile.focusGoals.items.<id>`.
 const GOALS = [
-  { id: 'syncing', label: 'Cycle Syncing', Icon: Calendar },
-  { id: 'tracking', label: 'Cycle Tracking', Icon: BarChart3 },
-  { id: 'weight_loss', label: 'Weight Loss', Icon: Scale },
-  { id: 'pcos', label: 'PCOS Guidance', Icon: HeartPulse },
+  { id: 'syncing', Icon: Calendar },
+  { id: 'tracking', Icon: BarChart3 },
+  { id: 'weight_loss', Icon: Scale },
 ];
 
 interface FocusGoalsProps {
@@ -28,6 +33,7 @@ interface FocusGoalsProps {
 }
 
 export function FocusGoals({ goals, onToggleGoal, theme }: FocusGoalsProps) {
+  const { t, i18n } = useTranslation();
   return (
     <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
       <View className="mb-6 flex-row items-center gap-3">
@@ -38,52 +44,48 @@ export function FocusGoals({ goals, onToggleGoal, theme }: FocusGoalsProps) {
           <Target size={20} color={theme.accentColor} />
         </View>
         <View>
-          <Text className="text-xl text-stone-800" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-            Focus & Care Mode
+          <Text className="text-xl text-stone-800" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
+            {t('profile.focusGoals.title')}
           </Text>
-          <Text className="mt-0.5 text-xs text-stone-400">What we tailor your plan around</Text>
+          <Text className="mt-0.5 text-xs text-stone-400">{t('profile.focusGoals.subtitle')}</Text>
         </View>
       </View>
 
       <View className="gap-6">
-        <View className="gap-3">
+        <View className="gap-2">
           <Text className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
-            Your Goals
+            {t('profile.focusGoals.yourGoals')}
           </Text>
-          <View className="flex-row flex-wrap" style={{ marginHorizontal: -6 }}>
-            {GOALS.map((goal) => {
-              const selected = goals.includes(goal.id);
-              return (
-                <View key={goal.id} style={{ width: '50%' }} className="p-1.5">
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      onToggleGoal(goal.id);
-                    }}
-                    activeOpacity={0.85}
-                    className={`flex-row items-center gap-2 rounded-2xl border p-3 ${
-                      selected ? 'border-stone-800 bg-stone-800' : 'border-stone-100 bg-stone-50/50'
-                    }`}
-                  >
-                    <View
-                      className={`h-7 w-7 items-center justify-center rounded-lg ${
-                        selected ? 'bg-white/15' : 'bg-white'
-                      }`}
-                    >
-                      <goal.Icon size={14} color={selected ? '#FAF7F2' : '#78716C'} />
-                    </View>
-                    <Text
-                      className={`flex-1 text-xs font-semibold ${selected ? 'text-white' : 'text-stone-700'}`}
-                      numberOfLines={1}
-                    >
-                      {goal.label}
-                    </Text>
-                    {selected ? <Check size={14} color="#FAF7F2" /> : null}
-                  </TouchableOpacity>
+          {GOALS.map((goal) => {
+            const selected = goals.includes(goal.id);
+            return (
+              <TouchableOpacity
+                key={goal.id}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onToggleGoal(goal.id);
+                }}
+                activeOpacity={0.85}
+                className={`flex-row items-center gap-3 rounded-2xl border p-3 ${
+                  selected ? 'border-stone-800 bg-stone-800' : 'border-stone-100 bg-stone-50/50'
+                }`}
+              >
+                <View
+                  className={`h-8 w-8 items-center justify-center rounded-lg ${
+                    selected ? 'bg-white/15' : 'bg-white'
+                  }`}
+                >
+                  <goal.Icon size={15} color={selected ? '#FAF7F2' : '#78716C'} />
                 </View>
-              );
-            })}
-          </View>
+                <Text
+                  className={`flex-1 text-sm font-semibold ${selected ? 'text-white' : 'text-stone-700'}`}
+                >
+                  {t(`profile.focusGoals.items.${goal.id}`)}
+                </Text>
+                {selected ? <Check size={16} color="#FAF7F2" /> : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
       </View>

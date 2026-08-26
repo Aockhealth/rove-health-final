@@ -5,9 +5,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Droplets, Zap, Flame, Moon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
-import { phaseThemes, PHASE_KEYWORDS, PHASE_EXPLAINERS } from '../../data/home-content';
+import { phaseThemes, getPhaseKeyword, getPhaseExplainer } from '../../data/home-content';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 const LAST_SEEN_PHASE_KEY = 'rove-last-seen-phase';
 
@@ -28,6 +30,7 @@ interface PhaseTransitionCelebrationProps {
 // since you last opened it — a "delight" beat that's unique to a cycle app
 // (most habit apps only have streaks/logging celebrations, not this).
 export default function PhaseTransitionCelebration({ phaseName }: PhaseTransitionCelebrationProps) {
+  const { t, i18n } = useTranslation();
   const sheetRef = useRef<BottomSheetModal>(null);
   const [celebratingPhase, setCelebratingPhase] = useState<string | null>(null);
 
@@ -66,19 +69,19 @@ export default function PhaseTransitionCelebration({ phaseName }: PhaseTransitio
         </LinearGradient>
 
         <Text className="mb-1 text-[11px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>
-          New Phase
+          {t('home.newPhase')}
         </Text>
 
-        <Text className="mb-2 text-3xl text-rove-charcoal text-center" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-          Welcome to {celebratingPhase}
+        <Text className="mb-2 text-3xl text-rove-charcoal text-center" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
+          {t('home.welcomeToPhase', { phase: t(`tracker.quickPhaseLog.phaseNames.${celebratingPhase}`, { defaultValue: celebratingPhase }) })}
         </Text>
 
         <Text className="mb-6 text-sm font-bold uppercase tracking-widest text-rove-stone text-center">
-          {PHASE_KEYWORDS[celebratingPhase]}
+          {getPhaseKeyword(celebratingPhase, t)}
         </Text>
 
-        <Text className="mb-8 px-4 text-base leading-relaxed text-rove-stone text-center italic" style={{ fontFamily: 'CormorantGaramond-Medium' }}>
-          {PHASE_EXPLAINERS[celebratingPhase]}
+        <Text className="mb-8 px-4 text-base leading-relaxed text-rove-stone text-center italic" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Medium', i18n.language) }}>
+          {getPhaseExplainer(celebratingPhase, t)}
         </Text>
 
         <Button
@@ -86,7 +89,7 @@ export default function PhaseTransitionCelebration({ phaseName }: PhaseTransitio
           className="rounded-full px-8"
           style={{ backgroundColor: theme.textColor }}
         >
-          See What's Ahead
+          {t('home.seeWhatsAhead')}
         </Button>
       </View>
     </BottomSheet>

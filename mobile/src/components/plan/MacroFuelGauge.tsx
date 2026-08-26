@@ -16,7 +16,9 @@ import Reanimated, {
     type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Defs, RadialGradient as SvgRadialGradient, Stop, Rect } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { phaseThemes } from '../../data/home-content';
+import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import { PhaseOrbRing } from '../home/PhaseOrbRing';
 
 interface MacroFuelGaugeProps {
@@ -35,35 +37,19 @@ interface MacroFuelGaugeProps {
     onScrollToChef?: () => void;
 }
 
-const phaseGuidance: Record<string, any[]> = {
-    "Menstrual": [
-        { icon: "🩸", title: "Iron Focus", tip: "Prioritize iron-rich foods", desc: "Replace what you're losing" },
-        { icon: "🥑", title: "Gentle Fats", tip: "Embrace healthy fats", desc: "Avocado, nuts & olive oil soothe inflammation" },
-        { icon: "🍚", title: "Warming Carbs", tip: "Don't skip carbs now", desc: "Complex carbs reduce cramps & boost mood" },
-        { icon: "💧", title: "Hydration", tip: "Drink warm liquids", desc: "Herbal teas & warm water ease discomfort" }
-    ],
-    "Follicular": [
-        { icon: "🥗", title: "Light & Fresh", tip: "Go light on heavy fats", desc: "Your body processes lighter foods better now" },
-        { icon: "🥚", title: "Protein Power", tip: "Aim for 80g today", desc: "Building phase - support with amino acids" },
-        { icon: "🥬", title: "Fiber Up", tip: "Load up on fiber", desc: "Helps metabolize rising estrogen" },
-        { icon: "⚡", title: "Energizing Carbs", tip: "Complex carbs fuel workouts", desc: "You can handle more intensity now" }
-    ],
-    "Ovulatory": [
-        { icon: "🥒", title: "Anti-Inflammatory", tip: "Avoid processed foods", desc: "Keep inflammation low at peak fertility" },
-        { icon: "🐟", title: "Omega Balance", tip: "Focus on omega-3s", desc: "Fish, flax & walnuts support hormones" },
-        { icon: "🥗", title: "Light Meals", tip: "Eat smaller, frequent meals", desc: "High energy means faster metabolism" },
-        { icon: "🚫", title: "Skip Heavy Fats", tip: "Avoid fried & greasy foods", desc: "Your liver is processing extra estrogen" }
-    ],
-    "Luteal": [
-        { icon: "🥚", title: "Protein Stabilizer", tip: "Maintain 70g protein", desc: "Supports mood stability & muscle retention" },
-        { icon: "🍠", title: "Complex Carbs", tip: "Don't cut carbs!", desc: "They boost serotonin & reduce PMS anxiety" },
-        { icon: "🥜", title: "Healthy Fats", tip: "Increase good fats now", desc: "Supports progesterone production" },
-        { icon: "🍫", title: "Magnesium Rich", tip: "Dark chocolate is okay!", desc: "Magnesium eases cramps & cravings" },
-        { icon: "🚫", title: "Limit Salt & Sugar", tip: "Reduce bloating triggers", desc: "Avoid processed & salty snacks" }
-    ]
+// Icons only — title/tip/desc are localized strings pulled from
+// plan.macroFuelGauge.phaseGuidance.<Phase>.<index> at render time (see
+// useLocalizedPhaseGuidance below), since this data lives in this component
+// rather than a shared content module.
+const phaseGuidanceIcons: Record<string, string[]> = {
+    "Menstrual": ["🩸", "🥑", "🍚", "💧"],
+    "Follicular": ["🥗", "🥚", "🥬", "⚡"],
+    "Ovulatory": ["🥒", "🐟", "🥗", "🚫"],
+    "Luteal": ["🥚", "🍠", "🥜", "🍫", "🚫"],
 };
 
 export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFuelGaugeProps) {
+    const { t, i18n } = useTranslation();
     if (!data) return null;
 
     const currentPhase = phase || "Menstrual";
@@ -98,21 +84,27 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
 
     // Carousel State
     const [currentIndex, setCurrentIndex] = useState(0);
-    const facts = phaseGuidance[currentPhase] || phaseGuidance["Follicular"];
+    const guidancePhase = phaseGuidanceIcons[currentPhase] ? currentPhase : "Follicular";
+    // A couple of tips (Follicular's Protein Power, Luteal's Protein
+    // Stabilizer) cite a specific gram target — {{grams}} interpolates the
+    // account's real computed target (same data.protein "Today's Intake"
+    // reads) instead of a hardcoded number that silently drifted from it.
+    const proteinGrams = Math.round(data.protein);
+    const facts = phaseGuidanceIcons[guidancePhase].map((icon, i) => ({
+        icon,
+        title: t(`plan.macroFuelGauge.phaseGuidance.${guidancePhase}.${i}.title`),
+        tip: t(`plan.macroFuelGauge.phaseGuidance.${guidancePhase}.${i}.tip`, { grams: proteinGrams }),
+        desc: t(`plan.macroFuelGauge.phaseGuidance.${guidancePhase}.${i}.desc`),
+    }));
     const currentFact = facts[currentIndex];
 
     const fadeAnim = useRef(new Animated.Value(1)).current;
 
     const changeFact = (direction: 1 | -1) => {
-        Animated.sequence([
-            Animated.timing(fadeAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
-            Animated.timing(fadeAnim, { toValue: 1, duration: 0, useNativeDriver: true })
-        ]).start();
-
-        setTimeout(() => {
+        Animated.timing(fadeAnim, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => {
             setCurrentIndex((prev) => (prev + direction + facts.length) % facts.length);
             Animated.timing(fadeAnim, { toValue: 1, duration: 280, useNativeDriver: true }).start();
-        }, 220);
+        });
     };
 
     useEffect(() => {
@@ -125,9 +117,14 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
     };
 
     // Swipe left/right through the tip cards, in addition to the auto-advance.
-    // activeOffsetX keeps this from hijacking the page's vertical scroll.
+    // activeOffsetX keeps this from hijacking the page's vertical scroll, and
+    // failOffsetY makes it concede fast on a mostly-vertical drag instead of
+    // sitting in the ambiguous zone while it negotiates with the page's
+    // ScrollView — that negotiation window is what read as a slow-scroll
+    // stutter (see PhaseOrbRing/CycleCalendar for the same fix).
     const swipeGesture = Gesture.Pan()
         .activeOffsetX([-15, 15])
+        .failOffsetY([-10, 10])
         .onEnd((e) => {
             if (e.translationX < -40) {
                 runOnJS(changeFact)(1);
@@ -189,17 +186,17 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             elevation: Platform.OS === 'ios' ? 2 : 0,
                         }}
                     >
-                        <Text className="text-[9px] font-bold tracking-[2px] text-rove-stone uppercase mb-1">
-                            Daily Fuel
+                        <Text className="text-[9px] font-bold text-rove-stone uppercase mb-1" style={{ letterSpacing: getLocalizedTracking(2, i18n.language) }}>
+                            {t('plan.macroFuelGauge.dailyFuel')}
                         </Text>
                         <Text
                             className="text-4xl mb-0"
-                            style={{ color: theme.textColor, fontFamily: 'CormorantGaramond-Regular' }}
+                            style={{ color: theme.textColor, fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}
                         >
                             {displayedCalories}
                         </Text>
                         <Text className="text-[10px] text-rove-stone font-bold uppercase tracking-widest mt-1">
-                            kCal
+                            {t('plan.macroFuelGauge.kcal')}
                         </Text>
                     </View>
 
@@ -242,7 +239,7 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             style={{ position: 'absolute', bottom: -20, left: -24, right: -24 }}
                             className="text-center text-[9px] font-extrabold uppercase tracking-wider text-rove-charcoal"
                         >
-                            Rove Chef
+                            {t('plan.macroFuelGauge.roveChef')}
                         </Text>
                     </View>
                 </Reanimated.View>
@@ -282,10 +279,10 @@ export function MacroFuelGauge({ data, phase, scrollY, onScrollToChef }: MacroFu
                             <Text className="text-2xl">{currentFact.icon}</Text>
                         </View>
                         <View className="flex-1">
-                            <Text className="text-[10px] font-extrabold uppercase tracking-[2px] mb-1" style={{ color: theme.textColor }}>
+                            <Text className="text-[10px] font-extrabold uppercase mb-1" style={{ color: theme.textColor, letterSpacing: getLocalizedTracking(2, i18n.language) }}>
                                 {currentFact.title}
                             </Text>
-                            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                            <Text className="text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
                                 {currentFact.tip}
                             </Text>
                             <Text className="text-xs text-rove-stone mt-1 font-medium">

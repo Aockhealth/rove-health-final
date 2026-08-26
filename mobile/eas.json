@@ -38,6 +38,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "image": "latest"
+      },
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
         "EXPO_PUBLIC_SUPABASE_URL": "https://jicmptpnhapbycdxutng.supabase.co",

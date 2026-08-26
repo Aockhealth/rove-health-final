@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { correlateIngredientsWithSeverity, describeTopOutcome, type ChosenDish } from './foodOutcomeCorrelation';
 
 // Chef v2 "pick your plate" — logging + personalization source.
 //
@@ -90,8 +91,8 @@ export async function fetchFoodChoiceContext(mealType: string): Promise<FoodChoi
   ).slice(0, 12);
 
   // Taste sketch from chosen options.
-  const chosenOptions: ChefOption[] = rows
-    .filter((r) => r.chosen_name && Array.isArray(r.options_shown))
+  const chosenRows = rows.filter((r) => r.chosen_name && Array.isArray(r.options_shown));
+  const chosenOptions: ChefOption[] = chosenRows
     .map((r) => r.options_shown.find((o) => o.name === r.chosen_name))
     .filter((o): o is ChefOption => Boolean(o));
 
@@ -100,6 +101,43 @@ export async function fetchFoodChoiceContext(mealType: string): Promise<FoodChoi
   }
 
   const parts: string[] = [];
+
+  // Outcome sketch: does a symptom-severity pattern show up around the
+  // ingredients she's actually chosen? This is the piece the taste-only
+  // sketch below doesn't cover — see foodOutcomeCorrelation.ts. Best-effort:
+  // a failed lookup here should never break the (working) taste sketch.
+  try {
+    const chosenDishes: ChosenDish[] = chosenRows
+      .map((r) => {
+        const option = r.options_shown.find((o) => o.name === r.chosen_name);
+        return option ? { date: r.created_at.slice(0, 10), ingredients: option.key_ingredients || [] } : null;
+      })
+      .filter((d): d is ChosenDish => d !== null);
+
+    const dates = chosenDishes.map((d) => d.date).sort();
+    if (dates.length > 0) {
+      const { data: severityLogs } = await supabase
+        .from('daily_logs')
+        .select('date, symptom_severity')
+        .eq('user_id', user.id)
+        .gte('date', dates[0])
+        .lte('date', dates[dates.length - 1]);
+
+      const severityByDate: Record<string, number | null> = {};
+      (severityLogs || []).forEach((log: any) => {
+        const values = Object.values(log.symptom_severity || {}) as number[];
+        severityByDate[log.date] = values.length
+          ? values.reduce((s, v) => s + v, 0) / values.length
+          : null;
+      });
+
+      const outcomes = correlateIngredientsWithSeverity(chosenDishes, severityByDate);
+      const outcomeClause = describeTopOutcome(outcomes);
+      if (outcomeClause) parts.push(outcomeClause);
+    }
+  } catch (err) {
+    console.error('[foodChoices] Outcome correlation skipped:', err);
+  }
 
   const ingredientCounts = new Map<string, number>();
   chosenOptions.forEach((o) =>

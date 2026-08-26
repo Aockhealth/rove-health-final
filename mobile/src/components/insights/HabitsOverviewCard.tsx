@@ -5,12 +5,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 // Dumbbell (lucide) reads as "exercise" far more specifically than the
 // generic activity/pulse icon, which was overused across the app.
-import { Dumbbell } from 'lucide-react-native';
+import { Dumbbell, Footprints } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
+import { getDateLocaleTag } from '../../lib/i18n';
 
 type WellnessAverages = {
   water: number;
   sleep: string | number;
   exerciseMinutes: number;
+  steps?: number;
 };
 
 type HabitsOverviewCardProps = {
@@ -22,10 +26,12 @@ export function HabitsOverviewCard({
   wellnessAverages,
   theme,
 }: HabitsOverviewCardProps) {
+  const { t, i18n } = useTranslation();
   // Extract averages from backend data (fallback to 0)
   const avgSleep = Number(wellnessAverages?.sleep || 0);
   const avgExercise = wellnessAverages?.exerciseMinutes || 0;
   const avgHydration = wellnessAverages?.water || 0;
+  const avgSteps = wellnessAverages?.steps || 0;
 
   return (
     <View
@@ -54,8 +60,8 @@ export function HabitsOverviewCard({
       <View className="relative z-10">
         <View className="flex-row items-center gap-2 mb-4">
           <Feather name="star" size={16} color={theme.color} />
-          <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>
-            30-Day Habits
+          <Text className="text-lg text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
+            {t('insights.habitsOverview.title')}
           </Text>
         </View>
 
@@ -66,16 +72,16 @@ export function HabitsOverviewCard({
               <View className="p-2 rounded-[14px] shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.7)' : '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Feather name="moon" size={16} color={theme.color} />
               </View>
-              <Text className="text-sm font-medium text-rove-charcoal">Avg Sleep</Text>
+              <Text className="text-sm font-medium text-rove-charcoal">{t('insights.habitsOverview.avgSleep')}</Text>
             </View>
             <View className="flex-row items-baseline gap-1">
               {avgSleep > 0 ? (
                 <>
-                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>{avgSleep}</Text>
-                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">hrs</Text>
+                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>{avgSleep}</Text>
+                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">{t('insights.habitsOverview.hrs')}</Text>
                 </>
               ) : (
-                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">No Data</Text>
+                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">{t('insights.habitsOverview.noData')}</Text>
               )}
             </View>
           </View>
@@ -86,16 +92,33 @@ export function HabitsOverviewCard({
               <View className="p-2 rounded-[14px] shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.7)' : '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Dumbbell size={16} color={theme.color} />
               </View>
-              <Text className="text-sm font-medium text-rove-charcoal">Avg Workout</Text>
+              <Text className="text-sm font-medium text-rove-charcoal">{t('insights.habitsOverview.avgWorkout')}</Text>
             </View>
             <View className="flex-row items-baseline gap-1">
               {avgExercise > 0 ? (
                 <>
-                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>{avgExercise}</Text>
-                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">mins</Text>
+                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>{avgExercise}</Text>
+                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">{t('insights.habitsOverview.mins')}</Text>
                 </>
               ) : (
-                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">No Data</Text>
+                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">{t('insights.habitsOverview.noData')}</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Steps Row — synced from Apple Health / Health Connect only, no manual entry */}
+          <View className="flex-row items-center justify-between p-3 rounded-[20px] border border-white/60 shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
+            <View className="flex-row items-center gap-3">
+              <View className="p-2 rounded-[14px] shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.7)' : '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
+                <Footprints size={16} color={theme.color} />
+              </View>
+              <Text className="text-sm font-medium text-rove-charcoal">{t('insights.habitsOverview.avgSteps')}</Text>
+            </View>
+            <View className="flex-row items-baseline gap-1">
+              {avgSteps > 0 ? (
+                <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>{avgSteps.toLocaleString(getDateLocaleTag())}</Text>
+              ) : (
+                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">{t('insights.habitsOverview.noData')}</Text>
               )}
             </View>
           </View>
@@ -106,16 +129,16 @@ export function HabitsOverviewCard({
               <View className="p-2 rounded-[14px] shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.7)' : '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 0 }}>
                 <Feather name="droplet" size={16} color={theme.color} />
               </View>
-              <Text className="text-sm font-medium text-rove-charcoal">Avg Hydration</Text>
+              <Text className="text-sm font-medium text-rove-charcoal">{t('insights.habitsOverview.avgHydration')}</Text>
             </View>
             <View className="flex-row items-baseline gap-1">
               {avgHydration > 0 ? (
                 <>
-                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-SemiBold' }}>{(avgHydration * 0.25).toFixed(1)}</Text>
-                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">L/day</Text>
+                  <Text className="text-xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>{(avgHydration * 0.25).toFixed(1)}</Text>
+                  <Text className="text-[10px] font-bold text-rove-stone uppercase tracking-wider">{t('insights.habitsOverview.litersPerDay')}</Text>
                 </>
               ) : (
-                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">No Data</Text>
+                <Text className="text-[10px] text-rove-stone uppercase tracking-wider font-bold">{t('insights.habitsOverview.noData')}</Text>
               )}
             </View>
           </View>

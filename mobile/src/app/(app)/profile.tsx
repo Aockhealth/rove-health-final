@@ -15,12 +15,13 @@ import { toast } from 'sonner-native';
 import * as Haptics from 'expo-haptics';
 import { ChevronLeft, Minus, Plus } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import {
   fetchProfilePageData,
   updateUserProfile,
-  requestPasswordReset,
   updateContactInfo,
+  deleteUserAccount,
   type ProfileFormData,
   type ProfileCycleData,
 } from '../../lib/profile';
@@ -29,9 +30,13 @@ import { phaseThemes } from '../../data/home-content';
 import { HealthPassport } from '../../components/profile/HealthPassport';
 import { FocusGoals } from '../../components/profile/FocusGoals';
 import { AccountSettings } from '../../components/profile/AccountSettings';
-import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { HealthPlatformSync } from '../../components/profile/HealthPlatformSync';
+import { PartnerShareCard } from '../../components/profile/PartnerShareCard';
+import { Select } from '../../components/ui/Select';
 import { syncBbtReminder } from '../../lib/notifications';
+import { hasPcosFlag, withoutLegacyPcosGoal } from '../../lib/pcos';
 import LoadingScreen from '../../components/ui/LoadingScreen';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 // Derived from the app's single real phase palette (phaseThemes) instead of a
 // second hand-typed color list — this badge/avatar ring needs to match the same
@@ -44,6 +49,7 @@ const PROFILE_THEMES: Record<string, ProfileTheme> = Object.fromEntries(
 );
 
 export default function ProfileScreen() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
@@ -75,7 +81,23 @@ export default function ProfileScreen() {
       if (cancelled) return;
       if (data) {
         setUserEmail(data.user.email);
-        setFormData(data.formData);
+        // Self-heals accounts that already have a stale legacy 'pcos' goal
+        // (see withoutLegacyPcosGoal) from before this screen offered any
+        // way to clear one — otherwise an account that removed PMOS from
+        // conditions before this fix shipped would stay stuck showing
+        // PCOS-gated content forever, since there's nothing left to tap to
+        // re-trigger handleConditionsChange's cleanup.
+        const stillHasPcosInConditions = hasPcosFlag([], data.formData.conditions);
+        const cleanedGoals = stillHasPcosInConditions
+          ? data.formData.goals
+          : withoutLegacyPcosGoal(data.formData.goals);
+        const cleanedFormData = { ...data.formData, goals: cleanedGoals };
+        setFormData(cleanedFormData);
+        if (cleanedGoals.length !== data.formData.goals.length) {
+          updateUserProfile(cleanedFormData).then((res) => {
+            if (!res.error) queryClient.invalidateQueries({ queryKey: ['trackerData'] });
+          });
+        }
         setCycleData(data.cycleData);
         setUnifiedPhase(data.smartPhase);
       }
@@ -101,11 +123,11 @@ export default function ProfileScreen() {
     const res = await updateUserProfile(formData);
     setIsPending(false);
     if (res.error) {
-      toast.error('Failed to save profile', { description: res.error });
+      toast.error(t('profile.screen.saveProfileFailed'), { description: res.error });
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success('Profile updated');
+    toast.success(t('profile.screen.profileUpdated'));
     invalidateAppData();
   };
 
@@ -118,7 +140,7 @@ export default function ProfileScreen() {
     const res = await updateUserProfile(next);
     setIsPending(false);
     if (res.error) {
-      toast.error('Failed to save', { description: res.error });
+      toast.error(t('profile.screen.saveFailed'), { description: res.error });
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -132,35 +154,54 @@ export default function ProfileScreen() {
     saveProfileFields({ goals: nextGoals });
   };
 
+  // Same autosave-on-change pattern as goals — a condition tap (PMOS,
+  // Endometriosis, etc.) should take effect immediately, not wait for a
+  // separate "Save Passport Data" tap she might not know to make.
+  //
+  // Also clears any legacy 'pcos' goal (see withoutLegacyPcosGoal) once PMOS
+  // is no longer in conditions — otherwise removing PMOS here silently does
+  // nothing for a pre-Health-Passport-era user, since hasPcosFlag still
+  // counts the old goal chip and PCOS-gated content (like Tracker's
+  // fertility card) keeps showing.
+  const handleConditionsChange = (nextConditions: string[]) => {
+    const stillHasPcos = hasPcosFlag([], nextConditions);
+    const nextGoals = stillHasPcos ? formData.goals : withoutLegacyPcosGoal(formData.goals);
+    saveProfileFields({ conditions: nextConditions, goals: nextGoals });
+  };
+
   const handleUpdateContact = async (newEmail: string, newPhone: string) => {
     setIsPending(true);
     const res = await updateContactInfo(newEmail, newPhone);
     setIsPending(false);
     if (res.error) {
-      toast.error('Update failed', { description: res.error });
+      toast.error(t('profile.screen.updateFailed'), { description: res.error });
       return;
     }
-    toast.success('Contact info updated', {
-      description: 'Please check your new email for a confirmation link.',
+    toast.success(t('profile.screen.contactUpdated'), {
+      description: t('profile.screen.contactUpdatedDescription'),
     });
     setFormData((prev) => ({ ...prev, phone_number: newPhone }));
   };
 
-  const handleResetPassword = async () => {
-    if (!userEmail) return;
-    setIsPending(true);
-    const res = await requestPasswordReset(userEmail);
-    setIsPending(false);
-    if (res.error) {
-      toast.error('Failed to send reset email', { description: res.error });
-      return;
-    }
-    toast.success('Password reset email sent');
-  };
-
   const handleLogout = async () => {
     queryClient.clear();
+    const { unregisterHealthBackgroundSync } = await import('../../lib/healthBackgroundSync');
+    await unregisterHealthBackgroundSync().catch(() => {});
     await supabase.auth.signOut();
+    router.replace('/(auth)/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsPending(true);
+    const res = await deleteUserAccount();
+    if (res.error) {
+      toast.error(t('profile.screen.deleteAccountFailed'), { description: res.error });
+      setIsPending(false);
+      return;
+    }
+    queryClient.clear();
+    const { unregisterHealthBackgroundSync } = await import('../../lib/healthBackgroundSync');
+    await unregisterHealthBackgroundSync().catch(() => {});
     router.replace('/(auth)/login');
   };
 
@@ -174,7 +215,7 @@ export default function ProfileScreen() {
         <TouchableOpacity onPress={() => router.back()} className="-ml-2 p-2">
           <ChevronLeft size={20} color="#A8A29E" />
         </TouchableOpacity>
-        <Text className="text-xs font-bold uppercase tracking-widest text-stone-500">Profile</Text>
+        <Text className="text-xs font-bold uppercase tracking-widest text-stone-500">{t('profile.screen.title')}</Text>
         <View className="w-9" />
       </View>
 
@@ -202,7 +243,7 @@ export default function ProfileScreen() {
               >
                 <Text
                   className="text-4xl text-stone-700"
-                  style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+                  style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
                 >
                   {formData.full_name?.[0]?.toUpperCase() || userEmail?.[0]?.toUpperCase() || 'U'}
                 </Text>
@@ -213,10 +254,10 @@ export default function ProfileScreen() {
               value={formData.full_name}
               onChangeText={(text) => setFormData({ ...formData, full_name: text })}
               onBlur={handleSaveProfile}
-              placeholder="Your Name"
+              placeholder={t('profile.screen.namePlaceholder')}
               placeholderTextColor="#A8A29E"
               className="w-full text-center text-3xl text-stone-800"
-              style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+              style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
             />
           </Animated.View>
 
@@ -232,31 +273,69 @@ export default function ProfileScreen() {
             <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
               <Text
                 className="mb-2 text-xl text-stone-800"
-                style={{ fontFamily: 'CormorantGaramond-SemiBold' }}
+                style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
               >
-                Tracking Mode
+                {t('profile.screen.trackingMode.title')}
               </Text>
               <Text className="mb-4 text-xs leading-relaxed text-stone-500">
-                Conceiving mode adds basal temperature and ovulation test logging, and detects your
-                ovulation from them.
+                {t('profile.screen.trackingMode.description')}
               </Text>
-              <SegmentedControl
-                tabs={[
-                  { id: 'menstruation', label: 'Cycle' },
-                  { id: 'ttc', label: 'Conceiving' },
-                  { id: 'menopause', label: 'Menopause' },
+              <Select
+                title={t('profile.screen.trackingMode.title')}
+                // TTC and Menopause are temporarily locked while they're
+                // still being refined (see StepGoals.tsx's onboarding-side
+                // lock). Only offered here if that's already the account's
+                // current mode, so an existing TTC/Menopause user keeps
+                // seeing their own setting correctly rather than it looking
+                // unset — but once they switch away, the option is gone
+                // until this is lifted.
+                options={[
+                  { value: 'menstruation', label: t('profile.screen.trackingMode.tabs.cycle') },
+                  ...(formData.tracker_mode === 'ttc' ? [{ value: 'ttc', label: t('profile.screen.trackingMode.tabs.conceiving') }] : []),
+                  ...(formData.tracker_mode === 'menopause' ? [{ value: 'menopause', label: t('profile.screen.trackingMode.tabs.menopause') }] : []),
                 ]}
-                activeTab={formData.tracker_mode}
-                onChange={(id) => {
+                value={formData.tracker_mode}
+                onValueChange={(id) => {
                   if (id === formData.tracker_mode) return;
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  saveProfileFields({ tracker_mode: id });
+                  saveProfileFields({ tracker_mode: id as typeof formData.tracker_mode });
                   // Turning Conceiving mode on schedules the morning
                   // temperature reminder (and asks for permission the first
                   // time); turning it off cancels it, without prompting.
                   syncBbtReminder(id);
                 }}
               />
+
+              {/* Also drives Tracker's fertility card (see showFertilityTracking
+                  in app/(app)/tracker.tsx) — surfaced here so it's visible and
+                  editable instead of a value onboarding set once and forgot. */}
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  saveProfileFields({ is_irregular: !formData.is_irregular });
+                }}
+                activeOpacity={0.85}
+                className="mt-4 flex-row items-center justify-between rounded-2xl border border-stone-100 bg-stone-50/50 p-3.5"
+              >
+                <View className="flex-1 pr-3">
+                  <Text className="text-sm font-semibold text-stone-700">
+                    {t('profile.screen.trackingMode.irregularToggle.label')}
+                  </Text>
+                  <Text className="mt-0.5 text-xs leading-relaxed text-stone-400">
+                    {t('profile.screen.trackingMode.irregularToggle.description')}
+                  </Text>
+                </View>
+                <View
+                  className={`h-6 w-11 justify-center rounded-full p-0.5 ${
+                    formData.is_irregular ? 'bg-stone-800' : 'bg-stone-200'
+                  }`}
+                >
+                  <View
+                    className="h-5 w-5 rounded-full bg-white"
+                    style={{ marginLeft: formData.is_irregular ? 20 : 0 }}
+                  />
+                </View>
+              </TouchableOpacity>
             </View>
 
             <FocusGoals
@@ -269,16 +348,22 @@ export default function ProfileScreen() {
               formData={formData}
               setFormData={setFormData}
               onSave={handleSaveProfile}
+              onConditionsChange={handleConditionsChange}
               isPending={isPending}
               theme={theme}
             />
 
+            <HealthPlatformSync />
+
+            {formData.tracker_mode === 'ttc' ? <PartnerShareCard /> : null}
+
             <AccountSettings
+              name={formData.full_name}
               email={userEmail}
               phone={formData.phone_number}
               onLogout={handleLogout}
-              onResetPassword={handleResetPassword}
               onUpdateContact={handleUpdateContact}
+              onDeleteAccount={handleDeleteAccount}
               isPending={isPending}
             />
           </View>

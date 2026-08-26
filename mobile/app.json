@@ -9,6 +9,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.rovehealth.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -52,7 +53,9 @@
             "useFrameworks": "static"
           },
           "android": {
-            "targetSdkVersion": 36
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 26
           }
         }
       ],
@@ -64,7 +67,18 @@
           "project": "rove-health-mobile",
           "url": "https://sentry.io/"
         }
-      ]
+      ],
+      "react-native-health-connect",
+      "./plugins/withHealthConnectPermissionDelegate",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Rove reads your basal body temperature, sleep, fertility test results, heart rate variability, resting heart rate, and wrist temperature from Health to fill in your cycle log automatically.",
+          "NSHealthUpdateUsageDescription": "Rove writes the basal body temperature and period days you log in the app back to Health, so it stays your single record — nothing else you log in Rove is written back.",
+          "background": true
+        }
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true

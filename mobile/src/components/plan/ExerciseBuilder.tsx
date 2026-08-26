@@ -14,13 +14,8 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import * as Haptics from 'expo-haptics';
 import { CharLimitIndicator, MAX_PROMPT_CHARS, MAX_PROMPTS_PER_SESSION, PromptCountIndicator } from '../ui/PromptLimitIndicator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const COACH_LOADING_MESSAGES = [
-    'Reading your cycle data...',
-    'Matching intensity to your phase...',
-    'Checking your equipment & limits...',
-    'Building your set...',
-];
+import { useTranslation } from 'react-i18next';
+import { getLocalizedFontFamily } from '../../lib/fonts';
 
 const EXERCISE_PROMPT_COUNT_KEY = "rove_exercise_prompt_count";
 const EXERCISE_LAST_PREFS_KEY = "rove_exercise_last_prefs";
@@ -33,6 +28,8 @@ export function ExerciseBuilder({
     activityLevel,
     fitnessGoal,
     defaultDuration,
+    contextLabel,
+    insightsLabel,
 }: {
     phase: string;
     openSignal?: number;
@@ -44,7 +41,36 @@ export function ExerciseBuilder({
     /** The phase's activity-scaled duration (e.g. "45m"), same number shown
      * on the Move tab's orb — falls back to "30m" if not provided. */
     defaultDuration?: string;
+    /** Overrides the "Optimized for: {phase}" empty-state badge — e.g. TTC
+     * mode uses "Optimized for your cycle" instead of naming the phase. */
+    contextLabel?: string;
+    /** Forwarded to the embedded Session Log's "Completion by Phase" heading. */
+    insightsLabel?: string;
 }) {
+    const { t, i18n } = useTranslation();
+    const COACH_LOADING_MESSAGES = [
+        t('plan.exerciseBuilder.loadingMessages.readingCycleData'),
+        t('plan.exerciseBuilder.loadingMessages.matchingIntensity'),
+        t('plan.exerciseBuilder.loadingMessages.checkingEquipment'),
+        t('plan.exerciseBuilder.loadingMessages.buildingSet'),
+    ];
+    const SETTING_LABELS: Record<'Home' | 'Gym', string> = {
+        Home: t('plan.exerciseBuilder.settingOptions.home'),
+        Gym: t('plan.exerciseBuilder.settingOptions.gym'),
+    };
+    const FOCUS_LABELS: Record<'Full Body' | 'Upper Body' | 'Lower Body' | 'Cardio' | 'Core' | 'Mobility', string> = {
+        'Full Body': t('plan.exerciseBuilder.focusOptions.fullBody'),
+        'Upper Body': t('plan.exerciseBuilder.focusOptions.upperBody'),
+        'Lower Body': t('plan.exerciseBuilder.focusOptions.lowerBody'),
+        Cardio: t('plan.exerciseBuilder.focusOptions.cardio'),
+        Core: t('plan.exerciseBuilder.focusOptions.core'),
+        Mobility: t('plan.exerciseBuilder.focusOptions.mobility'),
+    };
+    const ENERGY_LABELS: Record<'Low' | 'Medium' | 'High', string> = {
+        Low: t('plan.exerciseBuilder.energyOptions.low'),
+        Medium: t('plan.exerciseBuilder.energyOptions.medium'),
+        High: t('plan.exerciseBuilder.energyOptions.high'),
+    };
     const theme = phaseThemes[phase as keyof typeof phaseThemes] || phaseThemes.Menstrual;
     // RN's native <Modal> renders in a separate native window on iOS, and
     // SafeAreaView's auto-detected insets are unreliable there (often report
@@ -212,7 +238,7 @@ export function ExerciseBuilder({
                 await AsyncStorage.setItem(EXERCISE_LAST_PREFS_KEY, JSON.stringify({ setting, focus }));
             } catch {}
         } catch (e) {
-            Alert.alert("Error", "Could not generate plan");
+            Alert.alert(t('plan.exerciseBuilder.errorTitle'), t('plan.exerciseBuilder.errorGeneratePlan'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsGenerating(false);
@@ -275,7 +301,7 @@ export function ExerciseBuilder({
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (err: any) {
             console.error(err);
-            Alert.alert("Error", "Could not save workout.");
+            Alert.alert(t('plan.exerciseBuilder.errorTitle'), t('plan.exerciseBuilder.errorSaveWorkout'));
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setIsSaving(false);
@@ -327,13 +353,13 @@ export function ExerciseBuilder({
                         <View className="flex-1 mr-2">
                             <Text
                                 className="font-bold text-base text-rove-charcoal"
-                                style={{ fontFamily: 'CormorantGaramond-Regular' }}
+                                style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}
                                 numberOfLines={1}
                             >
                                 {result.title}
                             </Text>
                             <Text className="text-[12px] text-rove-stone" numberOfLines={1}>
-                                {totalExercises} exercises · {result.duration}
+                                {t('plan.exerciseBuilder.exercisesCount', { count: totalExercises, duration: result.duration })}
                             </Text>
                         </View>
                         {sessionMode ? (
@@ -349,7 +375,7 @@ export function ExerciseBuilder({
                 /* ── Empty state ── */
                 <Animated.View key="empty" entering={FadeIn.duration(280)} exiting={FadeOut.duration(150)} className="items-center py-4">
                     <View className="px-3 py-1.5 rounded-lg border border-rove-stone/10 mb-4" style={{ backgroundColor: `${theme.color}05` }}>
-                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Optimized for: {phase}</Text>
+                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{contextLabel ?? t('plan.exerciseBuilder.optimizedFor', { phase })}</Text>
                     </View>
                     <View
                         style={{
@@ -368,9 +394,9 @@ export function ExerciseBuilder({
                     >
                         <Feather name="zap" size={22} color="white" />
                     </View>
-                    <Text className="font-bold text-2xl text-rove-charcoal mb-2" style={{ fontFamily: 'CormorantGaramond-Regular' }}>Ready to move?</Text>
+                    <Text className="font-bold text-2xl text-rove-charcoal mb-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language) }}>{t('plan.exerciseBuilder.readyToMove')}</Text>
                     <Text className="text-sm text-rove-stone mb-6 text-center px-4">
-                        Tell Rove Coach your setting, focus, and how you're feeling.
+                        {t('plan.exerciseBuilder.tellRoveCoach')}
                     </Text>
                     <TouchableOpacity
                         onPress={openBuilder}
@@ -378,7 +404,7 @@ export function ExerciseBuilder({
                         style={{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                     >
                         <Feather name="zap" size={16} color="white" />
-                        <Text className="text-white font-bold ml-2 text-[14px]">Build My Workout</Text>
+                        <Text className="text-white font-bold ml-2 text-[14px]">{t('plan.exerciseBuilder.buildMyWorkout')}</Text>
                     </TouchableOpacity>
                 </Animated.View>
             )}
@@ -410,7 +436,7 @@ export function ExerciseBuilder({
                         >
                             <Feather name="x" size={16} color={theme.color} />
                         </TouchableOpacity>
-                        <Text className="text-[11px] font-bold uppercase tracking-widest text-rove-charcoal">Rove Coach</Text>
+                        <Text className="text-[11px] font-bold uppercase tracking-widest text-rove-charcoal">{t('plan.exerciseBuilder.roveCoachHeader')}</Text>
                         <View className="w-9" />
                     </View>
 
@@ -420,14 +446,14 @@ export function ExerciseBuilder({
                             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(fullscreenTab === 'coach' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                         >
                             <Feather name="zap" size={13} color={fullscreenTab === 'coach' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'coach' ? '#FFFFFF' : '#78716C' }}>Workout Coach</Text>
+                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'coach' ? '#FFFFFF' : '#78716C' }}>{t('plan.exerciseBuilder.workoutCoachTab')}</Text>
                         </Pressable>
                         <Pressable
                             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFullscreenTab('history'); }}
                             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, ...(fullscreenTab === 'history' ? { backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } } : {}) }}
                         >
                             <Feather name="bar-chart-2" size={13} color={fullscreenTab === 'history' ? 'white' : '#78716C'} style={{ marginRight: 5 }} />
-                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'history' ? '#FFFFFF' : '#78716C' }}>Session Log</Text>
+                            <Text className="text-[11px] font-bold" style={{ color: fullscreenTab === 'history' ? '#FFFFFF' : '#78716C' }}>{t('plan.exerciseBuilder.sessionLogTab')}</Text>
                         </Pressable>
                     </View>
 
@@ -436,7 +462,7 @@ export function ExerciseBuilder({
                             contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingBottom: 40 }}
                             showsVerticalScrollIndicator={false}
                         >
-                            <WorkoutHistory phase={phase} />
+                            <WorkoutHistory phase={phase} insightsLabel={insightsLabel} />
                         </ScrollView>
                     ) : (
                     <ScrollView
@@ -449,8 +475,8 @@ export function ExerciseBuilder({
                                 {/* Session Header */}
                                 <View className="flex-row justify-between items-center mb-5 p-4 rounded-[18px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
                                     <View className="flex-1">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>Live Session</Text>
-                                        <Text className="text-base text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.exerciseBuilder.liveSession')}</Text>
+                                        <Text className="text-base text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
                                             {result.title}
                                         </Text>
                                     </View>
@@ -469,7 +495,7 @@ export function ExerciseBuilder({
                                 {result.warmup?.length > 0 && (
                                     <View className="mb-5">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.textColor }}>
-                                            ✦ Warmup
+                                            {t('plan.exerciseBuilder.warmup')}
                                         </Text>
                                         {result.warmup.map((item: string, i: number) => (
                                             <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.40)', borderColor: 'rgba(255, 255, 255, 0.50)' }}>
@@ -484,7 +510,7 @@ export function ExerciseBuilder({
 
                                 {/* Main Circuit */}
                                 <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>
-                                    ✦ Main Circuit
+                                    {t('plan.exerciseBuilder.mainCircuit')}
                                 </Text>
                                 {result.main_set?.map((ex: any, i: number) => {
                                     const isDone = completedSets[i];
@@ -514,12 +540,12 @@ export function ExerciseBuilder({
                                                         <View className="flex-row gap-2 mt-1.5">
                                                             <View className="px-2 py-0.5 rounded flex-row items-center" style={{ backgroundColor: 'rgba(245, 245, 244, 0.80)' }}>
                                                                 <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isDone ? 'rgba(120,113,108,0.5)' : '#78716C' }}>
-                                                                    {ex.sets} Sets
+                                                                    {t('plan.exerciseBuilder.setsLabel', { count: ex.sets })}
                                                                 </Text>
                                                             </View>
                                                             <View className="px-2 py-0.5 rounded flex-row items-center" style={{ backgroundColor: 'rgba(245, 245, 244, 0.80)' }}>
                                                                 <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isDone ? 'rgba(120,113,108,0.5)' : '#78716C' }}>
-                                                                    {ex.reps} Reps
+                                                                    {t('plan.exerciseBuilder.repsLabel', { count: ex.reps })}
                                                                 </Text>
                                                             </View>
                                                         </View>
@@ -549,7 +575,7 @@ export function ExerciseBuilder({
                                 {result.cooldown?.length > 0 && (
                                     <View className="mt-4 mb-2">
                                         <Text className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: theme.textColor }}>
-                                            ✦ Cooldown
+                                            {t('plan.exerciseBuilder.cooldown')}
                                         </Text>
                                         {result.cooldown.map((item: string, i: number) => (
                                             <View key={i} className="flex-row items-center py-2 px-3 mb-1.5 rounded-[12px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.40)', borderColor: 'rgba(255, 255, 255, 0.50)' }}>
@@ -572,7 +598,7 @@ export function ExerciseBuilder({
                                     {isSaving ? <ActivityIndicator color="white" /> : (
                                         <>
                                             <Feather name="check-circle" size={16} color="white" />
-                                            <Text className="text-white font-bold ml-2 text-[14px]">Finish & Save Workout</Text>
+                                            <Text className="text-white font-bold ml-2 text-[14px]">{t('plan.exerciseBuilder.finishSaveWorkout')}</Text>
                                         </>
                                     )}
                                 </TouchableOpacity>
@@ -583,8 +609,8 @@ export function ExerciseBuilder({
                                 {/* Title + Refresh */}
                                 <View className="flex-row justify-between items-start mb-4">
                                     <View className="flex-1 mr-3">
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.textColor }}>AI Generated Plan</Text>
-                                        <Text className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{result.title}</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: theme.textColor }}>{t('plan.exerciseBuilder.aiGeneratedPlan')}</Text>
+                                        <Text className="text-xl text-rove-charcoal leading-tight" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{result.title}</Text>
                                     </View>
                                     <TouchableOpacity onPress={handleClearSession} className="w-9 h-9 rounded-full items-center justify-center border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.7)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                                         <Feather name="refresh-ccw" size={14} color="#A8A29E" />
@@ -606,14 +632,14 @@ export function ExerciseBuilder({
                                         <Text className="text-[10px] font-bold text-rove-charcoal uppercase tracking-widest">{result.duration}</Text>
                                     </View>
                                     <View className="px-3 py-1.5 rounded-full border bg-white mr-2 flex-row items-center" style={{ borderColor: 'rgba(255, 255, 255, 0.60)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, backgroundColor: `${theme.color}15` }}>
-                                        <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{result.intensity} Intensity</Text>
+                                        <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>{t('plan.exerciseBuilder.intensityLabel', { intensity: result.intensity })}</Text>
                                     </View>
                                 </View>
 
                                 {/* Warmup */}
                                 {result.warmup?.length > 0 && (
                                     <View className="mb-5 p-4 rounded-[16px] border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.50)', borderColor: 'rgba(255, 255, 255, 0.80)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 16 }}>
-                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: theme.textColor }}>✦ Warmup</Text>
+                                        <Text className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: theme.textColor }}>{t('plan.exerciseBuilder.warmup')}</Text>
                                         {result.warmup.map((item: string, i: number) => (
                                             <View key={i} className="flex-row items-center py-1.5">
                                                 <View className="w-1.5 h-1.5 rounded-full mr-2.5" style={{ backgroundColor: theme.color, opacity: 0.5 }} />
@@ -625,7 +651,7 @@ export function ExerciseBuilder({
 
                                 {/* Main Circuit */}
                                 <Text className="text-[9px] font-bold uppercase tracking-widest mb-3" style={{ color: theme.textColor }}>
-                                    ✦ Main Circuit · {totalExercises} exercises
+                                    {t('plan.exerciseBuilder.mainCircuitCount', { count: totalExercises })}
                                 </Text>
                                 {result.main_set?.map((ex: any, i: number) => (
                                     <View key={i} className="flex-row items-center p-3.5 mb-2 rounded-[14px] border border-white" style={{ backgroundColor: 'rgba(255, 255, 255, 0.70)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
@@ -651,7 +677,7 @@ export function ExerciseBuilder({
                                     style={{ backgroundColor: theme.color, shadowColor: theme.color, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                                 >
                                     <Feather name="play" size={16} color="white" style={{ fill: 'white' } as any} />
-                                    <Text className="text-white font-bold ml-2 text-[14px]">Start Guided Session</Text>
+                                    <Text className="text-white font-bold ml-2 text-[14px]">{t('plan.exerciseBuilder.startGuidedSession')}</Text>
                                 </TouchableOpacity>
                             </Animated.View>
                         ) : (
@@ -659,7 +685,7 @@ export function ExerciseBuilder({
                             <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut} layout={LinearTransition}>
                                 {/* Setting Selector */}
                                 <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
-                                    Where?
+                                    {t('plan.exerciseBuilder.whereQuestion')}
                                 </Text>
                                 <View className="flex-row gap-3 mb-6">
                 {([
@@ -687,7 +713,7 @@ export function ExerciseBuilder({
                             }}
                         >
                             <Feather name={opt.icon} size={14} color={isSelected ? theme.color : '#2D2420'} style={{ opacity: isSelected ? 1 : 0.7 }} />
-                            <Text className="font-bold text-[13px] ml-2 text-rove-charcoal">{opt.id}</Text>
+                            <Text className="font-bold text-[13px] ml-2 text-rove-charcoal">{SETTING_LABELS[opt.id]}</Text>
                         </TouchableOpacity>
                     );
                 })}
@@ -695,7 +721,7 @@ export function ExerciseBuilder({
 
             {/* Focus Pills */}
             <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
-                Focus Area
+                {t('plan.exerciseBuilder.focusArea')}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6" style={{ marginHorizontal: -4 }}>
                 {(["Full Body", "Upper Body", "Lower Body", "Cardio", "Core", "Mobility"] as const).map(f => {
@@ -719,7 +745,7 @@ export function ExerciseBuilder({
                                     backgroundColor: 'rgba(255,255,255,0.4)',
                                     borderColor: 'rgba(255,255,255,0.4)'
                                 }}>
-                                <Text className="font-bold text-[12px] text-rove-charcoal">{f}</Text>
+                                <Text className="font-bold text-[12px] text-rove-charcoal">{FOCUS_LABELS[f]}</Text>
                             </View>
                         </TouchableOpacity>
                     );
@@ -729,7 +755,7 @@ export function ExerciseBuilder({
                                 {/* Energy Level — real signal instead of a hardcoded "Medium",
                                     since the AI plan's intensity is safety-gated on this. */}
                                 <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
-                                    How's your energy today?
+                                    {t('plan.exerciseBuilder.energyQuestion')}
                                 </Text>
                                 <View className="flex-row gap-3 mb-6">
                                     {(["Low", "Medium", "High"] as const).map(level => {
@@ -753,7 +779,7 @@ export function ExerciseBuilder({
                                                     borderColor: 'rgba(255,255,255,0.6)'
                                                 }}
                                             >
-                                                <Text className="font-bold text-[13px] text-rove-charcoal">{level}</Text>
+                                                <Text className="font-bold text-[13px] text-rove-charcoal">{ENERGY_LABELS[level]}</Text>
                                             </TouchableOpacity>
                                         );
                                     })}
@@ -761,12 +787,12 @@ export function ExerciseBuilder({
 
                                 {/* Symptoms Input */}
                                 <Text className="text-[10px] font-bold uppercase tracking-widest mb-3 flex-row items-center text-rove-stone">
-                                    Anything to keep in mind?
+                                    {t('plan.exerciseBuilder.symptomsQuestion')}
                                 </Text>
                                 <TextInput
                                     value={symptoms}
                                     onChangeText={setSymptoms}
-                                    placeholder="e.g. cramps, sore knees..."
+                                    placeholder={t('plan.exerciseBuilder.symptomsPlaceholder')}
                                     placeholderTextColor="#A8A29E"
                                     className="border rounded-[16px] p-4 text-rove-charcoal text-[14px] leading-5 mb-6 font-medium"
                                     style={{ backgroundColor: 'rgba(255, 255, 255, 0.60)', borderColor: 'rgba(255, 255, 255, 0.80)', minHeight: 56, shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
@@ -788,7 +814,7 @@ export function ExerciseBuilder({
                                     {isGenerating ? <ActivityIndicator color="white" /> : (
                                         <>
                                             <Feather name="zap" size={16} color="white" />
-                                            <Text className="text-white font-bold ml-2 text-[14px]">Generate AI Plan</Text>
+                                            <Text className="text-white font-bold ml-2 text-[14px]">{t('plan.exerciseBuilder.generateAiPlan')}</Text>
                                         </>
                                     )}
                                 </TouchableOpacity>
