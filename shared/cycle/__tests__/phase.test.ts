@@ -741,4 +741,58 @@ describe('Legacy adapters', () => {
         });
     });
 
+
+    // ========================================================================
+    // NO PHASE HOLES  (a period must never appear to resume after it ended)
+    // ========================================================================
+    describe('explicit not-period days end the period rather than punching a hole', () => {
+        const settings: CycleSettings = {
+            last_period_start: '2026-08-05',
+            cycle_length_days: 28,
+            period_length_days: 5,
+        };
+        const phasesFrom = (logs: Record<string, DailyLog>, days: number[]): string[] =>
+            days.map((d) => {
+                const date = parseLocalDate(`2026-08-${String(d).padStart(2, '0')}`);
+                return calculatePhase(date, settings, logs).phase ?? '-';
+            });
+
+        it('does not resume Menstrual after an explicitly non-period day', () => {
+            // Day 1 logged, day 2 explicitly not-period (un-marked, or "End
+            // Period Here"), days 3+ unlogged. Days 3+ used to project as
+            // Menstrual off the untouched 5-day average, rendering
+            // Menstrual / Follicular / Menstrual / Menstrual on the calendar.
+            const logs: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+                '2026-08-27': { date: '2026-08-27', is_period: false },
+            };
+            expect(phasesFrom(logs, [26, 27, 28, 29])).toEqual([
+                'Menstrual', 'Follicular', 'Follicular', 'Follicular',
+            ]);
+        });
+
+        it('still projects a full period when nothing says it ended', () => {
+            const logs: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+            };
+            expect(phasesFrom(logs, [26, 27, 28, 29])).toEqual([
+                'Menstrual', 'Menstrual', 'Menstrual', 'Menstrual',
+            ]);
+        });
+
+        it('never overrides a day she explicitly logged as bleeding', () => {
+            // A stray un-marked day mid-streak must not un-Menstrual the real
+            // logged days around it.
+            const logs: Record<string, DailyLog> = {
+                '2026-08-26': { date: '2026-08-26', is_period: true },
+                '2026-08-27': { date: '2026-08-27', is_period: false },
+                '2026-08-28': { date: '2026-08-28', is_period: true },
+                '2026-08-29': { date: '2026-08-29', is_period: true },
+            };
+            expect(phasesFrom(logs, [26, 28, 29])).toEqual([
+                'Menstrual', 'Menstrual', 'Menstrual',
+            ]);
+        });
+    });
+
 });

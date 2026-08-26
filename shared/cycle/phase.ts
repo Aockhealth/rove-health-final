@@ -404,15 +404,25 @@ export function calculatePhase(
                 streak++;
                 walker.setDate(walker.getDate() + 1);
             }
-            // `walker` is now the first non-period day after the streak. Only trust the
-            // observed length once that day has actually arrived, AND only when it was
-            // explicitly logged as not-period ("End Period Here") — an unlogged day is
-            // silence, not a signal that the period ended, and must not shorten it.
-            if (
-                streak > 0 &&
-                monthLogs[formatDate(walker)]?.is_period === false &&
-                normalizeToLocalMidnight(walker) <= today
-            ) {
+            // `walker` is now the first non-period day after the streak. It only
+            // counts when it was explicitly logged as not-period ("End Period
+            // Here", or un-marking a day) — an *unlogged* day is silence, not a
+            // signal that the period ended, and must not shorten it.
+            //
+            // Note there is deliberately no "has this day arrived yet" test. An
+            // explicit false is a statement, not an absence, so it means the
+            // same thing whether it sits in the past or the future. Requiring
+            // arrival used to punch a hole in the middle of a projected period:
+            // with day 1 logged and day 2 explicitly false, day 2 was excluded
+            // by the is_period===false override below while days 3+ kept
+            // projecting as Menstrual off the unchanged 5-day average — so the
+            // calendar rendered Menstrual, Follicular, Menstrual, Menstrual on
+            // consecutive days, and a period appeared to resume after it ended.
+            //
+            // This can only ever shorten a *projection*: any day explicitly
+            // logged as period is returned as Menstrual by step 1 long before
+            // this runs.
+            if (streak > 0 && monthLogs[formatDate(walker)]?.is_period === false) {
                 effectivePeriodLength = streak;
             }
         }
