@@ -186,7 +186,9 @@
     "periodIn_one": "Period in {{count}} day",
     "periodIn_other": "Period in {{count}} days",
     "lateAdviceLong": "A week or more is worth looking into. If pregnancy is possible, a test will tell you more. Otherwise, consider checking in with a doctor.",
-    "lateAdviceShort": "A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle."
+    "lateAdviceShort": "A few days either way is common. Stress, illness, travel and poor sleep can all shift a cycle.",
+    "staleAnchor": "It's been a while",
+    "staleAnchorAdvice": "We've lost track of your cycle. Log the first day of your last period to start your predictions again."
   },
   "toasts": {
     "periodSaveFailed": "Failed to save some period dates",

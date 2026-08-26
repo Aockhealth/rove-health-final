@@ -1,11 +1,17 @@
 import { supabase } from './supabase';
-import { daysBetween, parseLocalDate, type CycleSettings } from '@shared/cycle/phase';
+import { daysBetween, parseLocalDate, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { resolvePhaseSettings, toTtcLogs } from './phaseSettings';
 import type { OpkResult } from '@shared/cycle/ttc';
 import { writeHealthData } from './healthSync';
 import type { FlowIntensity } from '@shared/health/platformMapping';
 import { hasPcosFlag } from './pcos';
 
-const LOG_WINDOW_DAYS = 90;
+// Sized to CYCLE_HISTORY_LOOKBACK (6) cycles at the long end of
+// MAX_PLAUSIBLE_CYCLE_LENGTH, so the history-hungry consumers can actually be
+// satisfied. A flat 90 days held ~3 cycles at 28 days and only 2 at 45 — below
+// the 4 anomaly detection needs and the 3 fertile-window personalization
+// needs, so the longer a woman's cycles were, the less personalization she got.
+const LOG_WINDOW_DAYS = 270;
 
 export type TrackerMode = 'menstruation' | 'ttc' | 'menopause';
 
@@ -97,16 +103,36 @@ export async function fetchTrackerData(): Promise<TrackerData | null> {
     monthLogs[l.date] = l;
   });
 
+  const baseSettings = {
+    last_period_start: settings?.last_period_start || '',
+    cycle_length_days: settings?.cycle_length_days || 28,
+    period_length_days: settings?.period_length_days || 5,
+  };
+  const trackerMode = normaliseTrackerMode(onboardingResult.data?.tracker_mode);
+  const hasPcos = hasPcosFlag(onboardingResult.data?.goals, onboardingResult.data?.conditions);
+
+  const sharedLogs: Record<string, DailyLog> = {};
+  logs.forEach((l) => {
+    sharedLogs[l.date] = { date: l.date, is_period: l.is_period ?? undefined };
+  });
+
   return {
-    settings: {
-      last_period_start: settings?.last_period_start || '',
-      cycle_length_days: settings?.cycle_length_days || 28,
-      period_length_days: settings?.period_length_days || 5,
-    },
+    // Resolved here, not rebuilt on the screen: Tracker used to hand
+    // calculatePhase a settings object with no luteal_length_days at all, so it
+    // silently fell back to the population 14 while Home used her personalized
+    // value — the two screens then named a different phase on four days of
+    // every cycle. See lib/phaseSettings.ts.
+    settings: resolvePhaseSettings({
+      base: baseSettings,
+      monthLogs: sharedLogs,
+      ttcLogs: toTtcLogs(logs),
+      trackerMode,
+      hasPcos,
+    }),
     monthLogs,
     hasSettings: !!settings?.last_period_start,
-    trackerMode: normaliseTrackerMode(onboardingResult.data?.tracker_mode),
-    hasPcos: hasPcosFlag(onboardingResult.data?.goals, onboardingResult.data?.conditions),
+    trackerMode,
+    hasPcos,
     isIrregular: settings?.is_irregular === true,
   };
 }

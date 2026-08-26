@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 // move we need here, and the legacy surface is still shipped and supported.
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
-import { calculatePhase, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import { calculatePhase, resolveCycleSettings, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
 import { type BbtReading, type OpkReading, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
 import type { LhBandReading } from '@shared/cycle/lh';
 import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
@@ -515,12 +515,21 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     .map((l) => parseMucusJson(l.cervical_discharge, l.date))
     .filter((m): m is MucusReading => m !== null);
 
-  const settings: CycleSettings = {
+  // Her observed cycle length wins over the stored one here too — a report
+  // that predicts off a number her own logs contradict is worse than no
+  // report. (The luteal personalization stays the two-pass version below,
+  // which is report-specific.)
+  const storedSettings: CycleSettings = {
     last_period_start: settingsRow.last_period_start,
     cycle_length_days: settingsRow.cycle_length_days || 28,
     period_length_days: settingsRow.period_length_days || 5,
     luteal_length_days: settingsRow.luteal_length_days,
   };
+  const settingsLogMap: Record<string, DailyLog> = {};
+  logs.forEach((l) => {
+    settingsLogMap[l.date] = { date: l.date, is_period: l.is_period ?? undefined };
+  });
+  const settings: CycleSettings = resolveCycleSettings(windowEnd, storedSettings, settingsLogMap);
 
   // ── cycle statistics from observed data ──────────────────────────────────
   const { starts, bleedLengths } = deriveCycleStarts(logs);

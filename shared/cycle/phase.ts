@@ -30,6 +30,15 @@ export interface PhaseResult {
     daysLate: number;              // days past the expected start; 0 when due today or not late
     confidence: 'low' | 'medium' | 'high';
     dataSource: 'logs' | 'settings' | 'none';
+    /**
+     * True when the only anchor available is a `settings` date so old that the
+     * day/daysLate numbers derived from it have stopped meaning anything (see
+     * MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS). The numbers are still returned so
+     * nothing downstream has to handle a null, but UI must not assert them at
+     * the user -- "Day 452, 423 days late" is noise, not information. Prompt
+     * her to log a period instead.
+     */
+    staleAnchor: boolean;
 }
 
 // ============================================================================
@@ -42,6 +51,29 @@ export const DEFAULT_LUTEAL_LENGTH = 14;
 
 // Ovulation window: ±1 day around ovulation for "Ovulatory" phase
 export const OVULATION_PHASE_WINDOW = 1;
+
+/**
+ * Ovulation day is normally `cycleLength - lutealLength`, but on a short cycle
+ * (or whenever a personalized luteal length approaches the cycle length) that
+ * lands inside the period days, and the phases in between stop existing --
+ * an 18-day cycle used to report only Menstrual and Luteal, so Follicular and
+ * Ovulatory content was unreachable for the whole cycle.
+ *
+ * The gap has to clear the period AND the ±OVULATION_PHASE_WINDOW ovulatory
+ * band with at least one day left over, or Follicular is still squeezed to
+ * nothing: Follicular days are those with
+ * `periodLength < day < ovulationDay - OVULATION_PHASE_WINDOW`, so one exists
+ * only when `ovulationDay >= periodLength + OVULATION_PHASE_WINDOW + 2`.
+ */
+export const MIN_DAYS_BETWEEN_PERIOD_AND_OVULATION = OVULATION_PHASE_WINDOW + 2;
+
+/**
+ * How many days past an expected period start a `settings`-sourced anchor
+ * stays worth quoting. Beyond this the user has logged no period at all for
+ * roughly three cycles and the anchor is almost certainly a stale onboarding
+ * value, not a real 100-day cycle -- see PhaseResult.staleAnchor.
+ */
+export const MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS = 90;
 
 // Fertility window: wider range for fertility tracking. These are the
 // population defaults — used as-is until she has enough cycle history to
@@ -211,7 +243,8 @@ export function calculatePhase(
                 latePeriod: false,
                 daysLate: 0,
                 confidence: 'high',
-                dataSource: 'logs'
+                dataSource: 'logs',
+                staleAnchor: false
             };
         }
 
@@ -226,7 +259,8 @@ export function calculatePhase(
                 latePeriod: false,
                 daysLate: 0,
                 confidence: 'low',
-                dataSource: 'none'
+                dataSource: 'none',
+                staleAnchor: false
             };
         }
 
@@ -241,17 +275,30 @@ export function calculatePhase(
                 latePeriod: false,
                 daysLate: 0,
                 confidence: 'low',
-                dataSource: source
+                dataSource: source,
+                staleAnchor: false
             };
         }
 
         const cycleLength = settings.cycle_length_days || DEFAULT_CYCLE_LENGTH;
         const periodLength = settings.period_length_days || DEFAULT_PERIOD_LENGTH;
         const lutealLength = settings.luteal_length_days || DEFAULT_LUTEAL_LENGTH;
-        const ovulationDay = cycleLength - lutealLength;
+        // Floored -- see getOvulationDay. Uses the *settings* period length
+        // rather than the observed one below, so the phase boundaries stay
+        // stable within a cycle even as she logs her way through her period.
+        const ovulationDay = getOvulationDay(cycleLength, lutealLength, periodLength);
 
         // 4. Check for late period (past expected cycle length, no new period logged)
         const isLate = diffDays >= cycleLength && target <= today;
+
+        // A `settings` anchor that is months stale is an abandoned onboarding
+        // value, not a real cycle -- see MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS.
+        // Flagged rather than nulled so callers keep a phase to render, but
+        // must not quote the day/daysLate numbers at the user.
+        const staleAnchor =
+            source === 'settings' &&
+            isLate &&
+            diffDays - cycleLength > MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS;
 
         // 5. Calculate day in cycle
         let dayInCycle: number;
@@ -404,7 +451,8 @@ export function calculatePhase(
             // Tracker and Insights reporting different numbers for the same day.
             daysLate: isLate ? diffDays - cycleLength : 0,
             confidence,
-            dataSource: source
+            dataSource: source,
+            staleAnchor
         };
     } catch (err) {
         // Safety fallback: never crash the app due to phase calculation
@@ -413,9 +461,10 @@ export function calculatePhase(
             phase: null,
             day: 0,
             latePeriod: false,
-                daysLate: 0,
+            daysLate: 0,
             confidence: 'low',
-            dataSource: 'none'
+            dataSource: 'none',
+            staleAnchor: false
         };
     }
 }
@@ -518,6 +567,69 @@ export function deriveRecentCycleHistory(
 }
 
 /**
+ * Cycle lengths outside this range are almost certainly a logging artefact
+ * (a mis-tapped date, a skipped period read as one long cycle) rather than a
+ * real cycle, and must not be allowed to drag the observed average.
+ */
+export const MIN_PLAUSIBLE_CYCLE_LENGTH = 21;
+export const MAX_PLAUSIBLE_CYCLE_LENGTH = 60;
+
+/** Need at least this many completed cycles before her logs outrank the number she typed at onboarding. */
+export const MIN_CYCLES_FOR_OBSERVED_LENGTH = 2;
+
+/**
+ * Her real cycle length, measured from logged period starts.
+ *
+ * `cycle_length_days` in the settings row is only ever written by the manual
+ * Cycle Settings form, so before this existed a woman could log three honest
+ * 34-day cycles and still be counted down to day 28 forever -- every
+ * prediction (next period, "late by N", ovulation day, all four phase
+ * boundaries) ran off a number her own history contradicted. This derives the
+ * real one so predictions follow what actually happened.
+ *
+ * Median, not mean: one skipped-log 60-day "cycle" shouldn't drag the number
+ * the whole app predicts from. Returns null until there's enough history,
+ * leaving the stored setting in charge.
+ */
+export function deriveObservedCycleLength(
+    referenceDate: Date,
+    monthLogs: Record<string, DailyLog>,
+    maxCycles: number = CYCLE_HISTORY_LOOKBACK
+): number | null {
+    const lengths = deriveRecentCycleLengths(referenceDate, monthLogs, maxCycles)
+        .filter((n) => n >= MIN_PLAUSIBLE_CYCLE_LENGTH && n <= MAX_PLAUSIBLE_CYCLE_LENGTH);
+
+    if (lengths.length < MIN_CYCLES_FOR_OBSERVED_LENGTH) return null;
+
+    const sorted = [...lengths].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid];
+
+    return Math.round(median);
+}
+
+/**
+ * The cycle settings the app should actually predict from: whatever is stored,
+ * with `cycle_length_days` replaced by her observed length once her logs can
+ * support one (see deriveObservedCycleLength).
+ *
+ * Deliberately does NOT write back to the settings row. The stored value is
+ * hers -- she typed it -- so this corrects the prediction without overwriting
+ * her input, and the moment she edits Cycle Settings by hand that value is
+ * still exactly what she left there.
+ */
+export function resolveCycleSettings(
+    referenceDate: Date,
+    settings: CycleSettings,
+    monthLogs: Record<string, DailyLog>
+): CycleSettings {
+    const observed = deriveObservedCycleLength(referenceDate, monthLogs);
+    return observed === null ? settings : { ...settings, cycle_length_days: observed };
+}
+
+/**
  * Recent cycle lengths only (see deriveRecentCycleHistory) — kept as a thin
  * wrapper since computeFertileWindowRadius and older callers just want the
  * numbers, not the dates.
@@ -541,9 +653,10 @@ export function isInFertileWindow(
     dayInCycle: number,
     cycleLength: number,
     lutealLength: number = DEFAULT_LUTEAL_LENGTH,
-    recentCycleLengths?: number[]
+    recentCycleLengths?: number[],
+    periodLength: number = DEFAULT_PERIOD_LENGTH
 ): boolean {
-    const ovulationDay = cycleLength - lutealLength;
+    const ovulationDay = getOvulationDay(cycleLength, lutealLength, periodLength);
     const radius = recentCycleLengths
         ? computeFertileWindowRadius(recentCycleLengths)
         : { before: FERTILE_WINDOW_BEFORE, after: FERTILE_WINDOW_AFTER, sigma: 0, tooIrregularForWindow: false };
@@ -556,12 +669,22 @@ export function isInFertileWindow(
 
 /**
  * Calculate ovulation day for a given cycle.
+ *
+ * Floored so ovulation always sits at least
+ * MIN_DAYS_BETWEEN_PERIOD_AND_OVULATION days after the last period day. The
+ * raw `cycleLength - lutealLength` collapses on short cycles: at 18 days with
+ * the population luteal of 14 it lands on day 4, inside the period, which
+ * erased Follicular and Ovulatory entirely (they became unreachable, so the
+ * phase-keyed Guide/Nourish/Move content was too). Also guards the case where
+ * a personalized luteal length meets or exceeds the cycle length.
  */
 export function getOvulationDay(
     cycleLength: number,
-    lutealLength: number = DEFAULT_LUTEAL_LENGTH
+    lutealLength: number = DEFAULT_LUTEAL_LENGTH,
+    periodLength: number = DEFAULT_PERIOD_LENGTH
 ): number {
-    return cycleLength - lutealLength;
+    const raw = cycleLength - lutealLength;
+    return Math.max(periodLength + MIN_DAYS_BETWEEN_PERIOD_AND_OVULATION, raw);
 }
 
 // ============================================================================

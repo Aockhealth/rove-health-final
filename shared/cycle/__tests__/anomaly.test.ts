@@ -60,16 +60,41 @@ describe('detectCycleAnomalies', () => {
       { start: '2026-03-26', length: 28 },
       { start: '2026-04-23', length: 45 },
     ];
-    const disruptorsByDate: Record<string, string[]> = {};
-    // Log "High stress event" on 12 separate days within the long cycle.
-    const start = new Date('2026-04-23T00:00:00');
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      disruptorsByDate[d.toISOString().slice(0, 10)] = ['High stress event'];
-    }
+    // Written out as literal local dates, the way daily_logs.date actually
+    // stores them. Building this fixture with toISOString() (as it used to)
+    // shifted it by the same day the implementation was shifting by, so the
+    // two cancelled out and the test passed against a real IST off-by-one.
+    const disruptorsByDate: Record<string, string[]> = {
+      '2026-04-23': ['High stress event'], '2026-04-24': ['High stress event'],
+      '2026-04-25': ['High stress event'], '2026-04-26': ['High stress event'],
+      '2026-04-27': ['High stress event'], '2026-04-28': ['High stress event'],
+      '2026-04-29': ['High stress event'], '2026-04-30': ['High stress event'],
+      '2026-05-01': ['High stress event'], '2026-05-02': ['High stress event'],
+      '2026-05-03': ['High stress event'], '2026-05-04': ['High stress event'],
+    };
     const anomalies = detectCycleAnomalies(cycles, disruptorsByDate);
     expect(anomalies[0].likelyExplanation).toBe('High stress event');
+  });
+
+  it('counts disruptors on the cycle\'s own local dates, not the day before', () => {
+    const cycles: CycleHistoryEntry[] = [
+      { start: '2026-01-01', length: 28 },
+      { start: '2026-01-29', length: 27 },
+      { start: '2026-02-25', length: 29 },
+      { start: '2026-03-26', length: 28 },
+      { start: '2026-04-23', length: 45 },
+    ];
+    // The flagged cycle is 2026-04-23 + 45 days, so its last two days are
+    // 5 and 6 June. Placing 'Travel' on exactly those two puts it right on
+    // the boundary the off-by-one crosses: a local-date lookup counts both
+    // (2, which clears findLikelyExplanation's >= 2 gate), while a
+    // UTC-shifted lookup sees only 5 June and drops below the gate entirely.
+    const disruptorsByDate: Record<string, string[]> = {
+      '2026-06-05': ['Travel'], '2026-06-06': ['Travel'],
+    };
+    const anomalies = detectCycleAnomalies(cycles, disruptorsByDate);
+    expect(anomalies[0].start).toBe('2026-04-23');
+    expect(anomalies[0].likelyExplanation).toBe('Travel');
   });
 
   it('returns null explanation when no disruptor tag stands out', () => {

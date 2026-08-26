@@ -19,6 +19,9 @@ import {
     getOvulationDay,
     computeFertileWindowRadius,
     deriveRecentCycleLengths,
+    deriveObservedCycleLength,
+    resolveCycleSettings,
+    MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS,
     type CycleSettings,
     type DailyLog,
     type PhaseResult,
@@ -585,4 +588,157 @@ describe('Legacy adapters', () => {
             expect(result.day).toBe(35);
         });
     });
+
+    // ========================================================================
+    // OBSERVED CYCLE LENGTH  (the app learning her real cycle)
+    // ========================================================================
+    describe('deriveObservedCycleLength / resolveCycleSettings', () => {
+        /** Logs period days for `periodLength` days from each start. */
+        const logCycles = (starts: string[], periodLength = 4): Record<string, DailyLog> => {
+            const logs: Record<string, DailyLog> = {};
+            for (const start of starts) {
+                const cursor = parseLocalDate(start);
+                for (let i = 0; i < periodLength; i++) {
+                    logs[formatDate(cursor)] = { date: formatDate(cursor), is_period: true };
+                    cursor.setDate(cursor.getDate() + 1);
+                }
+            }
+            return logs;
+        };
+
+        it('returns null until there are enough completed cycles to measure', () => {
+            const logs = logCycles(['2026-01-01', '2026-02-04']); // 1 completed cycle
+            expect(deriveObservedCycleLength(parseLocalDate('2026-02-20'), logs)).toBeNull();
+        });
+
+        it('measures her real cycle length from logged period starts', () => {
+            // 34-day cycles, logged honestly, by someone whose settings say 28.
+            const logs = logCycles(['2026-01-01', '2026-02-04', '2026-03-10', '2026-04-13']);
+            expect(deriveObservedCycleLength(parseLocalDate('2026-04-20'), logs)).toBe(34);
+        });
+
+        it('uses the median so one skipped-log gap cannot drag the number', () => {
+            // 30, 30, 58 (a missed period read as one long cycle), 30
+            const logs = logCycles(['2026-01-01', '2026-01-31', '2026-03-02', '2026-04-29', '2026-05-29']);
+            const observed = deriveObservedCycleLength(parseLocalDate('2026-06-10'), logs);
+            expect(observed).toBe(30);
+        });
+
+        it('ignores implausible cycle lengths entirely', () => {
+            // Two 8-day "cycles" from mis-tapped dates — below MIN_PLAUSIBLE.
+            const logs = logCycles(['2026-01-01', '2026-01-09', '2026-01-17'], 2);
+            expect(deriveObservedCycleLength(parseLocalDate('2026-02-01'), logs)).toBeNull();
+        });
+
+        it('predicts from her logs, not the number she typed at onboarding', () => {
+            const stored: CycleSettings = {
+                last_period_start: '2026-01-01',
+                cycle_length_days: 28,      // what she guessed during onboarding
+                period_length_days: 4,
+            };
+            const logs = logCycles(['2026-01-01', '2026-02-04', '2026-03-10', '2026-04-13']);
+            const resolved = resolveCycleSettings(parseLocalDate('2026-04-20'), stored, logs);
+
+            expect(resolved.cycle_length_days).toBe(34);
+            // Never writes back over what she typed.
+            expect(stored.cycle_length_days).toBe(28);
+
+            // On day 30 the old 28-day setting called her 2 days late; with her
+            // real 34-day cycle she is simply mid-luteal.
+            const staleRead = calculatePhase(parseLocalDate('2026-05-12'), stored, logs);
+            const trueRead = calculatePhase(parseLocalDate('2026-05-12'), resolved, logs);
+            expect(staleRead.latePeriod).toBe(true);
+            expect(trueRead.latePeriod).toBe(false);
+        });
+    });
+
+    // ========================================================================
+    // SHORT CYCLES  (all four phases must stay reachable)
+    // ========================================================================
+    describe('phase reachability on short cycles', () => {
+        const phasesAcrossCycle = (cycleLength: number, periodLength = 5): Set<string> => {
+            const settings: CycleSettings = {
+                last_period_start: '2026-01-01',
+                cycle_length_days: cycleLength,
+                period_length_days: periodLength,
+            };
+            const seen = new Set<string>();
+            for (let d = 0; d < cycleLength; d++) {
+                const date = parseLocalDate('2026-01-01');
+                date.setDate(date.getDate() + d);
+                const { phase } = calculatePhase(date, settings, {});
+                if (phase) seen.add(phase);
+            }
+            return seen;
+        };
+
+        it.each([28, 22, 20, 18, 16])(
+            'reaches all four phases on a %i-day cycle',
+            (cycleLength) => {
+                const seen = phasesAcrossCycle(cycleLength);
+                expect([...seen].sort()).toEqual(['Follicular', 'Luteal', 'Menstrual', 'Ovulatory']);
+            }
+        );
+
+        it('keeps ovulation clear of the period even when luteal >= cycle length', () => {
+            const settings: CycleSettings = {
+                last_period_start: '2026-01-01',
+                cycle_length_days: 21,
+                period_length_days: 5,
+                luteal_length_days: 21,
+            };
+            const seen = new Set<string>();
+            for (let d = 0; d < 21; d++) {
+                const date = parseLocalDate('2026-01-01');
+                date.setDate(date.getDate() + d);
+                const { phase } = calculatePhase(date, settings, {});
+                if (phase) seen.add(phase);
+            }
+            expect(seen.has('Ovulatory')).toBe(true);
+            expect(seen.has('Follicular')).toBe(true);
+        });
+
+        it('never places ovulation inside the period days', () => {
+            for (let cycleLength = 15; cycleLength <= 40; cycleLength++) {
+                expect(getOvulationDay(cycleLength, 14, 5)).toBeGreaterThan(5);
+            }
+        });
+    });
+
+    // ========================================================================
+    // STALE SETTINGS ANCHOR
+    // ========================================================================
+    describe('staleAnchor', () => {
+        const settings: CycleSettings = {
+            last_period_start: '2025-06-01',
+            cycle_length_days: 28,
+            period_length_days: 5,
+        };
+
+        it('flags an abandoned onboarding date instead of asserting the count', () => {
+            const result = calculatePhase(parseLocalDate('2026-08-26'), settings, {});
+            expect(result.dataSource).toBe('settings');
+            expect(result.staleAnchor).toBe(true);
+            // The numbers are still there for callers that want them...
+            expect(result.daysLate).toBeGreaterThan(MAX_TRUSTED_SETTINGS_ANCHOR_LATE_DAYS);
+            // ...but UI is expected to show the prompt, not "423 days late".
+        });
+
+        it('does not flag an ordinary late period', () => {
+            const recent: CycleSettings = { ...settings, last_period_start: '2026-07-20' };
+            const result = calculatePhase(parseLocalDate('2026-08-26'), recent, {});
+            expect(result.latePeriod).toBe(true);
+            expect(result.staleAnchor).toBe(false);
+        });
+
+        it('never flags a cycle anchored to real logged period days', () => {
+            const logs: Record<string, DailyLog> = {
+                '2025-06-01': { date: '2025-06-01', is_period: true },
+            };
+            const result = calculatePhase(parseLocalDate('2026-08-26'), settings, logs);
+            expect(result.dataSource).toBe('logs');
+            expect(result.staleAnchor).toBe(false);
+        });
+    });
+
 });

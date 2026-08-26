@@ -3,7 +3,7 @@ import { calculatePhase, deriveRecentCycleLengths, getRelevantPeriodStart, type 
 import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
 import type { LhBandReading } from '@shared/cycle/lh';
 import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
-import { deriveCycleStarts, getPersonalizedLutealLength, scoreTtcCycles } from './ttcCycleHistory';
+import { resolvePhaseSettings, toTtcLogs } from './phaseSettings';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
 import { hasPcosFlag } from './pcos';
 import { BLUEPRINTS } from '@shared/content/plan-blueprints';
@@ -15,7 +15,12 @@ import {
     recommendActiveDaysPerWeek,
 } from './exercisePersonalization';
 
-const LOG_WINDOW_DAYS = 90;
+// Sized to CYCLE_HISTORY_LOOKBACK (6) cycles at the long end of
+// MAX_PLAUSIBLE_CYCLE_LENGTH. A flat 90 days held ~3 cycles at 28 days and
+// only 2 at 45 — below the 4 that anomaly detection needs and the 3 that
+// fertile-window personalization needs, so the longer a woman's cycles were,
+// the less personalization she got.
+const LOG_WINDOW_DAYS = 270;
 
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -103,29 +108,17 @@ export async function fetchPlanPageDataFast() {
   const trackerModeRaw = onboarding?.tracker_mode || 'menstruation';
   const hasPcos = hasPcosFlag(onboarding?.goals, onboarding?.conditions);
 
-  // Anchors the date-math fallback (both the phase calculation and the TTC
-  // ovulation read below) off her own history once there's enough of it —
-  // luteal length is comparatively stable within a woman, so it's a better
-  // prior than the 14-day population default. See getPersonalizedLutealLength.
-  let phaseSettings = baseSettings;
-  if (trackerModeRaw === 'ttc') {
-      const ttcHistoryLogs = logs.map((l: any) => ({
-          date: l.date as string,
-          is_period: l.is_period as boolean | null,
-          bbt_celsius: l.bbt_celsius === null || l.bbt_celsius === undefined ? null : Number(l.bbt_celsius),
-          opk_result: (l.opk_result ?? null) as TtcDailyLog['opk_result'],
-          disruptors: l.disruptors ?? null,
-          sleep_minutes: l.sleep_minutes === null || l.sleep_minutes === undefined ? null : Number(l.sleep_minutes),
-          bbt_wake_time: l.bbt_wake_time ?? null,
-          nsaid_taken: l.nsaid_taken ?? null,
-      }));
-      const { starts } = deriveCycleStarts(ttcHistoryLogs);
-      const historyCycles = scoreTtcCycles(ttcHistoryLogs, starts, baseSettings, new Date(), hasPcos, lhReadings, mucusReadings);
-      const personalizedLuteal = getPersonalizedLutealLength(historyCycles);
-      if (personalizedLuteal !== null) {
-          phaseSettings = { ...baseSettings, luteal_length_days: personalizedLuteal };
-      }
-  }
+  // Her observed cycle length + (in TTC) her own luteal length, resolved once
+  // by the module every screen now shares — see lib/phaseSettings.ts.
+  const phaseSettings = resolvePhaseSettings({
+      base: baseSettings,
+      monthLogs,
+      ttcLogs: toTtcLogs(logs),
+      trackerMode: trackerModeRaw,
+      hasPcos,
+      lhReadings,
+      mucusReadings,
+  });
 
   const phaseResult = calculatePhase(new Date(), phaseSettings, monthLogs);
   const phase = phaseResult.phase || "Menstrual";

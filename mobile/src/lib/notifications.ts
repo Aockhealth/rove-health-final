@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { OvulationSignal } from '@shared/cycle/ttc';
+import { parseLocalDate } from '@shared/cycle/phase';
 
 // Fixed identifiers so re-scheduling (e.g. cycle dates refresh) replaces the
 // existing notification instead of stacking duplicates.
@@ -121,7 +122,10 @@ export async function schedulePeriodReminder(nextPeriodDateIso: string | null) {
   const granted = await ensureNotificationPermissions();
   if (!granted) return;
 
-  const nextPeriod = new Date(nextPeriodDateIso);
+  // parseLocalDate, not new Date(): JS reads a bare "YYYY-MM-DD" as UTC
+  // midnight, which lands on the previous local day west of UTC and fired
+  // this reminder a day early there.
+  const nextPeriod = parseLocalDate(nextPeriodDateIso);
   const reminderDate = new Date(nextPeriod);
   reminderDate.setDate(reminderDate.getDate() - PERIOD_REMINDER_DAYS_BEFORE);
   reminderDate.setHours(PERIOD_REMINDER_HOUR, 0, 0, 0);

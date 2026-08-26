@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   ScrollView,
   View,
@@ -74,6 +74,7 @@ import {
   getRelevantPeriodStart,
   findStreakStart,
   isInFertileWindow,
+  deriveRecentCycleLengths,
   daysBetween,
   parseLocalDate,
   formatDate,
@@ -474,9 +475,33 @@ export default function TrackerScreen() {
   const dayInCycle = phaseResult.day > 0 ? phaseResult.day : null;
   const hasPhaseData = phaseResult.phase !== null;
   const lateByDays = phaseResult.daysLate;
+  // Her own recent cycle lengths, so the shading below widens (or disappears)
+  // for her real variability instead of drawing the same fixed 5-day window for
+  // everyone — the same input Home's fertile window already uses.
+  const recentCycleLengths = useMemo(
+    () => deriveRecentCycleLengths(new Date(), sharedLogs),
+    [sharedLogs]
+  );
+  // All four arguments, every time. Dropping the luteal length and her cycle
+  // history is what made this disagree with Home — and passing the history is
+  // also what lets isInFertileWindow suppress the window entirely once her
+  // cycles are too irregular for one to mean anything, instead of the calendar
+  // shading days 9-15 while Home says it can't call a window at all.
+  const fertileFor = useCallback(
+    (day: number) =>
+      isInFertileWindow(
+        day,
+        cycleSettings.cycle_length_days || 28,
+        cycleSettings.luteal_length_days,
+        recentCycleLengths,
+        cycleSettings.period_length_days
+      ),
+    [cycleSettings, recentCycleLengths]
+  );
+
   const isFertileDay =
     dayInCycle && !phaseResult.latePeriod
-      ? isInFertileWindow(dayInCycle, cycleSettings.cycle_length_days || 28) && currentPhase !== 'Menstrual'
+      ? fertileFor(dayInCycle) && currentPhase !== 'Menstrual'
       : false;
 
   const phaseThemeColor = currentPhase ? PHASE_COLORS[currentPhase] : '#A8A29E';
@@ -512,20 +537,26 @@ export default function TrackerScreen() {
     ? t('tracker.headline.logFirstPeriod')
     : currentPhase === 'Menstrual'
       ? t('tracker.headline.periodDay', { day: Math.max(1, dayInCycle || 1) })
-      : todayResult.latePeriod
-        ? todayLateByDays === 0
-          ? t('tracker.headline.periodDueToday')
-          : t('tracker.headline.lateBy', { count: todayLateByDays })
-        : daysUntilPeriod === 0
-          ? t('tracker.headline.startsToday')
-          : t('tracker.headline.periodIn', { count: daysUntilPeriod });
+      : todayResult.staleAnchor
+        // Months past an onboarding date she never logged against, the count is
+        // noise, not information — "423 days late" helps nobody. Ask for a
+        // period instead of asserting a number.
+        ? t('tracker.headline.staleAnchor')
+        : todayResult.latePeriod
+          ? todayLateByDays === 0
+            ? t('tracker.headline.periodDueToday')
+            : t('tracker.headline.lateBy', { count: todayLateByDays })
+          : daysUntilPeriod === 0
+            ? t('tracker.headline.startsToday')
+            : t('tracker.headline.periodIn', { count: daysUntilPeriod });
 
   // A late period is the most anxious moment in the cycle, and a bare number with no
   // context is what makes it worse. Normalise the common case, and only at a week or
   // more point toward an actual next step. Deliberately non-diagnostic.
   const LATE_ADVICE_THRESHOLD_DAYS = 7;
-  const headlineSubtext =
-    todayResult.latePeriod && todayLateByDays > 0
+  const headlineSubtext = todayResult.staleAnchor
+    ? t('tracker.headline.staleAnchorAdvice')
+    : todayResult.latePeriod && todayLateByDays > 0
       ? todayLateByDays >= LATE_ADVICE_THRESHOLD_DAYS
         ? t('tracker.headline.lateAdviceLong')
         : t('tracker.headline.lateAdviceShort')
@@ -542,7 +573,7 @@ export default function TrackerScreen() {
       const log = monthLogs[dateStr];
       const fertile =
         result.phase && !result.latePeriod && result.day > 0
-          ? isInFertileWindow(result.day, cycleSettings.cycle_length_days || 28)
+          ? fertileFor(result.day)
           : false;
       map[dateStr] = {
         phase: result.phase,
@@ -552,7 +583,7 @@ export default function TrackerScreen() {
       };
     }
     return map;
-  }, [calYear, calMonth, cycleSettings, sharedLogs, monthLogs]);
+  }, [calYear, calMonth, cycleSettings, sharedLogs, monthLogs, fertileFor]);
 
   // ─── Period-mode toggling — staged locally, persisted on "Done" ──────────
   // Tapping a day fills forward a typical period length (Cycle Settings'
@@ -1135,7 +1166,11 @@ export default function TrackerScreen() {
               <Text style={styles.statusDate}>
                 {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </Text>
-              {hasPhaseData && phaseResult.latePeriod && (
+              {/* `latePeriod` is already true on the day the period is merely
+                  due, when daysLate is correctly 0 — without this guard the
+                  badge read "Late 0d" while the headline directly above it
+                  said "Period due today". */}
+              {hasPhaseData && phaseResult.latePeriod && lateByDays > 0 && !phaseResult.staleAnchor && (
                 <Text style={styles.statusLateText}>Late {lateByDays}d</Text>
               )}
             </View>

@@ -19,7 +19,6 @@ import {
     computeTtcCycleStats,
     deriveCycleStarts,
     detectTtcPatterns,
-    getPersonalizedLutealLength,
     scoreTtcCycles,
     summarizePcosPatterns,
     type TtcCycleStats,
@@ -29,6 +28,7 @@ import {
 } from './ttcCycleHistory';
 import { deriveRecentCycleLengths, deriveRecentCycleHistory, type CycleSettings, type CycleHistoryEntry } from '@shared/cycle/phase';
 import { detectCycleAnomalies, type CycleAnomaly } from '@shared/cycle/anomaly';
+import { resolvePhaseSettings, toTtcLogs } from './phaseSettings';
 import type { LhBandReading } from '@shared/cycle/lh';
 import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
 import { hasPcosFlag } from './pcos';
@@ -63,7 +63,11 @@ export type TtcInsights = {
     };
 };
 
-const LOG_WINDOW_CYCLE_MULTIPLIER = 3; // Cover at least 3 cycles so pattern analysis isn't limited to the most recent one
+// 6, not 3: this is the one window already scaled to her own cycle length, and
+// CYCLE_HISTORY_LOOKBACK / MIN_CYCLES_FOR_ANOMALY_DETECTION ask for more
+// cycles than 3 can supply — detectCycleAnomalies needs 4 and was therefore
+// almost never able to return anything.
+const LOG_WINDOW_CYCLE_MULTIPLIER = 6;
 
 // ==========================================================
 // SYMPTOM CORRELATIONS — computed from her own logs, not a
@@ -282,11 +286,25 @@ export async function fetchInsightsData() {
         });
     }
 
-    const settings = {
-        last_period_start: cycleSettings.last_period_start,
-        cycle_length_days: cycleSettings.cycle_length_days,
-        period_length_days: cycleSettings.period_length_days
-    };
+    // Resolved once for the whole payload — her observed cycle length, plus her
+    // own luteal length in TTC. The per-day phase loop below, `currentStatus`,
+    // `relevant` and the TTC ovulation read all take these same settings, so
+    // Insights can't disagree with Home/Tracker about which phase a day is in.
+    const settings: CycleSettings = resolvePhaseSettings({
+        base: {
+            last_period_start: cycleSettings.last_period_start,
+            cycle_length_days: cycleSettings.cycle_length_days,
+            period_length_days: cycleSettings.period_length_days,
+        },
+        monthLogs: logMap,
+        ttcLogs: toTtcLogs(logs),
+        trackerMode: onboarding?.tracker_mode,
+        hasPcos,
+        lhReadings,
+        mucusReadings: (logs || [])
+            .map((l: any) => parseMucusJson(l.cervical_discharge, l.date))
+            .filter((m: MucusReading | null): m is MucusReading => m !== null),
+    });
 
     if (logs) {
         // Grab the most recent non-empty note
@@ -336,26 +354,14 @@ export async function fetchInsightsData() {
         });
     }
 
-    const currentStatus = calculatePhase(new Date(), {
-        last_period_start: cycleSettings.last_period_start,
-        cycle_length_days: cycleSettings.cycle_length_days,
-        period_length_days: cycleSettings.period_length_days
-    }, logMap);
+    const currentStatus = calculatePhase(new Date(), settings, logMap);
 
-    const relevant = getRelevantPeriodStart(
-        new Date(),
-        {
-            last_period_start: cycleSettings.last_period_start,
-            cycle_length_days: cycleSettings.cycle_length_days,
-            period_length_days: cycleSettings.period_length_days
-        },
-        logMap
-    );
+    const relevant = getRelevantPeriodStart(new Date(), settings, logMap);
 
     const nextPeriodDate = relevant.start
         ? (() => {
             const start = parseLocalDate(relevant.start);
-            const cycleLen = cycleSettings.cycle_length_days || 28;
+            const cycleLen = settings.cycle_length_days;
             start.setDate(start.getDate() + cycleLen);
             return formatDate(start);
         })()
@@ -415,11 +421,7 @@ export async function fetchInsightsData() {
             .map((l: any) => parseMucusJson(l.cervical_discharge, l.date))
             .filter((m): m is MucusReading => m !== null);
 
-        const baseTtcSettings: CycleSettings = {
-            last_period_start: cycleSettings.last_period_start,
-            cycle_length_days: cycleSettings.cycle_length_days,
-            period_length_days: cycleSettings.period_length_days,
-        };
+        const baseTtcSettings: CycleSettings = settings;
         const recentCycleLengths = deriveRecentCycleLengths(new Date(), logMap);
         cycleHistory = deriveRecentCycleHistory(new Date(), logMap);
 
@@ -466,11 +468,11 @@ export async function fetchInsightsData() {
 
             pcosPatterns = hasPcos ? summarizePcosPatterns(cycles) : [];
 
-            // Anchors the date-math fallback off her own history once there's enough
-            // of it, rather than the population default — see getPersonalizedLutealLength.
-            const personalizedLuteal = getPersonalizedLutealLength(cycles);
-            const ttcSettings: CycleSettings = { ...baseTtcSettings, luteal_length_days: personalizedLuteal ?? undefined };
-            const signal = detectOvulation(relevant.start, new Date(), ttcLogs, ttcSettings, { hasPcos, recentCycleLengths, lhReadings, mucusReadings });
+            // `settings` already carries her personalized luteal length —
+            // resolvePhaseSettings applied it above, for every screen at once.
+            // Recomputing it here was how Insights used to end up a step out of
+            // sync with Home.
+            const signal = detectOvulation(relevant.start, new Date(), ttcLogs, baseTtcSettings, { hasPcos, recentCycleLengths, lhReadings, mucusReadings });
 
             const todayStr = formatDate(new Date());
             const cycleMucusReadings = mucusReadings.filter(

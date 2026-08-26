@@ -6,7 +6,7 @@
  *
  * @module shared/cycle/anomaly
  */
-import type { CycleHistoryEntry } from './phase';
+import { formatDate, parseLocalDate, type CycleHistoryEntry } from './phase';
 
 export interface CycleAnomaly {
   /** The flagged cycle's own start date. */
@@ -47,16 +47,19 @@ function findLikelyExplanation(
   allCycles: CycleHistoryEntry[],
   disruptorsByDate: Record<string, string[]>
 ): string | null {
+  // Keys must be built with formatDate (local), never toISOString (UTC): a
+  // local-midnight Date stringifies to the PREVIOUS day in any UTC+ timezone,
+  // so in IST every lookup here read the day before the one it meant, dropping
+  // the last day of each cycle and pulling in the last day of the one before.
+  // disruptorsByDate is keyed by daily_logs.date, which is a true local date.
   const countForCycle = (c: CycleHistoryEntry): Map<string, number> => {
     const counts = new Map<string, number>();
-    const startDate = new Date(`${c.start}T00:00:00`);
+    const cursor = parseLocalDate(c.start);
     for (let i = 0; i < c.length; i++) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
-      const key = d.toISOString().slice(0, 10);
-      for (const tag of disruptorsByDate[key] ?? []) {
+      for (const tag of disruptorsByDate[formatDate(cursor)] ?? []) {
         counts.set(tag, (counts.get(tag) ?? 0) + 1);
       }
+      cursor.setDate(cursor.getDate() + 1);
     }
     return counts;
   };
