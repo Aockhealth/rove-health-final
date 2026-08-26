@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { User } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 
 async function fetchProfileInitial(): Promise<string | null> {
@@ -22,7 +23,10 @@ export default function ProfileAvatar() {
 
   return (
     <Link href="/profile" asChild>
-      <Pressable className="w-10 h-10 rounded-full bg-white/50 border border-white/60 items-center justify-center active:scale-95 z-50">
+      <Pressable
+        onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+        className="w-10 h-10 rounded-full bg-white/50 border border-white/60 items-center justify-center active:scale-95 z-50"
+      >
         {initial ? (
           <Text className="text-lg text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>{initial.toUpperCase()}</Text>
         ) : (

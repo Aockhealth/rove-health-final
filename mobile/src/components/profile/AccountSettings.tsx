@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { setAppLanguage, type SupportedLanguage } from '../../lib/i18n';
 import { getLocalizedFontFamily } from '../../lib/fonts';
@@ -41,7 +42,10 @@ function Row({
 }) {
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={onPress ? () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      } : undefined}
       disabled={!onPress}
       className="flex-row items-center justify-between p-4"
     >
@@ -190,7 +194,10 @@ export function AccountSettings({
               </View>
               <View className="flex-row gap-2 pt-1">
                 <TouchableOpacity
-                  onPress={handleContactSave}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    handleContactSave();
+                  }}
                   disabled={isPending}
                   className="flex-1 items-center rounded-xl bg-stone-900 py-2.5"
                   style={{ opacity: isPending ? 0.5 : 1 }}
@@ -199,6 +206,7 @@ export function AccountSettings({
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setIsEditingContact(false);
                     setEditEmail(email);
                     setEditPhone(phone || '');
@@ -243,7 +251,10 @@ export function AccountSettings({
       </View>
 
       <TouchableOpacity
-        onPress={onLogout}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onLogout();
+        }}
         className="flex-row items-center justify-center gap-2 rounded-xl border border-phase-menstrual/20 py-4"
       >
         <LogOut size={16} color="#AF6B6B" />
@@ -251,7 +262,10 @@ export function AccountSettings({
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={handleDeleteAccount}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          handleDeleteAccount();
+        }}
         disabled={isPending}
         className="flex-row items-center justify-center gap-2 rounded-xl bg-phase-menstrual/10 py-4"
         style={{ opacity: isPending ? 0.5 : 1 }}

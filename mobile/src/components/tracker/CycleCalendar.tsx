@@ -365,8 +365,8 @@ export function CycleCalendar({
                 disabled={isFuture}
                 activeOpacity={0.75}
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   if (isPeriodLoggingMode) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     onTogglePeriodDate(dateStr);
                   } else {
                     onDateTap(cellDate);

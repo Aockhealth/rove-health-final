@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BottomSheet } from './BottomSheet';
 import { ChevronDown, Check } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { cn } from '../../lib/utils';
 
 export interface SelectOption {
@@ -32,6 +33,7 @@ export const Select: React.FC<SelectProps> = ({
   const selectedOption = options.find(o => o.value === value);
 
   const handleSelect = (val: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onValueChange(val);
     bottomSheetRef.current?.dismiss();
   };
@@ -40,7 +42,10 @@ export const Select: React.FC<SelectProps> = ({
     <>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => bottomSheetRef.current?.present()}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          bottomSheetRef.current?.present();
+        }}
         className={cn(
           "flex-row items-center justify-between h-14 w-full rounded-[1.25rem] border border-white/60 bg-white/50 px-5 shadow-sm",
           className
