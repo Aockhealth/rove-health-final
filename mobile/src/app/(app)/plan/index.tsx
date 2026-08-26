@@ -123,6 +123,13 @@ export default function PlanScreen() {
         target: parseFloat(data.weightGoal.targetWeight) || 0,
         start: parseFloat(data.weightGoal.startWeight) || 0,
       });
+    } else if (data?.lifestyle?.weight_kg) {
+      // No goal row yet (see the weight card's hasGoal note) — seed the editor
+      // from her known current weight so the "Set Your Goal" form opens on real
+      // numbers instead of 0/0/0, which would make every +/- tap a chore and
+      // would compute a nonsense pace.
+      const known = parseFloat(data.lifestyle.weight_kg) || 0;
+      setTempGoalData({ current: known, target: known, start: known });
     }
     if (data?.lifestyle) {
       setTempHeight(String(data.lifestyle.height_cm || '165'));
@@ -559,10 +566,21 @@ export default function PlanScreen() {
             )}
 
             {/* Weight Goal Widget */}
-            {data?.weightGoal && (() => {
-              const startW = parseFloat(data.weightGoal.startWeight) || 0;
-              const currentW = parseFloat(data.weightGoal.currentWeight) || 0;
-              const targetW = parseFloat(data.weightGoal.targetWeight) || 0;
+            {(data?.weightGoal || data?.lifestyle) && (() => {
+              // A missing user_weight_goals row used to hide this entire card —
+              // and with it the edit pencil, which is the ONLY route to
+              // (re)entering a goal once the one-time setup wizard is behind you
+              // (hasPlanSetup only checks user_lifestyle). So anyone whose goal
+              // write failed — e.g. the silently-swallowed DB CHECK-constraint
+              // rejection fixed in savePlanSettings (lib/plan.ts) — was left
+              // with no weight card AND no way to ever create one. The card now
+              // also renders in an empty "no goal yet" state whenever the plan
+              // is set up, keeping the goal always reachable.
+              const hasGoal = !!data?.weightGoal;
+              const goalKey = data.weightGoal?.fitnessGoal ?? data.lifestyle?.fitness_goal ?? 'weight_loss';
+              const startW = parseFloat(data.weightGoal?.startWeight) || 0;
+              const currentW = parseFloat(data.weightGoal?.currentWeight) || 0;
+              const targetW = parseFloat(data.weightGoal?.targetWeight) || 0;
               const totalDiff = Math.abs(startW - targetW);
               const currentDiff = Math.abs(startW - currentW);
               const progressPct = totalDiff === 0 ? 0 : Math.min(100, Math.max(0, (currentDiff / totalDiff) * 100));
@@ -607,7 +625,7 @@ export default function PlanScreen() {
                         )}
                         <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: theme.color }}>
                           <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
-                            {GOAL_LABELS[data.weightGoal.fitnessGoal] ?? data.weightGoal.fitnessGoal?.replace('_', ' ')}
+                            {GOAL_LABELS[goalKey] ?? goalKey?.replace('_', ' ')}
                           </Text>
                         </View>
                       </View>
@@ -759,6 +777,26 @@ export default function PlanScreen() {
                           </TouchableOpacity>
                         </View>
                       </Animated.View>
+                    ) : !hasGoal ? (
+                      /* No goal row yet — the empty state that keeps the goal
+                         reachable instead of hiding the whole card. */
+                      <View className="items-center py-2">
+                        <Text className="text-center text-[13px] leading-5 text-rove-stone mb-4">
+                          {t('plan.index.noGoalBody')}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setIsEditingGoal(true);
+                          }}
+                          className="px-6 py-3 rounded-full"
+                          style={{ backgroundColor: theme.color }}
+                        >
+                          <Text className="text-[10px] font-bold uppercase tracking-widest text-white">
+                            {t('plan.index.noGoalCta')}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     ) : (
                       <>
                         {/* Weight Dashboard */}

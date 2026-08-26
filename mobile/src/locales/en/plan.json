@@ -101,29 +101,97 @@
     "roveChef": "Rove Chef",
     "phaseGuidance": {
       "Menstrual": {
-        "0": { "title": "Iron Focus", "tip": "Prioritize iron-rich foods", "desc": "Replace what you're losing" },
-        "1": { "title": "Gentle Fats", "tip": "Embrace healthy fats", "desc": "Avocado, nuts & olive oil soothe inflammation" },
-        "2": { "title": "Warming Carbs", "tip": "Don't skip carbs now", "desc": "Complex carbs reduce cramps & boost mood" },
-        "3": { "title": "Hydration", "tip": "Drink warm liquids", "desc": "Herbal teas & warm water ease discomfort" }
+        "0": {
+          "title": "Iron Focus",
+          "tip": "Prioritize iron-rich foods",
+          "desc": "Replace what you're losing"
+        },
+        "1": {
+          "title": "Gentle Fats",
+          "tip": "Embrace healthy fats",
+          "desc": "Avocado, nuts & olive oil soothe inflammation"
+        },
+        "2": {
+          "title": "Warming Carbs",
+          "tip": "Don't skip carbs now",
+          "desc": "Complex carbs reduce cramps & boost mood"
+        },
+        "3": {
+          "title": "Hydration",
+          "tip": "Drink warm liquids",
+          "desc": "Herbal teas & warm water ease discomfort"
+        }
       },
       "Follicular": {
-        "0": { "title": "Light & Fresh", "tip": "Go light on heavy fats", "desc": "Your body processes lighter foods better now" },
-        "1": { "title": "Protein Power", "tip": "Aim for {{grams}}g today", "desc": "Building phase - support with amino acids" },
-        "2": { "title": "Fiber Up", "tip": "Load up on fiber", "desc": "Helps metabolize rising estrogen" },
-        "3": { "title": "Energizing Carbs", "tip": "Complex carbs fuel workouts", "desc": "You can handle more intensity now" }
+        "0": {
+          "title": "Light & Fresh",
+          "tip": "Go light on heavy fats",
+          "desc": "Your body processes lighter foods better now"
+        },
+        "1": {
+          "title": "Protein Power",
+          "tip": "Aim for {{grams}}g today",
+          "desc": "Building phase - support with amino acids"
+        },
+        "2": {
+          "title": "Fiber Up",
+          "tip": "Load up on fiber",
+          "desc": "Helps metabolize rising estrogen"
+        },
+        "3": {
+          "title": "Energizing Carbs",
+          "tip": "Complex carbs fuel workouts",
+          "desc": "You can handle more intensity now"
+        }
       },
       "Ovulatory": {
-        "0": { "title": "Anti-Inflammatory", "tip": "Avoid processed foods", "desc": "Keep inflammation low at peak fertility" },
-        "1": { "title": "Omega Balance", "tip": "Focus on omega-3s", "desc": "Fish, flax & walnuts support hormones" },
-        "2": { "title": "Light Meals", "tip": "Eat smaller, frequent meals", "desc": "High energy means faster metabolism" },
-        "3": { "title": "Skip Heavy Fats", "tip": "Avoid fried & greasy foods", "desc": "Your liver is processing extra estrogen" }
+        "0": {
+          "title": "Anti-Inflammatory",
+          "tip": "Avoid processed foods",
+          "desc": "Keep inflammation low at peak fertility"
+        },
+        "1": {
+          "title": "Omega Balance",
+          "tip": "Focus on omega-3s",
+          "desc": "Fish, flax & walnuts support hormones"
+        },
+        "2": {
+          "title": "Light Meals",
+          "tip": "Eat smaller, frequent meals",
+          "desc": "High energy means faster metabolism"
+        },
+        "3": {
+          "title": "Skip Heavy Fats",
+          "tip": "Avoid fried & greasy foods",
+          "desc": "Your liver is processing extra estrogen"
+        }
       },
       "Luteal": {
-        "0": { "title": "Protein Stabilizer", "tip": "Maintain {{grams}}g protein", "desc": "Supports mood stability & muscle retention" },
-        "1": { "title": "Complex Carbs", "tip": "Don't cut carbs!", "desc": "They boost serotonin & reduce PMS anxiety" },
-        "2": { "title": "Healthy Fats", "tip": "Increase good fats now", "desc": "Supports progesterone production" },
-        "3": { "title": "Magnesium Rich", "tip": "Dark chocolate is okay!", "desc": "Magnesium eases cramps & cravings" },
-        "4": { "title": "Limit Salt & Sugar", "tip": "Reduce bloating triggers", "desc": "Avoid processed & salty snacks" }
+        "0": {
+          "title": "Protein Stabilizer",
+          "tip": "Maintain {{grams}}g protein",
+          "desc": "Supports mood stability & muscle retention"
+        },
+        "1": {
+          "title": "Complex Carbs",
+          "tip": "Don't cut carbs!",
+          "desc": "They boost serotonin & reduce PMS anxiety"
+        },
+        "2": {
+          "title": "Healthy Fats",
+          "tip": "Increase good fats now",
+          "desc": "Supports progesterone production"
+        },
+        "3": {
+          "title": "Magnesium Rich",
+          "tip": "Dark chocolate is okay!",
+          "desc": "Magnesium eases cramps & cravings"
+        },
+        "4": {
+          "title": "Limit Salt & Sugar",
+          "tip": "Reduce bloating triggers",
+          "desc": "Avoid processed & salty snacks"
+        }
       }
     }
   },
@@ -173,24 +241,72 @@
     "dishesToPickFrom": "{{count}} dishes to pick from",
     "animatedExamples": {
       "Menstrual": {
-        "snack": ["Warm Ragi Ladoo...", "Jaggery Til Chikki...", "Roasted Makhana..."],
-        "smoothie": ["Beetroot Iron Boost...", "Warm Turmeric Milk...", "Date & Almond Shake..."],
-        "salad": ["Warm Moong Bowl...", "Steamed Veggie Khichdi...", "Spiced Sweet Potato..."]
+        "snack": [
+          "Warm Ragi Ladoo...",
+          "Jaggery Til Chikki...",
+          "Roasted Makhana..."
+        ],
+        "smoothie": [
+          "Beetroot Iron Boost...",
+          "Warm Turmeric Milk...",
+          "Date & Almond Shake..."
+        ],
+        "salad": [
+          "Warm Moong Bowl...",
+          "Steamed Veggie Khichdi...",
+          "Spiced Sweet Potato..."
+        ]
       },
       "Follicular": {
-        "snack": ["Sprouted Moong Chaat...", "Roasted Chana...", "Fresh Fruit Chaat..."],
-        "smoothie": ["Green Detox Blend...", "Mixed Berry Lassi...", "Cucumber Mint Cooler..."],
-        "salad": ["Sprout & Veggie Bowl...", "Kachumber Salad...", "Citrus Quinoa Bowl..."]
+        "snack": [
+          "Sprouted Moong Chaat...",
+          "Roasted Chana...",
+          "Fresh Fruit Chaat..."
+        ],
+        "smoothie": [
+          "Green Detox Blend...",
+          "Mixed Berry Lassi...",
+          "Cucumber Mint Cooler..."
+        ],
+        "salad": [
+          "Sprout & Veggie Bowl...",
+          "Kachumber Salad...",
+          "Citrus Quinoa Bowl..."
+        ]
       },
       "Ovulatory": {
-        "snack": ["Chilled Fruit Bowl...", "Cucumber Raita Cups...", "Coconut Ladoo..."],
-        "smoothie": ["Coconut Water Cooler...", "Watermelon Mint Blend...", "Chilled Buttermilk..."],
-        "salad": ["Watermelon Feta Bowl...", "Curd Rice Bowl...", "Cooling Cucumber Salad..."]
+        "snack": [
+          "Chilled Fruit Bowl...",
+          "Cucumber Raita Cups...",
+          "Coconut Ladoo..."
+        ],
+        "smoothie": [
+          "Coconut Water Cooler...",
+          "Watermelon Mint Blend...",
+          "Chilled Buttermilk..."
+        ],
+        "salad": [
+          "Watermelon Feta Bowl...",
+          "Curd Rice Bowl...",
+          "Cooling Cucumber Salad..."
+        ]
       },
       "Luteal": {
-        "snack": ["Dark Chocolate Bites...", "Roasted Nut Mix...", "Baked Sweet Potato..."],
-        "smoothie": ["Banana Cacao Shake...", "Warm Golden Milk...", "Peanut Butter Blend..."],
-        "salad": ["Warm Grain Bowl...", "Roasted Veggie Bowl...", "Paneer Bhurji Bowl..."]
+        "snack": [
+          "Dark Chocolate Bites...",
+          "Roasted Nut Mix...",
+          "Baked Sweet Potato..."
+        ],
+        "smoothie": [
+          "Banana Cacao Shake...",
+          "Warm Golden Milk...",
+          "Peanut Butter Blend..."
+        ],
+        "salad": [
+          "Warm Grain Bowl...",
+          "Roasted Veggie Bowl...",
+          "Paneer Bhurji Bowl..."
+        ]
       }
     }
   },
@@ -321,6 +437,8 @@
     "whyItWorksRightNow": "Why it works right now",
     "startSession": "Start Session",
     "optimizedForCycle": "Optimized for your cycle",
-    "recentSessions": "Recent Sessions"
+    "recentSessions": "Recent Sessions",
+    "noGoalBody": "Set a target weight to track your progress here.",
+    "noGoalCta": "Set Your Goal"
   }
 }
