@@ -1,9 +1,15 @@
 /**
  * Per-goal supplementary content for the Plan screen's "Focus For You" section.
- * Goal ids match GOALS in mobile/src/components/onboarding/StepGoals.tsx and
- * mobile/src/components/profile/FocusGoals.tsx. "syncing"/"tracking" are
- * intentionally omitted — they describe the app's default behavior, not
- * anything extra to surface.
+ *
+ * Goal ids must match GOALS in mobile/src/components/onboarding/StepGoals.tsx
+ * and mobile/src/components/profile/FocusGoals.tsx exactly — those are the
+ * only three ids `goals` can ever contain ('syncing', 'tracking',
+ * 'weight_loss'). This file used to also define 'pcos' / 'other' /
+ * 'learn_body', none of which exist as a selectable goal anywhere, so those
+ * entries could never render; removed rather than left as dead content.
+ *
+ * 'syncing' and 'tracking' still have no entry here — they describe the
+ * app's default behavior, not anything extra to surface.
  */
 
 export type GoalContentCta = {
@@ -25,23 +31,11 @@ export type GoalContentEntry = {
 export const GOAL_CONTENT: Record<string, GoalContentEntry> = {
     weight_loss: {
         title: 'Weight Goal',
-        body: "Pairing your cycle phase with a weight target helps pace expectations — energy and appetite naturally shift phase to phase. Set or update yours from your Plan setup.",
+        // Names what actually happens once she sets it up, rather than the
+        // vaguer "pace expectations" this used to say — Nourish really does
+        // recompute her calorie and macro targets from cycle phase, activity
+        // level and this goal (see mobile/src/lib/calorieCalculator.ts).
+        body: "Once you set a target weight in Plan setup, your Nourish tab's calorie and macro numbers adjust to it automatically — recalculated for your cycle phase and activity level, not one fixed number all month.",
         icon: 'trending-down',
-    },
-    pcos: {
-        title: 'PCOS Guidance',
-        body: 'Irregular cycles are common with PCOS. Consistent logging helps us tailor nutrition and movement guidance to what your body actually needs.',
-        icon: 'heart',
-    },
-    other: {
-        title: 'General Wellness',
-        body: "Small, steady habits — hydration, sleep, movement — compound more than any single big change. We'll keep surfacing the ones that fit your current phase.",
-        icon: 'sun',
-    },
-    learn_body: {
-        title: 'Learn My Body',
-        body: 'Want the deeper science behind what you\'re feeling this phase? The Learn tab has bite-sized reads on hormones, symptoms, and cycle patterns.',
-        icon: 'book-open',
-        cta: { label: 'Explore Learn', target: 'learn' },
     },
 };
