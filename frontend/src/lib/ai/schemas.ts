@@ -52,7 +52,11 @@ export const ChefOptionSchema = z.object({
     drink_type: z.enum(["smoothie", "juice", "soup"]).optional(),
     // Self-reported added/free sugar estimate in grams, checked against a
     // hard cap in the quality gate.
-    estimated_sugar_g: z.number().optional()
+    estimated_sugar_g: z.number().optional(),
+    // Only meaningful when mealType is "snack" — lets the quality gate cap
+    // how many of the 4 options are dessert-style sweets (ladoo/halwa/etc.)
+    // without guessing sweetness from the dish name.
+    flavor_profile: z.enum(["sweet", "savory"]).optional()
 });
 
 export const ChefOptionsResponseSchema = z.object({

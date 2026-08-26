@@ -1197,10 +1197,10 @@ export interface ChefDetailInput {
 // preference and every phase's serving rules.
 const CHEF_OPTIONS_FALLBACK: Record<ChefOptionsInput["mealType"], ChefOption[]> = {
     snack: [
-        { name: "Roasted Makhana", description: "Ghee-roasted foxnuts with rock salt and pepper.", prep_time_minutes: 5, key_ingredients: ["Makhana", "Ghee", "Black pepper"], why: "Magnesium in makhana eases muscle tension common in this phase.", serving_style: "warm" },
-        { name: "Roasted Chana Chaat", description: "Crunchy roasted chana with onion, lemon and chaat masala.", prep_time_minutes: 5, key_ingredients: ["Roasted chana", "Onion", "Lemon", "Chaat masala"], why: "Iron in chana supports steady energy through the cycle.", serving_style: "room" },
-        { name: "Peanut Jaggery Ladoo", description: "Two-ingredient ladoos, sweet and grounding.", prep_time_minutes: 10, key_ingredients: ["Peanuts", "Jaggery"], why: "Iron in jaggery helps replenish stores while peanuts add B6.", serving_style: "room" },
-        { name: "Masala Sweet Potato", description: "Warm boiled sweet potato tossed in lemon and cumin.", prep_time_minutes: 15, key_ingredients: ["Sweet potato", "Lemon", "Cumin"], why: "Complex carbs in sweet potato steady mood and cravings.", serving_style: "warm" }
+        { name: "Roasted Makhana", description: "Ghee-roasted foxnuts with rock salt and pepper.", prep_time_minutes: 5, key_ingredients: ["Makhana", "Ghee", "Black pepper"], why: "Magnesium in makhana eases muscle tension common in this phase.", serving_style: "warm", flavor_profile: "savory" },
+        { name: "Roasted Chana Chaat", description: "Crunchy roasted chana with onion, lemon and chaat masala.", prep_time_minutes: 5, key_ingredients: ["Roasted chana", "Onion", "Lemon", "Chaat masala"], why: "Iron in chana supports steady energy through the cycle.", serving_style: "room", flavor_profile: "savory" },
+        { name: "Peanut Jaggery Ladoo", description: "Two-ingredient ladoos, sweet and grounding.", prep_time_minutes: 10, key_ingredients: ["Peanuts", "Jaggery"], why: "Iron in jaggery helps replenish stores while peanuts add B6.", serving_style: "room", flavor_profile: "sweet", estimated_sugar_g: 10 },
+        { name: "Masala Sweet Potato", description: "Warm boiled sweet potato tossed in lemon and cumin.", prep_time_minutes: 15, key_ingredients: ["Sweet potato", "Lemon", "Cumin"], why: "Complex carbs in sweet potato steady mood and cravings.", serving_style: "warm", flavor_profile: "savory" }
     ],
     smoothie: [
         { name: "Banana Peanut Protein Shake", description: "Thick banana shake blended with a scoop of protein powder.", prep_time_minutes: 5, key_ingredients: ["Banana", "Milk", "Peanut protein powder"], why: "B6 in banana plus added protein keeps energy and mood steady in this phase.", serving_style: "room", drink_type: "smoothie", estimated_sugar_g: 9 },
@@ -1270,8 +1270,20 @@ function evaluateChefOptionsQuality(
         if (proteinScoopViolation) reasons.push("smoothie_missing_protein_scoop");
     }
 
+    // Snack sweetness — only meaningful for the snack tab: at most 1 of the
+    // 4 options may be a dessert-style sweet (ladoo/halwa/chikki/etc.), so
+    // the set doesn't read as an all-sugar dessert menu. Checked via the
+    // model's own self-reported flavor_profile rather than guessing from
+    // the dish name.
+    let snackTooSweetViolation = false;
+    if (mealType === "snack") {
+        const sweetCount = candidate.options.filter((o) => o.flavor_profile === "sweet").length;
+        snackTooSweetViolation = sweetCount > 1;
+        if (snackTooSweetViolation) reasons.push("snack_too_sweet_no_variety");
+    }
+
     const phaseRulePassed = !servingViolation && distinct && !repeatsChosen
-        && !sugarViolation && !compositionViolation && !proteinScoopViolation;
+        && !sugarViolation && !compositionViolation && !proteinScoopViolation && !snackTooSweetViolation;
     const genericScore = computeGenericScore(
         candidate.options.flatMap((o) => [o.name, o.description, o.why])
     );
