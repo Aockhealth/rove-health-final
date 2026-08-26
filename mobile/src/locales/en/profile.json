@@ -166,6 +166,13 @@
     "resetEmailFailed": "Failed to send reset email",
     "resetEmailSent": "Password reset email sent",
     "deleteAccountFailed": "Failed to delete account",
+    "cycleLengthSuggestion": {
+      "title": "Your cycles look a little different",
+      "body": "Your recent periods average {{observed}} days apart, but your settings say {{stored}}. We're already using {{observed}} for your predictions — update your settings to match?",
+      "action": "Update to {{observed}} days",
+      "updated": "Cycle length updated",
+      "failed": "Could not update your cycle length"
+    },
     "trackingMode": {
       "title": "Tracking Mode",
       "description": "Conceiving mode adds basal temperature and ovulation test logging, and detects your ovulation from them.",

@@ -1,7 +1,16 @@
 import { supabase } from './supabase';
-import { calculatePhase, getRelevantPeriodStart, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
+import {
+  calculatePhase,
+  deriveObservedCycleLength,
+  formatDate,
+  getRelevantPeriodStart,
+  type CycleSettings,
+  type DailyLog,
+} from '@shared/cycle/phase';
 
-const LOG_WINDOW_DAYS = 90;
+// Wide enough to hold CYCLE_HISTORY_LOOKBACK cycles even at a long cycle
+// length — the suggestion below is only as good as the history behind it.
+const LOG_WINDOW_DAYS = 270;
 
 export type ProfileFormData = {
   full_name: string;
@@ -20,6 +29,17 @@ export type ProfileCycleData = {
   last_period_start: string;
   cycle_length_days: number;
   period_length_days: number;
+  /**
+   * The cycle length her logged periods actually show, when it differs from
+   * the stored `cycle_length_days` by enough to be worth mentioning. null when
+   * there isn't enough history, or when her setting already matches.
+   *
+   * The engine already predicts from this (see resolveCycleSettings); this
+   * field exists so Profile can offer to bring the number she typed into line
+   * with it, rather than the app silently disagreeing with its own settings
+   * screen.
+   */
+  observedCycleLength: number | null;
 };
 
 export type ProfilePageData = {
@@ -60,7 +80,7 @@ export async function fetchProfilePageData(): Promise<ProfilePageData | null> {
         .from('daily_logs')
         .select('date, is_period')
         .eq('user_id', user.id)
-        .gte('date', pastDate.toISOString().split('T')[0]),
+        .gte('date', formatDate(pastDate)),
     ]);
 
   const profile = profileResult.data;
@@ -94,6 +114,14 @@ export async function fetchProfilePageData(): Promise<ProfilePageData | null> {
     if (start) resolvedLastPeriodStart = start;
   }
 
+  // What her logs say her cycle actually is. Only surfaced when it differs
+  // from the stored number by more than a day — a one-day drift is normal
+  // month-to-month wobble, not something worth prompting about.
+  const storedCycleLength = cycleSettings?.cycle_length_days || 28;
+  const derived = deriveObservedCycleLength(new Date(), monthLogs);
+  const observedCycleLength =
+    derived !== null && Math.abs(derived - storedCycleLength) > 1 ? derived : null;
+
   return {
     user: { id: user.id, email: user.email || '' },
     formData: {
@@ -111,8 +139,9 @@ export async function fetchProfilePageData(): Promise<ProfilePageData | null> {
     },
     cycleData: {
       last_period_start: resolvedLastPeriodStart,
-      cycle_length_days: cycleSettings?.cycle_length_days || 28,
+      cycle_length_days: storedCycleLength,
       period_length_days: cycleSettings?.period_length_days || 5,
+      observedCycleLength,
     },
     smartPhase,
   };

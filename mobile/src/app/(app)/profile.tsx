@@ -22,6 +22,7 @@ import {
   updateUserProfile,
   updateContactInfo,
   deleteUserAccount,
+  updateCycleSettings,
   type ProfileFormData,
   type ProfileCycleData,
 } from '../../lib/profile';
@@ -71,6 +72,7 @@ export default function ProfileScreen() {
     last_period_start: '',
     cycle_length_days: 28,
     period_length_days: 5,
+    observedCycleLength: null,
   });
   const [unifiedPhase, setUnifiedPhase] = useState('Menstrual');
 
@@ -144,6 +146,36 @@ export default function ProfileScreen() {
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    invalidateAppData();
+  };
+
+  // Brings the number she typed at onboarding into line with what her logged
+  // periods actually show. The engine already predicts from the observed
+  // value (see resolveCycleSettings) — this only exists so the settings
+  // screen stops contradicting the predictions, and it stays her decision.
+  const [isApplyingCycleLength, setIsApplyingCycleLength] = useState(false);
+  const handleApplyObservedCycleLength = async () => {
+    const observed = cycleData.observedCycleLength;
+    if (observed === null || isApplyingCycleLength) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsApplyingCycleLength(true);
+    const res = await updateCycleSettings({
+      last_period_start: cycleData.last_period_start,
+      cycle_length_days: observed,
+      period_length_days: cycleData.period_length_days,
+      is_irregular: formData.is_irregular,
+    });
+    setIsApplyingCycleLength(false);
+
+    if (res.error) {
+      toast.error(t('profile.screen.cycleLengthSuggestion.failed'), { description: res.error });
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Clearing observedCycleLength dismisses the card — the two numbers agree now.
+    setCycleData({ ...cycleData, cycle_length_days: observed, observedCycleLength: null });
+    toast.success(t('profile.screen.cycleLengthSuggestion.updated'));
     invalidateAppData();
   };
 
@@ -269,6 +301,39 @@ export default function ProfileScreen() {
               phaseName={unifiedPhase}
               theme={theme}
             />
+
+            {cycleData.observedCycleLength !== null && (
+              <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
+                <Text
+                  className="mb-2 text-xl text-stone-800"
+                  style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}
+                >
+                  {t('profile.screen.cycleLengthSuggestion.title')}
+                </Text>
+                <Text className="mb-4 text-xs leading-relaxed text-stone-500">
+                  {t('profile.screen.cycleLengthSuggestion.body', {
+                    observed: cycleData.observedCycleLength,
+                    stored: cycleData.cycle_length_days,
+                  })}
+                </Text>
+                <TouchableOpacity
+                  onPress={handleApplyObservedCycleLength}
+                  disabled={isApplyingCycleLength}
+                  activeOpacity={0.85}
+                  className="flex-row items-center justify-center rounded-2xl p-3.5"
+                  style={{
+                    backgroundColor: theme.accentColor,
+                    opacity: isApplyingCycleLength ? 0.6 : 1,
+                  }}
+                >
+                  <Text className="text-xs font-bold uppercase tracking-widest text-white">
+                    {t('profile.screen.cycleLengthSuggestion.action', {
+                      observed: cycleData.observedCycleLength,
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <View className="rounded-[2rem] border border-white/60 bg-white/70 p-6">
               <Text
