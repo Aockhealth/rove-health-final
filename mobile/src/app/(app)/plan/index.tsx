@@ -164,7 +164,13 @@ export default function PlanScreen() {
       setIsEditingGoal(false);
       await loadData(true);
     } catch (e) {
-      Alert.alert(t('plan.index.errorTitle'), t('plan.index.errorUpdatePlan'));
+      // Surface the underlying DB error, not just a generic string: these
+      // writes fail for schema/RLS reasons (a missing column, a missing UPDATE
+      // policy) that are indistinguishable from the outside otherwise, and
+      // savePlanSettings used to swallow them entirely.
+      const detail = e instanceof Error ? e.message : String(e);
+      console.error('[plan] savePlanSettings (goal edit) failed:', detail);
+      Alert.alert(t('plan.index.errorTitle'), `${t('plan.index.errorUpdatePlan')}\n\n${detail}`);
     }
     setIsSavingGoal(false);
   };
@@ -280,7 +286,9 @@ export default function PlanScreen() {
       });
       await loadData(true);
     } catch (e) {
-      Alert.alert(t('plan.index.errorTitle'), t('plan.index.errorSavePlan'));
+      const detail = e instanceof Error ? e.message : String(e);
+      console.error('[plan] savePlanSettings (setup wizard) failed:', detail);
+      Alert.alert(t('plan.index.errorTitle'), `${t('plan.index.errorSavePlan')}\n\n${detail}`);
     }
     setIsSaving(false);
   };
