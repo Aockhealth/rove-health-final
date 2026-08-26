@@ -1330,7 +1330,7 @@ export default function PlanScreen() {
                       <Pressable
                         onPress={() => setExpandedExerciseIndex(i)}
                         className="rounded-[22px] overflow-hidden relative border border-white/40"
-                        style={{ aspectRatio: 1, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 3 : 0 }}
+                        style={{ minHeight: 168, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: Platform.OS === 'ios' ? 3 : 0 }}
                       >
                         {Platform.OS === 'ios' ? (
                           <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
@@ -1351,9 +1351,17 @@ export default function PlanScreen() {
                             <Text className="text-2xl opacity-80">{getEmoji(ex.title)}</Text>
                           </View>
 
-                          {/* Bottom: title + time */}
+                          {/* Bottom: title + preview + time. The preview line is what
+                              was missing before — the collapsed card used to show only a
+                              title and a time badge, with the actual reasoning ("why this,
+                              why now") hidden until you tapped through. */}
                           <View>
-                            <Text className="text-[16px] text-rove-charcoal leading-tight mb-2" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{ex.title}</Text>
+                            <Text className="text-[16px] text-rove-charcoal leading-tight mb-1" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>{ex.title}</Text>
+                            {!!ex.desc && (
+                              <Text numberOfLines={2} className="text-[10.5px] leading-[13px] text-rove-charcoal/60 mb-2">
+                                {ex.desc}
+                              </Text>
+                            )}
                             <View className="flex-row items-center">
                               <View className="px-2 py-1 rounded-md bg-white/50 border border-white/80 flex-row items-center shadow-sm" style={{ shadowColor: theme.color, shadowOpacity: 0.1, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }}>
                                 <Feather name="clock" size={9} color={theme.color} style={{ marginRight: 4 }} />
