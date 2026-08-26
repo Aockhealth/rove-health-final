@@ -281,7 +281,13 @@ export async function savePlanSettings(data: any) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    // Save to user_lifestyle
+    // onConflict MUST be spelled out (as it already is in lib/onboarding.ts and
+    // lib/profile.ts). Without it PostgREST resolves conflicts against the
+    // table's PRIMARY KEY, and in the live DB these tables carry a surrogate
+    // `id` PK plus a separate UNIQUE (user_id) -- so an upsert that omits `id`
+    // is planned as a plain INSERT and dies on
+    // "duplicate key value violates unique constraint user_lifestyle_user_id_key"
+    // for anyone who already has a row (i.e. every returning user).
     const { error: lifestyleError } = await supabase.from("user_lifestyle").upsert({
         user_id: user.id,
         height_cm: data.height_cm,
@@ -290,7 +296,7 @@ export async function savePlanSettings(data: any) {
         diet_preference: data.diet_preference,
         fitness_goal: data.fitness_goal,
         updated_at: new Date().toISOString()
-    });
+    }, { onConflict: "user_id" });
     if (lifestyleError) throw new Error(`user_lifestyle save failed: ${lifestyleError.message}`);
 
     const weeklyRateKg = Math.min(
@@ -298,15 +304,33 @@ export async function savePlanSettings(data: any) {
         DB_MAX_WEEKLY_RATE_KG
     );
 
-    // Save to user_weight_goals
-    const { error: weightGoalError } = await supabase.from("user_weight_goals").upsert({
+    // start_weight_kg / start_date are the baseline the Plan screen measures
+    // progress against ("2.4 kg lost"), so they belong to the FIRST goal only.
+    // Re-sending them on every save would silently reset that baseline to
+    // today's weight each time she edits her height or diet, permanently
+    // zeroing her progress bar. Seed them only when there is no goal row yet
+    // (or when an older row never got a baseline written).
+    const { data: existingGoal, error: existingGoalError } = await supabase
+        .from("user_weight_goals")
+        .select("start_weight_kg, start_date")
+        .eq("user_id", user.id)
+        .maybeSingle();
+    if (existingGoalError) throw new Error(`user_weight_goals read failed: ${existingGoalError.message}`);
+
+    const weightGoalRow: Record<string, any> = {
         user_id: user.id,
         current_weight_kg: data.weight_kg,
-        start_weight_kg: data.weight_kg,
         target_weight_kg: data.target_weight_kg,
         weekly_rate_kg: weeklyRateKg,
-        start_date: new Date().toISOString()
-    });
+        updated_at: new Date().toISOString()
+    };
+    if (existingGoal?.start_weight_kg == null) weightGoalRow.start_weight_kg = data.weight_kg;
+    if (existingGoal?.start_date == null) weightGoalRow.start_date = new Date().toISOString();
+
+    // Save to user_weight_goals
+    const { error: weightGoalError } = await supabase
+        .from("user_weight_goals")
+        .upsert(weightGoalRow, { onConflict: "user_id" });
     if (weightGoalError) throw new Error(`user_weight_goals save failed: ${weightGoalError.message}`);
 
     return { success: true };
