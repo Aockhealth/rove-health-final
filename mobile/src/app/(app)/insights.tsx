@@ -11,11 +11,10 @@ import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { phaseThemes } from '../../data/home-content';
 import { fetchInsightsData } from '../../lib/insights';
-import { fetchRoveInsight } from '../../lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { CycleOverviewCard } from '../../components/insights/CycleOverviewCard';
 import { HabitsOverviewCard } from '../../components/insights/HabitsOverviewCard';
-import { PhaseInsightCard } from '../../components/insights/PhaseInsightCard';
+import { PhasePatternCard } from '../../components/insights/PhasePatternCard';
 import { MentalHealthCheckCard } from '../../components/insights/MentalHealthCheckCard';
 import { HealthReportCard } from '../../components/insights/HealthReportCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
@@ -26,6 +25,14 @@ import { LockedComingSoonCard } from '../../components/insights/LockedComingSoon
 import { HormoneRhythmCard } from '../../components/insights/HormoneRhythmCard';
 import { CycleAnomalyCard } from '../../components/insights/CycleAnomalyCard';
 import { PmosScoreCard } from '../../components/insights/PmosScoreCard';
+
+/** [label, count] with the highest count in a phase's mood/symptom tally, or null with nothing logged yet. */
+function topEntry(counts: Record<string, number> | undefined): [string, number] | null {
+  if (!counts) return null;
+  const entries = Object.entries(counts);
+  if (entries.length === 0) return null;
+  return entries.reduce((best, cur) => (cur[1] > best[1] ? cur : best));
+}
 
 const TABS = [
   { id: 'cycle', labelKey: 'cycle', icon: 'calendar' },
@@ -41,9 +48,6 @@ export default function InsightsScreen() {
   const [activeTab, setActiveTab] = useState<'cycle' | 'patterns' | 'health'>(
     initialTab === 'health' || initialTab === 'patterns' ? initialTab : 'cycle'
   );
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiInsight, setAiInsight] = useState<{ title?: string; insight: string } | null>(null);
-  const [insightError, setInsightError] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
   // Animation values for tab bar
@@ -72,25 +76,6 @@ export default function InsightsScreen() {
     queryKey: ['insights'],
     queryFn: fetchInsightsData,
   });
-
-  const handleGenerateInsight = useCallback(async () => {
-    setIsGenerating(true);
-    setInsightError(false);
-    try {
-      const phaseName = stats?.phase?.name || 'Menstrual';
-      const moodCounts = stats?.moodsByPhase?.[phaseName] || {};
-      const result = await fetchRoveInsight({ phase: phaseName, moodCounts });
-      if (result.insight) {
-        setAiInsight({ title: result.title, insight: result.insight });
-      } else {
-        setInsightError(true);
-      }
-    } catch (e) {
-      setInsightError(true);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [stats]);
 
   const scrollY = useSharedValue(0);
   const scrollHandler = useAnimatedScrollHandler({
@@ -232,14 +217,13 @@ export default function InsightsScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(200).duration(500).springify()}>
-              <PhaseInsightCard
+              <PhasePatternCard
                 phase={phaseName}
-                day={stats?.phase?.day || 1}
-                insight={aiInsight}
+                loggedDaysThisPhase={stats?.phaseCounts?.[phaseName] || 0}
+                topMood={topEntry(stats?.moodsByPhase?.[phaseName])}
+                topSymptom={topEntry(stats?.symptomsByPhase?.[phaseName])}
                 theme={theme}
-                isGenerating={isGenerating}
-                hasError={insightError}
-                onGenerateInsight={handleGenerateInsight}
+                onSeeFullBreakdown={() => handleTabPress('patterns')}
               />
             </Animated.View>
 
