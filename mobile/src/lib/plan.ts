@@ -268,12 +268,21 @@ export async function fetchPlanPageDataFast() {
   };
 }
 
+// user_weight_goals.weekly_rate_kg has a DB-level CHECK constraint of
+// [0.25, 0.75] (see supabase/migrations/001_ai_personalization.sql), but the
+// Plan screen's own "safe pace" clamp only enforces [0, 1.0] — so a goal with
+// a small weight difference or a long timeline can compute a rate outside
+// the DB's stricter range. Re-clamping here guarantees the write below never
+// gets rejected by that constraint no matter which caller/UI clamp fed it.
+const DB_MIN_WEEKLY_RATE_KG = 0.25;
+const DB_MAX_WEEKLY_RATE_KG = 0.75;
+
 export async function savePlanSettings(data: any) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
-    
+
     // Save to user_lifestyle
-    await supabase.from("user_lifestyle").upsert({
+    const { error: lifestyleError } = await supabase.from("user_lifestyle").upsert({
         user_id: user.id,
         height_cm: data.height_cm,
         weight_kg: data.weight_kg,
@@ -282,16 +291,23 @@ export async function savePlanSettings(data: any) {
         fitness_goal: data.fitness_goal,
         updated_at: new Date().toISOString()
     });
+    if (lifestyleError) throw new Error(`user_lifestyle save failed: ${lifestyleError.message}`);
+
+    const weeklyRateKg = Math.min(
+        Math.max(data.weekly_rate_kg, DB_MIN_WEEKLY_RATE_KG),
+        DB_MAX_WEEKLY_RATE_KG
+    );
 
     // Save to user_weight_goals
-    await supabase.from("user_weight_goals").upsert({
+    const { error: weightGoalError } = await supabase.from("user_weight_goals").upsert({
         user_id: user.id,
         current_weight_kg: data.weight_kg,
         start_weight_kg: data.weight_kg,
         target_weight_kg: data.target_weight_kg,
-        weekly_rate_kg: data.weekly_rate_kg,
+        weekly_rate_kg: weeklyRateKg,
         start_date: new Date().toISOString()
     });
+    if (weightGoalError) throw new Error(`user_weight_goals save failed: ${weightGoalError.message}`);
 
     return { success: true };
 }
