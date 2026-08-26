@@ -161,13 +161,14 @@ export async function fetchPlanPageDataFast() {
           lifestyle.fitness_goal,
           weightGoal?.weekly_rate_kg
       );
-      const macros = getPhaseMacros(phase, targetCalories);
+      const macros = getPhaseMacros(phase, targetCalories, lifestyle.fitness_goal);
       macroFuel = {
           ...staticMacroFuel,
           calories: targetCalories,
           protein: macros.protein.g,
           fats: macros.fats.g,
           carbs: macros.carbs.g,
+          sugar: macros.sugar.g,
       };
   }
 

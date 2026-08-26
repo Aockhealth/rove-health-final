@@ -139,9 +139,21 @@ export default function PlanScreen() {
     }
   }, [data?.weightGoal, data?.lifestyle]);
 
+  // Whether a weight goal already exists decides which weight fields the form
+  // offers at all (see the editor below): setting a goal for the first time
+  // asks for Start and Goal, since "now" and "start" are the same number that
+  // day and asking for both invites contradicting answers. Afterwards Start is
+  // history and Goal is the target, so the number she comes back to change is
+  // her current weight.
+  const hasGoal = !!data?.weightGoal;
+  // Before a goal exists, "now" IS the start weight — the pace maths below has
+  // to read it from there, or the first save computes a rate from an untouched
+  // 0 and lands on a nonsense timeline.
+  const effectiveCurrentWeight = hasGoal ? tempGoalData.current : tempGoalData.start;
+
   // Same safe-pace derivation as the setup wizard (see MAX_SAFE_WEEKLY_RATE_KG
   // above) — kept in sync here since this edit form now also sets the pace.
-  const editTotalToLoseKg = Math.abs(tempGoalData.current - tempGoalData.target);
+  const editTotalToLoseKg = Math.abs(effectiveCurrentWeight - tempGoalData.target);
   const editWeeksAvailable = tempDesiredMonths * AVG_WEEKS_PER_MONTH;
   const editRawWeeklyRateKg = editWeeksAvailable > 0 ? editTotalToLoseKg / editWeeksAvailable : 0;
   const editSafeWeeklyRateKg = Math.min(Math.max(editRawWeeklyRateKg, 0), MAX_SAFE_WEEKLY_RATE_KG);
@@ -154,7 +166,7 @@ export default function PlanScreen() {
     try {
       await savePlanSettings({
         height_cm: parseFloat(tempHeight),
-        weight_kg: tempGoalData.current,
+        weight_kg: effectiveCurrentWeight,
         activity_level: tempActivity,
         diet_preference: tempDiet,
         fitness_goal: tempFitnessGoal,
@@ -584,7 +596,6 @@ export default function PlanScreen() {
               // with no weight card AND no way to ever create one. The card now
               // also renders in an empty "no goal yet" state whenever the plan
               // is set up, keeping the goal always reachable.
-              const hasGoal = !!data?.weightGoal;
               const goalKey = data.weightGoal?.fitnessGoal ?? data.lifestyle?.fitness_goal ?? 'weight_loss';
               const startW = parseFloat(data.weightGoal?.startWeight) || 0;
               const currentW = parseFloat(data.weightGoal?.currentWeight) || 0;
@@ -641,35 +652,59 @@ export default function PlanScreen() {
 
                     {isEditingGoal ? (
                       <Animated.View entering={FadeInUp.duration(300)}>
-                        {[
-                          { label: t('plan.index.startLabel'), key: 'start' as const },
-                          { label: t('plan.index.nowLabel'), key: 'current' as const },
-                          { label: t('plan.index.goalLabel'), key: 'target' as const },
-                        ].map(({ label, key }) => (
+                        {/* Setting a goal for the first time asks only for
+                            Start and Goal — on day one "now" and "start" are
+                            the same weight, and asking for both lets her enter
+                            two different numbers for one fact. Once the goal
+                            exists, Start is history and Goal is the target, so
+                            the field she returns to change is her weight today;
+                            the other two stay visible as context. */}
+                        {(hasGoal
+                          ? [
+                              { label: t('plan.index.startLabel'), key: 'start' as const, editable: false },
+                              { label: t('plan.index.nowLabel'), key: 'current' as const, editable: true },
+                              { label: t('plan.index.goalLabel'), key: 'target' as const, editable: false },
+                            ]
+                          : [
+                              { label: t('plan.index.startLabel'), key: 'start' as const, editable: true },
+                              { label: t('plan.index.goalLabel'), key: 'target' as const, editable: true },
+                            ]
+                        ).map(({ label, key, editable }) => (
                           <View
                             key={key}
                             className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60 mb-3"
                           >
                             <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{label}</Text>
-                            <View className="flex-row items-center gap-3">
-                              <TouchableOpacity
-                                onPress={() => setTempGoalData((p) => ({ ...p, [key]: Math.max(0, p[key] - 0.5) }))}
-                                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
-                              >
-                                <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>−</Text>
-                              </TouchableOpacity>
+                            {editable ? (
+                              <View className="flex-row items-center gap-3">
+                                <TouchableOpacity
+                                  onPress={() => setTempGoalData((p) => ({ ...p, [key]: Math.max(0, p[key] - 0.5) }))}
+                                  className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                                >
+                                  <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>−</Text>
+                                </TouchableOpacity>
+                                <View style={{ minWidth: 56 }}>
+                                  <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+                                    {tempGoalData[key]}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => setTempGoalData((p) => ({ ...p, [key]: p[key] + 0.5 }))}
+                                  className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                                >
+                                  <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>+</Text>
+                                </TouchableOpacity>
+                              </View>
+                            ) : (
                               <View style={{ minWidth: 56 }}>
-                                <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+                                <Text
+                                  className="text-xl text-center text-rove-stone"
+                                  style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}
+                                >
                                   {tempGoalData[key]}
                                 </Text>
                               </View>
-                              <TouchableOpacity
-                                onPress={() => setTempGoalData((p) => ({ ...p, [key]: p[key] + 0.5 }))}
-                                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
-                              >
-                                <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>+</Text>
-                              </TouchableOpacity>
-                            </View>
+                            )}
                           </View>
                         ))}
 
@@ -977,6 +1012,10 @@ export default function PlanScreen() {
                     protein: bp.nutrition_guide.macro_fuel.protein,
                     carbs: bp.nutrition_guide.macro_fuel.carbs,
                     fats: bp.nutrition_guide.macro_fuel.fats,
+                    // Computed from her own calorie target now, so it tightens
+                    // on a weight-loss goal instead of always sitting at the
+                    // card's flat WHO-10% fallback.
+                    sugar: bp.nutrition_guide.macro_fuel.sugar,
                   }}
                   theme={theme}
                 />
@@ -1067,6 +1106,10 @@ export default function PlanScreen() {
                     protein: bp.nutrition_guide.macro_fuel.protein,
                     carbs: bp.nutrition_guide.macro_fuel.carbs,
                     fats: bp.nutrition_guide.macro_fuel.fats,
+                    // Computed from her own calorie target now, so it tightens
+                    // on a weight-loss goal instead of always sitting at the
+                    // card's flat WHO-10% fallback.
+                    sugar: bp.nutrition_guide.macro_fuel.sugar,
                   }}
                   theme={theme}
                 />

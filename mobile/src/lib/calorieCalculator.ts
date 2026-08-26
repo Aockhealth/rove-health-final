@@ -114,7 +114,19 @@ export function applyGoalAdjustment(
   return Math.round(maintenanceCalories);
 }
 
-export function getPhaseMacros(phase: string, calories: number) {
+// WHO's free-sugar guidance: a strong recommendation to stay under 10% of
+// total energy, and a conditional one to go under 5% for further benefit. The
+// tighter figure is applied on a weight-loss goal, where displacing free sugar
+// is the least costly place to find part of the deficit.
+//
+// Expressed as a share of the *personalized* calorie target, so the sugar cap
+// already moves with activity level, cycle phase and goal rather than being a
+// fixed number — see calculateTDEE and applyGoalAdjustment.
+const WHO_SUGAR_SHARE = 0.1;
+const WHO_SUGAR_SHARE_WEIGHT_LOSS = 0.05;
+const CALORIES_PER_GRAM_SUGAR = 4;
+
+export function getPhaseMacros(phase: string, calories: number, fitnessGoal?: string | null) {
   let p = 0.25,
     f = 0.3,
     c = 0.45; // Default
@@ -134,9 +146,20 @@ export function getPhaseMacros(phase: string, calories: number) {
       break;
   }
 
+  // Deliberately not varied by cycle phase. Protein/fat/carb splits shift with
+  // phase because the body's fuel needs genuinely do; a free-sugar ceiling is a
+  // health guideline, and quietly raising it in the luteal phase to
+  // accommodate cravings would dress a preference up as nutrition advice.
+  const sugarShare = fitnessGoal === 'weight_loss' ? WHO_SUGAR_SHARE_WEIGHT_LOSS : WHO_SUGAR_SHARE;
+
   return {
     protein: { g: Math.round((calories * p) / 4), pct: p * 100 },
     fats: { g: Math.round((calories * f) / 9), pct: f * 100 },
     carbs: { g: Math.round((calories * c) / 4), pct: c * 100 },
+    /** A daily ceiling, not a target to reach. */
+    sugar: {
+      g: Math.round((calories * sugarShare) / CALORIES_PER_GRAM_SUGAR),
+      pct: sugarShare * 100,
+    },
   };
 }
