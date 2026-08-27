@@ -163,3 +163,60 @@ export function getPhaseMacros(phase: string, calories: number, fitnessGoal?: st
     },
   };
 }
+
+// ============================================================================
+// EXERCISE-EARNED CALORIES
+// ============================================================================
+
+// Labels as persisted in daily_logs.exercise_types (see EXERCISE_OPTIONS in
+// components/tracker/constants.ts — that file's own comment: "label is the
+// exact string persisted... to daily_logs"). Duplicated here rather than
+// imported so this stays a dependency-free calculation module; these three
+// change rarely and are checked by prefix ("Light" of "Light (Walk, Yoga)"),
+// not exact match, so minor wording changes to the parenthetical don't break it.
+const EXERCISE_TIER_PREFIXES = ['Intense', 'Moderate', 'Light'] as const;
+
+// Approximate MET (metabolic equivalent) values for the app's three exercise
+// intensity tiers, converted to kcal/min via the standard
+// kcal/min = MET × 3.5 × weightKg / 200 formula. A rough estimate for nudging
+// today's target — not a wearable-measured burn to build a calorie bank on.
+const EXERCISE_MET: Record<(typeof EXERCISE_TIER_PREFIXES)[number], number> = {
+  Light: 3.5,
+  Moderate: 5.5,
+  Intense: 8.5,
+};
+
+// Don't let a long, intense session hand back more than a lean-bulk-sized
+// surplus — earning back calories should nudge the target, not license
+// compensatory eating after a big workout.
+const MAX_EARNED_CALORIES = 500;
+
+/**
+ * Estimated calories earned back today from logged exercise, added to the
+ * day's target. This is the mechanic that was missing: calculateTDEE's
+ * activity_level input is a fixed onboarding setting, so completing a workout
+ * previously changed nothing about today's calorie ceiling — only tomorrow's
+ * baseline assumption did.
+ *
+ * `loggedTypes` is today's daily_logs.exercise_types (a multi-select, so more
+ * than one tier can be logged the same day); `totalMinutes` is the day's one
+ * aggregate exercise_minutes. The schema doesn't split minutes per type, so
+ * the highest-intensity tier logged today is applied to the whole total
+ * rather than guessing a split — a session that was "light AND intense" is
+ * more likely under-logged-as-light than genuinely half-and-half.
+ */
+export function calculateEarnedCalories(
+  loggedTypes: string[] | null | undefined,
+  totalMinutes: number | null | undefined,
+  weightKg: number
+): number {
+  if (!totalMinutes || totalMinutes <= 0 || !loggedTypes || loggedTypes.length === 0) return 0;
+
+  const highestTier = EXERCISE_TIER_PREFIXES.find((tier) =>
+    loggedTypes.some((label) => label.startsWith(tier))
+  );
+  if (!highestTier) return 0;
+
+  const kcalPerMin = (EXERCISE_MET[highestTier] * 3.5 * weightKg) / 200;
+  return Math.min(Math.round(kcalPerMin * totalMinutes), MAX_EARNED_CALORIES);
+}

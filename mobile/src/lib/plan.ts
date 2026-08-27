@@ -4,10 +4,11 @@ import { detectOvulation, type OvulationSignal, type TtcDailyLog } from '@shared
 import type { LhBandReading } from '@shared/cycle/lh';
 import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
 import { resolvePhaseSettings, toTtcLogs } from './phaseSettings';
+import { writeWeightLog } from './weightLog';
 import { PHASE_CONTENT } from '@shared/content/phase-content';
 import { hasPcosFlag } from './pcos';
 import { BLUEPRINTS } from '@shared/content/plan-blueprints';
-import { calculateAge, calculateTDEE, applyGoalAdjustment, getPhaseMacros } from './calorieCalculator';
+import { calculateAge, calculateTDEE, applyGoalAdjustment, getPhaseMacros, calculateEarnedCalories } from './calorieCalculator';
 import {
     scaleDurationForActivity,
     capIntensityForActivity,
@@ -45,7 +46,7 @@ export async function fetchPlanPageDataFast() {
       lhReadingsResult
   ] = await Promise.all([
       supabase.from("user_cycle_settings").select("*").eq("user_id", user.id).single(),
-      supabase.from("daily_logs").select("date, is_period, bbt_celsius, opk_result, nsaid_taken, disruptors, sleep_minutes, bbt_wake_time, cervical_discharge").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
+      supabase.from("daily_logs").select("date, is_period, bbt_celsius, opk_result, nsaid_taken, disruptors, sleep_minutes, bbt_wake_time, cervical_discharge, exercise_types, exercise_minutes").eq("user_id", user.id).gte("date", formatDate(pastDate)).order("date", { ascending: false }),
       supabase.from("user_lifestyle").select("*").eq("user_id", user.id).single(),
       supabase.from("user_weight_goals").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_onboarding").select("goals, conditions, date_of_birth, tracker_mode").eq("user_id", user.id).maybeSingle(),
@@ -156,15 +157,30 @@ export async function fetchPlanPageDataFast() {
           phase,
           lifestyle.activity_level
       );
-      const targetCalories = applyGoalAdjustment(
+      const baseTargetCalories = applyGoalAdjustment(
           maintenanceCalories,
           lifestyle.fitness_goal,
           weightGoal?.weekly_rate_kg
       );
+
+      // Exercise earning back calories today — the mechanic calculateTDEE's
+      // static activity_level input can't provide, since that's an onboarding
+      // setting, not today's actual logged workout. See calculateEarnedCalories.
+      const todayStr = formatDate(new Date());
+      const todayLog = logs.find((l: any) => l.date === todayStr);
+      const earnedCalories = calculateEarnedCalories(
+          todayLog?.exercise_types,
+          todayLog?.exercise_minutes,
+          lifestyle.weight_kg
+      );
+      const targetCalories = baseTargetCalories + earnedCalories;
+
       const macros = getPhaseMacros(phase, targetCalories, lifestyle.fitness_goal);
       macroFuel = {
           ...staticMacroFuel,
           calories: targetCalories,
+          baseCalories: baseTargetCalories,
+          earnedCalories,
           protein: macros.protein.g,
           fats: macros.fats.g,
           carbs: macros.carbs.g,
@@ -182,6 +198,18 @@ export async function fetchPlanPageDataFast() {
       baseExercise.type || 'Cardio',
       lifestyle?.activity_level
   );
+  // How many of the last 7 days actually had a workout logged, against the
+  // activeDaysPerWeek guide below -- that guide used to be a static sentence
+  // with nothing tracking whether she was actually hitting it.
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  const sevenDaysAgoStr = formatDate(sevenDaysAgo);
+  const activeDaysThisWeek = new Set(
+      logs
+          .filter((l: any) => l.date >= sevenDaysAgoStr && (l.exercise_minutes || 0) > 0)
+          .map((l: any) => l.date)
+  ).size;
+
   const personalizedExercise = {
       summary: baseExercise.summary || '',
       best: reorderBestByGoal(baseExercise.best || [], lifestyle?.fitness_goal),
@@ -195,6 +223,7 @@ export async function fetchPlanPageDataFast() {
           lifestyle?.activity_level,
           weightGoal?.weekly_rate_kg
       ),
+      activeDaysThisWeek,
   };
 
   return {
@@ -293,6 +322,16 @@ export async function savePlanSettings(data: any) {
     }, { onConflict: "user_id" });
     if (lifestyleError) throw new Error(`user_lifestyle save failed: ${lifestyleError.message}`);
 
+    // This is her current weight, as of today, so every save through this
+    // form counts as today's weigh-in for the trend chart -- see
+    // lib/weightLog.ts. onConflict on (user_id, date) means saving twice in
+    // one day just re-writes today's entry, not a duplicate.
+    const { error: weightLogError } = await supabase.from("weight_logs").upsert(
+        { user_id: user.id, date: formatDate(new Date()), weight_kg: data.weight_kg, updated_at: new Date().toISOString() },
+        { onConflict: "user_id, date" }
+    );
+    if (weightLogError) throw new Error(`weight_logs save failed: ${weightLogError.message}`);
+
     const weeklyRateKg = Math.min(
         Math.max(data.weekly_rate_kg, DB_MIN_WEEKLY_RATE_KG),
         DB_MAX_WEEKLY_RATE_KG
@@ -345,8 +384,18 @@ export async function updateWeightGoals(weightData: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized" };
 
+    // Handles weight_logs (the trend chart's source of truth) plus syncing
+    // user_lifestyle.weight_kg and user_weight_goals.current_weight_kg -- see
+    // lib/weightLog.ts. Editing weight from this pencil is a real weigh-in
+    // the same as the quick-log entry point, so it belongs in her history too.
+    const logResult = await writeWeightLog(weightData.current_weight_kg);
+    if (!logResult.success) {
+        return { error: logResult.error || "Failed to log weight" };
+    }
+
+    // target_weight_kg / start_weight_kg aren't part of a weight log -- they
+    // stay a direct update here.
     const updateData: Record<string, any> = {
-        current_weight_kg: weightData.current_weight_kg,
         target_weight_kg: weightData.target_weight_kg,
         updated_at: new Date().toISOString()
     };
@@ -361,15 +410,6 @@ export async function updateWeightGoals(weightData: {
 
     if (wgError) {
         return { error: "Failed to update weight goals" };
-    }
-
-    const { error: lsError } = await supabase
-        .from("user_lifestyle")
-        .update({ weight_kg: weightData.current_weight_kg, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-
-    if (lsError) {
-        console.error("Error syncing lifestyle weight:", lsError);
     }
 
     return { success: true };

@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CycleOverviewCard } from '../../components/insights/CycleOverviewCard';
 import { HabitsOverviewCard } from '../../components/insights/HabitsOverviewCard';
 import { PhasePatternCard } from '../../components/insights/PhasePatternCard';
+import { WeightTrendCard } from '../../components/insights/WeightTrendCard';
 import { MentalHealthCheckCard } from '../../components/insights/MentalHealthCheckCard';
 import { HealthReportCard } from '../../components/insights/HealthReportCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
@@ -209,13 +210,7 @@ export default function InsightsScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(200).duration(500).springify()}>
-              <PhasePatternCard
-                phase={phaseName}
-                loggedDaysThisPhase={stats?.phaseCounts?.[phaseName] || 0}
-                moodCounts={stats?.moodsByPhase?.[phaseName] || {}}
-                theme={theme}
-                onSeeFullBreakdown={() => handleTabPress('patterns')}
-              />
+              <WeightTrendCard theme={theme} onLogged={refetch} />
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(300).duration(500).springify()}>
@@ -232,6 +227,15 @@ export default function InsightsScreen() {
               selectedPhase={activePatternsPhase}
               onPhaseSelect={setSelectedPhase}
               symptomCorrelations={stats?.symptomCorrelations}
+            />
+            {/* Moved here from the Cycle tab, which now shows WeightTrendCard
+                instead — mood pattern analysis belongs alongside symptom
+                pattern analysis, not competing with it for the same slot. */}
+            <PhasePatternCard
+              phase={phaseName}
+              loggedDaysThisPhase={stats?.phaseCounts?.[phaseName] || 0}
+              moodCounts={stats?.moodsByPhase?.[phaseName] || {}}
+              theme={theme}
             />
             <CycleAnomalyCard anomalies={stats?.cycleAnomalies ?? []} />
             {stats?.pmosScore ? <PmosScoreCard score={stats.pmosScore} /> : null}

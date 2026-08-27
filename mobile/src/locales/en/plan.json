@@ -353,7 +353,8 @@
     "todaysIntake": "Today's Intake",
     "fats": "Fats",
     "kcal": "{{count}} kcal",
-    "nothingLoggedYet": "Nothing logged yet today."
+    "nothingLoggedYet": "Nothing logged yet today.",
+    "earnedCalories": "+{{count}} kcal earned from today's workout"
   },
   "index": {
     "tabs": {

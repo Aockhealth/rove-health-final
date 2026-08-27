@@ -17,6 +17,7 @@ function todayKey(): string {
 }
 
 interface Targets {
+  /** The full ceiling for today, already including earnedCalories — this is what the progress bar measures against. */
   calories: number;
   protein: number;
   carbs: number;
@@ -24,6 +25,8 @@ interface Targets {
   /** Daily max, not a "reach this" target. Defaults to the WHO guideline
    * (free sugar <10% of total energy) when not supplied — see WHO_SUGAR_CALORIE_SHARE. */
   sugar?: number;
+  /** How much of `calories` today's logged exercise earned back, if any — see calculateEarnedCalories. Shown as a breakdown, not a separate bar. */
+  earnedCalories?: number;
 }
 
 // WHO's strong recommendation caps free sugar at <10% of total energy
@@ -126,6 +129,11 @@ export function NutritionTrackerCard({ targets, theme }: { targets: Targets; the
       </View>
 
       <ProgressRow label={t('plan.mealLogSheet.fields.calories')} logged={totals.calories} target={targets.calories} unit="" color={theme.color} />
+      {!!targets.earnedCalories && (
+        <Text className="mb-2.5 -mt-1.5 text-[10px] font-semibold text-rove-stone">
+          {t('plan.nutritionTrackerCard.earnedCalories', { count: targets.earnedCalories })}
+        </Text>
+      )}
       <ProgressRow label={t('plan.mealLogSheet.fields.protein')} logged={totals.proteinG} target={targets.protein} unit="g" color={theme.color} />
       <ProgressRow label={t('plan.mealLogSheet.fields.carbs')} logged={totals.carbsG} target={targets.carbs} unit="g" color={theme.color} />
       <ProgressRow label={t('plan.nutritionTrackerCard.fats')} logged={totals.fatG} target={targets.fats} unit="g" color={theme.color} />

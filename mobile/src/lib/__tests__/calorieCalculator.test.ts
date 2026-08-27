@@ -3,7 +3,7 @@
  * macro rows. Pure functions, no RN imports, so they run under the repo's
  * root jest config alongside the shared/cycle suites.
  */
-import { calculateTDEE, applyGoalAdjustment, getPhaseMacros } from '../calorieCalculator';
+import { calculateTDEE, applyGoalAdjustment, getPhaseMacros, calculateEarnedCalories } from '../calorieCalculator';
 
 const WEIGHT = 60;
 const HEIGHT = 165;
@@ -83,5 +83,47 @@ describe('macros', () => {
     const luteal = getPhaseMacros('Luteal', 1800, 'weight_loss').sugar.g;
     const follicular = getPhaseMacros('Follicular', 1800, 'weight_loss').sugar.g;
     expect(luteal).toBe(follicular);
+  });
+});
+
+describe('calculateEarnedCalories', () => {
+  it('returns 0 with no exercise logged', () => {
+    expect(calculateEarnedCalories([], 30, 60)).toBe(0);
+    expect(calculateEarnedCalories(['Light (Walk, Yoga)'], 0, 60)).toBe(0);
+    expect(calculateEarnedCalories(null, 30, 60)).toBe(0);
+    expect(calculateEarnedCalories(['Light (Walk, Yoga)'], null, 60)).toBe(0);
+  });
+
+  it('scales with intensity tier', () => {
+    const light = calculateEarnedCalories(['Light (Walk, Yoga)'], 30, 60);
+    const moderate = calculateEarnedCalories(['Moderate (Gym, Pilates)'], 30, 60);
+    const intense = calculateEarnedCalories(['Intense (HIIT, Run)'], 30, 60);
+    expect(light).toBeLessThan(moderate);
+    expect(moderate).toBeLessThan(intense);
+  });
+
+  it('scales with minutes and body weight', () => {
+    const short = calculateEarnedCalories(['Moderate (Gym, Pilates)'], 15, 60);
+    const long = calculateEarnedCalories(['Moderate (Gym, Pilates)'], 60, 60);
+    expect(long).toBeGreaterThan(short);
+
+    const lighter = calculateEarnedCalories(['Moderate (Gym, Pilates)'], 30, 50);
+    const heavier = calculateEarnedCalories(['Moderate (Gym, Pilates)'], 30, 80);
+    expect(heavier).toBeGreaterThan(lighter);
+  });
+
+  it('uses the highest logged tier when more than one is logged the same day', () => {
+    const both = calculateEarnedCalories(['Light (Walk, Yoga)', 'Intense (HIIT, Run)'], 30, 60);
+    const intenseOnly = calculateEarnedCalories(['Intense (HIIT, Run)'], 30, 60);
+    expect(both).toBe(intenseOnly);
+  });
+
+  it('ignores "Rest Day" as a real workout', () => {
+    expect(calculateEarnedCalories(['Rest Day'], 20, 60)).toBe(0);
+  });
+
+  it('never earns back more than the cap, however long the session', () => {
+    const massive = calculateEarnedCalories(['Intense (HIIT, Run)'], 600, 90);
+    expect(massive).toBe(500);
   });
 });

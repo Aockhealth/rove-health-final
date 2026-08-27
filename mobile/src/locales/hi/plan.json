@@ -353,7 +353,8 @@
     "todaysIntake": "आज का सेवन",
     "fats": "फैट्स",
     "kcal": "{{count}} kCal",
-    "nothingLoggedYet": "आज अभी तक कुछ लॉग नहीं किया गया।"
+    "nothingLoggedYet": "आज अभी तक कुछ लॉग नहीं किया गया।",
+    "earnedCalories": "आज की एक्सरसाइज़ से +{{count}} कैलोरी अर्जित"
   },
   "index": {
     "tabs": {

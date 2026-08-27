@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../
 import { RoveChef } from '../../../components/plan/RoveChef';
 import { MacroFuelGauge } from '../../../components/plan/MacroFuelGauge';
 import { NutritionTrackerCard } from '../../../components/plan/NutritionTrackerCard';
+import { ActiveDaysDots } from '../../../components/plan/ActiveDaysDots';
 import { SymptomDecoder } from '../../../components/plan/SymptomDecoder';
 import { DietCheatSheet } from '../../../components/plan/DietCheatSheet';
 import { ActivitiesWidget } from '../../../components/plan/ActivitiesWidget';
@@ -1016,6 +1017,7 @@ export default function PlanScreen() {
                     // on a weight-loss goal instead of always sitting at the
                     // card's flat WHO-10% fallback.
                     sugar: bp.nutrition_guide.macro_fuel.sugar,
+                    earnedCalories: bp.nutrition_guide.macro_fuel.earnedCalories,
                   }}
                   theme={theme}
                 />
@@ -1110,6 +1112,7 @@ export default function PlanScreen() {
                     // on a weight-loss goal instead of always sitting at the
                     // card's flat WHO-10% fallback.
                     sugar: bp.nutrition_guide.macro_fuel.sugar,
+                    earnedCalories: bp.nutrition_guide.macro_fuel.earnedCalories,
                   }}
                   theme={theme}
                 />
@@ -1201,9 +1204,14 @@ export default function PlanScreen() {
                 <View className="w-10 h-10 rounded-xl items-center justify-center mr-3 border border-white/50 bg-white/50">
                   <Feather name="calendar" size={16} color={ACCENT} />
                 </View>
-                <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
-                  {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: ACCENT, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
-                </Text>
+                <View className="flex-1">
+                  <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
+                    {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: ACCENT, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
+                  </Text>
+                  <View className="mt-2">
+                    <ActiveDaysDots completed={bp.exercise.activeDaysThisWeek ?? 0} target={bp.exercise.activeDaysPerWeek} color={ACCENT} />
+                  </View>
+                </View>
               </Animated.View>
             )}
 
@@ -1295,9 +1303,14 @@ export default function PlanScreen() {
                 <View className="w-10 h-10 rounded-xl items-center justify-center mr-3 border border-white/50 bg-white/50">
                   <Feather name="calendar" size={16} color={theme.color} />
                 </View>
-                <Text className="flex-1 text-rove-charcoal text-xs font-semibold leading-relaxed">
-                  {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: theme.textColor, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
-                </Text>
+                <View className="flex-1">
+                  <Text className="text-rove-charcoal text-xs font-semibold leading-relaxed">
+                    {t('plan.index.aimForActiveDaysPrefix')}<Text style={{ color: theme.textColor, fontWeight: '800' }}>{t('plan.index.activeDaysCount', { count: bp.exercise.activeDaysPerWeek })}</Text>{t('plan.index.aimForActiveDaysSuffix')}
+                  </Text>
+                  <View className="mt-2">
+                    <ActiveDaysDots completed={bp.exercise.activeDaysThisWeek ?? 0} target={bp.exercise.activeDaysPerWeek} color={theme.textColor} />
+                  </View>
+                </View>
               </Animated.View>
             )}
 

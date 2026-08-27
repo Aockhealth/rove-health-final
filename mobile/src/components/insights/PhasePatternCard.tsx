@@ -12,7 +12,8 @@ type PhasePatternCardProps = {
   /** mood label -> count, this phase only — see moodsByPhase in lib/insights.ts. */
   moodCounts: Record<string, number>;
   theme: any;
-  onSeeFullBreakdown: () => void;
+  /** Omit when the card is already on the Patterns tab — the CTA below would just point at itself. */
+  onSeeFullBreakdown?: () => void;
 };
 
 const MIN_LOGGED_DAYS_TO_SHOW_PATTERN = 3;
@@ -150,15 +151,17 @@ export function PhasePatternCard({
           )}
         </View>
 
-        <Pressable
-          onPress={onSeeFullBreakdown}
-          className="flex-row items-center self-start"
-        >
-          <Text className="text-xs font-bold uppercase tracking-widest mr-1.5" style={{ color: theme.textColor }}>
-            See symptoms & patterns
-          </Text>
-          <ArrowRight size={13} color={theme.textColor} />
-        </Pressable>
+        {onSeeFullBreakdown && (
+          <Pressable
+            onPress={onSeeFullBreakdown}
+            className="flex-row items-center self-start"
+          >
+            <Text className="text-xs font-bold uppercase tracking-widest mr-1.5" style={{ color: theme.textColor }}>
+              See symptoms & patterns
+            </Text>
+            <ArrowRight size={13} color={theme.textColor} />
+          </Pressable>
+        )}
       </View>
     </View>
   );
