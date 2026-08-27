@@ -23,15 +23,26 @@ if (typeof process === 'undefined' || process.release?.name !== 'node') {
     };
   } else {
     const SecureStore = require('expo-secure-store');
+    // Default Keychain accessibility (WHEN_UNLOCKED) throws
+    // "User interaction is not allowed" (errSecInteractionNotAllowed) the
+    // moment anything touches the session token from a background context
+    // while the phone is locked — the auto-refresh timer below, a
+    // background-task run, or a HealthKit background-delivery sync. All three
+    // are real background paths this app already has. AFTER_FIRST_UNLOCK
+    // stays readable in the background once the device has been unlocked
+    // once since boot, which is the standard fix and still requires a device
+    // passcode to have been set at some point — the token isn't readable
+    // before first unlock.
+    const KEYCHAIN_OPTIONS = { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK };
     SSRSafeStorage = {
       getItem: (key: string) => {
-        return SecureStore.getItemAsync(key);
+        return SecureStore.getItemAsync(key, KEYCHAIN_OPTIONS);
       },
       setItem: (key: string, value: string) => {
-        return SecureStore.setItemAsync(key, value);
+        return SecureStore.setItemAsync(key, value, KEYCHAIN_OPTIONS);
       },
       removeItem: (key: string) => {
-        return SecureStore.deleteItemAsync(key);
+        return SecureStore.deleteItemAsync(key, KEYCHAIN_OPTIONS);
       },
     };
   }
