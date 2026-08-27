@@ -4,10 +4,11 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { Scale, Plus, Minus } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Scale, ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { parseLocalDate } from '@shared/cycle/phase';
-import { fetchWeightHistory, fetchWeightGoalTarget, logWeightToday, type WeightLogPoint } from '../../lib/weightLog';
+import { fetchWeightHistory, fetchWeightGoalTarget, type WeightLogPoint } from '../../lib/weightLog';
 import { getDateLocaleTag } from '../../lib/i18n';
 import { getLocalizedFontFamily } from '../../lib/fonts';
 
@@ -16,8 +17,13 @@ import { getLocalizedFontFamily } from '../../lib/fonts';
  * existed, the app kept exactly one weight number per user, overwritten on
  * every log — there was no history to draw a trend from, the single most
  * habit-forming screen in a Healthify-style app. This is that screen: a real
- * line chart from weight_logs, plus the fast "log today's weight" entry
- * point that used to only exist buried in Plan's goal-edit pencil.
+ * line chart from weight_logs.
+ *
+ * Logging itself is not done here — this card had an inline stepper at
+ * first, but Plan's weight card is the one place that already keeps
+ * current/target/pace consistent with each other, and duplicating "enter a
+ * number, save" in a second place just for this card risked the two
+ * disagreeing. Tapping through routes to Plan instead.
  */
 
 const LINE_COLOR = '#8B7355';
@@ -27,7 +33,6 @@ const AXIS_COLOR = 'rgba(138,131,120,0.18)';
 const CHART_HEIGHT = 120;
 const PADDING_X = 14;
 const PADDING_Y = 16;
-const STEP_KG = 0.5;
 
 function shortDate(dateStr: string): string {
   return parseLocalDate(dateStr).toLocaleDateString(getDateLocaleTag(), { day: 'numeric', month: 'short' });
@@ -112,48 +117,20 @@ function ChartWidthMeasure({ children }: { children: (width: number) => React.Re
   return <View onLayout={onLayout}>{width > 0 ? children(width) : null}</View>;
 }
 
-export function WeightTrendCard({
-  theme,
-  onLogged,
-}: {
-  theme: any;
-  /** Called after a successful log so the host screen can refresh anything else reading her current weight (Plan's goal card, Home). */
-  onLogged?: () => void;
-}) {
+export function WeightTrendCard({ theme }: { theme: any }) {
   const { i18n } = useTranslation();
+  const router = useRouter();
   const [history, setHistory] = useState<WeightLogPoint[] | null>(null);
   const [targetWeightKg, setTargetWeightKg] = useState<number | null>(null);
-  const [isLogging, setIsLogging] = useState(false);
-  const [draftKg, setDraftKg] = useState<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const reload = useCallback(() => {
-    fetchWeightHistory(90).then(setHistory);
-  }, []);
 
   useEffect(() => {
-    reload();
+    fetchWeightHistory(90).then(setHistory);
     fetchWeightGoalTarget().then(setTargetWeightKg);
-  }, [reload]);
+  }, []);
 
-  const startLogging = () => {
+  const goToPlan = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const last = history && history.length > 0 ? history[history.length - 1].weightKg : targetWeightKg ?? 60;
-    setDraftKg(Math.round(last * 2) / 2);
-    setIsLogging(true);
-  };
-
-  const handleSave = async () => {
-    if (draftKg === null) return;
-    setIsSaving(true);
-    const res = await logWeightToday(draftKg);
-    setIsSaving(false);
-    if (res.success) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setIsLogging(false);
-      reload();
-      onLogged?.();
-    }
+    router.push('/(app)/plan' as any);
   };
 
   const hasEnoughData = !!history && history.length >= 2;
@@ -162,102 +139,68 @@ export function WeightTrendCard({
   const totalChange = latest && first ? latest.weightKg - first.weightKg : null;
 
   return (
-    <View
-      className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
-      style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.45)' : undefined, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 3 }}
-    >
-      {Platform.OS === 'ios' ? (
-        <>
-          <View className="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-30" style={{ backgroundColor: theme.color, transform: [{ scale: 1.5 }] }} />
-          <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
-        </>
-      ) : (
-        <LinearGradient colors={theme.gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
-      )}
+    <Pressable onPress={goToPlan}>
+      <View
+        className="relative rounded-[32px] p-6 flex flex-col mb-4 overflow-hidden border border-white/60"
+        style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.45)' : undefined, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: Platform.OS === 'ios' ? 4 : 3 }}
+      >
+        {Platform.OS === 'ios' ? (
+          <>
+            <View className="absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-30" style={{ backgroundColor: theme.color, transform: [{ scale: 1.5 }] }} />
+            <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFillObject} />
+          </>
+        ) : (
+          <LinearGradient colors={theme.gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFillObject} />
+        )}
 
-      <View className="relative z-10 flex flex-col gap-5">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1">
-            <Text className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: theme.textColor }}>
-              WEIGHT
-            </Text>
-            <Text className="text-2xl mt-1 text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
-              {latest ? `${latest.weightKg.toFixed(1)} kg` : 'Your trend'}
-            </Text>
-            {totalChange !== null && (
-              <Text className="text-[11px] font-semibold text-rove-charcoal/60 mt-0.5">
-                {totalChange === 0
-                  ? 'Steady since your first log'
-                  : `${totalChange > 0 ? '+' : ''}${totalChange.toFixed(1)} kg since ${shortDate(first!.date)}`}
+        <View className="relative z-10 flex flex-col gap-5">
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1">
+              <Text className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: theme.textColor }}>
+                WEIGHT
               </Text>
-            )}
-          </View>
-          <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
-            <Scale size={20} color={theme.color} />
-          </View>
-        </View>
-
-        <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
-          {hasEnoughData ? (
-            <ChartWidthMeasure>
-              {(width) => <WeightLine points={history!} width={width} targetWeightKg={targetWeightKg} />}
-            </ChartWidthMeasure>
-          ) : (
-            <View className="min-h-[64px] justify-center">
-              <Text className="text-sm leading-relaxed text-rove-stone">
-                {history === null
-                  ? ' '
-                  : history.length === 0
-                    ? "Log today's weight and this card starts drawing your trend — no history existed before this."
-                    : 'One more weigh-in and there\'s enough to draw a line.'}
+              <Text className="text-2xl mt-1 text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-SemiBold', i18n.language) }}>
+                {latest ? `${latest.weightKg.toFixed(1)} kg` : 'Your trend'}
               </Text>
+              {totalChange !== null && (
+                <Text className="text-[11px] font-semibold text-rove-charcoal/60 mt-0.5">
+                  {totalChange === 0
+                    ? 'Steady since your first log'
+                    : `${totalChange > 0 ? '+' : ''}${totalChange.toFixed(1)} kg since ${shortDate(first!.date)}`}
+                </Text>
+              )}
             </View>
-          )}
-        </View>
+            <View className="w-12 h-12 rounded-full flex items-center justify-center border border-white/40" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 8, elevation: Platform.OS === 'ios' ? 2 : 0 }}>
+              <Scale size={20} color={theme.color} />
+            </View>
+          </View>
 
-        {isLogging ? (
-          <View className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60">
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">Today's weight</Text>
-            <View className="flex-row items-center gap-3">
-              <Pressable
-                onPress={() => setDraftKg((k) => Math.max(0, (k ?? 0) - STEP_KG))}
-                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
-              >
-                <Minus size={14} color="#57534E" />
-              </Pressable>
-              <View style={{ minWidth: 56 }}>
-                <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
-                  {draftKg?.toFixed(1)}
+          <View className="relative mt-2 p-5 rounded-[24px] border border-white/60 shadow-sm" style={{ backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 0 }}>
+            {hasEnoughData ? (
+              <ChartWidthMeasure>
+                {(width) => <WeightLine points={history!} width={width} targetWeightKg={targetWeightKg} />}
+              </ChartWidthMeasure>
+            ) : (
+              <View className="min-h-[64px] justify-center">
+                <Text className="text-sm leading-relaxed text-rove-stone">
+                  {history === null
+                    ? ' '
+                    : history.length === 0
+                      ? 'Log a weigh-in from Plan and this card starts drawing your trend — no history existed before this.'
+                      : 'One more weigh-in and there\'s enough to draw a line.'}
                 </Text>
               </View>
-              <Pressable
-                onPress={() => setDraftKg((k) => (k ?? 0) + STEP_KG)}
-                className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
-              >
-                <Plus size={14} color="#57534E" />
-              </Pressable>
-            </View>
+            )}
           </View>
-        ) : null}
 
-        <View className="flex-row items-center gap-3">
-          {isLogging && (
-            <Pressable onPress={() => setIsLogging(false)} className="px-4 py-2.5 rounded-xl border border-black/10">
-              <Text className="text-xs font-bold uppercase tracking-widest text-rove-stone">Cancel</Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={isLogging ? handleSave : startLogging}
-            disabled={isSaving}
-            className="flex-1 flex-row items-center justify-center py-2.5 rounded-xl"
-            style={{ backgroundColor: theme.color, opacity: isSaving ? 0.6 : 1 }}
-          >
-            <Text className="text-xs font-bold uppercase tracking-widest text-white">
-              {isSaving ? 'Saving…' : isLogging ? 'Save' : "Log Today's Weight"}
+          <View className="flex-row items-center self-start">
+            <Text className="text-xs font-bold uppercase tracking-widest mr-1.5" style={{ color: theme.textColor }}>
+              Log in Plan
             </Text>
-          </Pressable>
+            <ArrowRight size={13} color={theme.textColor} />
+          </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }

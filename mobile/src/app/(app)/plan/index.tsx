@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { fetchPlanPageDataFast, savePlanSettings } from '../../../lib/plan';
+import { writeWeightLog } from '../../../lib/weightLog';
 import { phaseThemes } from '../../../data/home-content';
 import { getLocalizedFontFamily, getLocalizedTracking } from '../../../lib/fonts';
 import { useFocusEffect, Link } from 'expo-router';
@@ -108,6 +109,13 @@ export default function PlanScreen() {
   // one-time setup wizard above was done.
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
+  // The pencil used to always open the full setup form — height, activity,
+  // diet, fitness goal, pace — even for someone who already finished setup
+  // and just wants to log today's weight. Once a goal exists, the pencil now
+  // opens a plain weight stepper by default; this flag is how she reaches the
+  // full form on purpose, from a link inside that stepper.
+  const [isEditingFullPlan, setIsEditingFullPlan] = useState(false);
+  const [isSavingQuickWeight, setIsSavingQuickWeight] = useState(false);
   const [tempGoalData, setTempGoalData] = useState({ current: 0, target: 0, start: 0 });
   // Everything else the one-time setup wizard collects, editable from the
   // same pencil icon instead of only the three weight numbers.
@@ -175,6 +183,7 @@ export default function PlanScreen() {
         weekly_rate_kg: editSafeWeeklyRateKg,
       });
       setIsEditingGoal(false);
+      setIsEditingFullPlan(false);
       await loadData(true);
     } catch (e) {
       // Surface the underlying DB error, not just a generic string: these
@@ -186,6 +195,23 @@ export default function PlanScreen() {
       Alert.alert(t('plan.index.errorTitle'), `${t('plan.index.errorUpdatePlan')}\n\n${detail}`);
     }
     setIsSavingGoal(false);
+  };
+
+  // The default action once a goal exists: just her weight today, nothing
+  // else touched. writeWeightLog only writes weight_logs/user_lifestyle/
+  // user_weight_goals.current_weight_kg — height, activity, diet, target and
+  // pace all stay exactly as they were, unlike handleSaveGoal above which
+  // resends every field from form state on every save.
+  const handleQuickLogWeight = async () => {
+    setIsSavingQuickWeight(true);
+    const res = await writeWeightLog(tempGoalData.current);
+    setIsSavingQuickWeight(false);
+    if (res.success) {
+      setIsEditingGoal(false);
+      await loadData(true);
+    } else {
+      Alert.alert(t('plan.index.errorTitle'), res.error || t('plan.index.errorUpdatePlan'));
+    }
   };
 
   const [activeTab, setActiveTab] = useState<'guide' | 'diet' | 'exercise'>('guide');
@@ -651,7 +677,60 @@ export default function PlanScreen() {
                       </View>
                     </View>
 
-                    {isEditingGoal ? (
+                    {isEditingGoal && hasGoal && !isEditingFullPlan ? (
+                      /* The default view once a goal exists: her weight
+                         today, nothing else. The full form below (height,
+                         activity, diet, fitness goal, pace) is real
+                         information she can't always usefully see or change
+                         in the moment she's just stepping on a scale — it's
+                         one tap away via the link, not the first thing shown. */
+                      <Animated.View entering={FadeInUp.duration(300)}>
+                        <View className="flex-row items-center justify-between p-3 rounded-2xl border border-white/40 bg-white/60 mb-3">
+                          <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{t('plan.index.nowLabel')}</Text>
+                          <View className="flex-row items-center gap-3">
+                            <TouchableOpacity
+                              onPress={() => setTempGoalData((p) => ({ ...p, current: Math.max(0, p.current - 0.5) }))}
+                              className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                            >
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>−</Text>
+                            </TouchableOpacity>
+                            <View style={{ minWidth: 56 }}>
+                              <Text className="text-xl text-center text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>
+                                {tempGoalData.current}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => setTempGoalData((p) => ({ ...p, current: p.current + 0.5 }))}
+                              className="w-8 h-8 rounded-full items-center justify-center bg-black/5"
+                            >
+                              <Text className="text-rove-stone text-lg" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Bold', i18n.language) }}>+</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        <TouchableOpacity onPress={() => setIsEditingFullPlan(true)} className="mb-4 self-start">
+                          <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: theme.textColor }}>
+                            {t('plan.index.editFullPlanSettings')} →
+                          </Text>
+                        </TouchableOpacity>
+
+                        <View className="flex-row justify-end gap-3">
+                          <TouchableOpacity onPress={() => setIsEditingGoal(false)} className="px-3 py-2">
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{t('common.buttons.cancel')}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={handleQuickLogWeight}
+                            disabled={isSavingQuickWeight}
+                            className="px-5 py-2 rounded-full"
+                            style={{ backgroundColor: theme.color, opacity: isSavingQuickWeight ? 0.6 : 1 }}
+                          >
+                            <Text className="text-[10px] font-bold uppercase tracking-widest text-white">
+                              {isSavingQuickWeight ? '...' : t('common.buttons.save')}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </Animated.View>
+                    ) : isEditingGoal && (!hasGoal || isEditingFullPlan) ? (
                       <Animated.View entering={FadeInUp.duration(300)}>
                         {/* Setting a goal for the first time asks only for
                             Start and Goal — on day one "now" and "start" are
@@ -806,7 +885,10 @@ export default function PlanScreen() {
                         </View>
 
                         <View className="flex-row justify-end gap-3 mt-2">
-                          <TouchableOpacity onPress={() => setIsEditingGoal(false)} className="px-3 py-2">
+                          <TouchableOpacity
+                            onPress={() => (isEditingFullPlan ? setIsEditingFullPlan(false) : setIsEditingGoal(false))}
+                            className="px-3 py-2"
+                          >
                             <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone">{t('common.buttons.cancel')}</Text>
                           </TouchableOpacity>
                           <TouchableOpacity

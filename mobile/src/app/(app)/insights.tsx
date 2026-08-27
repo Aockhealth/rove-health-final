@@ -210,7 +210,7 @@ export default function InsightsScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(200).duration(500).springify()}>
-              <WeightTrendCard theme={theme} onLogged={refetch} />
+              <WeightTrendCard theme={theme} />
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(300).duration(500).springify()}>
