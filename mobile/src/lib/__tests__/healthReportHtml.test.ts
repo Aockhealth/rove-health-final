@@ -44,9 +44,12 @@ function baseReport(overrides: Partial<HealthReport> = {}): HealthReport {
     exercise: { ...emptyObserved, weeklyAverage: null, topTypes: [] },
     symptoms: { top: [], byPhase: {}, matrix: [], daysWithSymptoms: 0 },
     moods: [],
+    moodMatrix: [],
     sleepDisruptors: [],
     suggestions: [],
     clinicalFlags: [],
+    cycleAnomalies: [],
+    pmosScore: { flaggedCount: 0, assessableCount: 0, indicators: [] },
     ttc: null,
     nutrition: null,
     wearable: null,
@@ -112,5 +115,132 @@ describe('renderHealthReportHtml', () => {
       }),
     );
     expect(html).toContain('+0.22 °C');
+  });
+
+  it('renders a clean "no flags" summary when nothing was flagged', () => {
+    const html = renderHealthReportHtml(baseReport());
+    expect(html).toContain('No patterns flagged for review in this period.');
+  });
+
+  it('counts clinical flags, cycle anomalies and PMOS flags into one summary total', () => {
+    const html = renderHealthReportHtml(
+      baseReport({
+        clinicalFlags: [{ finding: 'Shortest observed cycle was 18 days.', why: 'Outside the typical range.' }],
+        cycleAnomalies: [
+          { start: '2026-06-01', length: 45, personalMean: 29.5, zScore: 3.1, likelyExplanation: 'Travel' },
+        ],
+        pmosScore: {
+          flaggedCount: 1,
+          assessableCount: 2,
+          indicators: [
+            { key: 'cycle_irregularity', label: 'Cycle regularity', assessable: true, flagged: true, detail: 'Varied by 9 days.' },
+            { key: 'bmi', label: 'BMI', assessable: true, flagged: false, detail: 'Within range.' },
+          ],
+        },
+      }),
+    );
+    // 1 clinical flag + 1 anomaly + 1 flagged PMOS indicator = 3
+    expect(html).toContain('3 patterns flagged for review below.');
+  });
+
+  it('renders cycle anomalies with her own mean and a likely explanation, never as a population comparison', () => {
+    const html = renderHealthReportHtml(
+      baseReport({
+        cycleAnomalies: [
+          { start: '2026-06-01', length: 45, personalMean: 29.5, zScore: 3.1, likelyExplanation: 'Travel' },
+        ],
+      }),
+    );
+    expect(html).toContain('Cycle pattern analysis');
+    expect(html).toContain('her average is 29.5');
+    expect(html).toContain('Longer than usual for her');
+    expect(html).toContain('Travel');
+  });
+
+  it('omits the PMOS section entirely when nothing was assessable', () => {
+    const html = renderHealthReportHtml(baseReport());
+    expect(html).not.toContain('PMOS / PCOS Pattern Indicators');
+  });
+
+  it('renders PMOS indicators, distinguishing flagged from typical', () => {
+    const html = renderHealthReportHtml(
+      baseReport({
+        pmosScore: {
+          flaggedCount: 1,
+          assessableCount: 2,
+          indicators: [
+            { key: 'cycle_irregularity', label: 'Cycle regularity', assessable: true, flagged: true, detail: 'Varied by 9 days across your logged history.' },
+            { key: 'bmi', label: 'BMI', assessable: true, flagged: false, detail: 'Your BMI (21.0) is below the range commonly discussed alongside PMOS.' },
+            { key: 'anovulatory_signals', label: 'Ovulation signal patterns', assessable: false, flagged: false, detail: 'Log basal temperature to include this indicator.' },
+          ],
+        },
+      }),
+    );
+    expect(html).toContain('PMOS / PCOS Pattern Indicators');
+    expect(html).toContain('1 of 2 assessable indicators flagged');
+    expect(html).toContain('Cycle regularity — flagged');
+    expect(html).toContain('BMI — typical');
+    expect(html).not.toContain('Ovulation signal patterns — flagged');
+    expect(html).not.toContain('Ovulation signal patterns — typical');
+  });
+
+  it('renders a mood-by-phase matrix alongside the symptom matrix', () => {
+    const html = renderHealthReportHtml(
+      baseReport({
+        moodMatrix: [
+          {
+            name: 'Irritable',
+            total: 6,
+            byPhase: { Menstrual: 1, Follicular: 0, Ovulatory: 0, Luteal: 5 },
+            peakPhase: 'Luteal',
+          },
+        ],
+      }),
+    );
+    expect(html).toContain('Mood by phase');
+    expect(html).toContain('Irritable');
+  });
+
+  it('omits the mood-by-phase matrix when there is nothing to show', () => {
+    const html = renderHealthReportHtml(baseReport());
+    expect(html).not.toContain('Mood by phase');
+  });
+
+  it('carries anovulatory notes and recurring PCOS patterns into the TTC section', () => {
+    const html = renderHealthReportHtml(
+      baseReport({
+        ttc: {
+          cycles: [
+            {
+              cycleStart: '2026-06-01',
+              cycleEnd: '2026-06-30',
+              isOngoing: false,
+              status: 'monitoring',
+              confirmedDate: null,
+              method: 'date_math',
+              confidence: 'low',
+              anovulatory: {
+                detected: true,
+                reasons: ['persistent_opk_highs_no_peak'],
+                note: 'Your tests have stayed high without reaching a clear peak.',
+              },
+            },
+          ],
+          chart: null,
+          pcosPatterns: [
+            {
+              reason: 'persistent_opk_highs_no_peak',
+              title: 'Tests stayed high without a clear peak',
+              body: '2 of your last 3 cycles showed persistently high ovulation-test readings that never reached a clear peak.',
+              count: 2,
+              totalCycles: 3,
+            },
+          ],
+        },
+      }),
+    );
+    expect(html).toContain('Your tests have stayed high without reaching a clear peak.');
+    expect(html).toContain('Recurring patterns across her cycles');
+    expect(html).toContain('Tests stayed high without a clear peak');
   });
 });

@@ -1,4 +1,7 @@
-import type { Counted, HealthReport, TtcReportCycle, TtcReportData } from './healthReport';
+import type { Counted, HealthReport, SymptomRow, TtcReportCycle, TtcReportData } from './healthReport';
+import type { CycleAnomaly } from '@shared/cycle/anomaly';
+import type { PmosPatternScore } from './pmosScore';
+import type { PcosPatternInsight } from './ttcCycleHistory';
 import type { OpkResult, OvulationSignal } from '@shared/cycle/ttc';
 
 /**
@@ -10,10 +13,18 @@ import type { OpkResult, OvulationSignal } from '@shared/cycle/ttc';
  * half, and so suggestions are never mistaken for clinical findings.
  */
 
-const ACCENT = '#4338CA';
-const INK = '#1F2937';
-const MUTED = '#6B7280';
-const RULE = '#E5E7EB';
+// Rove's own brand palette, not a generic report-template purple — the same
+// warm, editorial identity used everywhere else in the app (rove-charcoal,
+// rove-stone, the Terra Rose phase accent), so a doctor holding this page
+// reads it as the same product the member's phone shows, not a third-party
+// export. ACCENT is the WCAG-contrast-safe Terra Rose already used as phase
+// text color elsewhere (see phaseThemes.Menstrual.textColor in
+// data/home-content.ts) — the raw phase hex (#AF6B6B) reads lighter and
+// fails on white at this weight of use (headers, table highlights, borders).
+const ACCENT = '#A75D5D';
+const INK = '#2D2420';
+const MUTED = '#78716C';
+const RULE = '#E8E1D8';
 
 function escapeHtml(value: string): string {
   return value
@@ -73,15 +84,146 @@ const METHOD_LABEL: Record<OvulationSignal['method'], string> = {
 };
 
 const OPK_COLORS: Record<OpkResult, string> = {
-  negative: '#E5E7EB',
-  low: '#C7C2F0',
-  high: '#8B7FE0',
+  negative: RULE,
+  low: '#DDBBBB',
+  high: '#C17E7E',
   peak: ACCENT,
 };
 
 function shortDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+const PHASE_ORDER = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'] as const;
+
+/** The name × phase matrix table shape both Symptoms and Mood by phase render — pulled out so the two can't silently drift apart. */
+function renderPhaseMatrix(rows: SymptomRow[], nameHeader: string): string {
+  return `
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th class="m-name">${escapeHtml(nameHeader)}</th>
+          ${PHASE_ORDER.map((p) => `<th>${p}</th>`).join('')}
+          <th class="m-total">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            (row) => `
+          <tr>
+            <td class="m-name">${escapeHtml(row.name)}</td>
+            ${PHASE_ORDER.map((p) => {
+              const v = row.byPhase[p] || 0;
+              const isPeak = row.peakPhase === p && v > 0;
+              return `<td class="${isPeak ? 'peak' : ''}">${v || '·'}</td>`;
+            }).join('')}
+            <td class="m-total">${row.total}</td>
+          </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>`;
+}
+
+/**
+ * "At a glance" — the one thing a doctor with 30 seconds should read before
+ * anything else. Deterministic sentence construction, not a generated
+ * summary: it just counts what the rest of the report already established.
+ */
+function renderExecutiveSummary(r: HealthReport): string {
+  const pmosFlagged = r.pmosScore.assessableCount > 0 ? r.pmosScore.flaggedCount : 0;
+  const totalFlags = r.clinicalFlags.length + r.cycleAnomalies.length + pmosFlagged;
+  const confirmedCycles = r.ttc ? r.ttc.cycles.filter((c) => c.status === 'ovulation_confirmed').length : null;
+
+  const headline =
+    totalFlags === 0
+      ? 'No patterns flagged for review in this period.'
+      : `${totalFlags} pattern${totalFlags === 1 ? '' : 's'} flagged for review below.`;
+
+  const stats = [
+    { label: 'Cycles reviewed', value: String(r.cycle.observedCycles.length) },
+    { label: 'Log coverage', value: `${r.coverage.completenessPct}%` },
+    { label: 'Flags for review', value: String(totalFlags) },
+    confirmedCycles !== null ? { label: 'Ovulation confirmed', value: `${confirmedCycles} of ${r.ttc!.cycles.length} cycles` } : null,
+  ].filter((s): s is { label: string; value: string } => s !== null);
+
+  return `
+    <div class="summary">
+      <div class="summary-headline">${escapeHtml(headline)}</div>
+      <div class="summary-stats">
+        ${stats.map((s) => `<div class="summary-stat"><b>${escapeHtml(s.value)}</b><span>${escapeHtml(s.label)}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/**
+ * Cycles that deviate from HER OWN rolling mean/stdev — never a population
+ * number — with a likely explanation pulled from her own disruptor tags
+ * where one genuinely stands out. See shared/cycle/anomaly.ts.
+ */
+function renderCycleAnomalies(anomalies: CycleAnomaly[]): string {
+  if (anomalies.length === 0) return '';
+  return `
+    <h3 style="margin-top:14px">Cycle pattern analysis</h3>
+    <p class="sub" style="margin-bottom:6px">
+      Flagged against her own logged history — a cycle length more than ~1.5 standard
+      deviations from her personal average, not a population range.
+    </p>
+    ${anomalies
+      .map(
+        (a) => `
+      <div class="flag">
+        <b>${escapeHtml(shortDate(a.start))} cycle ran ${a.length} days (her average is ${a.personalMean.toFixed(1)}).</b>
+        <span>
+          ${a.zScore >= 0 ? 'Longer' : 'Shorter'} than usual for her (z = ${a.zScore.toFixed(2)}).
+          ${a.likelyExplanation ? ` Logged more "${escapeHtml(a.likelyExplanation)}" than usual that cycle.` : ''}
+        </span>
+      </div>`,
+      )
+      .join('')}`;
+}
+
+/**
+ * Composite PMOS-pattern indicator count — same educational, non-diagnostic
+ * score the Insights screen already shows. Renders nothing when none of the
+ * three indicators (cycle irregularity, ovulation signal patterns, BMI)
+ * could be assessed at all, rather than a section full of "not enough data."
+ */
+function renderPmosScore(score: PmosPatternScore): string {
+  if (score.assessableCount === 0) return '';
+  return `
+  <h2>PMOS / PCOS Pattern Indicators</h2>
+  <p class="sub" style="margin-bottom:8px">
+    ${score.flaggedCount} of ${score.assessableCount} assessable indicator${score.assessableCount === 1 ? '' : 's'} flagged.
+    Descriptive pattern-matching against her own logs, not a diagnosis — PMOS/PCOS is a clinical diagnosis of exclusion.
+  </p>
+  ${score.indicators
+    .map(
+      (i) => `
+    <div class="flag ${i.assessable && i.flagged ? '' : 'flag-ok'}">
+      <b>${escapeHtml(i.label)}${i.assessable ? (i.flagged ? ' — flagged' : ' — typical') : ' — not assessable'}</b>
+      <span>${escapeHtml(i.detail)}</span>
+    </div>`,
+    )
+    .join('')}`;
+}
+
+/** How often each anovulatory pattern recurred across her logged history — see summarizePcosPatterns. */
+function renderPcosPatterns(patterns: PcosPatternInsight[]): string {
+  if (patterns.length === 0) return '';
+  return `
+  <h3 style="margin-top:14px">Recurring patterns across her cycles</h3>
+  ${patterns
+    .map(
+      (p) => `
+    <div class="flag">
+      <b>${escapeHtml(p.title)}</b>
+      <span>${escapeHtml(p.body)}</span>
+    </div>`,
+    )
+    .join('')}`;
 }
 
 function dayOffset(cycleStart: string, dateStr: string): number {
@@ -182,6 +324,7 @@ function renderTtcSection(ttc: TtcReportData, personFirstName: string): string {
         <td>${escapeHtml(STATUS_LABEL[c.status])}</td>
         <td>${c.confirmedDate ? escapeHtml(shortDate(c.confirmedDate)) : '—'}</td>
         <td>${escapeHtml(METHOD_LABEL[c.method])}</td>
+        <td class="m-name">${c.anovulatory ? escapeHtml(c.anovulatory.note) : '—'}</td>
       </tr>`;
     })
     .join('');
@@ -203,6 +346,7 @@ function renderTtcSection(ttc: TtcReportData, personFirstName: string): string {
         <th>Status</th>
         <th>Ovulation</th>
         <th>Detected from</th>
+        <th class="m-name">Notes</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
@@ -210,8 +354,10 @@ function renderTtcSection(ttc: TtcReportData, personFirstName: string): string {
   <p class="sub" style="margin-top:8px">
     "Detected from" shows which of ${escapeHtml(personFirstName)}'s own readings the status is based on —
     temperature, ovulation tests, or cycle-date estimates when neither was logged that cycle.
+    "Notes" flags a cycle that may not have ovulated, when the logged readings support that read.
     These are descriptive readings from self-logged data, not a fertility diagnosis.
-  </p>`;
+  </p>
+  ${renderPcosPatterns(ttc.pcosPatterns)}`;
 }
 
 export function renderHealthReportHtml(r: HealthReport): string {
@@ -225,7 +371,6 @@ export function renderHealthReportHtml(r: HealthReport): string {
     .filter(Boolean)
     .join(' · ');
 
-  const phaseOrder = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'];
 
   return `
 <!DOCTYPE html>
@@ -270,13 +415,26 @@ export function renderHealthReportHtml(r: HealthReport): string {
   .bars { width: 100%; }
   .bar-row { display: flex; align-items: center; gap: 8px; padding: 2.5px 0; font-size: 9.5pt; }
   .bar-name { flex: 0 0 40%; }
-  .bar-track { flex: 1 1 auto; background: #F3F4F6; border-radius: 4px; height: 9px; overflow: hidden; }
+  .bar-track { flex: 1 1 auto; background: #F1ECE4; border-radius: 4px; height: 9px; overflow: hidden; }
   .bar-fill { height: 9px; background: ${ACCENT}; border-radius: 4px; opacity: 0.75; }
   .bar-count { flex: 0 0 18px; text-align: right; color: ${MUTED}; font-size: 9pt; }
 
   .flag { border-left: 3px solid #B45309; background: #FFFBEB; padding: 7px 11px; margin-bottom: 6px; border-radius: 0 5px 5px 0; }
   .flag b { display: block; font-size: 10pt; }
   .flag span { color: ${MUTED}; font-size: 9pt; }
+  /* PMOS indicators that came back "typical" render in the same box language
+     as a flag, but neutral — a doctor scanning the list shouldn't have to
+     read every line to tell flagged from clear. */
+  .flag.flag-ok { border-left-color: #A69C8E; background: #FAF8F4; }
+
+  .summary {
+    border: 1.5px solid ${ACCENT}; border-radius: 9px; padding: 12px 14px;
+    margin: 10px 0 4px; background: rgba(167,93,93,0.05);
+  }
+  .summary-headline { font-size: 11pt; font-weight: 600; margin-bottom: 8px; }
+  .summary-stats { display: flex; flex-wrap: wrap; gap: 14px 26px; }
+  .summary-stat b { display: block; font-size: 14pt; font-weight: 700; color: ${ACCENT}; }
+  .summary-stat span { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.7px; color: ${MUTED}; }
 
   .sug { border: 1px solid ${RULE}; border-radius: 7px; padding: 9px 11px; margin-bottom: 7px; }
   .sug-area { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 1px; color: ${ACCENT}; }
@@ -290,7 +448,7 @@ export function renderHealthReportHtml(r: HealthReport): string {
   }
   table.matrix td { text-align: center; padding: 4px; border-bottom: 1px solid #F3F4F6; color: ${MUTED}; }
   table.matrix th.m-name, table.matrix td.m-name { text-align: left; width: 30%; color: ${INK}; }
-  table.matrix td.peak { background: rgba(67,56,202,0.10); color: ${ACCENT}; font-weight: 700; border-radius: 3px; }
+  table.matrix td.peak { background: rgba(167,93,93,0.12); color: ${ACCENT}; font-weight: 700; border-radius: 3px; }
   table.matrix th.m-total, table.matrix td.m-total { color: ${INK}; font-weight: 600; width: 12%; }
 
   .cols { display: flex; gap: 20px; }
@@ -302,7 +460,7 @@ export function renderHealthReportHtml(r: HealthReport): string {
   table.matrix tr, .bar-row, .metric, .flag, .sug { page-break-inside: avoid; }
   .pagebreak { page-break-before: always; }
   .note {
-    margin-top: 20px; padding: 9px 11px; background: #F9FAFB;
+    margin-top: 20px; padding: 9px 11px; background: #FAF8F4;
     border: 1px solid ${RULE}; border-radius: 7px; font-size: 8.5pt; color: ${MUTED};
   }
 </style>
@@ -329,6 +487,8 @@ export function renderHealthReportHtml(r: HealthReport): string {
     </div>
   </div>
 
+  ${renderExecutiveSummary(r)}
+
   <h2>Cycle</h2>
   <div class="metrics">
     ${metric('Avg cycle', cycle.averageLength ? `${cycle.averageLength} d` : '—', cycle.observedCycles.length ? `${cycle.observedCycles.length} observed` : 'not enough data')}
@@ -341,6 +501,9 @@ export function renderHealthReportHtml(r: HealthReport): string {
     member's saved averages${cycle.markedIrregular ? '. Cycles are self-reported as irregular' : ''}.
     ${cycle.observedCycles.length < 2 ? 'Fewer than two complete cycles were recorded, so cycle-length statistics are indicative only.' : ''}
   </p>
+  ${renderCycleAnomalies(r.cycleAnomalies)}
+
+  ${renderPmosScore(r.pmosScore)}
 
   ${r.ttc ? renderTtcSection(r.ttc, person.name.split(' ')[0]) : ''}
 
@@ -389,42 +552,22 @@ export function renderHealthReportHtml(r: HealthReport): string {
       : ''
   }
 
-  <h2>Symptoms</h2>
+  <h2>Symptoms &amp; Mood</h2>
   ${
     r.symptoms.matrix.length === 0
       ? `<p class="empty">No symptoms logged in this period.</p>`
       : `
     <p class="sub" style="margin-bottom:8px">
       Recorded on ${r.symptoms.daysWithSymptoms} of the ${r.coverage.daysWithAnyLog} days logged.
-      Shaded cells mark the phase where each symptom occurred most.
+      Shaded cells mark the phase where each symptom or mood occurred most.
     </p>
-    <table class="matrix">
-      <thead>
-        <tr>
-          <th class="m-name">Symptom</th>
-          ${phaseOrder.map((p) => `<th>${p}</th>`).join('')}
-          <th class="m-total">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${r.symptoms.matrix
-          .map(
-            (row) => `
-          <tr>
-            <td class="m-name">${escapeHtml(row.name)}</td>
-            ${phaseOrder
-              .map((p) => {
-                const v = row.byPhase[p] || 0;
-                const isPeak = row.peakPhase === p && v > 0;
-                return `<td class="${isPeak ? 'peak' : ''}">${v || '·'}</td>`;
-              })
-              .join('')}
-            <td class="m-total">${row.total}</td>
-          </tr>`,
-          )
-          .join('')}
-      </tbody>
-    </table>`
+    ${renderPhaseMatrix(r.symptoms.matrix, 'Symptom')}`
+  }
+
+  ${
+    r.moodMatrix.length > 0
+      ? `<h3 style="margin-top:14px">Mood by phase</h3>${renderPhaseMatrix(r.moodMatrix, 'Mood')}`
+      : ''
   }
 
   <div class="cols" style="margin-top:16px">

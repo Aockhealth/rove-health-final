@@ -10,11 +10,13 @@ import { HealthReportViewer } from './HealthReportViewer';
 type Theme = { color: string; iconBg: string };
 
 const CONTENTS = [
-  { icon: 'repeat', label: 'Cycle regularity, length and bleed statistics' },
+  { icon: 'zap', label: 'An at-a-glance summary — flags and cycles reviewed, first thing on the page' },
+  { icon: 'repeat', label: 'Cycle regularity, length and bleed statistics, with anomalies flagged against your own history' },
   { icon: 'activity', label: 'Symptoms and mood, broken down by cycle phase' },
+  { icon: 'alert-circle', label: 'PMOS/PCOS pattern indicators, when there is enough logged to assess them' },
   { icon: 'moon', label: 'Sleep, hydration and movement averages' },
   { icon: 'pie-chart', label: 'Nutrition from logged meals, when you have any' },
-  { icon: 'heart', label: 'Heart rate, HRV and steps, if Apple Health or Health Connect is synced' },
+  { icon: 'watch', label: 'Heart rate, HRV and steps, if Apple Health or Health Connect is synced' },
   { icon: 'target', label: 'Personal suggestions, on their own page' },
 ] as const;
 

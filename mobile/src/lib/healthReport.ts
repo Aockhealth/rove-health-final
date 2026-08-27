@@ -4,12 +4,30 @@ import * as Sharing from 'expo-sharing';
 // move we need here, and the legacy surface is still shipped and supported.
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
-import { calculatePhase, resolveCycleSettings, type CycleSettings, type DailyLog } from '@shared/cycle/phase';
-import { type BbtReading, type OpkReading, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
+import {
+  calculatePhase,
+  deriveRecentCycleHistory,
+  resolveCycleSettings,
+  CYCLE_HISTORY_LOOKBACK,
+  type CycleHistoryEntry,
+  type CycleSettings,
+  type DailyLog,
+} from '@shared/cycle/phase';
+import { type AnovulatorySignal, type BbtReading, type OpkReading, type OvulationSignal, type TtcDailyLog } from '@shared/cycle/ttc';
+import { detectCycleAnomalies, type CycleAnomaly } from '@shared/cycle/anomaly';
 import type { LhBandReading } from '@shared/cycle/lh';
 import { parseMucusJson, type MucusReading } from '@shared/cycle/mucus';
 import { renderHealthReportHtml } from './healthReportHtml';
-import { deriveCycleStarts, getPersonalizedLutealLength, latestCycleChart, scoreTtcCycles } from './ttcCycleHistory';
+import {
+  deriveCycleStarts,
+  getPersonalizedLutealLength,
+  latestCycleChart,
+  scoreTtcCycles,
+  summarizePcosPatterns,
+  type PcosPatternInsight,
+  type TtcHistoryCycle,
+} from './ttcCycleHistory';
+import { computePmosPatternScore, type PmosPatternScore } from './pmosScore';
 import { hasPcosFlag } from './pcos';
 
 /**
@@ -23,6 +41,16 @@ import { hasPcosFlag } from './pcos';
  */
 
 export const REPORT_WINDOW_DAYS = 90;
+/**
+ * How far back cycle-structural analysis (cycle stats, TTC scoring, anomaly
+ * detection, PMOS indicators) looks — wider than REPORT_WINDOW_DAYS on
+ * purpose, since those need enough cycles to be statistically meaningful
+ * (see MIN_CYCLES_FOR_ANOMALY_DETECTION, MIN_CYCLES_FOR_PCOS_PATTERNS) and
+ * 90 days rarely holds enough at a typical cycle length. Sized the same way
+ * the rest of the app now sizes its cycle-history windows — see the log
+ * windows in lib/dashboard.ts / lib/plan.ts / lib/tracker.ts.
+ */
+export const CYCLE_HISTORY_WINDOW_DAYS = 270;
 
 // Thresholds used for both the stats and the suggestions. Kept together so the
 // numbers quoted in the PDF and the advice derived from them can't drift apart.
@@ -140,6 +168,8 @@ export type TtcReportCycle = {
   confirmedDate: string | null;
   method: OvulationSignal['method'];
   confidence: OvulationSignal['confidence'];
+  /** Why this cycle looks like it may not have ovulated, if the engine flagged one — same read the in-app Insights screen shows. Null on a cycle with no anovulatory signs. */
+  anovulatory: AnovulatorySignal | null;
 };
 
 export type TtcReportData = {
@@ -152,6 +182,8 @@ export type TtcReportData = {
     opk: OpkReading[];
     coverline: number | null;
   } | null;
+  /** How often each anovulatory pattern recurred across her logged cycles — see summarizePcosPatterns. Empty when there isn't enough history yet, or PCOS isn't flagged. */
+  pcosPatterns: PcosPatternInsight[];
 };
 
 export type HealthReport = {
@@ -185,9 +217,28 @@ export type HealthReport = {
     daysWithSymptoms: number;
   };
   moods: Counted[];
+  /** Mood × phase matrix, same shape and same "is one phase genuinely leading" rule as symptoms.matrix. */
+  moodMatrix: SymptomRow[];
   sleepDisruptors: Counted[];
   suggestions: Suggestion[];
   clinicalFlags: ClinicalFlag[];
+  /**
+   * Cycles that deviate from HER OWN rolling mean/stdev — never a population
+   * number — with a likely explanation pulled from her own disruptor tags
+   * where one stands out. See shared/cycle/anomaly.ts. Computed from a wider
+   * cycle-history window than the report's own 90-day reporting window (see
+   * CYCLE_HISTORY_WINDOW_DAYS), since 4+ cycles are needed before a mean/stdev
+   * means anything and 90 days rarely holds that many. Empty with fewer than
+   * 4 cycles logged.
+   */
+  cycleAnomalies: CycleAnomaly[];
+  /**
+   * Composite PMOS-pattern indicator count (cycle irregularity, ovulation
+   * signal patterns, BMI) — same educational, non-diagnostic score the
+   * Insights screen already shows. Always present; each indicator reports
+   * "not enough data" rather than a false negative when it can't be assessed.
+   */
+  pmosScore: PmosPatternScore;
   /** Only populated for accounts in TTC (trying-to-conceive) mode. */
   ttc: TtcReportData | null;
   /** Null when no meals were logged in the window — section is omitted rather than shown empty. */
@@ -276,13 +327,22 @@ function dailyNutritionTotals(meals: ReportMealLog[]): DailyNutritionTotal[] {
 }
 
 /**
- * Scores every cycle the report window actually saw, most recent first, using
- * the same `detectOvulation`/`scoreTtcCycles` the Insights screen runs — a
- * doctor comparing this page to what the app showed at the time should see
- * the same answer. Trims `scoreTtcCycles`'s richer per-cycle result down to
- * the narrower fields the PDF actually renders.
+ * Scores every cycle her logged history covers, most recent first, using the
+ * same `detectOvulation`/`scoreTtcCycles` the Insights screen runs — a doctor
+ * comparing this page to what the app showed at the time should see the same
+ * answer. Runs the personalized-luteal-length second pass Insights already
+ * does (see the comment this used to carry): the first pass establishes her
+ * own confirmed-cycle history, and re-scoring with that value can't disturb
+ * any cycle that already confirmed on its own, since luteal_length_days only
+ * ever changes the date-math fallback.
+ *
+ * Kept as its own step (not folded into buildHealthReport) because both the
+ * TTC section and the PMOS/PCOS analysis below need the same scored cycles —
+ * computing them once here and passing the result to both keeps the report
+ * and the in-app screen from ever disagreeing about which cycle looked
+ * anovulatory.
  */
-function buildTtcReportData(
+function scoreCyclesForReport(
   logs: ReportLog[],
   cycleStarts: string[],
   settings: CycleSettings,
@@ -290,19 +350,23 @@ function buildTtcReportData(
   hasPcos: boolean,
   lhReadings: LhBandReading[] = [],
   mucusReadings: MucusReading[] = [],
-): TtcReportData | null {
-  if (cycleStarts.length === 0) return null;
-
-  // First pass with the base settings establishes her own confirmed-cycle
-  // history. luteal_length_days only ever changes the date-math fallback —
-  // never a biomarker-confirmed signal — so re-scoring with the personalized
-  // value below can't disturb any cycle that already confirmed on its own.
+): TtcHistoryCycle[] {
+  if (cycleStarts.length === 0) return [];
   const baseCycles = scoreTtcCycles(logs, cycleStarts, settings, windowEnd, hasPcos, lhReadings, mucusReadings);
   const personalizedLuteal = getPersonalizedLutealLength(baseCycles);
-  const scoredCycles =
-    personalizedLuteal === null
-      ? baseCycles
-      : scoreTtcCycles(logs, cycleStarts, { ...settings, luteal_length_days: personalizedLuteal }, windowEnd, hasPcos, lhReadings, mucusReadings);
+  return personalizedLuteal === null
+    ? baseCycles
+    : scoreTtcCycles(logs, cycleStarts, { ...settings, luteal_length_days: personalizedLuteal }, windowEnd, hasPcos, lhReadings, mucusReadings);
+}
+
+/** Trims scoreCyclesForReport's richer per-cycle result down to the fields the TTC section of the PDF actually renders. */
+function buildTtcReportData(
+  scoredCycles: TtcHistoryCycle[],
+  logs: ReportLog[],
+  cycleStarts: string[],
+  windowEnd: Date,
+): TtcReportData | null {
+  if (cycleStarts.length === 0) return null;
 
   const cycles: TtcReportCycle[] = scoredCycles.map((c) => ({
     cycleStart: c.cycleStart,
@@ -312,9 +376,10 @@ function buildTtcReportData(
     confirmedDate: c.signal.confirmedDate,
     method: c.signal.method,
     confidence: c.signal.confidence,
+    anovulatory: c.signal.anovulatory,
   }));
 
-  return { cycles, chart: latestCycleChart(logs, cycleStarts, windowEnd) };
+  return { cycles, chart: latestCycleChart(logs, cycleStarts, windowEnd), pcosPatterns: summarizePcosPatterns(scoredCycles) };
 }
 
 // ── suggestions (deterministic, non-diagnostic) ─────────────────────────────
@@ -440,6 +505,17 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   const windowEnd = new Date();
   const windowStart = new Date();
   windowStart.setDate(windowStart.getDate() - REPORT_WINDOW_DAYS);
+  // Cycle-length statistics need real history to mean anything — anomaly
+  // detection alone needs 4+ cycles (see MIN_CYCLES_FOR_ANOMALY_DETECTION in
+  // shared/cycle/anomaly.ts) and the 90-day printed window rarely holds that
+  // many. daily_logs is fetched over this wider bound instead; the printed
+  // "reporting window" figures (sleep, hydration, symptoms, coverage %, …)
+  // are then filtered back down to the 90-day slice below (`windowLogs`), so
+  // what the PDF says the window is stays true. Cycle-structural analysis —
+  // cycle stats, TTC scoring, anomaly detection, PMOS indicators — reads from
+  // the full wide `logs` on purpose.
+  const windowStartWide = new Date();
+  windowStartWide.setDate(windowStartWide.getDate() - CYCLE_HISTORY_WINDOW_DAYS);
 
   // Profile data is spread across three tables (see fetchProfilePageData) — the
   // name lives on `profiles`, conditions on `user_onboarding`, and the body/diet
@@ -459,14 +535,14 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
         'date, is_period, flow_intensity, symptoms, moods, exercise_types, exercise_minutes, water_intake, sleep_quality, sleep_minutes, disruptors, bbt_celsius, opk_result, bbt_wake_time, nsaid_taken, cervical_discharge, steps, hrv_ms, hrv_source, resting_heart_rate_bpm, skin_temp_delta_celsius',
       )
       .eq('user_id', user.id)
-      .gte('date', formatDate(windowStart))
+      .gte('date', formatDate(windowStartWide))
       .lte('date', formatDate(windowEnd))
       .order('date', { ascending: true }),
     supabase
       .from('lh_readings')
       .select('date, test_time, band_level')
       .eq('user_id', user.id)
-      .gte('date', formatDate(windowStart))
+      .gte('date', formatDate(windowStartWide))
       .lte('date', formatDate(windowEnd))
       .order('date', { ascending: true }),
     supabase
@@ -515,10 +591,16 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     .map((l) => parseMucusJson(l.cervical_discharge, l.date))
     .filter((m): m is MucusReading => m !== null);
 
+  // Printed daily-measure figures (sleep, hydration, symptoms, coverage %, …)
+  // stay scoped to the documented 90-day reporting window even though `logs`
+  // itself now covers more (see CYCLE_HISTORY_WINDOW_DAYS).
+  const windowStartStr = formatDate(windowStart);
+  const windowLogs: ReportLog[] = logs.filter((l) => l.date >= windowStartStr);
+
   // Her observed cycle length wins over the stored one here too — a report
   // that predicts off a number her own logs contradict is worse than no
-  // report. (The luteal personalization stays the two-pass version below,
-  // which is report-specific.)
+  // report. Uses the full wide history for the best available observed
+  // length, same reasoning as the rest of the app (see resolveCycleSettings).
   const storedSettings: CycleSettings = {
     last_period_start: settingsRow.last_period_start,
     cycle_length_days: settingsRow.cycle_length_days || 28,
@@ -531,8 +613,8 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   });
   const settings: CycleSettings = resolveCycleSettings(windowEnd, storedSettings, settingsLogMap);
 
-  // ── cycle statistics from observed data ──────────────────────────────────
-  const { starts, bleedLengths } = deriveCycleStarts(logs);
+  // ── cycle statistics, scoped to the reporting window (unchanged behavior) ─
+  const { starts, bleedLengths } = deriveCycleStarts(windowLogs);
   const observedCycles: number[] = [];
   for (let i = 1; i < starts.length; i++) {
     const prev = new Date(`${starts[i - 1]}T00:00:00`);
@@ -554,17 +636,40 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     markedIrregular: settingsRow.is_irregular === true,
   };
 
-  // ── symptoms by cycle phase ──────────────────────────────────────────────
+  // ── cycle-pattern analysis, from the full wide history ───────────────────
+  // Needs more cycles than 90 days reliably holds (see CYCLE_HISTORY_WINDOW_DAYS).
+  // Runs the same detectCycleAnomalies the Insights screen already shows, so a
+  // doctor reading this on paper sees the same read the member sees live.
+  const { starts: wideStarts } = deriveCycleStarts(logs);
+  const wideCycleHistory: CycleHistoryEntry[] = [];
+  for (let i = 1; i < wideStarts.length; i++) {
+    const length = Math.round(
+      (new Date(`${wideStarts[i]}T00:00:00`).getTime() - new Date(`${wideStarts[i - 1]}T00:00:00`).getTime()) / 86400000,
+    );
+    if (length > 0) wideCycleHistory.push({ start: wideStarts[i - 1], length });
+  }
+  const recentCycleHistory = wideCycleHistory.slice(-CYCLE_HISTORY_LOOKBACK);
+
+  const wideDisruptorsByDate: Record<string, string[]> = {};
+  for (const l of logs) {
+    if (l.disruptors?.length) wideDisruptorsByDate[l.date] = l.disruptors;
+  }
+  const cycleAnomalies: CycleAnomaly[] = detectCycleAnomalies(recentCycleHistory, wideDisruptorsByDate);
+
+  // ── symptoms & moods by cycle phase, scoped to the reporting window ──────
   const phaseLogs: Record<string, ReportLog[]> = {
     Menstrual: [],
     Follicular: [],
     Ovulatory: [],
     Luteal: [],
   };
+  // The lookup map calculatePhase walks needs the FULL history, so it can
+  // correctly resolve a period streak that started before the window did —
+  // only the bucketing loop below is scoped to windowLogs.
   const monthLogs: Record<string, DailyLog> = {};
   for (const l of logs) monthLogs[l.date] = { date: l.date, is_period: l.is_period === true };
 
-  for (const l of logs) {
+  for (const l of windowLogs) {
     const result = calculatePhase(new Date(`${l.date}T00:00:00`), settings, monthLogs);
     if (result.phase) phaseLogs[result.phase].push(l);
   }
@@ -574,25 +679,32 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
     symptomsByPhase[phase] = tally(phaseLogs[phase].map((l) => l.symptoms)).slice(0, 5);
   }
 
-  // Symptom × phase matrix, ordered by overall frequency so the most significant
-  // rows sit at the top where a clinician will actually look.
-  const allSymptoms = tally(logs.map((l) => l.symptoms));
-  const symptomMatrix: SymptomRow[] = allSymptoms.slice(0, 10).map(({ name, count }) => {
-    const byPhase: Record<string, number> = {};
-    for (const phase of PHASE_ORDER) {
-      byPhase[phase] = phaseLogs[phase].filter((l) => (l.symptoms || []).includes(name)).length;
-    }
-    const peak = PHASE_ORDER.reduce((best, p) => (byPhase[p] > byPhase[best] ? p : best), PHASE_ORDER[0]);
-    // Only call it a peak when one phase genuinely leads — a flat spread shouldn't
-    // be dressed up as a pattern.
-    const isFlat = PHASE_ORDER.every((p) => byPhase[p] === byPhase[peak]);
-    return { name, total: count, byPhase, peakPhase: isFlat ? null : peak };
-  });
+  // Symptom × phase and mood × phase matrices — same "only call it a peak when
+  // one phase genuinely leads" rule for both, so a flat spread never gets
+  // dressed up as a pattern, and both ordered by overall frequency so the
+  // most significant rows sit where a clinician will actually look first.
+  function buildPhaseMatrix(counted: Counted[], pick: (l: ReportLog) => string[] | null | undefined): SymptomRow[] {
+    return counted.slice(0, 10).map(({ name, count }) => {
+      const byPhase: Record<string, number> = {};
+      for (const phase of PHASE_ORDER) {
+        byPhase[phase] = phaseLogs[phase].filter((l) => (pick(l) || []).includes(name)).length;
+      }
+      const peak = PHASE_ORDER.reduce((best, p) => (byPhase[p] > byPhase[best] ? p : best), PHASE_ORDER[0]);
+      const isFlat = PHASE_ORDER.every((p) => byPhase[p] === byPhase[peak]);
+      return { name, total: count, byPhase, peakPhase: isFlat ? null : peak };
+    });
+  }
 
-  const daysWithSymptoms = logs.filter((l) => (l.symptoms || []).length > 0).length;
+  const allSymptoms = tally(windowLogs.map((l) => l.symptoms));
+  const symptomMatrix: SymptomRow[] = buildPhaseMatrix(allSymptoms, (l) => l.symptoms);
 
-  const exerciseObserved = observedFrom(logs, (l) => l.exercise_minutes);
-  const totalExerciseMinutes = logs.reduce((acc, l) => acc + (l.exercise_minutes || 0), 0);
+  const allMoods = tally(windowLogs.map((l) => l.moods));
+  const moodMatrix: SymptomRow[] = buildPhaseMatrix(allMoods, (l) => l.moods);
+
+  const daysWithSymptoms = windowLogs.filter((l) => (l.symptoms || []).length > 0).length;
+
+  const exerciseObserved = observedFrom(windowLogs, (l) => l.exercise_minutes);
+  const totalExerciseMinutes = windowLogs.reduce((acc, l) => acc + (l.exercise_minutes || 0), 0);
   const weeks = REPORT_WINDOW_DAYS / 7;
 
   const heightCm = typeof lifestyle.height_cm === 'number' ? lifestyle.height_cm : null;
@@ -600,11 +712,33 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
   const bmi =
     heightCm && weightKg && heightCm > 0 ? weightKg / (heightCm / 100) ** 2 : null;
 
-  const daysWithAnyLog = new Set(logs.map((l) => l.date)).size;
+  const daysWithAnyLog = new Set(windowLogs.map((l) => l.date)).size;
 
   const hasPcos = hasPcosFlag(onboarding.goals, onboarding.conditions);
+
+  // Scored once from the full wide history, reused by the TTC section (when
+  // she's in TTC mode) and the PMOS indicator below (in every mode) — so the
+  // two can never disagree about which cycle looked anovulatory. Cheap to
+  // run even outside TTC mode: with no BBT/OPK logged, the anovulatory read
+  // just comes back null, same as detectOvulation's own date-math fallback.
+  const scoredCycles = scoreCyclesForReport(logs, wideStarts, settings, windowEnd, hasPcos, lhReadings, mucusReadings);
   const ttc =
-    onboarding.tracker_mode === 'ttc' ? buildTtcReportData(logs, starts, settings, windowEnd, hasPcos, lhReadings, mucusReadings) : null;
+    onboarding.tracker_mode === 'ttc' ? buildTtcReportData(scoredCycles, logs, wideStarts, windowEnd) : null;
+
+  // ── PMOS-pattern indicators — same composite score Insights already shows ─
+  const scoredForAnovulatoryCheck = scoredCycles.filter((c) => !c.isOngoing);
+  const anovulatoryAssessment =
+    scoredForAnovulatoryCheck.length > 0
+      ? {
+          flaggedCycles: scoredForAnovulatoryCheck.filter((c) => (c.signal.anovulatory?.reasons?.length ?? 0) > 0).length,
+          totalCycles: scoredForAnovulatoryCheck.length,
+        }
+      : null;
+  const pmosScore: PmosPatternScore = computePmosPatternScore({
+    cycleLengths: recentCycleHistory.map((c) => c.length),
+    anovulatoryAssessment,
+    bmi,
+  });
 
   // ── nutrition, from meal logging ─────────────────────────────────────────
   const dailyTotals = dailyNutritionTotals(meals);
@@ -628,12 +762,12 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
 
   // ── wearable signals, from Apple Health / Health Connect ────────────────
   const wearableCandidate: WearableStats = {
-    restingHeartRate: observedFrom(logs, (l) => l.resting_heart_rate_bpm),
-    hrv: observedFrom(logs, (l) => l.hrv_ms),
-    steps: observedFrom(logs, (l) => l.steps),
+    restingHeartRate: observedFrom(windowLogs, (l) => l.resting_heart_rate_bpm),
+    hrv: observedFrom(windowLogs, (l) => l.hrv_ms),
+    steps: observedFrom(windowLogs, (l) => l.steps),
     // requirePositive: false — a below-baseline delta is a real, meaningful
     // reading here, unlike the app's "0 means not logged" convention elsewhere.
-    skinTempDelta: observedFrom(logs, (l) => l.skin_temp_delta_celsius, false),
+    skinTempDelta: observedFrom(windowLogs, (l) => l.skin_temp_delta_celsius, false),
   };
   const hasAnyWearableData = [
     wearableCandidate.restingHeartRate,
@@ -662,15 +796,15 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
       completenessPct: Math.round((daysWithAnyLog / REPORT_WINDOW_DAYS) * 100),
     },
     cycle,
-    hydration: observedFrom(logs, (l) => (l.water_intake ? l.water_intake * ML_PER_GLASS : null)),
+    hydration: observedFrom(windowLogs, (l) => (l.water_intake ? l.water_intake * ML_PER_GLASS : null)),
     sleep: {
       // sleep_minutes is stored in minutes; the report speaks in hours throughout.
-      ...observedFrom(logs, (l) => (l.sleep_minutes ? l.sleep_minutes / 60 : null)),
+      ...observedFrom(windowLogs, (l) => (l.sleep_minutes ? l.sleep_minutes / 60 : null)),
     },
     exercise: {
       ...exerciseObserved,
       weeklyAverage: totalExerciseMinutes > 0 ? totalExerciseMinutes / weeks : null,
-      topTypes: tally(logs.map((l) => l.exercise_types)).slice(0, 5),
+      topTypes: tally(windowLogs.map((l) => l.exercise_types)).slice(0, 5),
     },
     symptoms: {
       top: allSymptoms.slice(0, 8),
@@ -678,8 +812,11 @@ export async function buildHealthReport(): Promise<HealthReport | null> {
       matrix: symptomMatrix,
       daysWithSymptoms,
     },
-    moods: tally(logs.map((l) => l.moods)).slice(0, 6),
-    sleepDisruptors: tally(logs.map((l) => l.disruptors)).slice(0, 5),
+    moods: allMoods.slice(0, 6),
+    moodMatrix,
+    sleepDisruptors: tally(windowLogs.map((l) => l.disruptors)).slice(0, 5),
+    cycleAnomalies,
+    pmosScore,
     ttc,
     nutrition,
     wearable,
