@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rove Health
 
-## Getting Started
+A monorepo containing the Rove Health website, mobile app, and the shared logic
+that powers both.
 
-First, run the development server:
+## What lives where
+
+| Folder      | What it is                                                        |
+|-------------|-------------------------------------------------------------------|
+| `frontend/` | The Next.js website and web app (rovehealth.in). Deployed to Vercel. |
+| `mobile/`   | The Expo / React Native app for iOS and Android.                   |
+| `shared/`   | Cycle maths, phase content, and schemas used by *both* apps.       |
+| `backend/`  | Server actions and the AI orchestrator that `frontend/` calls into.|
+| `supabase/` | Database migrations, edge functions, and seed content.             |
+| `scripts/`  | One-off maintenance scripts (seeding, cache clearing, DB reads).   |
+| `docs/`     | Product plans, specs, and strategy documents.                      |
+
+Anything imported by both the website and the app belongs in `shared/`.
+It is aliased as `@shared/*` everywhere.
+
+## Getting started
+
+Install dependencies once at the root, then per app:
+
+```bash
+npm install
+npm install --prefix frontend
+npm install --prefix mobile
+```
+
+### Run the website
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Opens http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Run the mobile app
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm start --prefix mobile
+```
 
-## Learn More
+Then scan the QR code with Expo Go, or press `i` for the iOS simulator.
 
-To learn more about Next.js, take a look at the following resources:
+### Run the tests
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This runs the Jest suite over `shared/` — the cycle and phase calculations.
 
-## Deploy on Vercel
+## Import aliases
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Alias        | Points to        |
+|--------------|------------------|
+| `@shared/*`  | `shared/*`       |
+| `@/*`        | `frontend/src/*` |
+| `@backend/*` | `backend/src/*`  |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Always use the alias rather than a relative path like `../../../../backend/...`.
+
+## Deploying
+
+- **Website** — Vercel deploys automatically from the `aock-final` remote.
+- **Mobile (JS-only changes)** — `eas update --branch <channel> --platform ios`
+  ships over the air without an app-store review.
+- **Mobile (native changes)** — requires a full `eas build` and store submission.
+
+## A caution on Supabase config
+
+Running `supabase config push` overwrites **all** live Auth and Storage
+settings from `config.toml`, not just the section you edited. Do not run it
+casually — it has caused a production incident before.

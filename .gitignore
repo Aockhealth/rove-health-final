@@ -50,3 +50,31 @@ backend/node_modules
 # IDE / Agent
 .idea/
 .claude/
+
+# sample-account seeding output (contains demo account emails/password)
+scripts/output/
+
+# build output
+mobile/dist/
+frontend/test-results/
+*.tsbuildinfo
+
+# logs
+*.log
+mobile/eas-log*
+
+# screenshot / scratch capture output (see capture*.js)
+rendered.html
+fullpage.png
+ios_screenshots*/
+screenshot-preview/
+.ios-shot-tmp/
+
+# local python venv used for image tooling
+.venv_img/
+
+# macOS
+.DS_Store
+
+# stray root Expo artifacts (the real app lives in mobile/)
+.expo/

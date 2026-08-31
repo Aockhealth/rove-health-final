@@ -2,6 +2,8 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
+    // Playwright specs must run via `npx playwright test`, not Jest.
+    testPathIgnorePatterns: ['/node_modules/', '<rootDir>/frontend/e2e/'],
     moduleNameMapper: {
         '^@shared/(.*)$': '<rootDir>/shared/$1',
         '^@/(.*)$': '<rootDir>/frontend/src/$1'

@@ -306,7 +306,15 @@ describe('TTC engine — synthetic accuracy backtest', () => {
         // rather than re-typed summary numbers.
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const fs = require('fs');
-        const outPath = '/private/tmp/claude-501/-Users-sangitaraka-rove-health/5a59fae4-2ef7-4b5a-acce-34cf7ff1bb7b/scratchpad/ttc-backtest-results.json';
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const os = require('os');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const path = require('path');
+        // Set TTC_BACKTEST_OUT to keep the raw results somewhere specific;
+        // otherwise they land in the OS temp directory.
+        const outPath =
+            process.env.TTC_BACKTEST_OUT ??
+            path.join(os.tmpdir(), 'ttc-backtest-results.json');
         fs.writeFileSync(
             outPath,
             JSON.stringify(
