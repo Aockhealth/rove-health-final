@@ -78,3 +78,10 @@ screenshot-preview/
 
 # stray root Expo artifacts (the real app lives in mobile/)
 .expo/
+
+# strategy drafts kept out of the public repo (aockhealth/rove-health-final)
+docs/yc-application-draft.md
+docs/gynae-ecosystem-expansion-plan.md
+docs/menopause-screen-plan.md
+docs/telehealth-payment-video-plan.md
+docs/condition-modules-screen-plan.md
