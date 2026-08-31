@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/too-wet-too-dry-vaginal-discharge.jpg"
 ---
 
-## **Too Wet? Too Dry? Or Just Right — What Your Vaginal Discharge Is Actually Telling You**
+## **Too Wet? Too Dry? Or Just Right: What Your Vaginal Discharge Is Actually Telling You**
 
 ### ***The “Wetness” Guide: breaking myths with cycle science***
 
@@ -18,7 +18,7 @@ image: "/blog/too-wet-too-dry-vaginal-discharge.jpg"
 “Why does it feel dry even when I’m in the mood?”  
 “And… should I be worried?”
 
-In India, vaginal discharge is often misunderstood, ignored, or linked to shame. Many women grow up thinking **wetness is embarrassing** and **dryness is a problem** — without being told that both are often **normal, hormonal, and cyclical**.
+In India, vaginal discharge is often misunderstood, ignored, or linked to shame. Many women grow up thinking **wetness is embarrassing** and **dryness is a problem**, without being told that both are often **normal, hormonal, and cyclical**.
 
 Here’s the truth: **Vaginal wetness changes across your cycle for a reason.**  
 Understanding those changes helps you protect comfort, intimacy, and health without panic.
@@ -62,7 +62,7 @@ This leads to:
 * Increased natural lubrication  
 * Less friction during sex
 
-This “wetness” supports sperm movement and reduces tissue injury — it’s **functional, not dirty** 
+This “wetness” supports sperm movement and reduces tissue injury: it’s **functional, not dirty** 
 
 2. ### **Progesterone \= Dryness (and That’s Normal Too)**
 
@@ -78,7 +78,7 @@ You may notice:
 * A drier vaginal feel  
 * More sensitivity or friction
 
-This is a normal hormonal downshift — not something wrong with you .
+This is a normal hormonal downshift, not something wrong with you.
 
 
 
@@ -93,7 +93,7 @@ Avoid unnecessary washes or medications for normal wetness.
 
 ### **2\. When Dryness Affects Comfort or Sex**
 
-Dryness doesn’t mean low desire — it often means **low estrogen locally**.
+Dryness doesn’t mean low desire: it often means **low estrogen locally**.
 
 Helpful options:
 
@@ -122,7 +122,7 @@ Why?
 * They can alter vaginal pH  
 * They increase infection risk over time
 
-Natural doesn’t always mean safe — especially inside the vagina.
+Natural doesn’t always mean safe, especially inside the vagina.
 
 
 
@@ -135,13 +135,13 @@ Natural doesn’t always mean safe — especially inside the vagina.
 * Dryness in the luteal phase is normal  
 * Discharge alone doesn’t mean infection  
 * Use water-based lubricants for comfort  
-* Avoid oils with condoms — they increase risk
+* Avoid oils with condoms: they increase risk
 
 
 
 ## **Dr. Rove’s Note**
 
-If discharge is foul-smelling, itchy, painful, or persists with burning or bleeding, get evaluated — infections and hormonal issues need targeted treatment, not guesswork.
+If discharge is foul-smelling, itchy, painful, or persists with burning or bleeding, get evaluated: infections and hormonal issues need targeted treatment, not guesswork.
 
 
 

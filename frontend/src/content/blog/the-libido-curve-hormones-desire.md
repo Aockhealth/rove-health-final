@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/the-libido-curve-hormones-desire.jpg"
 ---
 
-## **Why Your Desire Peaks One Week — and Disappears the Next**
+## **Why Your Desire Peaks One Week, and Disappears the Next**
 
 ### ***The Libido Curve: Hormones & Desire (without shame or guessing)***
 
@@ -20,7 +20,7 @@ image: "/blog/the-libido-curve-hormones-desire.jpg"
 In Indian society, women are rarely taught that **sexual desire is hormonal, cyclical, and changeable**. Instead, fluctuating libido is often framed as emotional distance, lack of attraction, or personal failure.
 
 Here’s the clinical truth: **Libido follows your menstrual cycle.**  
-And when you understand the curve, you stop blaming yourself — and start planning intimacy more kindly.
+And when you understand the curve, you stop blaming yourself, and start planning intimacy more kindly.
 
 
 
@@ -56,7 +56,7 @@ Female sexual desire is influenced by:
 * **Testosterone** (desire, initiation)  
 * **Progesterone** (calming, nesting, withdrawal)
 
-These hormones don’t stay flat — they **rise and fall across the cycle**.
+These hormones don’t stay flat: they **rise and fall across the cycle**.
 
 2. ### **Ovulation: The Desire Peak**
 
@@ -72,7 +72,7 @@ This combination leads to:
 * Increased confidence and body awareness  
 * Greater responsiveness to touch
 
-This isn’t accidental — biologically, it’s the fertile window .
+This isn’t accidental: biologically, it’s the fertile window.
 
 3. ### **Luteal Phase: The Desire Dip**
 
@@ -135,7 +135,7 @@ Desire responds better to safety than obligation.
 * Cycle-based contraception works against a rhythm designed around conception  
 * Desire can’t be switched off just because a calendar says so  
 * You don’t need to feel stuck or conflicted  
-* With the right guidance, you can plan *around* your body — but any change to your contraceptive method should be made with your doctor, since effectiveness varies by method and cycle-tracking alone is not a reliable substitute for medical contraceptive guidance
+* With the right guidance, you can plan *around* your body, but any change to your contraceptive method should be made with your doctor, since effectiveness varies by method and cycle-tracking alone is not a reliable substitute for medical contraceptive guidance
 
 ### **5\. When to Check Further**
 
@@ -161,7 +161,7 @@ Then evaluation for thyroid issues, iron deficiency, depression, or hormonal imb
 
 ## **Dr. Rove’s Note**
 
-If low libido persists across cycles or causes distress, evaluate hormonal health, mental health, and medication effects — desire is multifactorial, not just relational.
+If low libido persists across cycles or causes distress, evaluate hormonal health, mental health, and medication effects: desire is multifactorial, not just relational.
 
 
 

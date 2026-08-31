@@ -1,6 +1,6 @@
 ---
 title: "Vitamin D and PMOS"
-excerpt: "You Live in the Sun \u2014 So Why Is Your Vitamin D Still Low?"
+excerpt: "You Live in the Sun. So Why Is Your Vitamin D Still Low?"
 category: "PMOS"
 categorySlug: "pmos"
 readTime: "6 min read"
@@ -9,25 +9,25 @@ publishedDate: "2024-10-01"
 image: "/blog/vitamin-d-and-pcos.jpg"
 ---
 
-## **You Live in the Sun — So Why Is Your Vitamin D Still Low?**
+## **You Live in the Sun. So Why Is Your Vitamin D Still Low?**
 
 ### ***Vitamin D: The Silent Hormone Regulator Indian Women Are Missing***
 
 ### **Introduction: The Sunshine Assumption**
 
-“Vitamin D? I live in India — how can I be deficient?”  
+“Vitamin D? I live in India, how can I be deficient?”  
 “I go out every day.”  
 “That test is unnecessary.”
 
 And yet, blood reports keep coming back low.
 
 Here’s the uncomfortable truth:  
-**Vitamin D deficiency is one of the most common — and ignored — hormonal disruptors in Indian women**, especially those with PMOS.
+**Vitamin D deficiency is one of the most common, and most ignored, hormonal disruptors in Indian women**, especially those with PMOS.
 
 And no, Vitamin D is **not just a vitamin**.  
 It behaves like a **pro-hormone**, directly influencing ovarian function, insulin sensitivity, and cycle regularity.
 
-Let’s talk about why it matters — and why so many of us are missing it.
+Let’s talk about why it matters, and why so many of us are missing it.
 
 
 
@@ -94,7 +94,7 @@ Supplementation has shown improvement in:
 * Metabolic markers  
 * Inflammatory profiles
 
-Vitamin D doesn’t “cure” PMOS — but **deficiency makes PMOS harder to manage**.
+Vitamin D doesn’t “cure” PMOS, but **deficiency makes PMOS harder to manage**.
 
 
 
@@ -109,7 +109,7 @@ Why?
 * Sunscreen and covered clothing  
 * Pollution blocking UVB rays
 
-So yes — sunlight exists.  
+So yes, sunlight exists.  
 But effective synthesis doesn’t.
 
 
@@ -126,7 +126,7 @@ Optimal (for hormonal health):
 
 * \~30–50 ng/mL (not just “barely normal”)
 
-### **2\. Sunlight — But Done Right**
+### **2\. Sunlight, But Done Right**
 
 If relying on sun:
 
@@ -147,7 +147,7 @@ Some support:
 * Egg yolk  
 * Mushrooms exposed to sunlight
 
-Diet alone rarely corrects deficiency — but it supports maintenance.
+Diet alone rarely corrects deficiency, but it supports maintenance.
 
 ### **4\. Supplementation (Often Necessary)**
 
@@ -155,13 +155,13 @@ For deficient individuals:
 
 * Supplementation is usually required  
 * Dose depends on baseline levels  
-* Always follow medical guidance — more is not better
+* Always follow medical guidance: more is not better
 
 Vitamin D is fat-soluble. Excess can be harmful.
 
 ### **5\. Cycle Syncing Insight**
 
-Vitamin D supports follicle development — so adequate levels help:
+Vitamin D supports follicle development, so adequate levels help:
 
 * Follicular phase ovulation quality  
 * Hormonal signaling across the cycle
@@ -182,7 +182,7 @@ It’s foundational, not optional.
 
 ## **Dr. Rove’s Note**
 
-Never megadose Vitamin D without testing — excessive supplementation can cause calcium imbalance and kidney issues.
+Never megadose Vitamin D without testing: excessive supplementation can cause calcium imbalance and kidney issues.
 
 
 

@@ -1,6 +1,6 @@
 ---
 title: "The 4 seasons of your cycle"
-excerpt: "The 4 Seasons of Your Cycle \u2014 A Biological Overview"
+excerpt: "The 4 Seasons of Your Cycle: A Biological Overview"
 category: "Cycle Syncing"
 categorySlug: "cycle-syncing"
 readTime: "6 min read"
@@ -9,26 +9,26 @@ publishedDate: "2024-10-01"
 image: "/blog/the-4-seasons-of-your-cycle.jpg"
 ---
 
-**The 4 Seasons of Your Cycle — A Biological Overview**
+**The 4 Seasons of Your Cycle: A Biological Overview**
 
-If you’ve ever wondered why some weeks you’re conquering deadlines like a boss, and the next you can’t decide between crying or napping — it isn’t “moodiness.” It’s biology. Think of your cycle not as a monthly "curse," but as a biological year with four distinct seasons. Expecting yourself to have the same energy every day is like expecting a tree to bloom flowers in the middle of winter. It’s not just unrealistic; it’s biologically impossible.
+If you’ve ever wondered why some weeks you’re conquering deadlines like a boss, and the next you can’t decide between crying or napping, it isn’t “moodiness.” It’s biology. Think of your cycle not as a monthly "curse," but as a biological year with four distinct seasons. Expecting yourself to have the same energy every day is like expecting a tree to bloom flowers in the middle of winter. It’s not just unrealistic; it’s biologically impossible.
 
  Here is your map to the weather patterns inside your body.
 
 **What this article will help you understand:**
 
 * The science of the menstrual cycle as a 28-day biological rhythm (beyond “period vs no period”).  
-* How to interpret a hormone curve — even if you’ve never seen one before.  
+* How to interpret a hormone curve, even if you’ve never seen one before.  
 * Why your motivation, cravings, skin, sleep, and mood genuinely change by phase.  
 * Practical ways to plan diet, movement, and social/work energy around your inner seasons.
 
-(And once you learn the seasons, you stop fighting your body — and start using it.)
+(And once you learn the seasons, you stop fighting your body, and start using it.)
 
 
 
 ### **The Science: Your Internal Weather Report**
 
-Your cycle has **four hormonal phases**, orchestrated by two main characters: **Estrogen** (your energy and social butterfly hormone) and **Progesterone** (your sedating, detail-oriented hormone). Think of them like emotional-weather forecasts — knowing them helps you plan food, workouts, work meetings, and mood support
+Your cycle has **four hormonal phases**, orchestrated by two main characters: **Estrogen** (your energy and social butterfly hormone) and **Progesterone** (your sedating, detail-oriented hormone). Think of them like emotional-weather forecasts: knowing them helps you plan food, workouts, work meetings, and mood support
 
 #### **1\. Winter: The Menstrual Phase (Days 1–5)**
 
@@ -55,16 +55,16 @@ Your cycle has **four hormonal phases**, orchestrated by two main characters: **
 * **How You Feel:** Your body shifts into "prepare and protect" mode. Your brain becomes wired for detail and caution rather than big-picture socializing.  
   * *Note:* As you near the end of this phase, serotonin (the happy chemical) can drop, leading to emotional sensitivity.
 
-## — **Visualising Your Hormone Wave** — **![][image1]**
+## **Visualising Your Hormone Wave** **![][image1]**
 
 * **Estrogen \= Energy \+ Glow \+ Social Brain**  
   When estrogen rises (Spring → Summer), brain areas linked to confidence and language become more active.  
 * **Progesterone \= Calm \+ Caution \+ Prepare Mode**  
-  After ovulation (Autumn), progesterone rises, temperature increases slightly, metabolism accelerates, and cravings are NORMAL — your body thinks it “may need to support pregnancy.”
+  After ovulation (Autumn), progesterone rises, temperature increases slightly, metabolism accelerates, and cravings are NORMAL: your body thinks it “may need to support pregnancy.”
 
 By late luteal phase, **progesterone drops sharply → serotonin drops**, which is one reason **PMS can feel like someone swapped your brain overnight.**
 
-And yes — most traditional routines and health advice ignore this because medical systems historically excluded women from trials **until the 1990s**
+And yes, most traditional routines and health advice ignore this because medical systems historically excluded women from trials **until the 1990s**
 
 
 
@@ -85,7 +85,7 @@ You don't need to overhaul your life; just make small tweaks to match your inter
 **3\. Nutrition: Feed the Metabolism**
 
 * **Autumn (Luteal):** Your metabolism actually speeds up (burning \~100–300 extra calories/day).You *will* crave carbs because your insulin sensitivity changes. Don’t starve yourself. Increase your intake of complex carbs and protein to stabilize blood sugar and mood.  
-* **Winter (Menstrual)**:Iron loss may cause fatigue.Consume Warm iron-rich foods — spinach dal, rajma, beetroot sabzi, ragi ladoo with jaggery
+* **Winter (Menstrual)**:Iron loss may cause fatigue.Consume Warm iron-rich foods: spinach dal, rajma, beetroot sabzi, ragi ladoo with jaggery
 
 
 
@@ -100,25 +100,25 @@ Our traditional Indian diet is actually perfectly suited for this, if we use it 
 
 ## **Dr. Rove’s Note**
 
-If PMS symptoms regularly disrupt work, relationships, or sleep — that’s a clinical sign, not a personal flaw. Track → observe → and speak to a clinician early if something feels “too much.”
+If PMS symptoms regularly disrupt work, relationships, or sleep, that’s a clinical sign, not a personal flaw. Track → observe → and speak to a clinician early if something feels “too much.”
 
 
 
 **References & Further Reading**
 
-1. Menstrual cycle metabolism — *Journal of Physiology*  
+1. Menstrual cycle metabolism (*Journal of Physiology*)  
    [https://physoc.onlinelibrary.wiley.com/doi/10.1113/jphysiol.2020.195016](https://physoc.onlinelibrary.wiley.com/doi/10.1113/jphysiol.2020.195016)  
-2. Estrogen & insulin sensitivity — NIH  
+2. Estrogen & insulin sensitivity (NIH)  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6691699/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6691699/)  
-3. Progesterone & serotonin — JCEM  
+3. Progesterone & serotonin (JCEM)  
    [https://academic.oup.com/jcem/article/104/12/5960/5556220](https://academic.oup.com/jcem/article/104/12/5960/5556220)  
-4. Stress and menstrual disruption — NIH  
+4. Stress and menstrual disruption (NIH)  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7790710/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7790710/)  
-5. Luteal-phase based strength training — SpringerLink study  
+5. Luteal-phase based strength training (SpringerLink study)  
    [https://link.springer.com/article/10.1007/s00421-014-2783-4](https://link.springer.com/article/10.1007/s00421-014-2783-4)  
-6. Infradian rhythm & metabolic shifts — Scientific Reports  
+6. Infradian rhythm & metabolic shifts (Scientific Reports)  
    [https://www.nature.com/articles/s41598-018-30866-3](https://www.nature.com/articles/s41598-018-30866-3)  
-7. Gender data gap — Women excluded from trials (NIH history)  
+7. Gender data gap: Women excluded from trials (NIH history)  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3611753/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3611753/)
 
 

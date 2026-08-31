@@ -17,11 +17,11 @@ image: "/blog/painful-sex.jpg"
 “It will get better after marriage.”  
 “You’re thinking too much.”
 
-In Indian society, pain with penetration is often dismissed as anxiety, inexperience, or fear — something a woman is expected to *push through*. This misconception keeps many women silent for years, feeling broken, ashamed, or at fault.
+In Indian society, pain with penetration is often dismissed as anxiety, inexperience, or fear, something a woman is expected to *push through*. This misconception keeps many women silent for years, feeling broken, ashamed, or at fault.
 
 Here’s the clinical truth:  
 **Vaginismus (Painful Sex) is a real medical condition caused by involuntary pelvic floor muscle spasms.**  
-It has nothing to do with willpower, desire, or mindset — and it is **treatable**.
+It has nothing to do with willpower, desire, or mindset, and it is **treatable**.
 
 
 
@@ -41,7 +41,7 @@ Women with vaginismus often experience:
 * Feeling like penetration “hits a wall”  
 * Involuntary tightening despite trying to relax  
 * Difficulty with tampons or gynecological exams  
-* Fear *because of* repeated pain — not fear of sex itself  
+* Fear *because of* repeated pain, not fear of sex itself  
 * Emotional distress, avoidance, or relationship strain
 
 Important reminder:  
@@ -122,7 +122,7 @@ Helpful practices:
 
 **Cycle syncing insight:**
 
-* Follicular phase (post-period): muscles are more relaxed — ideal for therapy progress  
+* Follicular phase (post-period): muscles are more relaxed, ideal for therapy progress  
 * Luteal/PMS phase: go slower; sensitivity is higher
 
 
@@ -145,14 +145,14 @@ It’s **underdiagnosed**.
 * Vaginismus is caused by involuntary muscle spasms  
 * Desire and pain can coexist  
 * Pelvic floor therapy and dilators are effective  
-* Healing is gradual — and that’s normal
+* Healing is gradual, and that’s normal
 
 
 
 ## **Dr. Rove’s Note**
 
 **Never force penetration through pain.**  
-If sex keeps hurting, a clinician can help identify what’s going on — whether it’s vaginismus, an infection, hormonal dryness, or another treatable cause. Getting the right diagnosis early makes treatment gentler and prevents long-term discomfort and distress.
+If sex keeps hurting, a clinician can help identify what’s going on: whether it’s vaginismus, an infection, hormonal dryness, or another treatable cause. Getting the right diagnosis early makes treatment gentler and prevents long-term discomfort and distress.
 
 
 

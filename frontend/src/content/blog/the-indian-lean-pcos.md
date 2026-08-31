@@ -1,6 +1,6 @@
 ---
 title: "The Indian Lean PMOS"
-excerpt: "You\u2019re Not Overweight \u2014 So Why Does Your PMOS Still Act Up?"
+excerpt: "You\u2019re Not Overweight, So Why Does Your PMOS Still Act Up?"
 category: "PMOS"
 categorySlug: "pmos"
 readTime: "6 min read"
@@ -9,22 +9,22 @@ publishedDate: "2024-10-01"
 image: "/blog/the-indian-lean-pcos.jpg"
 ---
 
-## **You’re Not Overweight — So Why Does Your PMOS Still Act Up?**
+## **You’re Not Overweight, So Why Does Your PMOS Still Act Up?**
 
 ### ***The Indian “Lean PMOS” Reality No One Talks About***
 
 ### **Introduction: When the Scale Lies**
 
 “**But you’re not overweight. How can it be PMOS?**”  
-How many times have you heard that — from a doctor, a relative, or even yourself?
+How many times have you heard that: from a doctor, a relative, or even yourself?
 
 We’ve been taught to believe that PMOS only shows up with weight gain. That if the scale looks fine, everything inside must be fine too.  
 But here’s the truth: **in Indian women, PMOS doesn’t always come with obesity.**
 
-If your periods are irregular, acne or hair fall won’t settle, energy crashes are constant, or blood reports hint at insulin resistance — despite a “normal” BMI — this isn’t in your head.  
+If your periods are irregular, acne or hair fall won’t settle, energy crashes are constant, or blood reports hint at insulin resistance (despite a “normal” BMI), this isn’t in your head.  
 It’s called **Indian Lean PMOS**, where the issue isn’t body weight, but how your body handles insulin and stores fat.
 
-Let’s clear the confusion — early, accurately, and without blaming your body.
+Let’s clear the confusion: early, accurately, and without blaming your body.
 
 
 
@@ -44,7 +44,7 @@ If this is you, you’re not imagining things:
 * Skinny arms and legs, soft midsection  
 * Constant carb cravings or energy dips  
 * Acne, hair thinning, or facial hair despite being “lean”  
-* Doctors saying “just lose weight” — without a clear plan
+* Doctors saying “just lose weight”, without a clear plan
 
 This is not laziness.  
 This is **metabolic mismatch**.
@@ -59,11 +59,11 @@ South Asians are genetically predisposed to:
 
 * Higher **visceral (deep belly) fat**  
 * Lower **muscle mass**  
-* Higher **insulin resistance** — even at normal BMI
+* Higher **insulin resistance**, even at normal BMI
 
 This is well documented in metabolic studies on Indian populations .
 
-So you can look slim — and still have:
+So you can look slim, and still have:
 
 * High insulin levels  
 * Poor glucose handling  
@@ -117,7 +117,7 @@ For Lean PMOS, **muscle is your insulin sink**.
 
 * Strength training (2–4×/week)  
 * Resistance bands, weights, bodyweight exercises  
-* Short bursts of intensity — not endless cardio
+* Short bursts of intensity, not endless cardio
 
 Why cardio alone fails:
 
@@ -135,7 +135,7 @@ This reduces hormonal stress while improving consistency.
 ### **4\. Lifestyle: Small Levers, Big Impact**
 
 * Sleep is non-negotiable for insulin control  
-* Manage stress — cortisol worsens insulin resistance  
+* Manage stress: cortisol worsens insulin resistance  
 * Avoid long fasting windows if cycles are irregular
 
 Indian reality check:  
@@ -150,7 +150,7 @@ You need **food \+ muscle \+ rhythm**.
 * Vegetarian diets are often protein-deficient  
 * Social pressure to stay “thin” worsens under-fuelling
 
-Lean PMOS isn’t rare here — it’s **underdiagnosed**.
+Lean PMOS isn’t rare here: it’s **underdiagnosed**.
 
 
 
@@ -166,7 +166,7 @@ Lean PMOS isn’t rare here — it’s **underdiagnosed**.
 
 ## **Dr. Rove’s Note**
 
-If cycles remain irregular despite lifestyle changes, evaluate fasting insulin, glucose tolerance, and androgen levels — early metabolic correction prevents long-term complications.
+If cycles remain irregular despite lifestyle changes, evaluate fasting insulin, glucose tolerance, and androgen levels: early metabolic correction prevents long-term complications.
 
 
 
@@ -182,6 +182,6 @@ If cycles remain irregular despite lifestyle changes, evaluate fasting insulin, 
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3277302/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3277302/)  
 5. **Exercise, Muscle Mass, and Insulin Sensitivity**  
    [https://pubmed.ncbi.nlm.nih.gov/12949368/](https://pubmed.ncbi.nlm.nih.gov/12949368/)  
-6. **Lifestyle Management of PMOS — Evidence Review**  
+6. **Lifestyle Management of PMOS: Evidence Review**  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6734597/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6734597/)
 

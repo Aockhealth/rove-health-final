@@ -15,7 +15,7 @@ image: "/blog/luteal-phase-skincare.jpg"
 
 ### **Why This Matters**
 
-If your skin looks calm one week and oily, congested, or breakout-prone the next, it’s not inconsistency — it’s **hormones shifting gears**.  
+If your skin looks calm one week and oily, congested, or breakout-prone the next, it’s not inconsistency: it’s **hormones shifting gears**.  
  The luteal phase changes your skin’s oil production, and your skincare needs to change with it.
 
 
@@ -90,7 +90,7 @@ Use:
 * A **gentle salicylic acid cleanser (0.5–2%)**  
 * Once or twice daily, depending on sensitivity
 
-This is prevention — not damage control.
+This is prevention, not damage control.
 
 ### **2\. Don’t Over-Strip Your Skin**
 
@@ -160,7 +160,7 @@ Skincare works best **ahead of symptoms**, not after.
 
 ## **Dr. Rove’s Note**
 
-If acne is severe, cystic, or worsening each cycle, topical changes alone won’t suffice — evaluate hormonal and metabolic contributors.
+If acne is severe, cystic, or worsening each cycle, topical changes alone won’t suffice: evaluate hormonal and metabolic contributors.
 
 
 

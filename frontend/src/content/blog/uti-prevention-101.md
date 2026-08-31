@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/uti-prevention-101.jpg"
 ---
 
-## **Why UTIs Keep Coming Back — And Why It’s Not a “Hygiene Problem”**
+## **Why UTIs Keep Coming Back (And Why It’s Not a “Hygiene Problem”)**
 
 ### ***UTI Prevention 101: facts that actually protect you***
 
@@ -19,10 +19,10 @@ image: "/blog/uti-prevention-101.jpg"
 “Use a stronger wash.”  
 “Women just get UTIs.”
 
-In India, urinary tract infections (UTIs) are often blamed on poor hygiene or ignored as something women must “deal with.” This leads to **over-washing, harsh products, and repeated infections** — the exact opposite of prevention.
+In India, urinary tract infections (UTIs) are often blamed on poor hygiene or ignored as something women must “deal with.” This leads to **over-washing, harsh products, and repeated infections**, the exact opposite of prevention.
 
 Here’s the clinical truth:  
- **UTIs are about anatomy and bacteria — not cleanliness.**  
+ **UTIs are about anatomy and bacteria, not cleanliness.**  
 And many well-meaning habits actually increase your risk.
 
 
@@ -44,7 +44,7 @@ And many well-meaning habits actually increase your risk.
 * Being prescribed antibiotics again and again  
 * Being told to “drink more water” without real guidance
 
-Recurring UTIs aren’t bad luck — they’re usually **preventable**.
+Recurring UTIs aren’t bad luck: they’re usually **preventable**.
 
 
 
@@ -157,7 +157,7 @@ Clean doesn’t mean sterile.
 
 ## **Dr. Rove’s Note**
 
-If UTIs recur frequently, don’t self-treat — a urine culture and proper evaluation help prevent resistance and missed diagnoses.
+If UTIs recur frequently, don’t self-treat: a urine culture and proper evaluation help prevent resistance and missed diagnoses.
 
 
 

@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/endometriosis-more-than-just-bad-cramps.jpg"
 ---
 
-# **Endometriosis: More Than Just “Bad Cramps”** — **"It's just a bad period. Take a painkiller and go to work."**
+# **Endometriosis: More Than Just “Bad Cramps”**. **"It's just a bad period. Take a painkiller and go to work."**
 
 How many times have you heard that? From a teacher, a boss, or even a well-meaning auntie?
 
@@ -28,7 +28,7 @@ We are culturally conditioned to believe that suffering is part of the "female p
 ## **What Is Endometriosis? The "Glitch" in the System**
 
 * Endometriosis occurs when **tissue similar to the uterine lining (endometrium)** grows **outside the uterus**.  
-* Common sites include — Ovaries, Fallopian tubes, Pelvic lining, Behind the uterus or bladder  
+* Common sites include: Ovaries, Fallopian tubes, Pelvic lining, Behind the uterus or bladder  
 * Here is the problem: This rogue tissue still behaves like your period. It thickens, breaks down, and bleeds every month. This tissue responds to monthly hormones but **has no way to exit the body**, leading to inflammation and pain.
 
 **Key Point:** The severity of pain does *not* always match how advanced the disease is.
@@ -66,7 +66,7 @@ We are culturally conditioned to believe that suffering is part of the "female p
   * Bloating that worsens cyclically  
   * Difficulty conceiving
 
-**Reminder:** Severe pain is a symptom — not a personality trait.
+**Reminder:** Severe pain is a symptom, not a personality trait.
 
 
 
@@ -119,7 +119,7 @@ Consistency matters more than perfection.
 
 Early evaluation improves symptom control and quality of life.
 
- **What You Can Do — Without Overhauling Your Life**
+ **What You Can Do: Without Overhauling Your Life**
 
 **The Anti-Inflammatory Shift**:  
 Cut down on the "White Poisons" (Refined Sugar and Maida). These spike insulin, which can worsen inflammation. Try a 4-week trial of reducing gluten and dairy to see if your pelvic pain reducesmany "Endo Warriors" find this life-changing.
@@ -147,11 +147,11 @@ If your pain is loud enough to interrupt your life, it deserves to be taken seri
 
 ## **References & Further Reading**
 
-1. WHO — Endometriosis overview  
+1. WHO: Endometriosis overview  
    [https://www.who.int/news-room/fact-sheets/detail/endometriosis](https://www.who.int/news-room/fact-sheets/detail/endometriosis)  
-2. Delay in diagnosis — BMJ  
+2. Delay in diagnosis: BMJ  
    [https://www.bmj.com/content/348/bmj.g1752](https://www.bmj.com/content/348/bmj.g1752)  
-3. NIH — Endometriosis symptoms and diagnosis  
+3. NIH: Endometriosis symptoms and diagnosis  
    [https://www.nichd.nih.gov/health/topics/endometriosis](https://www.nichd.nih.gov/health/topics/endometriosis)  
 4. Pain patterns and diagnosis delay  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7237818/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7237818/)  

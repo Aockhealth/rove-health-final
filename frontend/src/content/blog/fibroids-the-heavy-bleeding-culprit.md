@@ -23,7 +23,7 @@ If this sounds like your life, you might be dealing with **Uterine Fibroids**. I
 
 * What fibroids are and why they cause heavy bleeding  
 * How common fibroids are in Indian women  
-* Medical vs surgical management — and when each is considered
+* Medical vs surgical management, and when each is considered
 
 
 
@@ -53,7 +53,7 @@ This can lead to:
 * Low iron levels (iron-deficiency anemia)  
 * Fatigue, breathlessness, brain fog
 
-**Key Point:** Heavy bleeding is often the *first* symptom — pain may come later or not at all.
+**Key Point:** Heavy bleeding is often the *first* symptom; pain may come later or not at all.
 
 
 
@@ -68,7 +68,7 @@ This can lead to:
   * Hormonal imbalance (estrogen dominance)
 
 **Indian Context**  
-Many women normalize heavy bleeding or treat anemia repeatedly without investigating the cause — delaying fibroid diagnosis.
+Many women normalize heavy bleeding or treat anemia repeatedly without investigating the cause, delaying fibroid diagnosis.
 
 **The Vitamin D Connection:** There is a massive, often ignored link between Vitamin D deficiency and fibroids. Despite having ample sunshine, most Indian women are Vitamin D deficient. Studies in Eastern India have shown that women with fibroids had significantly lower Vitamin D levels than those without. This nutrient actually helps inhibit fibroid cells, so our indoor lifestyle might be fueling the problem.
 
@@ -84,7 +84,7 @@ Many women normalize heavy bleeding or treat anemia repeatedly without investiga
 * Pain during periods or intercourse  
 * Difficulty conceiving (in some cases)
 
-Heavy bleeding is a symptom — not a normal phase of adulthood.
+Heavy bleeding is a symptom, not a normal phase of adulthood.
 
 
 
@@ -132,7 +132,7 @@ Patterns over time are more helpful than one painful cycle.
 
 ## **Dr. Rove’s Note**
 
-If your periods are getting heavier year after year, don’t wait for your haemoglobin to drop again. Ask *why* the bleeding is happening. Chronic blood loss strains your heart and causes severe fatigue. Please get an ultrasound—it’s painless and gives you an answer in minutes."
+If your periods are getting heavier year after year, don’t wait for your haemoglobin to drop again. Ask *why* the bleeding is happening. Chronic blood loss strains your heart and causes severe fatigue. Please get an ultrasound: it’s painless and gives you an answer in minutes."
 
  Many women live well with fibroids once they’re identified and managed early.
 
@@ -140,13 +140,13 @@ If your periods are getting heavier year after year, don’t wait for your haemo
 
 ## **References & Further Reading**
 
-1. WHO — Uterine fibroids overview  
+1. WHO: Uterine fibroids overview  
    [https://www.who.int/news-room/fact-sheets](https://www.who.int/news-room/fact-sheets)  
 2. Prevalence of fibroids in Indian women  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5691725/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5691725/)  
 3. Heavy menstrual bleeding & fibroids  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6512577/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6512577/)  
-4. Management guidelines — ACOG  
+4. Management guidelines: ACOG  
    [https://www.acog.org/womens-health/faqs/uterine-fibroids](https://www.acog.org/womens-health/faqs/uterine-fibroids)  
 5. Vitamin D deficiency and fibroids  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5735788/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5735788/)  

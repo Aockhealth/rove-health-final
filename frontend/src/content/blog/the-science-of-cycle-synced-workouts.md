@@ -9,10 +9,10 @@ publishedDate: "2024-10-01"
 image: "/blog/the-science-of-cycle-synced-workouts.jpg"
 ---
 
-## — **Train Like an Athlete: The Science of Cycle-Synced Workouts**
+## **Train Like an Athlete: The Science of Cycle-Synced Workouts**
 
 **Some weeks, workouts feel easy. Other weeks, the same routine feels exhausting or painful.**  
-You’re not lazy or out of shape — you’re training on a flat schedule in a cyclical body.  
+You’re not lazy or out of shape. You’re training on a flat schedule in a cyclical body.  
 This article shows how to sync movement with your menstrual cycle so exercise builds strength, not burnout.
 
 
@@ -21,7 +21,7 @@ This article shows how to sync movement with your menstrual cycle so exercise bu
 
 * Why energy, pain tolerance, and recovery change across your cycle  
 * How to match workouts to the follicular, luteal, and menstrual phases  
-* What kind of movement helps — and what backfires — in each phase
+* What kind of movement helps, and what backfires, in each phase
 
 
 
@@ -53,7 +53,7 @@ Across the cycle, fluctuations in **estrogen and progesterone** affect:
 * Cardiovascular strain  
 * Inflammation levels
 
-Training without adjusting to these shifts increases fatigue and injury risk — and reduces long-term consistency.
+Training without adjusting to these shifts increases fatigue and injury risk, and reduces long-term consistency.
 
 
 
@@ -89,7 +89,7 @@ Your body handles stress well here. This is your **performance window**.
 * Heart rate climbs faster  
 * Stress tolerance reduces
 
-Your body is working harder internally — even before exercise starts.
+Your body is working harder internally, even before exercise starts.
 
 #### **Best workouts**
 

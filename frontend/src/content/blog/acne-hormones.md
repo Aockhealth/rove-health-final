@@ -31,7 +31,7 @@ If your acne keeps returning in the **same places**, especially around your peri
 **If these questions resonate with you, read on:**
 
 * “Why does my acne flare right before my period?”  
-* “Why is it always my chin and jaw — never my forehead?”  
+* “Why is it always my chin and jaw, never my forehead?”  
 * “Why do prescription creams work briefly, then fail?”  
 * “Why did my acne return in my 20s or 30s?”  
 * “Why does stress or poor sleep show up on my face?”
@@ -64,7 +64,7 @@ This leads to:
 
 * Increased oil  
 * Clogged pores  
-* Inflammatory acne — often painful and deep
+* Inflammatory acne, often painful and deep
 
 ### **3\. Why Topical Creams Alone Often Fail**
 
@@ -90,7 +90,7 @@ So acne improves briefly… then returns.
 * **Follicular phase:** skin tolerates actives better  
 * **Luteal phase:** focus on barrier repair and calming
 
-Avoid aggressive exfoliation right before your period — it worsens inflammation.
+Avoid aggressive exfoliation right before your period: it worsens inflammation.
 
 ### **2\. Diet: Stabilise Insulin, Reduce Androgen Impact**
 
@@ -115,7 +115,7 @@ Chronic stress raises cortisol, which:
 * Disrupts estrogen–progesterone balance  
 * Worsens androgen effects
 
-Sleep deprivation \= more breakouts. This isn’t cosmetic — it’s hormonal.
+Sleep deprivation \= more breakouts. This isn’t cosmetic. It’s hormonal.
 
 ### **4\. When to Look Beyond Skincare**
 
@@ -136,7 +136,7 @@ A hormonal evaluation (PMOS, insulin resistance, thyroid) may be needed.
 * Hesitation to discuss menstrual links  
 * Overuse of steroid creams
 
-Clear skin doesn’t come from stronger products — it comes from **better signals**.
+Clear skin doesn’t come from stronger products; it comes from **better signals**.
 
 
 
@@ -152,7 +152,7 @@ Clear skin doesn’t come from stronger products — it comes from **better sign
 
 ## **Dr. Rove’s Note**
 
-If acne is severe, painful, or accompanied by cycle irregularities or hair changes, treat the hormones — not just the skin — with proper clinical evaluation.
+If acne is severe, painful, or accompanied by cycle irregularities or hair changes, treat the hormones, not just the skin, with proper clinical evaluation.
 
 
 

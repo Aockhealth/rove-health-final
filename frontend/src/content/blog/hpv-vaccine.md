@@ -9,13 +9,13 @@ publishedDate: "2024-10-01"
 image: "/blog/hpv-vaccine.jpg"
 ---
 
-## **The HPV Vaccine Isn’t About Sex — It’s About Cancer Prevention**
+## **The HPV Vaccine Isn’t About Sex: It’s About Cancer Prevention**
 
 ### ***Why this one decision can protect you for decades***
 
 ### **Introduction: The Misconception That Costs Lives**
 
-“I’m married — I don’t need it.”  
+“I’m married, I don’t need it.”  
 “I’m not sexually active.”  
 “I’m too old now.”  
 “Isn’t that vaccine only for teenagers?”
@@ -83,7 +83,7 @@ The vaccine does **not treat existing cancer**, but it **prevents future infecti
 
 3. ## **Why Age (and Marriage) Don’t Cancel the Benefit**
 
-### **“I’m Married — Why Would I Need It?”**
+### **“I’m Married, Why Would I Need It?”**
 
 Because:
 
@@ -93,13 +93,13 @@ Because:
 
 Marriage ≠ zero HPV risk.
 
-4. ### **“I’m Over 26 — Is It Too Late?”**
+4. ### **“I’m Over 26, Is It Too Late?”**
 
 No.
 
 Research shows women **up to age 45** still benefit, especially if they haven’t been exposed to all vaccine-covered strains .
 
-The benefit may be smaller than in teenagers — but it’s **still meaningful**.
+The benefit may be smaller than in teenagers, but it’s **still meaningful**.
 
 
 
@@ -107,8 +107,8 @@ The benefit may be smaller than in teenagers — but it’s **still meaningful**
 
 ### **1\. Know Your Vaccine Options (India)**
 
-* **Gardasil 4 / Gardasil 9** — protects against multiple HPV strains  
-* **Cervavac** — India’s indigenous HPV vaccine (cost-effective, approved)
+* **Gardasil 4 / Gardasil 9**: protects against multiple HPV strains  
+* **Cervavac**: India’s indigenous HPV vaccine (cost-effective, approved)
 
 Both are safe and effective.
 
@@ -155,22 +155,22 @@ Only prevention does.
 
 ## **Dr. Rove’s Note**
 
-Even if you’re married, not currently sexually active, or over 30, the HPV vaccine is worth discussing — prevention decisions should be based on health, not assumptions.
+Even if you’re married, not currently sexually active, or over 30, the HPV vaccine is worth discussing: prevention decisions should be based on health, not assumptions.
 
 
 
 ## **References & Further Reading**
 
-1. **WHO — Human Papillomavirus (HPV) and Cervical Cancer**  
+1. **WHO: Human Papillomavirus (HPV) and Cervical Cancer**  
    [https://www.who.int/news-room/fact-sheets/detail/human-papillomavirus-(hpv)-and-cervical-cancer](https://www.who.int/news-room/fact-sheets/detail/human-papillomavirus-\(hpv\)-and-cervical-cancer)  
-2. **CDC — HPV Vaccine Safety and Effectiveness**  
+2. **CDC: HPV Vaccine Safety and Effectiveness**  
    [https://www.cdc.gov/hpv/parents/vaccine/safety.html](https://www.cdc.gov/hpv/parents/vaccine/safety.html)  
 3. **Efficacy of HPV Vaccination in Adult Women**  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6745823/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6745823/)  
-4. **ACOG — Human Papillomavirus Vaccination**  
+4. **ACOG: Human Papillomavirus Vaccination**  
    [https://www.acog.org/womens-health/faqs/human-papillomavirus-vaccination](https://www.acog.org/womens-health/faqs/human-papillomavirus-vaccination)  
-5. **Lancet — Global Impact of HPV Vaccination**  
+5. **Lancet: Global Impact of HPV Vaccination**  
    [https://www.thelancet.com/article/S0140-6736(20)31821-3/fulltext](https://www.thelancet.com/article/S0140-6736\(20\)31821-3/fulltext)  
-6. **Indian Council of Medical Research — Cervical Cancer Prevention**  
+6. **Indian Council of Medical Research: Cervical Cancer Prevention**  
    [https://main.icmr.nic.in/content/cervical-cancer](https://main.icmr.nic.in/content/cervical-cancer)
 

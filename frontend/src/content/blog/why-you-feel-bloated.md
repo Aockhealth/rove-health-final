@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/why-you-feel-bloated.jpg"
 ---
 
-## **Why You Feel Bloated Before Your Period — Even When You’re Eating “Right”**
+## **Why You Feel Bloated Before Your Period: Even When You’re Eating “Right”**
 
 
 
@@ -22,7 +22,7 @@ It’s tempting to blame gluten, dairy, or last night’s rajma.
 But here’s the truth:  
  **This is a predictable luteal-phase digestion shift, not a gut failure.**
 
-Once you understand what’s happening — and tweak food choices slightly — digestion gets *much* easier.
+Once you understand what’s happening, and tweak food choices slightly, digestion gets *much* easier.
 
 
 
@@ -42,7 +42,7 @@ In the week before your period, you might notice:
 * Gas and discomfort after foods you normally tolerate  
 * Constipation or incomplete bowel movements  
 * Feeling heavy, sluggish, and uncomfortable  
-* Craving heavy, spicy, or salty foods — then regretting it
+* Craving heavy, spicy, or salty foods, then regretting it
 
 And then comes the confusion:  
 *“Why is my digestion suddenly so bad?”*
@@ -56,7 +56,7 @@ And then comes the confusion:
 During the **luteal phase**, progesterone rises to support a possible pregnancy.
 
 Progesterone’s side effect?  
- It **relaxes smooth muscles** — including those in your intestines.
+ It **relaxes smooth muscles**, including those in your intestines.
 
 This leads to:
 
@@ -67,7 +67,7 @@ This leads to:
 
 Multiple studies confirm that **gastrointestinal transit time slows in the luteal phase**, contributing to bloating and constipation .
 
-So no — your gut hasn’t suddenly become weak.  
+So no, your gut hasn’t suddenly become weak.  
 It’s hormonally slower.
 
 
@@ -81,10 +81,10 @@ It’s about **eating in a digestion-friendly way when motility is reduced**.
 
 #### **Foods to Go Easy On (Late Luteal Phase)**
 
-These foods are nutritious — just harder to digest when gut movement slows: Rajma, Chole, Whole chana, Excess paneer at night, Very spicy or oily gravies
+These foods are nutritious, just harder to digest when gut movement slows: Rajma, Chole, Whole chana, Excess paneer at night, Very spicy or oily gravies
 
 **Key point:**  
-You don’t have to eliminate them — just reduce portion size or shift them earlier in the cycle.
+You don’t have to eliminate them, just reduce portion size or shift them earlier in the cycle.
 
 #### **Foods That Digest Better Now:** Moong dal (lighter, less gas-forming);Lauki, tori, pumpkin, carrot, Rice \+ curd, Soft khichdi, Steamed or sautéed vegetables
 
@@ -101,7 +101,7 @@ Ajwain (carom seeds) contains compounds that:
 * Boil ½ tsp ajwain in 1 cup water  
 * Sip warm after meals or at bedtime
 
-This isn’t folklore — it’s backed by pharmacological studies on ajwain’s carminative action.
+This isn’t folklore: it’s backed by pharmacological studies on ajwain’s carminative action.
 
 ### **3\. Eating Habits Matter More Than You Think**
 
@@ -128,14 +128,14 @@ Movement helps mechanically stimulate bowel activity when hormones slow it down.
 * Bloating before periods is **hormonal, not random**  
 * Progesterone slows gut movement → gas & constipation  
 * Late luteal phase digestion needs **lighter foods**  
-* Ajwain water genuinely helps — use it  
+* Ajwain water genuinely helps, use it  
 * Eat earlier, slower, and slightly smaller
 
 
 
 ## **Dr. Rove’s Note**
 
-If bloating is severe, painful, or associated with unexplained weight loss, anemia, or persistent constipation, don’t normalize it — rule out IBS, hypothyroidism, or food intolerances with a clinician.
+If bloating is severe, painful, or associated with unexplained weight loss, anemia, or persistent constipation, don’t normalize it: rule out IBS, hypothyroidism, or food intolerances with a clinician.
 
 
 

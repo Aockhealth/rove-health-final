@@ -9,13 +9,13 @@ publishedDate: "2024-10-01"
 image: "/blog/the-ovulation-glow-phase.jpg"
 ---
 
-## **That “Glow” Isn’t Random — It’s Ovulation Doing Its Thing**
+## **That “Glow” Isn’t Random. It’s Ovulation Doing Its Thing**
 
 ### ***The Glow Phase: why your skin peaks mid-cycle***
 
 ### **Why This Matters**
 
-If some days your skin looks hydrated, plump, and effortlessly bright — and other days it feels dull despite the same routine — that’s **estrogen at work**.  
+If some days your skin looks hydrated, plump, and effortlessly bright, and other days it feels dull despite the same routine, that’s **estrogen at work**.  
  Ovulation is your skin’s **biological high point**, and knowing this helps you plan treatments instead of chasing glow all month.
 
 
@@ -31,7 +31,7 @@ If some days your skin looks hydrated, plump, and effortlessly bright — and ot
 ## **If your skin’s been unpredictable like this, read on.**
 
 * Some days your skin looks great “for no reason”  
-* Facials sometimes work brilliantly — sometimes don’t  
+* Facials sometimes work brilliantly, sometimes don’t  
 * Makeup sits beautifully mid-cycle but not always  
 * You wonder why glow is inconsistent despite effort  
 * You blame products instead of timing
@@ -118,7 +118,7 @@ Your skin mirrors your internal state faster now.
 
 
 
-### **What to Remember — and How to Make the Most of It**
+### **What to Remember and How to Make the Most of It**
 
 * Ovulation is your natural **glow phase**, driven by peak estrogen  
 * Skin hydration and collagen response are highest mid-cycle  

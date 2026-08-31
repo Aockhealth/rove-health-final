@@ -17,7 +17,7 @@ You’re not bloated from that extra samosa, and you aren’t gaining weight. Ye
 
 In India, if you get an ultrasound for this, the report often comes back with two terrifying words: **"Bulky Uterus."**
 
-Panic sets in. *Is it a tumor? Is it cancer?* Usually, it is neither. It is often a condition called **Adenomyosis** (ad-uh-no-my-O-sis) — the quiet, heavy cousin of Endometriosis.
+Panic sets in. *Is it a tumor? Is it cancer?* Usually, it is neither. It is often a condition called **Adenomyosis** (ad-uh-no-my-O-sis), the quiet, heavy cousin of Endometriosis.
 
 ### 
 
@@ -29,23 +29,23 @@ Panic sets in. *Is it a tumor? Is it cancer?* Usually, it is neither. It is ofte
 
 
 
-## **What Is Adenomyosis? — The Internal "Bruise"**
+## **What Is Adenomyosis? The Internal "Bruise"**
 
 To understand Adenomyosis, think of a wall.
 
 * **Normal Uterus:** The lining (endometrium) sits *on top* of the muscle wall.  
 * **Adenomyosis:** The lining breaks the barrier and starts growing *inside* the muscle wall. Each cycle, it responds to hormones → inflammation and muscle thickening.
 
-Every time you have your period, this trapped tissue inside the muscle also bleeds. But since it’s deep inside the muscle, the blood has nowhere to go. This causes the uterine muscle to swell, thicken, and become tender — clinicians call this a **"boggy" or "globular" uterus.**
+Every time you have your period, this trapped tissue inside the muscle also bleeds. But since it’s deep inside the muscle, the blood has nowhere to go. This causes the uterine muscle to swell, thicken, and become tender: clinicians call this a **"boggy" or "globular" uterus.**
 
 **The Clinical Insight: The "Dragging" Sensation** Why does it feel so heavy? Because it *is*. A healthy uterus is small and light (about the size of a pear). An adenomyotic uterus can grow to the size of a 12-week pregnancy. This extra weight pulls on the ligaments holding it in place, causing that distinct "dragging" or bearing-down sensation in your pelvis and thighs.
 
 **Key Difference:**  
-Unlike fibroids (which are separate growths), Adenomyosis makes the entire uterus larger, heavier, and more tender, — rather than having a separate growth.
+Unlike fibroids (which are separate growths), Adenomyosis makes the entire uterus larger, heavier, and more tender, rather than having a separate growth.
 
 
 
-## **The “Heavy, Dragging” Pelvic Sensation — Explained**
+## **The “Heavy, Dragging” Pelvic Sensation: Explained**
 
 Women with adenomyosis often describe:
 
@@ -59,7 +59,7 @@ Women with adenomyosis often describe:
 * Inflamed muscle fibers contract poorly  
 * Increased blood pooling adds to pelvic congestion
 
-This sensation is different from sharp pain — it’s more of a **constant weight or ache**.
+This sensation is different from sharp pain: it’s more of a **constant weight or ache**.
 
 
 
@@ -95,11 +95,11 @@ Adenomyosis is stubborn, but you can manage it.
 
 ## **References & Further Reading:**
 
-1. Adenomyosis overview — BMJ  
+1. Adenomyosis overview: BMJ  
    [https://www.bmj.com/content/367/bmj.l4635](https://www.bmj.com/content/367/bmj.l4635)  
 2. Pathophysiology of adenomyosis  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6639837/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6639837/)  
-3. Adenomyosis symptoms and diagnosis — NIH  
+3. Adenomyosis symptoms and diagnosis: NIH  
    [https://www.nichd.nih.gov/health/topics/adenomyosis](https://www.nichd.nih.gov/health/topics/adenomyosis)  
 4. Imaging and diagnosis challenges  
    [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7279730/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7279730/)  

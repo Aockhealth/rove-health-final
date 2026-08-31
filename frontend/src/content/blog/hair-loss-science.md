@@ -9,7 +9,7 @@ publishedDate: "2024-10-01"
 image: "/blog/hair-loss-science.jpg"
 ---
 
-## **Why Hair Fall Starts Months After the Damage — Not When You Expect It**
+## **Why Hair Fall Starts Months After the Damage: Not When You Expect It**
 
 ### ***Telogen Effluvium: hair loss that’s delayed, not permanent***
 
@@ -17,7 +17,7 @@ image: "/blog/hair-loss-science.jpg"
 
 If your hair is suddenly shedding in handfuls, the trigger likely happened **2–3 months ago**, not last week.
 
- Telogen Effluvium isn’t random hair loss — it’s a **stress response**. And the good news? It’s usually **reversible**.
+ Telogen Effluvium isn’t random hair loss: it’s a **stress response**. And the good news? It’s usually **reversible**.
 
 
 
@@ -32,7 +32,7 @@ If your hair is suddenly shedding in handfuls, the trigger likely happened **2�
 ## **Changes you might be noticing:**
 
 * Sudden increase in hair fall while washing or combing  
-* Hair everywhere — pillow, drain, floor  
+* Hair everywhere: pillow, drain, floor  
 * Hair thinning without bald patches  
 * Hair fall starting weeks after fever, COVID, exams, or weight loss  
 * Being told “it’s just stress” without real guidance
@@ -54,7 +54,7 @@ Hair grows in cycles:
 
 Under physical or emotional stress, a large number of hairs **shift prematurely into the telogen phase**.
 
-About **2–3 months later**, those hairs shed — all at once .
+About **2–3 months later**, those hairs shed, all at once .
 
 2. ### **Common Triggers**
 
@@ -100,7 +100,7 @@ Ask yourself:
 
 Hair loss makes sense once you connect the dots.
 
-### **2\. Check Iron Stores — Not Just Hb**
+### **2\. Check Iron Stores: Not Just Hb**
 
 Ask for:
 
@@ -118,7 +118,7 @@ Hair recovery requires consistency, not extremes.
 * Protein: dal, paneer, eggs, fish  
 * Vitamin C with meals (lemon, amla) → improves iron absorption
 
-Avoid crash dieting — it prolongs shedding.
+Avoid crash dieting: it prolongs shedding.
 
 ### **4\. Reduce Stress on the Body**
 
@@ -152,12 +152,12 @@ Hair reflects **metabolic stability**, not just scalp care.
 
 
 
-### **What to Remember — and How to Use This**
+### **What to Remember, and How to Use This**
 
 * Sudden hair fall often reflects something that happened **2–3 months earlier**  
 * Think back to stress, illness, or dieting instead of panicking about the present  
 * In Indian women, **low ferritin is a common and correctable cause**  
-* Address nutrition, iron stores, and recovery — not just hair products  
+* Address nutrition, iron stores, and recovery, not just hair products  
 * With the right support, telogen effluvium is **temporary and reversible**
 
 

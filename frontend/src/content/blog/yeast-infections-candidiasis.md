@@ -46,7 +46,7 @@ If your body is struggling to process insulin (very common in Indian women with 
 
 
 
-## — **Common Symptoms**
+## **Common Symptoms**
 
 * Intense itching (often worse at night)  
 * Thick white discharge (usually odorless)  
@@ -88,7 +88,7 @@ We have a cultural obsession with being "clean." When we feel an itch, our insti
 
 ### **The Fix: Starve the Yeast**
 
-**1\. Cutting Back on Added Sugar** For 2 weeks, cut out **all** added sugar. Yes, even the sugar in your *chai*. High blood sugar creates conditions yeast thrives in, so this is worth trying alongside — not instead of — proper treatment. If your symptoms ease, mention it to your doctor; if they persist or keep coming back, get assessed rather than continuing to self-test through diet, since recurrent infections can point to diabetes or another underlying cause.
+**1\. Cutting Back on Added Sugar** For 2 weeks, cut out **all** added sugar. Yes, even the sugar in your *chai*. High blood sugar creates conditions yeast thrives in, so this is worth trying alongside (not instead of) proper treatment. If your symptoms ease, mention it to your doctor; if they persist or keep coming back, get assessed rather than continuing to self-test through diet, since recurrent infections can point to diabetes or another underlying cause.
 
 **2\. Probiotics: The Reinforcements** You need to rebuild the army of good bacteria.
 
@@ -109,7 +109,7 @@ We have a cultural obsession with being "clean." When we feel an itch, our insti
 
 ## **References & Further Reading**
 
-* Recurrent vulvovaginal candidiasis — Clinical review  
+* Recurrent vulvovaginal candidiasis: Clinical review  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5463820/)  
 * Candida and glucose metabolism  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809253/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809253/)  

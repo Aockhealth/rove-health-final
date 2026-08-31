@@ -21,7 +21,7 @@ This is the terrifying reality of **Female Genital Tuberculosis (FGTB)**. In Ind
 
 * What genital tuberculosis (GTB) is and why it matters in India  
 * How TB can affect the fallopian tubes and fertility  
-* Subtle signs to watch for — especially scanty periods and unexplained infertility  
+* Subtle signs to watch for, especially scanty periods and unexplained infertility  
 * When evaluation is important and what treatment usually involves
 
 
@@ -61,7 +61,7 @@ In India, when a young woman complains of scanty periods, she is often told, *"Y
 
 
 
-## — **How TB Affects Fertility (Simply Explained)**
+## **How TB Affects Fertility (Simply Explained)**
 
 Think of the fallopian tubes as **soft, flexible pathways** that gently move the egg toward the uterus.
 
@@ -80,7 +80,7 @@ GTB can also damage the uterine lining, making implantation difficult even if tu
 
 
 
-## — **When to Consider Evaluation**
+## **When to Consider Evaluation**
 
 Evaluation is usually advised if:
 
@@ -97,7 +97,7 @@ Doctors may use:
 * Blood and molecular tests  
 * Laparoscopy (in select cases)
 
-No single test is perfect — diagnosis often relies on **clinical suspicion \+ pattern recognition**.
+No single test is perfect: diagnosis often relies on **clinical suspicion \+ pattern recognition**.
 
 ### 
 
@@ -117,24 +117,24 @@ No single test is perfect — diagnosis often relies on **clinical suspicion \+ 
 
 * **Swap:** Replace your morning toast with **Paneer** or **Eggs**. Add a daily bowl of **Sprouted Moong** to your lunch. Your immune system needs fuel to help the antibiotics work.
 
-**4\. — Fertility After Genital TB**
+**4\. Fertility After Genital TB**
 
 Fertility options depend on: Tubal damage, Uterine lining health, Age and Ovarian reserve.  
 Some women conceive naturally after treatment. Others may need assisted reproductive options.
 
-A diagnosis of GTB does **not** mean motherhood is off the table — it means the plan needs to be personalised.
+A diagnosis of GTB does **not** mean motherhood is off the table, it means the plan needs to be personalised.
 
 
 
 ### **🩺 Dr. Rove’s Note**
 
-"If your period has practically disappeared and you are struggling to conceive, do not let anyone tell you to 'just relax.' Ask your doctor about a TB test. It’s not a diagnosis to fear, but one that’s important to rule out early. A 'silent' disease needs a loud advocate — and that advocate is you."
+"If your period has practically disappeared and you are struggling to conceive, do not let anyone tell you to 'just relax.' Ask your doctor about a TB test. It’s not a diagnosis to fear, but one that’s important to rule out early. A 'silent' disease needs a loud advocate, and that advocate is you."
 
 
 
 ## **References (Evidence-Based Sources)**
 
-* WHO — Tuberculosis and extrapulmonary TB  
+* WHO: Tuberculosis and extrapulmonary TB  
   [https://www.who.int/news-room/fact-sheets/detail/tuberculosis](https://www.who.int/news-room/fact-sheets/detail/tuberculosis)  
 * Female genital tuberculosis overview  
   [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5516668/)  
