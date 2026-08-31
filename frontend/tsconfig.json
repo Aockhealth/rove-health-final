@@ -34,6 +34,12 @@
       ],
       "zod": [
         "./node_modules/zod"
+      ],
+      "openai": [
+        "./node_modules/openai"
+      ],
+      "@google/generative-ai": [
+        "./node_modules/@google/generative-ai"
       ]
     }
   },
