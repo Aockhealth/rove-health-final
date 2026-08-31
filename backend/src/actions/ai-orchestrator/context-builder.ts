@@ -1,5 +1,5 @@
-import { createClient } from "@/utils/supabase/server";
-import { UnifiedAIContextEnvelope } from "../../../../frontend/src/lib/ai/unified-schemas";
+import { createClient } from "../../utils/supabase/server";
+import { UnifiedAIContextEnvelope } from "@shared/ai/unified-schemas";
 import { getCyclePhase } from "../ai-actions/ai-actions";
 
 const CONTEXT_LOG_WINDOW_DAYS = 21;

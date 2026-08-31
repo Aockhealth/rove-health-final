@@ -11,7 +11,7 @@ import {
     type SymptomTips
 } from "./ai-actions";
 import { calculatePhase as calculatePhaseCanonical, parseLocalDate, type CycleSettings, type DailyLog } from "@shared/cycle/phase";
-import { AIService } from "@/lib/ai/service";
+import { AIService } from "@shared/ai/service";
 
 export interface AIContext {
     symptoms: string[];

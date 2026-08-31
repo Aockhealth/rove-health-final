@@ -1,5 +1,5 @@
-import { UnifiedAIRequest, UnifiedAIResponse } from "../../../../frontend/src/lib/ai/unified-schemas";
-import { AIService, AIRequest } from "../../../../frontend/src/lib/ai/service";
+import { UnifiedAIRequest, UnifiedAIResponse } from "@shared/ai/unified-schemas";
+import { AIService, AIRequest } from "@shared/ai/service";
 
 export class ModelRouter {
     /**

@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { AIService } from "../../../../frontend/src/lib/ai/service";
+import { createClient } from "../../utils/supabase/server";
+import { AIService } from "@shared/ai/service";
 
 // ============================================
 // TYPES & INTERFACES

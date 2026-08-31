@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { executeUnifiedAI } from "@backend/actions/ai-orchestrator/orchestrator";
-import { UnifiedAIRequest } from "@/lib/ai/unified-schemas";
+import { UnifiedAIRequest } from "@shared/ai/unified-schemas";
 import { aiRateLimiter } from "@/lib/rate-limiter";
 import { validateSkillPrompt } from "@backend/actions/ai-orchestrator/prompt-limiter";
 

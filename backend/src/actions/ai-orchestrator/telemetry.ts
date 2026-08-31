@@ -1,5 +1,5 @@
-import { createClient } from "@/utils/supabase/server";
-import { UnifiedAIRequest, UnifiedAIResponse } from "../../../../frontend/src/lib/ai/unified-schemas";
+import { createClient } from "../../utils/supabase/server";
+import { UnifiedAIRequest, UnifiedAIResponse } from "@shared/ai/unified-schemas";
 
 /**
  * Privacy-Aware Telemetry Logger

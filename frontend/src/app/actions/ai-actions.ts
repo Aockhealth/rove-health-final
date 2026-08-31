@@ -13,10 +13,10 @@ import {
     type ChefOptionsResponse,
     type ChefDetail
 } from "@/lib/ai/schemas";
-import { AIService } from "@/lib/ai/service";
-import { executeUnifiedAI } from "../../../../backend/src/actions/ai-orchestrator/orchestrator";
-import { logAIGenerationEvent } from "../../../../backend/src/actions/ai-orchestrator/telemetry";
-import { UnifiedAIRequest, UnifiedAIResponse } from "@/lib/ai/unified-schemas";
+import { AIService } from "@shared/ai/service";
+import { executeUnifiedAI } from "@backend/actions/ai-orchestrator/orchestrator";
+import { logAIGenerationEvent } from "@backend/actions/ai-orchestrator/telemetry";
+import { UnifiedAIRequest, UnifiedAIResponse } from "@shared/ai/unified-schemas";
 
 // ============================================
 // EDGE FUNCTION TYPES

@@ -4,8 +4,9 @@ import {
     UnifiedAIRequest,
     UnifiedAIRequestSchema,
     UnifiedAIResponse
-} from "../../../../frontend/src/lib/ai/unified-schemas";
-import { createClient } from "@/utils/supabase/server";
+} from "@shared/ai/unified-schemas";
+import { AIService } from "@shared/ai/service";
+import { createClient } from "../../utils/supabase/server";
 import { buildUnifiedContext } from "./context-builder";
 import { ModelRouter } from "./router";
 import { logAIGenerationEvent } from "./telemetry";
@@ -88,7 +89,6 @@ async function formatConversationHistory(history?: Array<{ role: "user" | "assis
 
     let summary = "";
     try {
-        const { AIService } = await import("../../../../frontend/src/lib/ai/service");
         const result = await AIService.generate<string>({
             feature: "summarize_conversation" as any,
             variables: { conversation: olderText },
