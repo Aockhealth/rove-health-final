@@ -30,7 +30,7 @@ const FAQS: AccordionItemData[] = [
   {
     question: "Are the supplements safe to take every day?",
     answer:
-      "Balance is 1–2 tablets daily, for as long as it's useful — there's no course to finish. It's a supplement, not a medicine, and it isn't a replacement for treatment. If you're pregnant, breastfeeding, or on prescription medication, check with your doctor before starting.",
+      "Balance is 1–2 tablets daily, for as long as it's useful; there's no course to finish. It's a supplement, not a medicine, and it isn't a replacement for treatment. If you're pregnant, breastfeeding, or on prescription medication, check with your doctor before starting.",
   },
 ];
 

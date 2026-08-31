@@ -30,6 +30,7 @@ import { StickyBuyBar } from "@/components/shop/StickyBuyBar";
 import { Cite } from "@/components/shop/Cite";
 import { ReferencesList, type ReferenceItem } from "@/components/shop/ReferencesList";
 import { getProductPricingByVariant, getQuantityQuote } from "@/lib/shopify/client";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -170,7 +171,7 @@ const STANDARDS = [
   "Dosed to the 40:1 ratio the published research actually tested",
   "Every claim on this page linked to its study, including where our dose is lower than the one trialled",
   "Vegetarian, and manufactured under an FSSAI licence",
-  "A supplement, not a medicine — and we don't market it as a replacement for treatment",
+  "A supplement, not a medicine, and we don't market it as a replacement for treatment",
 ];
 
 const COMPARISON = [
@@ -242,17 +243,29 @@ function SectionHeading({
   eyebrow,
   children,
   className,
+  dark,
 }: {
   eyebrow: string;
   children: React.ReactNode;
   className?: string;
+  dark?: boolean;
 }) {
   return (
     <div className={className}>
-      <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/65">
+      <span
+        className={cn(
+          "font-sans text-[11px] font-semibold uppercase tracking-[0.18em]",
+          dark ? "text-white-bone/65" : "text-obsidian/65"
+        )}
+      >
         {eyebrow}
       </span>
-      <h2 className="mt-3 font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-4xl">
+      <h2
+        className={cn(
+          "mt-3 font-sans text-2xl font-semibold leading-tight tracking-tight md:text-4xl",
+          dark ? "text-white-bone" : "text-obsidian"
+        )}
+      >
         {children}
       </h2>
     </div>
@@ -605,32 +618,32 @@ export default async function ShopPage() {
       </section>
 
       {/* ─── 7. The Rove difference & Standards ───────────────── */}
-      <section className="bg-taupe-light px-6 py-16 md:py-20">
+      <section className="bg-rove-plum px-6 py-16 md:py-20">
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
-            <SectionHeading eyebrow="The difference">
+            <SectionHeading eyebrow="The difference" dark>
               Built for one problem.{" "}
               <span className="font-serif italic font-medium">Not for a shelf.</span>
             </SectionHeading>
             <div className="mt-10 overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-obsidian/15">
-                    <th className="py-4 pr-4 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-obsidian/65">
+                  <tr className="border-b border-white-bone/15">
+                    <th className="py-4 pr-4 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-white-bone/65">
                       &nbsp;
                     </th>
-                    <th className="w-24 py-4 text-center font-sans text-xs font-semibold tracking-tight text-obsidian md:w-32 md:text-sm">
+                    <th className="w-24 py-4 text-center font-sans text-xs font-semibold tracking-tight text-white-bone md:w-32 md:text-sm">
                       {product.title}
                     </th>
-                    <th className="w-24 py-4 text-center font-sans text-xs font-medium tracking-tight text-obsidian/65 md:w-32 md:text-sm">
+                    <th className="w-24 py-4 text-center font-sans text-xs font-medium tracking-tight text-white-bone/65 md:w-32 md:text-sm">
                       A generic multivitamin
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {COMPARISON.map((row) => (
-                    <tr key={row} className="border-b border-obsidian/10">
-                      <td className="py-4 pr-4 font-sans text-sm leading-snug text-obsidian/80">
+                    <tr key={row} className="border-b border-white-bone/10">
+                      <td className="py-4 pr-4 font-sans text-sm leading-snug text-white-bone/80">
                         {row}
                       </td>
                       <td className="py-4 text-center">
@@ -640,7 +653,7 @@ export default async function ShopPage() {
                         </span>
                       </td>
                       <td className="py-4 text-center">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/8 text-obsidian/70">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white-bone/12 text-white-bone/70">
                           <X className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
                           <span className="sr-only">No</span>
                         </span>
@@ -654,14 +667,16 @@ export default async function ShopPage() {
 
           <Reveal delay={120} className="scroll-mt-24">
             <span id="standards" aria-hidden className="block scroll-mt-24" />
-            <SectionHeading eyebrow="Our standards">What we hold it to.</SectionHeading>
+            <SectionHeading eyebrow="Our standards" dark>
+              What we hold it to.
+            </SectionHeading>
             <ul className="mt-10 space-y-3.5">
               {STANDARDS.map((line) => (
                 <li key={line} className="flex items-start gap-3.5">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rove-lime text-obsidian">
                     <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                   </span>
-                  <span className="font-sans text-sm leading-[1.6] text-obsidian/75">{line}</span>
+                  <span className="font-sans text-sm leading-[1.6] text-white-bone/75">{line}</span>
                 </li>
               ))}
             </ul>
@@ -685,14 +700,14 @@ export default async function ShopPage() {
 
 
       {/* ─── 12. Close ────────────────────────────────────────── */}
-      <section className="bg-taupe-light px-6 py-16 text-center md:py-20">
+      <section className="bg-rove-plum px-6 py-16 text-center md:py-20">
         <Reveal className="mx-auto max-w-2xl">
-          <h2 className="font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-obsidian md:text-4xl">
+          <h2 className="font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-white-bone md:text-4xl">
             It starts tomorrow morning.{" "}
             <span className="font-serif italic font-medium">Then the one after that.</span>
           </h2>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-            <span className="font-sans text-2xl font-semibold tabular-nums text-obsidian">
+            <span className="font-sans text-2xl font-semibold tabular-nums text-white-bone">
               {compareAtPrice && (
                 <span className="mr-2 text-xl font-normal line-through opacity-60">
                   ₹{compareAtPrice}
@@ -702,7 +717,7 @@ export default async function ShopPage() {
             </span>
             <AddToCartButton product={liveProduct} />
           </div>
-          <p className="mt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-obsidian/70">
+          <p className="mt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-white-bone/70">
             {product.unitCount} {product.unitLabel} per bottle · 1–2 a day
           </p>
         </Reveal>

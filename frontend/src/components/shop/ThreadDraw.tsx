@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
-export function ThreadDraw() {
+export function ThreadDraw({ dark }: { dark?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [seen, setSeen] = useState(false);
   const reduced = useReducedMotion();
@@ -30,7 +30,7 @@ export function ThreadDraw() {
     <span
       ref={ref}
       aria-hidden
-      className="mx-auto mt-14 block h-14 w-px origin-top bg-obsidian/20 transition-transform duration-[900ms] ease-out"
+      className={`mx-auto mt-14 block h-14 w-px origin-top transition-transform duration-[900ms] ease-out ${dark ? "bg-white-bone/25" : "bg-obsidian/20"}`}
       style={{ transform: drawn ? "scaleY(1)" : "scaleY(0)" }}
     />
   );

@@ -34,13 +34,13 @@ const MOMENTS = [
 
 export function Philosophy() {
   return (
-    <section className="bg-taupe-light px-6 py-14 md:py-16">
+    <section className="bg-rove-plum px-6 py-14 md:py-16">
       <div className="mx-auto max-w-4xl">
         <Reveal className="mx-auto max-w-xl text-center">
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-obsidian/60">
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white-bone/60">
             Why phases
           </span>
-          <h2 className="mt-2 font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-3xl">
+          <h2 className="mt-2 font-sans text-2xl font-semibold leading-tight tracking-tight text-white-bone md:text-3xl">
             Your body runs on four phases.{" "}
             <span className="font-serif italic font-medium">
               Most supplements ignore all of them.
@@ -60,7 +60,7 @@ export function Philosophy() {
               >
                 {moment.phase}
               </span>
-              <p className="mt-2 font-serif text-lg italic font-medium leading-snug text-obsidian md:text-xl">
+              <p className="mt-2 font-serif text-lg italic font-medium leading-snug text-white-bone md:text-xl">
                 {moment.line}
               </p>
             </Reveal>

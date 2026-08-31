@@ -56,7 +56,7 @@ export function ProductGallery({
           <Image
             key={src}
             src={src}
-            alt={i === 0 ? alt : `${alt} — view ${i + 1}`}
+            alt={i === 0 ? alt : `${alt}, view ${i + 1}`}
             fill
             sizes="(min-width: 768px) 45vw, 100vw"
             priority={i === 0}

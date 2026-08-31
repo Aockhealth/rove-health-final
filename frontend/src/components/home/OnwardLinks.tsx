@@ -11,7 +11,7 @@ export function OnwardLinks() {
     <section className="px-6 py-14 md:py-16">
       <Reveal className="mx-auto flex max-w-3xl flex-col gap-6 border-y border-obsidian/15 py-8 sm:flex-row sm:items-center sm:justify-between sm:gap-10">
         <p className="max-w-[38ch] font-serif text-xl italic font-medium leading-snug text-obsidian md:text-2xl">
-          Your hormones shift week to week. The formulas are dosed to those shifts — Cycle Sync
+          Your hormones shift week to week. The formulas are dosed to those shifts, and Cycle Sync
           tells you which one you&apos;re in.
         </p>
 

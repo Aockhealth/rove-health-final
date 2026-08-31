@@ -108,20 +108,20 @@ export default function StoryPage() {
       </section>
 
       {/* ─── 3. Close ──────────────────────────────────── */}
-      <section className="bg-paper px-6 py-24 text-center md:py-32">
+      <section className="bg-rove-plum px-6 py-24 text-center md:py-32">
         <Reveal className="mx-auto max-w-2xl">
-          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-obsidian" />
-          
+          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-white-bone" />
+
           <div className="mt-12 flex flex-wrap items-baseline justify-center gap-x-4 gap-y-2">
-            <p className="font-sans text-lg font-semibold tracking-tight text-obsidian/90 md:text-xl">
+            <p className="font-sans text-lg font-semibold tracking-tight text-white-bone/90 md:text-xl">
               {ADVISORS.map((a) => a.name).join(" & ")}
             </p>
-            <p className="font-sans text-xs uppercase tracking-[0.16em] text-obsidian/70">
+            <p className="font-sans text-xs uppercase tracking-[0.16em] text-white-bone/70">
               MBBS · Co-founders
             </p>
           </div>
 
-          <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-obsidian md:text-5xl">
+          <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-white-bone md:text-5xl">
             We couldn&apos;t give her a better answer then.{" "}
             <span className="font-serif italic font-medium">This is the one we have now.</span>
           </h2>
@@ -131,7 +131,7 @@ export default function StoryPage() {
             </Button>
             <a
               href="/advisors"
-              className="font-sans text-sm text-obsidian underline decoration-obsidian/25 underline-offset-4 hover:decoration-obsidian"
+              className="font-sans text-sm text-white-bone underline decoration-white-bone/25 underline-offset-4 hover:decoration-white-bone"
             >
               Meet the doctors
             </a>

@@ -193,7 +193,7 @@ export function BuyBox({
           revealCart();
         }}
       >
-        Add to Cart — {rupees(selected.pricing.total)}
+        Add to Cart · {rupees(selected.pricing.total)}
       </Button>
     </div>
   );

@@ -140,10 +140,10 @@ export default function AppPage() {
       </section>
 
       {/* ─── 2. Recognition ────────────────────────────── */}
-      <section className="bg-taupe-light px-6 py-32 md:py-40">
+      <section className="bg-rove-plum px-6 py-32 md:py-40">
         <div className="mx-auto max-w-3xl text-center">
           <Reveal>
-            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-white-bone/70">
               If this is your phone
             </p>
           </Reveal>
@@ -151,7 +151,7 @@ export default function AppPage() {
           <div className="mt-12 flex flex-col gap-7 md:gap-9">
             {RECOGNITIONS.map((line, i) => (
               <Reveal key={line} delay={i * 200} className="duration-[1000ms]">
-                <p className="text-center font-serif text-2xl italic font-medium leading-snug text-obsidian/90 md:text-4xl">
+                <p className="text-center font-serif text-2xl italic font-medium leading-snug text-white-bone/90 md:text-4xl">
                   {line}
                 </p>
               </Reveal>
@@ -159,13 +159,13 @@ export default function AppPage() {
           </div>
 
           <Reveal delay={620}>
-            <p className="mt-16 text-center font-sans text-2xl font-semibold leading-tight tracking-tight text-obsidian md:text-4xl">
+            <p className="mt-16 text-center font-sans text-2xl font-semibold leading-tight tracking-tight text-white-bone md:text-4xl">
               Knowing what&apos;s coming was never the hard part.{" "}
               <span className="font-serif italic font-medium">Knowing what to do about it is.</span>
             </p>
           </Reveal>
 
-          <ThreadDraw />
+          <ThreadDraw dark />
         </div>
       </section>
 
@@ -213,7 +213,7 @@ export default function AppPage() {
         <div className="mx-auto max-w-6xl">
           <Reveal className="mx-auto max-w-3xl">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
-              Fig. 01 — One day, from the inside
+              Fig. 01 · One day, from the inside
             </p>
             <h2 className="mt-3 font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
               Priya, 28. Delhi.{" "}
@@ -236,7 +236,7 @@ export default function AppPage() {
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian/70">
-              Fig. 02 — Inside the app
+              Fig. 02 · Inside the app
             </p>
             <h2 className="mt-3 font-sans text-3xl font-semibold leading-tight tracking-tight text-obsidian md:text-5xl">
               A look at <span className="font-serif italic font-medium">the real thing.</span>
@@ -252,19 +252,20 @@ export default function AppPage() {
       </section>
 
       {/* ─── 7. Close ──────────────────────────────────── */}
-      <section className="bg-paper px-6 py-24 text-center md:py-32">
+      <section className="bg-rove-plum px-6 py-24 text-center md:py-32">
         <Reveal className="mx-auto max-w-2xl">
-          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-obsidian" />
-          <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-obsidian md:text-5xl">
-            The app builds the plan.{" "}
-            <span className="font-serif italic font-medium">The tablet is the other half.</span>
+          <span aria-hidden className="mx-auto block h-0.5 w-16 bg-white-bone" />
+          <h2 className="mt-8 font-sans text-3xl font-semibold leading-[1.08] tracking-tight text-white-bone md:text-5xl">
+            Stop guessing what today needs.{" "}
+            <span className="font-serif italic font-medium">Let the app tell you.</span>
           </h2>
-          <p className="mt-5 font-sans text-base leading-[1.8] text-obsidian/70 md:text-lg">
-            Rove tells you what your body needs today. Balance is what you take while it settles.
+          <p className="mt-5 font-sans text-base leading-[1.8] text-white-bone/70 md:text-lg">
+            Rove reads your phase and hands you the plan for it: what to eat, how to move, what
+            to do next.
           </p>
           <div className="mt-10 flex justify-center">
-            <Button size="lg" href="/shop">
-              Shop the supplements
+            <Button size="lg" href={PLAY_STORE_URL}>
+              Get it on Google Play
             </Button>
           </div>
         </Reveal>

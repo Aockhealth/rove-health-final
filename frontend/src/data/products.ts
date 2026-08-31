@@ -415,7 +415,7 @@ export const LOCAL_PRODUCTS: LocalProduct[] = [
       {
         question: "When do I take it?",
         answer:
-          "One to two tablets daily, or as directed by your dietician. There's no phase to time it to — irregular cycles don't have a predictable Day 1 to count from.",
+          "One to two tablets daily, or as directed by your dietician. There's no phase to time it to: irregular cycles don't have a predictable Day 1 to count from.",
       },
       {
         question: "Can I take it with my prescription?",

@@ -355,3 +355,26 @@ body::after {
   }
 }
 
+
+/* ── Doctor share (/report/[token]) ──────────────────────────────────────
+   A clinician printing the record must get the whole record, not just the
+   sections he happened to expand on screen — so every collapsed <details>
+   opens for print, and the interactive parts drop out. */
+@media print {
+  .report-section {
+    display: block !important;
+  }
+  .report-section > div {
+    display: block !important;
+  }
+  .report-section > summary {
+    list-style: none;
+  }
+  .report-section > summary span {
+    display: none !important;
+  }
+  .reply-form,
+  .no-print {
+    display: none !important;
+  }
+}

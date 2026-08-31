@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Raleway } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { ChromeGate } from "@/components/layout/ChromeGate";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CartProvider } from "@/context/CartContext";
 import dynamic from "next/dynamic";
@@ -73,10 +74,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-paper text-obsidian font-sans">
         <CartProvider>
-          <SiteHeader />
+          {/* Shared-outward pages (/report, /fertility) are somebody's medical
+              record opened by a doctor or partner who has no relationship with
+              Rove — they get the page and nothing else. See ChromeGate. */}
+          <ChromeGate>
+            <SiteHeader />
+          </ChromeGate>
           <main className="flex-1">{children}</main>
-          <SiteFooter />
-          <CartDrawer />
+          <ChromeGate>
+            <SiteFooter />
+            <CartDrawer />
+          </ChromeGate>
         </CartProvider>
       </body>
     </html>
