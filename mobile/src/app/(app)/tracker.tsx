@@ -32,6 +32,7 @@ import {
 } from 'lucide-react-native';
 
 import ProfileAvatar from '../../components/home/ProfileAvatar';
+import HomeSwipeEdge from '../../components/ui/HomeSwipeEdge';
 import { Link } from 'expo-router';
 import { phaseThemes } from '../../data/home-content';
 import {
@@ -1148,6 +1149,7 @@ export default function TrackerScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <HomeSwipeEdge />
       {/* ── Top Nav — left-aligned eyebrow + serif title, phase-tinted,
           matching Home/Insights/Plan's header instead of the centered,
           bordered bar this screen used to have on its own. ── */}

@@ -8,6 +8,7 @@ import { LearnHero } from '../../components/learn/LearnHero';
 import { ContentRow } from '../../components/learn/ContentRow';
 import { CategoryPillBar } from '../../components/learn/CategoryPillBar';
 import LoadingScreen from '../../components/ui/LoadingScreen';
+import HomeSwipeEdge from '../../components/ui/HomeSwipeEdge';
 import { fetchLearnArticles, getStorageUrl, type LearnArticle } from '../../lib/learn';
 import { getAllReadingProgress } from '../../lib/readingProgress';
 
@@ -17,6 +18,8 @@ export default function LearnScreen() {
   const sectionListRef = useRef<SectionList>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [progressById, setProgressById] = useState<Record<string, number>>({});
+  const [initialImagesReady, setInitialImagesReady] = useState(false);
+  const hasPrefetchedOnce = useRef(false);
 
   const { data: articles = [], isPending: loading, refetch, isRefetching } = useQuery<LearnArticle[]>({
     queryKey: ['learn-articles'],
@@ -25,11 +28,20 @@ export default function LearnScreen() {
   });
 
   // Prefetch the hero + first row's images as soon as the list loads, so they're
-  // already on disk by the time the user scrolls to them instead of loading cold.
+  // already on disk by the time they're shown instead of popping in over the network.
+  // On the very first load, hold the loading screen until that prefetch settles (or
+  // 4s passes) so the page doesn't reveal a screen of grey placeholder cards; later
+  // refetches (pull-to-refresh) just warm the cache in the background.
   useEffect(() => {
     if (articles.length === 0) return;
     const toPrefetch = articles.slice(0, 6).map((a) => getStorageUrl('learn-images', a.image_path)).filter(Boolean);
-    Image.prefetch(toPrefetch);
+    if (hasPrefetchedOnce.current) {
+      Image.prefetch(toPrefetch);
+      return;
+    }
+    hasPrefetchedOnce.current = true;
+    const timeout = new Promise((resolve) => setTimeout(resolve, 4000));
+    Promise.race([Image.prefetch(toPrefetch), timeout]).finally(() => setInitialImagesReady(true));
   }, [articles]);
 
   useEffect(() => {
@@ -76,10 +88,11 @@ export default function LearnScreen() {
     }
   };
 
-  if (loading) return <LoadingScreen />;
+  if (loading || (articles.length > 0 && !initialImagesReady)) return <LoadingScreen />;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <HomeSwipeEdge />
       <View className="px-5 pb-2 pt-1 flex-row items-center justify-between z-10">
         <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: 'CormorantGaramond-Bold' }}>Learn</Text>
         <ProfileAvatar />

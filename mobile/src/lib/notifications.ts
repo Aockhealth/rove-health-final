@@ -216,3 +216,83 @@ export async function syncOvulationStatusNotification(
     console.error('[notifications] syncOvulationStatusNotification failed:', err);
   }
 }
+
+// ============================================================================
+// DOCTOR FOLLOW-UPS
+// ============================================================================
+
+/** 9am, same as the period reminder — a follow-up is a morning-of-the-day thing, not an evening nudge. */
+const DOCTOR_ACTION_HOUR = 9;
+
+/** Namespaced per note+index so re-accepting can't stack duplicates and one note's reminders can be cancelled together. */
+function doctorActionId(noteId: string, index: number): string {
+  return `doctor-note-${noteId}-${index}`;
+}
+
+/**
+ * Turns the structured follow-ups a clinician attached to a note into real
+ * dated reminders — this is the step that makes the doctor loop a loop rather
+ * than a message she reads once and forgets.
+ *
+ * Only ever called after *she* accepts the note (see respondToDoctorNote), so
+ * an unconfirmed note from whoever happens to hold the link can never put a
+ * notification on her phone.
+ *
+ * The reminder repeats the instruction verbatim and names the doctor, because
+ * "Recheck TSH" six weeks later is meaningless without knowing who asked for
+ * it. It deliberately does not paraphrase his sentence.
+ */
+export async function scheduleDoctorActionReminders(
+  noteId: string,
+  doctorName: string,
+  actions: Array<
+    | { type: 'recheck'; test: string; inWeeks: number }
+    | { type: 'followup'; inWeeks: number }
+    | { type: 'supplement'; product: string; action: 'start' | 'continue' | 'stop' }
+  >,
+): Promise<void> {
+  // Supplement instructions have no date attached — they belong on the Plan
+  // card, not in a future notification. Only the timed ones are scheduled.
+  const timed = actions.filter(
+    (a): a is Extract<typeof a, { inWeeks: number }> =>
+      (a.type === 'recheck' || a.type === 'followup') && Number.isFinite((a as any).inWeeks),
+  );
+  if (timed.length === 0) return;
+
+  const granted = await ensureNotificationPermissions();
+  if (!granted) return;
+
+  for (let i = 0; i < timed.length; i++) {
+    const action = timed[i];
+    const when = new Date();
+    when.setDate(when.getDate() + Math.round(action.inWeeks * 7));
+    when.setHours(DOCTOR_ACTION_HOUR, 0, 0, 0);
+
+    if (when.getTime() <= Date.now()) continue; // an "in 0 weeks" instruction is for today, not a future alert
+
+    const content =
+      action.type === 'recheck'
+        ? {
+            title: `${doctorName} asked you to recheck ${action.test}`,
+            body: `That was ${action.inWeeks} weeks ago. Book the test, and log the result in Rove when it comes back.`,
+          }
+        : {
+            title: `Follow-up with ${doctorName}`,
+            body: `Your ${action.inWeeks}-week follow-up is due. Share an updated report before you go.`,
+          };
+
+    await Notifications.cancelScheduledNotificationAsync(doctorActionId(noteId, i)).catch(() => {});
+    await Notifications.scheduleNotificationAsync({
+      identifier: doctorActionId(noteId, i),
+      content,
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when },
+    });
+  }
+}
+
+/** Used when she declines a note she had previously accepted, so its reminders don't outlive it. */
+export async function cancelDoctorActionReminders(noteId: string, count = 10): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    await Notifications.cancelScheduledNotificationAsync(doctorActionId(noteId, i)).catch(() => {});
+  }
+}

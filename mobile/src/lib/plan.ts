@@ -249,7 +249,7 @@ export async function fetchPlanPageDataFast() {
       weightGoal: weightGoal ? {
           currentWeight: lifestyle?.weight_kg || weightGoal.current_weight_kg,
           targetWeight: weightGoal.target_weight_kg,
-          startWeight: weightGoal.current_weight_kg,
+          startWeight: weightGoal.start_weight_kg ?? weightGoal.current_weight_kg,
           weeklyRate: weightGoal.weekly_rate_kg,
           startDate: weightGoal.start_date,
           fitnessGoal: lifestyle?.fitness_goal

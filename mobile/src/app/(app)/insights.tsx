@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import LoadingScreen from '../../components/ui/LoadingScreen';
+import HomeSwipeEdge from '../../components/ui/HomeSwipeEdge';
 import { getLocalizedFontFamily, getLocalizedTracking } from '../../lib/fonts';
 import ProfileAvatar from '../../components/home/ProfileAvatar';
 import { phaseThemes } from '../../data/home-content';
@@ -18,6 +19,7 @@ import { PhasePatternCard } from '../../components/insights/PhasePatternCard';
 import { WeightTrendCard } from '../../components/insights/WeightTrendCard';
 import { MentalHealthCheckCard } from '../../components/insights/MentalHealthCheckCard';
 import { HealthReportCard } from '../../components/insights/HealthReportCard';
+import { DoctorShareCard } from '../../components/insights/DoctorShareCard';
 import { PatternAnalysisCard } from '../../components/insights/PatternAnalysisCard';
 import { TtcFertilityCard } from '../../components/insights/TtcFertilityCard';
 import { TtcCycleInsights } from '../../components/insights/TtcCycleInsights';
@@ -99,6 +101,7 @@ export default function InsightsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-rove-cream">
+      <HomeSwipeEdge />
       {/* HEADER */}
       <View className="px-5 pb-2 pt-2 flex-row items-center justify-between z-50 mb-2">
         <View>
@@ -246,6 +249,11 @@ export default function InsightsScreen() {
           <>
             <Animated.View entering={FadeInUp.duration(500).springify()}>
               <HealthReportCard theme={theme} />
+            </Animated.View>
+            {/* Directly beneath the report it shares — reading it and sending
+                it to a doctor are one errand, not two features. */}
+            <Animated.View entering={FadeInUp.delay(50).duration(500).springify()}>
+              <DoctorShareCard theme={theme} />
             </Animated.View>
             <Animated.View entering={FadeInUp.delay(75).duration(500).springify()}>
               <LockedComingSoonCard title={t('insights.labResults.title')} />

@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Image, Text } from 'react-native';
+import { StyleSheet, View, Image } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
   Easing,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
 import { phaseThemes } from '../../data/home-content';
+import { getLocalizedFontFamily } from '../../lib/fonts';
+
+const FACT_DURATION_MS = 5000;
 
 const DEFAULT_GLOW_COLOR = '#AF6B6B';
 
@@ -25,7 +26,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 };
 
 export default function LoadingScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const facts = t('common.loadingFacts', { returnObjects: true }) as string[];
 
   // Opportunistically picks up whatever phase color is already cached from the
@@ -38,38 +39,21 @@ export default function LoadingScreen() {
   const glowColor = (phaseName && phaseThemes[phaseName]?.color) || DEFAULT_GLOW_COLOR;
 
   const markOpacity = useSharedValue(0);
-  const markScale = useSharedValue(0.9);
-  const glowScale = useSharedValue(0.9);
+  const markScale = useSharedValue(0.94);
   const [factIndex, setFactIndex] = useState(0);
 
   useEffect(() => {
-    // Initial fade in
-    markOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    // Same calm one-shot fade + settle as SplashIntro, no looping pulse, no
+    // breathing glow. This screen can reappear often (every tab load), so an
+    // animation that keeps moving reads as busy rather than premium. The facts
+    // below are the one thing allowed to keep changing, slowly, since they're
+    // meant to be read rather than glanced past.
+    markOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+    markScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
 
-    // Gentle pulse animation
-    markScale.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.95, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    // Slower, wider breathing glow behind the mark
-    glowScale.value = withRepeat(
-      withSequence(
-        withTiming(1.08, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.9, { duration: 1800, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    // Cycle through facts
     const interval = setInterval(() => {
       setFactIndex((prev) => (prev + 1) % facts.length);
-    }, 3500);
+    }, FACT_DURATION_MS);
 
     return () => clearInterval(interval);
   }, []);
@@ -79,35 +63,28 @@ export default function LoadingScreen() {
     transform: [{ scale: markScale.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: markOpacity.value,
-    transform: [{ scale: glowScale.value }],
-  }));
-
   return (
     <View style={[StyleSheet.absoluteFillObject, styles.container]}>
-      <View style={styles.centerBlock}>
-        <View style={styles.markStage}>
-          <Animated.View style={[StyleSheet.absoluteFillObject, styles.glow, { backgroundColor: hexToRgba(glowColor, 0.14) }, glowStyle]} />
-          <Animated.View style={[styles.markWrap, { shadowColor: glowColor }, markStyle]}>
-            <Image
-              source={require('../../../assets/images/splash-mark.png')}
-              style={{ width: 100, height: 100 * (532 / 257) }}
-              resizeMode="contain"
-            />
-          </Animated.View>
-        </View>
+      <View style={styles.markStage}>
+        <View style={[StyleSheet.absoluteFillObject, styles.glow, { backgroundColor: hexToRgba(glowColor, 0.1) }]} />
+        <Animated.View style={[styles.markWrap, { shadowColor: glowColor }, markStyle]}>
+          <Image
+            source={require('../../../assets/images/splash-mark.png')}
+            style={{ width: 56, height: 56 * (532 / 257) }}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </View>
 
-        <View style={styles.factContainer}>
-          <Animated.Text
-            key={factIndex}
-            entering={FadeIn.duration(600).delay(200)}
-            exiting={FadeOut.duration(400)}
-            style={styles.factText}
-          >
-            {facts[factIndex]}
-          </Animated.Text>
-        </View>
+      <View style={styles.factContainer}>
+        <Animated.Text
+          key={factIndex}
+          entering={FadeIn.duration(700).delay(150)}
+          exiting={FadeOut.duration(500)}
+          style={[styles.factText, { fontFamily: getLocalizedFontFamily('CormorantGaramond-Medium', i18n.language) }]}
+        >
+          {facts[factIndex]}
+        </Animated.Text>
       </View>
     </View>
   );
@@ -120,35 +97,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 9999,
   },
-  centerBlock: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   markStage: {
-    width: 260,
-    height: 260,
+    width: 140,
+    height: 140,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
   glow: {
-    borderRadius: 130,
+    borderRadius: 70,
   },
   markWrap: {
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
   },
   factContainer: {
-    marginTop: 36,
-    width: 280,
+    width: 300,
+    minHeight: 110,
     alignItems: 'center',
-    minHeight: 60,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 8,
   },
   factText: {
-    fontFamily: 'Raleway-Medium',
-    fontSize: 14,
-    color: '#A8A29E',
+    fontStyle: 'italic',
+    fontSize: 22,
+    lineHeight: 30,
+    color: '#2D2420',
     textAlign: 'center',
-    lineHeight: 20,
   },
 });

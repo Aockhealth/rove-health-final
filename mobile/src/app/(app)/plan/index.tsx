@@ -19,6 +19,7 @@ import { GuidedSessionPlayer } from '../../../components/plan/GuidedSessionPlaye
 import { getPhaseData } from '@shared/content/phase-data';
 import { Button } from '../../../components/ui/Button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ui/Dialog';
+import HomeSwipeEdge from '../../../components/ui/HomeSwipeEdge';
 import { RoveChef } from '../../../components/plan/RoveChef';
 import { MacroFuelGauge } from '../../../components/plan/MacroFuelGauge';
 import { NutritionTrackerCard } from '../../../components/plan/NutritionTrackerCard';
@@ -29,6 +30,7 @@ import { ActivitiesWidget } from '../../../components/plan/ActivitiesWidget';
 import { SectionHeader } from '../../../components/plan/SectionHeader';
 import { FocusForYou } from '../../../components/plan/FocusForYou';
 import { TtcGuidanceSection } from '../../../components/plan/TtcGuidanceSection';
+import { DoctorNoteCard } from '../../../components/plan/DoctorNoteCard';
 import { TtcNourishSection } from '../../../components/plan/TtcNourishSection';
 import { TtcMoveSection } from '../../../components/plan/TtcMoveSection';
 import { deriveTtcState, getTtcStateMetaByKey } from '../../../lib/ttcEngine';
@@ -510,14 +512,11 @@ export default function PlanScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#FAF9F6]">
+      <HomeSwipeEdge />
       {/* Header — fixed outside scroll */}
       <View className="px-5 pb-2 pt-2 flex-row items-center justify-between">
-        <TouchableOpacity className="p-2 -ml-2">
-          <Feather name="chevron-left" size={24} color="#A8A29E" />
-        </TouchableOpacity>
-        
         <Link href={`/plan/${phaseName}`} asChild>
-          <TouchableOpacity className="items-center">
+          <TouchableOpacity>
             <Text className="text-2xl text-rove-charcoal" style={{ fontFamily: getLocalizedFontFamily('CormorantGaramond-Regular', i18n.language), color: theme.textColor }}>{headerTitle}</Text>
             <Text className="text-[10px] font-bold uppercase tracking-widest text-rove-stone mt-1">{t('plan.index.dayOfCycle', { day: data.day })}</Text>
           </TouchableOpacity>
@@ -579,6 +578,13 @@ export default function PlanScreen() {
         {/* Tabs Content */}
         {activeTab === 'guide' && (
           <View>
+            {/* A doctor's own instruction outranks anything Rove generated, so
+                it sits above both the TTC section and today's phase content —
+                if her gynaecologist told her something, that is the first
+                thing this tab should say. Renders nothing when there are no
+                notes, pending or confirmed. */}
+            <DoctorNoteCard themeColor={theme.color} />
+
             {/* TTC users see conception-prep content before anything tied to
                 today's cycle phase — this tab should read as "getting ready
                 for a baby", not "syncing with today's hormones". */}
